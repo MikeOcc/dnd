@@ -179,6 +179,9 @@ export class GameEngine {
     this.char.id = id;
     this.char.rerollUsed = this.char.rerollUsed;
 
+    // Character must exist in DB before dungeon levels (foreign key constraint)
+    this.repo.saveCharacter(this.char);
+
     // Generate all 7 dungeon levels
     for (let lvl = 1; lvl <= 7; lvl++) {
       const seed = this.rng.int(1, 0x7fffffff);
@@ -196,8 +199,6 @@ export class GameEngine {
 
     // Initialize dungeon state
     this.dungeonState = this.emptyDungeonState();
-
-    this.repo.saveCharacter(this.char);
     this.repo.saveDungeonState(this.char.id, this.dungeonState);
 
     this.pace = initialPace(this.rng);
