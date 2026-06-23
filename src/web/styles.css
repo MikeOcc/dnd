@@ -1,0 +1,245 @@
+/* THE SEVEN LEVELS — browser interface */
+
+:root {
+  --green: #33ff33;
+  --dark-green: #00aa00;
+  --amber: #ffb000;
+  --bg: #0a0a0a;
+  --dim: #1a2a1a;
+  --panel: #0d1a0d;
+  --border: #1a3a1a;
+  --font: 'Courier New', Courier, monospace;
+  --hp-good: #33ff33;
+  --hp-warn: #ffb000;
+  --hp-crit: #ff3333;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.4;
+  height: 100%;
+  overflow: hidden;
+}
+
+#terminal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  height: 100vh;
+  padding: 8px 12px;
+  gap: 6px;
+}
+
+/* Header */
+#header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+#game-title {
+  color: var(--green);
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 4px;
+}
+
+/* Status bar */
+#status-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+#char-name    { color: #99ff99; font-weight: bold; flex: 1; }
+#dungeon-level { color: var(--dark-green); }
+#char-level   { color: var(--dark-green); }
+#hp-display   { color: var(--hp-good); min-width: 100px; }
+#hp-display.warn { color: var(--hp-warn); }
+#hp-display.crit { color: var(--hp-crit); }
+#xp-display   { color: var(--dark-green); }
+#gold-display { color: #aaff44; }
+
+/* Dungeon view */
+#view-container {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+#dungeon-view {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  color: var(--green);
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-align: left;
+  min-height: 110px;
+  min-width: 200px;
+}
+
+/* Messages */
+#message-area {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  min-height: 80px;
+  max-height: 260px;
+}
+
+#messages {
+  color: var(--green);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Choices */
+#choices-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+  min-height: 32px;
+}
+
+.choice-btn {
+  background: var(--panel);
+  border: 1px solid var(--dark-green);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.choice-btn:hover {
+  background: var(--dark-green);
+  color: var(--bg);
+}
+
+.choice-btn .key {
+  color: #99ff99;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+/* Name input */
+#name-input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.prompt {
+  color: var(--green);
+}
+
+#name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--green);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  width: 240px;
+  caret-color: var(--green);
+}
+
+/* Movement controls */
+#movement-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  justify-content: center;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 36px);
+  grid-template-rows: repeat(2, 30px);
+  gap: 3px;
+}
+
+.climb-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ctrl-btn {
+  background: var(--panel);
+  border: 1px solid var(--dark-green);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  min-width: 36px;
+  height: 30px;
+  transition: background 0.1s;
+}
+
+.ctrl-btn:hover {
+  background: var(--dark-green);
+  color: var(--bg);
+}
+
+.ctrl-btn.empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+/* Help line */
+#help-line {
+  padding: 2px 0;
+  border-top: 1px solid var(--border);
+  min-height: 20px;
+}
+
+#key-hint {
+  color: var(--dim);
+  font-size: 11px;
+}
+
+/* Utility */
+.hidden { display: none !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--dark-green); }
+
+/* HP colors */
+.hp-good { color: var(--hp-good); }
+.hp-warn { color: var(--hp-warn); }
+.hp-crit { color: var(--hp-crit); }
+
+/* Glow effect for combat / important messages */
+.glow {
+  text-shadow: 0 0 8px var(--green);
+}

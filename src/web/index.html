@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE SEVEN LEVELS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="terminal">
+
+    <!-- Title / messages area -->
+    <div id="header">
+      <span id="game-title">THE SEVEN LEVELS</span>
+    </div>
+
+    <!-- Status bar (hidden until playing) -->
+    <div id="status-bar" class="hidden">
+      <span id="char-name"></span>
+      <span id="dungeon-level"></span>
+      <span id="char-level"></span>
+      <span id="hp-display"></span>
+      <span id="xp-display"></span>
+      <span id="gold-display"></span>
+    </div>
+
+    <!-- 5×5 dungeon view -->
+    <div id="view-container" class="hidden">
+      <pre id="dungeon-view"></pre>
+    </div>
+
+    <!-- Messages area -->
+    <div id="message-area">
+      <pre id="messages"></pre>
+    </div>
+
+    <!-- Choice buttons -->
+    <div id="choices-area"></div>
+
+    <!-- Name input (shown only during name entry) -->
+    <div id="name-input-area" class="hidden">
+      <span class="prompt">&gt; </span>
+      <input type="text" id="name-input" maxlength="24" autocomplete="off" spellcheck="false">
+    </div>
+
+    <!-- Movement controls (shown while playing) -->
+    <div id="movement-controls" class="hidden">
+      <div class="controls-grid">
+        <button class="ctrl-btn empty"></button>
+        <button class="ctrl-btn" id="btn-forward"  title="Move Forward (↑)">↑</button>
+        <button class="ctrl-btn empty"></button>
+        <button class="ctrl-btn" id="btn-turn-left"  title="Turn Left (←)">◁</button>
+        <button class="ctrl-btn" id="btn-backward"  title="Move Back (↓)">↓</button>
+        <button class="ctrl-btn" id="btn-turn-right" title="Turn Right (→)">▷</button>
+      </div>
+      <div class="climb-controls">
+        <button class="ctrl-btn" id="btn-climb-up"   title="Climb Up (U)">Up [U]</button>
+        <button class="ctrl-btn" id="btn-climb-down" title="Climb Down (D)">Dn [D]</button>
+      </div>
+    </div>
+
+    <!-- Help line -->
+    <div id="help-line">
+      <span id="key-hint">PRESS ANY KEY TO BEGIN</span>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
