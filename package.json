@@ -6,11 +6,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:web": "tsc -p tsconfig.web.json",
-    "db:init": "tsx scripts/init-db.ts",
-    "cli": "tsx src/cli/cli.ts",
-    "web": "tsx src/server/server.ts",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "db:init": "NODE_NO_WARNINGS=1 tsx scripts/init-db.ts",
+    "cli": "NODE_NO_WARNINGS=1 tsx src/cli/cli.ts",
+    "web": "NODE_NO_WARNINGS=1 tsx src/server/server.ts",
+    "test": "NODE_NO_WARNINGS=1 vitest run",
+    "test:watch": "NODE_NO_WARNINGS=1 vitest"
   },
   "dependencies": {
     "express": "^4.18.3"
