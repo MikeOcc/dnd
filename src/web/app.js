@@ -209,7 +209,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U: Up  |  D: Down  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U: Up  |  D: Down  |  S: Save & Menu  |  Q: Quit'; break;
     case 'combat':
       hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run'; break;
     case 'interaction':
@@ -332,6 +332,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') apiAction('turn-right');
     if (key === 'u') apiAction('climb-up');
     if (key === 'd') apiAction('climb-down');
+    if (key === 's') apiAction('main-menu');          // save & return to menu (auto-saved)
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
     return;
   }
@@ -371,6 +372,7 @@ document.getElementById('btn-turn-left') ?.addEventListener('click', () => apiAc
 document.getElementById('btn-turn-right')?.addEventListener('click', () => apiAction('turn-right'));
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
+document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('main-menu'));
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 

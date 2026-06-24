@@ -197,6 +197,11 @@ function handleKey(key: KeyEvent): void {
     if (key.type === 'char') {
       if (key.char === 'u') render(engine.climbUp());
       if (key.char === 'd') render(engine.climbDown());
+      if (key.char === 's') {
+        // Game auto-saves on every action; go to main menu
+        render(engine.showMainMenu());
+        return;
+      }
       if (key.char === 'q') exit();
       return;
     }

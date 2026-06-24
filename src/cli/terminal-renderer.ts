@@ -164,7 +164,7 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U: Climb Up  |  D: Climb Down  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U: Climb Up  |  D: Climb Down  |  S: Save & Menu  |  Q: Quit'));
   }
 
   return lines;

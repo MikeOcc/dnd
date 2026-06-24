@@ -75,7 +75,8 @@ export function dungeonDirToDisplayDir(facing: Direction, dungeonDir: Direction)
 // ─── Line-of-sight ──────────────────────────────────────────────────────────
 
 // Returns true if there is a clear line of sight from (fromX,fromY) to (toX,toY).
-// Traces along the integer grid, checking that no wall blocks the path.
+// For cardinal directions: single straight path.
+// For diagonals: tries X-first and Y-first corner paths; visible if either is clear.
 function hasLOS(
   grid: DungeonCell[][],
   fromX: number, fromY: number,
@@ -83,52 +84,50 @@ function hasLOS(
 ): boolean {
   if (fromX === toX && fromY === toY) return true;
 
-  let x = fromX;
-  let y = fromY;
   const dx = Math.sign(toX - fromX);
   const dy = Math.sign(toY - fromY);
-
-  // Trace cell-by-cell along the primary axis first, then secondary
   const stepsX = Math.abs(toX - fromX);
   const stepsY = Math.abs(toY - fromY);
+  const xDir: Direction = dx > 0 ? 'E' : 'W';
+  const yDir: Direction = dy > 0 ? 'S' : 'N';
 
-  // Cardinal path: handle diagonal by stepping both axes with Bresenham
-  let err = 0;
-  const totalSteps = stepsX + stepsY;
-
-  for (let step = 0; step < totalSteps; step++) {
-    const cell = grid[y]?.[x];
-    if (!cell) return false;
-
-    // Determine which direction we step next
-    let stepDir: Direction;
-    if (dx === 0) {
-      stepDir = dy > 0 ? 'S' : 'N';
-    } else if (dy === 0) {
-      stepDir = dx > 0 ? 'E' : 'W';
-    } else {
-      // Diagonal: use Bresenham's 2× error
-      err += stepsY;
-      if (err * 2 >= stepsX) {
-        // Step in Y
-        stepDir = dy > 0 ? 'S' : 'N';
-        err -= stepsX;
-      } else {
-        stepDir = dx > 0 ? 'E' : 'W';
-      }
+  if (stepsX === 0 || stepsY === 0) {
+    // Cardinal: single straight path
+    let x = fromX, y = fromY;
+    const steps = stepsX + stepsY;
+    const dir = stepsX === 0 ? yDir : xDir;
+    for (let i = 0; i < steps; i++) {
+      const cell = grid[y]?.[x];
+      if (!cell || cell.walls[dir]) return false;
+      x += dx; y += dy;
     }
-
-    // Check if the wall blocks movement in stepDir
-    if (cell.walls[stepDir]) return false;
-
-    // Advance
-    if (stepDir === 'N') y--;
-    if (stepDir === 'S') y++;
-    if (stepDir === 'E') x++;
-    if (stepDir === 'W') x--;
+    return true;
   }
 
-  return true;
+  // Diagonal: try X-first and Y-first Manhattan paths; visible if either is unblocked.
+  // This correctly handles "seeing around corners" — one path blocked doesn't prevent
+  // visibility if another path through the same corner is open.
+  function tryPath(preferX: boolean): boolean {
+    let x = fromX, y = fromY;
+    let rx = stepsX, ry = stepsY;
+    let goX = preferX;
+    while (rx > 0 || ry > 0) {
+      const cell = grid[y]?.[x];
+      if (!cell) return false;
+      const stepX = (goX && rx > 0) || ry === 0;
+      if (stepX) {
+        if (cell.walls[xDir]) return false;
+        x += dx; rx--;
+      } else {
+        if (cell.walls[yDir]) return false;
+        y += dy; ry--;
+      }
+      goX = !stepX;
+    }
+    return true;
+  }
+
+  return tryPath(true) || tryPath(false);
 }
 
 // ─── Visibility set ──────────────────────────────────────────────────────────
@@ -245,6 +244,40 @@ function renderWalls(
   }
 }
 
+// ─── Post-process: remove wall chars not adjacent to any visible cell ─────────
+
+function clipWallsToVisible(chars: string[][], visible: Set<string>): void {
+  const visInt = new Set<string>();
+  for (const key of visible) {
+    const [dr, dc] = key.split(',').map(Number);
+    visInt.add(`${dr * 2 + 1},${dc * 2 + 1}`);
+  }
+
+  for (let r = 0; r < 11; r++) {
+    for (let c = 0; c < 11; c++) {
+      const ch = chars[r][c];
+      if (ch === ' ' || ch === '^') continue;
+
+      // Identify the interior (odd,odd) positions adjacent to this wall slot
+      let neighbors: [number, number][];
+      if (r % 2 === 0 && c % 2 === 1) {
+        neighbors = [[r - 1, c], [r + 1, c]];          // horizontal wall
+      } else if (r % 2 === 1 && c % 2 === 0) {
+        neighbors = [[r, c - 1], [r, c + 1]];           // vertical wall
+      } else if (r % 2 === 0 && c % 2 === 0) {
+        neighbors = [[r-1,c-1],[r-1,c+1],[r+1,c-1],[r+1,c+1]]; // corner
+      } else {
+        continue; // interior slot — not a wall char
+      }
+
+      const hasVis = neighbors.some(
+        ([ar, ac]) => ar >= 0 && ar < 11 && ac >= 0 && ac < 11 && visInt.has(`${ar},${ac}`)
+      );
+      if (!hasVis) chars[r][c] = ' ';
+    }
+  }
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export interface FOVResult {
@@ -266,6 +299,7 @@ export function computeFOV(
   const chars = makeCharGrid();
 
   renderWalls(chars, dungeonGrid, playerX, playerY, facing, visible, h, w);
+  clipWallsToVisible(chars, visible);
 
   // Player symbol always at center
   chars[5][5] = '^';
