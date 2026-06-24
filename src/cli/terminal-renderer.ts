@@ -45,6 +45,10 @@ export function renderState(state: GameState): string {
       lines.push(...renderGame(state));
       break;
 
+    case 'status':
+      lines.push(...renderStatus(state));
+      break;
+
     case 'level-intro':
       lines.push(...renderLevelIntro(state));
       break;
@@ -164,7 +168,7 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U: Climb Up  |  D: Climb Down  |  S: Save & Menu  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
   }
 
   return lines;
@@ -222,4 +226,14 @@ function renderVictory(state: GameState): string[] {
     '',
     dim('  PRESS ANY KEY TO CONTINUE'),
   ];
+}
+
+function renderStatus(state: GameState): string[] {
+  const lines: string[] = [''];
+  for (const msg of state.messages) {
+    lines.push(msg.startsWith('═') ? bg('  ' + msg) : g('  ' + msg));
+  }
+  lines.push('');
+  lines.push(dim('  PRESS ANY KEY TO RETURN TO GAME'));
+  return lines;
 }

@@ -148,6 +148,15 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'dismiss-death':
           state = engine.dismissDeath();
           break;
+        case 'show-status':
+          state = engine.showStatus();
+          break;
+        case 'dismiss-status':
+          state = engine.dismissStatus();
+          break;
+        case 'restore':
+          state = engine.restoreFromSave();
+          break;
         default:
           return res.status(400).json({ error: `Unknown action: ${action}` });
       }

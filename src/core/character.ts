@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { LEVELING } from './config.js';
+import { LEVELING, CHARACTER } from './config.js';
 import type { Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
@@ -50,7 +50,7 @@ export function createCharacter(id: string, name: string, roll: CharacterRoll): 
     asmodeusDefeated: false,
     statusEffects: [],
     introsSeen: [],
-    rerollUsed: false,
+    rerollsRemaining: CHARACTER.MAX_REROLLS,
     createdAt: Date.now(),
     playTime: 0,
     lastSaved: Date.now(),

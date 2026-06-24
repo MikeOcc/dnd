@@ -147,6 +147,12 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
+  // Status screen
+  if (phase === 'status') {
+    render(engine.dismissStatus());
+    return;
+  }
+
   // Interaction menu
   if (phase === 'interaction') {
     if (key.type === 'char') {
@@ -197,11 +203,9 @@ function handleKey(key: KeyEvent): void {
     if (key.type === 'char') {
       if (key.char === 'u') render(engine.climbUp());
       if (key.char === 'd') render(engine.climbDown());
-      if (key.char === 's') {
-        // Game auto-saves on every action; go to main menu
-        render(engine.showMainMenu());
-        return;
-      }
+      if (key.char === 't') render(engine.showStatus());
+      if (key.char === 'r') render(engine.restoreFromSave());
+      if (key.char === 's') render(engine.showMainMenu());
       if (key.char === 'q') exit();
       return;
     }

@@ -57,11 +57,11 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view);
-  movementControls.classList.toggle('hidden', phase !== 'playing');
+  movementControls.classList.toggle('hidden', !['playing', 'status'].includes(phase));
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -86,6 +86,7 @@ function applyState(state) {
 
   // Awaiting any key
   awaitingAnyKey = ['title', 'level-intro', 'death', 'victory'].includes(phase);
+  // status uses X key, not any-key
 
   // Name input focus
   if (phase === 'name-entry') {
@@ -126,6 +127,13 @@ function renderChoices(choices, phase, state) {
   if (phase === 'level-intro' || phase === 'death' || phase === 'victory') {
     const btn = makeChoiceBtn('Any key', 'Continue');
     btn.onclick = handleAnyKey;
+    area.appendChild(btn);
+    return;
+  }
+
+  if (phase === 'status') {
+    const btn = makeChoiceBtn('X', 'Return to Game');
+    btn.onclick = () => apiAction('dismiss-status');
     area.appendChild(btn);
     return;
   }
@@ -209,7 +217,9 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U: Up  |  D: Down  |  S: Save & Menu  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
+    case 'status':
+      hint.textContent = 'X: Return to Game'; break;
     case 'combat':
       hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run'; break;
     case 'interaction':
@@ -332,8 +342,15 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') apiAction('turn-right');
     if (key === 'u') apiAction('climb-up');
     if (key === 'd') apiAction('climb-down');
-    if (key === 's') apiAction('main-menu');          // save & return to menu (auto-saved)
+    if (key === 't') apiAction('show-status');
+    if (key === 'r') apiAction('restore');
+    if (key === 's') apiAction('main-menu');
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
+    return;
+  }
+
+  if (phase === 'status') {
+    if (key === 'x' || key === 't' || key === 'escape') apiAction('dismiss-status');
     return;
   }
 
@@ -372,6 +389,8 @@ document.getElementById('btn-turn-left') ?.addEventListener('click', () => apiAc
 document.getElementById('btn-turn-right')?.addEventListener('click', () => apiAction('turn-right'));
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
+document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
+document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
 document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('main-menu'));
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────

@@ -40,11 +40,11 @@ describe('Character creation', () => {
     expect(char.hp).toBe(char.maxHp);
   });
 
-  it('reroll used flag starts false', () => {
+  it('rerollsRemaining starts at 20', () => {
     const rng = new RNG(4);
     const roll = rollCharacter(rng);
     const char = createCharacter('test-2', 'Hero', roll);
-    expect(char.rerollUsed).toBe(false);
+    expect(char.rerollsRemaining).toBe(20);
   });
 
   it('formatRoll returns string array with stat lines', () => {

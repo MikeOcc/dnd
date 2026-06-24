@@ -4,7 +4,7 @@ import type {
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { computeFOV } from './field-of-view.js';
 import { playerAttack, playerFireball, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
@@ -15,6 +15,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
+import { CHARACTER } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
@@ -99,10 +100,14 @@ export class GameEngine {
       ];
     }
     if (this.phase === 'char-roll') {
+      const rem = this.char?.rerollsRemaining ?? 0;
       return [
         { key: 'a', text: 'Accept Character' },
-        ...(!this.char?.rerollUsed ? [{ key: 'b', text: 'Reroll Character — ONE REROLL REMAINING' }] : []),
+        ...(rem > 0 ? [{ key: 'b', text: `Reroll Character (${rem} reroll${rem === 1 ? '' : 's'} remaining)` }] : []),
       ];
+    }
+    if (this.phase === 'status') {
+      return [{ key: 'x', text: 'Return to Game' }];
     }
     if (this.phase === 'combat' && this.combat) {
       return [
@@ -136,6 +141,42 @@ export class GameEngine {
     this.repo.deleteCharacter(id);
   }
 
+  showStatus(): GameState {
+    if (!this.char) return this.getState();
+    const c = this.char;
+    const xpForNext = this.xpToNextLevel(c);
+    this.phase = 'status';
+    this.messages = [
+      `══ CHARACTER STATUS ══════════════════════`,
+      `${c.name.padEnd(20)} Level ${c.level}`,
+      `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
+      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}`,
+      ``,
+      `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
+      `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
+      `RES ${String(c.resistance).padStart(2)}`,
+      ``,
+      `Deaths: ${c.deathCount}   Steps: ${c.stepsTaken}   Monsters: ${c.monstersDefeated}`,
+      ...(c.asmodeusDefeated ? [`*** ASMODEUS DEFEATED ***`] : []),
+      ...(c.statusEffects.length > 0
+        ? [``, `Active effects:`, ...c.statusEffects.map(e => `  ${e.type} (${e.turns} turns)`)]
+        : []),
+    ];
+    return this.getState();
+  }
+
+  dismissStatus(): GameState {
+    if (!this.char) return this.getState();
+    this.phase = 'playing';
+    this.messages = [];
+    return this.getState();
+  }
+
+  restoreFromSave(): GameState {
+    if (!this.char) return this.getState();
+    return this.loadCharacter(this.char.id);
+  }
+
   // ─── Character creation ──────────────────────────────────────────────────
 
   startNameEntry(): GameState {
@@ -146,16 +187,16 @@ export class GameEngine {
 
   submitName(name: string): GameState {
     this.pendingName = name.trim().slice(0, 24) || 'Unknown';
-    return this.doRoll(false);
+    return this.doRoll(0);
   }
 
-  private doRoll(isReroll: boolean): GameState {
+  private doRoll(rerollsUsed: number): GameState {
     this.phase = 'char-roll';
     const roll = rollCharacter(this.rng);
     this.pendingRoll = roll;
 
     const tmpChar = createCharacter('tmp', this.pendingName ?? 'Unknown', roll);
-    if (isReroll) tmpChar.rerollUsed = true;
+    tmpChar.rerollsRemaining = CHARACTER.MAX_REROLLS - rerollsUsed;
     this.char = tmpChar;
 
     this.messages = formatRoll(roll);
@@ -163,12 +204,12 @@ export class GameEngine {
   }
 
   rerollCharacter(): GameState {
-    if (!this.char || this.char.rerollUsed) {
+    if (!this.char || this.char.rerollsRemaining <= 0) {
       this.messages = ['No rerolls remaining.'];
       return this.getState();
     }
-    this.char.rerollUsed = true;
-    return this.doRoll(true);
+    const used = CHARACTER.MAX_REROLLS - this.char.rerollsRemaining + 1;
+    return this.doRoll(used);
   }
 
   acceptCharacter(): GameState {
@@ -177,7 +218,6 @@ export class GameEngine {
     }
     const id = `char-${Date.now()}-${this.rng.int(1000, 9999)}`;
     this.char.id = id;
-    this.char.rerollUsed = this.char.rerollUsed;
 
     // Character must exist in DB before dungeon levels (foreign key constraint)
     this.repo.saveCharacter(this.char);
@@ -1043,4 +1083,10 @@ export class GameEngine {
   getCombat(): CombatState | null { return this.combat; }
   getInteraction(): InteractionState | null { return this.interaction; }
   getPhase(): GamePhase { return this.phase; }
+
+  private xpToNextLevel(char: Character): number | null {
+    const next = xpForLevel(char.level + 1);
+    if (next === xpForLevel(char.level)) return null; // max level
+    return next;
+  }
 }

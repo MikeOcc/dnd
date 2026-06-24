@@ -106,7 +106,7 @@ export interface Character {
   asmodeusDefeated: boolean;
   statusEffects: StatusEffect[];
   introsSeen: number[];
-  rerollUsed: boolean;
+  rerollsRemaining: number;
   createdAt: number;
   playTime: number;
   lastSaved: number;
@@ -184,7 +184,8 @@ export type GamePhase =
   | 'interaction'
   | 'level-intro'
   | 'death'
-  | 'victory';
+  | 'victory'
+  | 'status';
 
 export interface Choice {
   key: string;

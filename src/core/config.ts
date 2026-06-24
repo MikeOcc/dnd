@@ -1,5 +1,9 @@
 // All tuning constants live here for easy adjustment.
 
+export const CHARACTER = {
+  MAX_REROLLS: 20,
+} as const;
+
 export const DUNGEON = {
   WIDTH: 80,
   HEIGHT: 60,

@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Character, SerializedDungeon, DungeonState, CharacterSummary } from '../core/types.js';
+import { CHARACTER } from '../core/config.js';
 
 // ─── Repository class ────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ export class Repository {
       asmodeus_defeated: char.asmodeusDefeated ? 1 : 0,
       status_effects: JSON.stringify(char.statusEffects),
       intros_seen: JSON.stringify(char.introsSeen),
-      reroll_used: char.rerollUsed ? 1 : 0,
+      reroll_used: CHARACTER.MAX_REROLLS - char.rerollsRemaining,
       created_at: char.createdAt,
       play_time: char.playTime,
       last_saved: char.lastSaved,
@@ -116,7 +117,7 @@ export class Repository {
       asmodeusDefeated:       Boolean(row['asmodeus_defeated']),
       statusEffects:          JSON.parse(row['status_effects'] as string || '[]'),
       introsSeen:             JSON.parse(row['intros_seen'] as string || '[]'),
-      rerollUsed:             Boolean(row['reroll_used']),
+      rerollsRemaining:       Math.max(0, CHARACTER.MAX_REROLLS - (row['reroll_used'] as number ?? 0)),
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,
       lastSaved:              row['last_saved'] as number,
