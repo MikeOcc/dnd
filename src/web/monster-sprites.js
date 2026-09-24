@@ -278,6 +278,386 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Skeleton': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skeleton">
+      <defs><filter id="glow-skeleton" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="148" rx="45" ry="6" fill="#000000" opacity="0.5"/>
+
+      <ellipse cx="66" cy="112" rx="5" ry="15" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <circle cx="65" cy="126" r="4" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.2"/>
+      <ellipse cx="63" cy="140" rx="4" ry="14" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <path d="M 58 152 L 70 152 L 68 156 L 60 156 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1"/>
+
+      <ellipse cx="86" cy="110" rx="5" ry="15" fill="#e8e0c8" stroke="#4a4438" stroke-width="1.5"/>
+      <circle cx="88" cy="124" r="4" fill="#e8e0c8" stroke="#4a4438" stroke-width="1.2"/>
+      <ellipse cx="90" cy="138" rx="4" ry="14" fill="#e8e0c8" stroke="#4a4438" stroke-width="1.5"/>
+      <path d="M 84 150 L 97 150 L 96 155 L 86 155 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="1"/>
+
+      <path d="M 60 108 L 92 106 L 88 118 L 64 118 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <path d="M 76 106 L 78 66" stroke="#c8c0a8" stroke-width="3" stroke-linecap="round"/>
+
+      <g stroke="#c8c0a8" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M 76 76 Q 64 78 62 86"/>
+        <path d="M 76 84 Q 64 86 62 94"/>
+        <path d="M 76 92 Q 65 94 63 101"/>
+      </g>
+      <g stroke="#e8e0c8" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M 76 76 Q 90 78 93 86"/>
+        <path d="M 76 84 Q 90 86 93 94"/>
+        <path d="M 76 92 Q 89 94 92 101"/>
+      </g>
+
+      <path d="M 82 80 L 78 100 L 86 96 L 84 112 L 90 102 L 88 82 Z" fill="#3a3428" opacity="0.85"/>
+
+      <path d="M 66 88 Q 58 96 56 108" stroke="#d8d0b8" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <circle cx="56" cy="108" r="2.5" fill="#d8d0b8" stroke="#4a4438" stroke-width="1"/>
+
+      <path d="M 88 88 Q 100 84 108 72" stroke="#e8e0c8" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle cx="108" cy="70" r="3" fill="#e8e0c8" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 108 70 L 132 48 L 136 52 L 114 76 Z" fill="#8a7050" stroke="#4a3820" stroke-width="1.2"/>
+      <path d="M 104 74 L 112 66" stroke="#4a3820" stroke-width="2.5"/>
+      <path d="M 108 71 L 114 77" stroke="#3a2a10" stroke-width="2"/>
+
+      <path d="M 68 56 L 74 46 L 86 44 L 94 50 L 96 60 L 90 68 L 76 70 L 68 64 Z" fill="#e8e0c8" stroke="#4a4438" stroke-width="2"/>
+      <path d="M 78 46 L 82 52" stroke="#4a4438" stroke-width="0.8" opacity="0.6"/>
+      <path d="M 74 66 L 88 65 L 92 74 L 80 76 L 72 72 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <rect x="76" y="67" width="2" height="4" fill="#f5f0e0"/>
+      <rect x="80" y="67" width="2" height="4" fill="#f5f0e0"/>
+      <rect x="84" y="67" width="2" height="4" fill="#f5f0e0"/>
+      <path d="M 88 54 L 91 58 L 87 59 Z" fill="#1a1610"/>
+
+      <circle cx="84" cy="52" r="5" fill="#1a1610"/>
+      <circle cx="84" cy="52" r="3" fill="#aaffee" filter="url(#glow-skeleton)" opacity="0.6"/>
+      <circle cx="84" cy="52" r="1.3" fill="#e8ffff" opacity="0.9"/>
+    </svg>
+  `,
+
+  'Zombie': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zombie">
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="148" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 62 118 L 54 134 L 48 150 L 58 150 L 66 134 L 70 118 Z" fill="#5a6e4a" stroke="#2a3a1a" stroke-width="2"/>
+      <path d="M 84 120 L 96 128 L 106 146 L 96 148 L 86 132 L 80 120 Z" fill="#4a5e3a" stroke="#2a3a1a" stroke-width="2"/>
+      <path d="M 48 150 L 44 156 L 54 154 Z" fill="#3a4a2a"/>
+      <path d="M 96 148 L 108 150 L 100 156 Z" fill="#3a4a2a"/>
+
+      <path d="M 58 118 Q 52 90 68 76 Q 86 70 96 84 Q 100 100 92 116 Q 76 128 58 118 Z" fill="#5a6e4a" stroke="#2a3a1a" stroke-width="2.4"/>
+
+      <path d="M 72 96 Q 80 92 86 98 Q 82 106 74 104 Z" fill="#3a2818" opacity="0.85" stroke="#1a1208" stroke-width="1"/>
+      <path d="M 76 98 Q 79 100 82 98" stroke="#d8d0b8" stroke-width="1.3" fill="none"/>
+      <path d="M 75 102 Q 79 104 83 101" stroke="#d8d0b8" stroke-width="1.3" fill="none"/>
+
+      <ellipse cx="64" cy="88" rx="5" ry="7" fill="#2a3a1a" opacity="0.6" transform="rotate(20 64 88)"/>
+      <ellipse cx="90" cy="108" rx="6" ry="4" fill="#2a3a1a" opacity="0.55"/>
+
+      <path d="M 60 92 L 52 108 L 58 116 L 62 100 Z" fill="#2a2a20" opacity="0.9"/>
+      <path d="M 90 88 L 98 100 L 92 110 L 86 96 Z" fill="#2a2a20" opacity="0.85"/>
+
+      <path d="M 94 92 Q 108 98 112 116" stroke="#4a5e3a" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <ellipse cx="113" cy="119" rx="5" ry="4" fill="#4a5e3a" stroke="#2a3a1a" stroke-width="1.3"/>
+      <path d="M 116 116 L 120 112 L 118 117 Z" fill="#4a5e3a"/>
+      <path d="M 117 120 L 122 118 L 118 122 Z" fill="#4a5e3a"/>
+
+      <path d="M 62 94 Q 54 102 52 114" stroke="#5a6e4a" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <ellipse cx="51" cy="116" rx="4" ry="3.5" fill="#5a6e4a" stroke="#2a3a1a" stroke-width="1.2"/>
+
+      <path d="M 70 66 L 78 56 L 92 58 L 98 68 L 94 80 L 80 82 L 70 76 Z" fill="#5a6e4a" stroke="#2a3a1a" stroke-width="2.2" transform="rotate(8 84 69)"/>
+      <ellipse cx="84" cy="72" rx="6" ry="4" fill="#3a4a2a" opacity="0.6"/>
+
+      <path d="M 78 60 L 94 60 L 92 65 L 80 64 Z" fill="#2a3a1a" opacity="0.8"/>
+      <ellipse cx="88" cy="64" rx="4.5" ry="3" fill="#c8c8b8" opacity="0.85"/>
+      <circle cx="89.5" cy="64.5" r="1.3" fill="#5a5a4a"/>
+
+      <path d="M 82 76 Q 90 82 96 76 Q 90 86 80 82 Z" fill="#1a1410" stroke="#0a0806" stroke-width="0.8"/>
+      <path d="M 86 78 L 87 82 L 89 78 Z" fill="#d8d0b8"/>
+      <path d="M 90 78 L 91 81 L 93 77 Z" fill="#d8d0b8"/>
+      <path d="M 84 84 Q 83 90 85 94" stroke="#8a9a6a" stroke-width="1.5" fill="none" opacity="0.7" stroke-linecap="round"/>
+    </svg>
+  `,
+
+  'Orc': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Orc">
+      <defs><filter id="glow-orc" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="150" rx="50" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 62 118 L 54 138 L 48 152 L 60 152 L 68 136 L 72 118 Z" fill="#4a6a2a" stroke="#1e2e10" stroke-width="2.2"/>
+      <path d="M 86 118 L 96 136 L 104 152 L 92 152 L 82 136 L 78 118 Z" fill="#5a7a34" stroke="#1e2e10" stroke-width="2.2"/>
+      <path d="M 48 152 L 43 159 L 51 153 Z" fill="#c9b98a"/>
+      <path d="M 104 152 L 109 159 L 99 153 Z" fill="#c9b98a"/>
+
+      <path d="M 56 118 Q 50 82 78 68 Q 104 70 108 90 Q 110 110 98 122 Q 76 132 56 118 Z" fill="#5a7a34" stroke="#1e2e10" stroke-width="2.6"/>
+      <path d="M 68 90 Q 78 96 88 90" stroke="#3e5a20" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 66 104 Q 78 110 90 104" stroke="#3e5a20" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 70 100 Q 82 112 94 100 Q 86 118 78 118 Q 70 116 70 100 Z" fill="#6a5a3a" opacity="0.75"/>
+
+      <path d="M 96 82 L 110 78 L 112 88 L 98 92 Z" fill="#5a4a30" stroke="#2a2010" stroke-width="1.3"/>
+      <path d="M 106 78 L 108 70 L 112 79 Z" fill="#8a7d55"/>
+
+      <path d="M 98 86 Q 112 72 116 54" stroke="#5a7a34" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M 112 40 L 128 34 L 134 44 L 128 56 L 116 52 L 118 46 Z" fill="#8a8a90" stroke="#3a3a3e" stroke-width="1.5"/>
+      <path d="M 114 52 L 122 36" stroke="#5a4630" stroke-width="3"/>
+
+      <path d="M 62 94 Q 50 98 44 110" stroke="#5a7a34" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <circle cx="42" cy="112" r="6" fill="#4a6a2a" stroke="#1e2e10" stroke-width="1.6"/>
+
+      <path d="M 74 68 L 64 58 L 76 64 Z" fill="#5a7a34" stroke="#1e2e10" stroke-width="1"/>
+      <path d="M 92 66 L 102 56 L 92 62 Z" fill="#5a7a34" stroke="#1e2e10" stroke-width="1"/>
+
+      <path d="M 74 58 L 88 50 L 102 54 L 106 66 L 98 76 L 82 78 L 72 70 Z" fill="#5a7a34" stroke="#1e2e10" stroke-width="2.4"/>
+      <path d="M 78 54 L 98 56 L 95 61 L 80 59 Z" fill="#1e2e10" opacity="0.9"/>
+
+      <path d="M 90 74 L 88 64 L 94 72 Z" fill="#f0ead8" stroke="#a89868" stroke-width="0.8"/>
+      <path d="M 98 72 L 98 62 L 103 70 Z" fill="#f0ead8" stroke="#a89868" stroke-width="0.8"/>
+      <path d="M 84 74 Q 94 78 100 72" stroke="#1e2e10" stroke-width="1.5" fill="none" opacity="0.8"/>
+
+      <circle cx="90" cy="60" r="3" fill="#ffaa22" filter="url(#glow-orc)" opacity="0.65"/>
+      <ellipse cx="90" cy="60" rx="3.5" ry="1.8" fill="#ffaa22" transform="rotate(-8 90 60)"/>
+      <ellipse cx="90" cy="60" rx="0.6" ry="1.1" fill="#1a1400" transform="rotate(-8 90 60)"/>
+    </svg>
+  `,
+
+  'Owlbear': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Owlbear">
+      <defs><filter id="glow-owlbear" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 60 116 L 52 136 L 46 152 L 60 152 L 68 134 L 70 116 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="2.2"/>
+      <path d="M 84 116 L 94 134 L 102 152 L 88 152 L 78 134 L 76 116 Z" fill="#7a5a34" stroke="#3a2810" stroke-width="2.2"/>
+      <path d="M 46 152 L 41 160 L 49 153 Z" fill="#2a1a0a"/>
+      <path d="M 53 152 L 51 161 L 58 153 Z" fill="#2a1a0a"/>
+      <path d="M 102 152 L 107 160 L 99 153 Z" fill="#2a1a0a"/>
+      <path d="M 95 152 L 97 161 L 90 153 Z" fill="#2a1a0a"/>
+
+      <path d="M 54 118 Q 48 80 76 66 Q 106 68 110 90 Q 112 112 98 124 Q 74 134 54 118 Z" fill="#7a5a34" stroke="#3a2810" stroke-width="2.6"/>
+      <path d="M 64 84 L 66 80 L 68 84" stroke="#5a3e20" stroke-width="1.2" fill="none"/>
+      <path d="M 74 78 L 76 74 L 78 78" stroke="#5a3e20" stroke-width="1.2" fill="none"/>
+      <path d="M 84 76 L 86 72 L 88 76" stroke="#5a3e20" stroke-width="1.2" fill="none"/>
+      <path d="M 70 100 L 72 96 L 74 100" stroke="#5a3e20" stroke-width="1.2" fill="none"/>
+      <path d="M 88 102 L 90 98 L 92 102" stroke="#5a3e20" stroke-width="1.2" fill="none"/>
+      <path d="M 64 98 Q 78 110 92 98 Q 84 118 74 118 Q 66 114 64 98 Z" fill="#c9b070" opacity="0.7"/>
+
+      <path d="M 98 88 Q 110 82 116 68" stroke="#7a5a34" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 114 66 L 120 58 L 116 68 Z" fill="#2a1a0a"/>
+      <path d="M 117 68 L 124 62 L 119 70 Z" fill="#2a1a0a"/>
+      <path d="M 111 64 L 116 55 L 113 66 Z" fill="#2a1a0a"/>
+
+      <path d="M 76 58 L 70 42 L 80 54 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="1"/>
+      <path d="M 92 56 L 100 40 L 94 52 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="1"/>
+
+      <circle cx="86" cy="56" r="16" fill="#8a6a3a" stroke="#5a3e20" stroke-width="1.5" opacity="0.9"/>
+      <path d="M 96 58 L 106 62 L 98 66 Z" fill="#c9b060" stroke="#8a7040" stroke-width="1"/>
+
+      <circle cx="86" cy="54" r="6" fill="#ffaa22" filter="url(#glow-owlbear)" opacity="0.7"/>
+      <circle cx="86" cy="54" r="8" fill="none" stroke="#2a1a0a" stroke-width="1.5"/>
+      <circle cx="86" cy="54" r="6" fill="#ffaa22"/>
+      <circle cx="87" cy="54" r="3" fill="#0a0604"/>
+      <circle cx="85" cy="52" r="1.3" fill="#ffffff" opacity="0.85"/>
+    </svg>
+  `,
+
+  'Displacer Beast': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Displacer Beast">
+      <defs><filter id="glow-displacer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <g id="db-body">
+        <path d="M 56 120 Q 50 134 46 150" stroke="#1a1a2e" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M 96 118 Q 100 134 98 150" stroke="#1a1a2e" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M 52 112 Q 34 108 28 88 Q 26 78 32 82 Q 36 96 54 104 Z" fill="#242440" stroke="#0f0f20" stroke-width="1.8"/>
+        <path d="M 50 118 Q 46 100 62 92 Q 82 86 100 96 Q 112 102 108 116 Q 100 128 78 126 Q 60 126 50 118 Z" fill="#242440" stroke="#0f0f20" stroke-width="2.2"/>
+        <path d="M 60 98 Q 78 92 96 100" stroke="#4a4a7a" stroke-width="2" fill="none" opacity="0.5"/>
+        <path d="M 82 92 Q 90 76 82 62 Q 78 54 84 50" stroke="#2e2e4e" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="84" cy="48" r="4" fill="#3a3a5e" stroke="#1a1a30" stroke-width="1"/>
+        <path d="M 80 46 L 76 40 L 82 44 Z" fill="#8a8aa0"/>
+        <path d="M 88 46 L 92 40 L 86 44 Z" fill="#8a8aa0"/>
+        <path d="M 84 44 L 84 36 L 88 42 Z" fill="#8a8aa0"/>
+        <path d="M 92 94 Q 104 84 102 68 Q 100 60 106 58" stroke="#2e2e4e" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="106" cy="56" r="3.5" fill="#3a3a5e" stroke="#1a1a30" stroke-width="1"/>
+        <path d="M 102 54 L 98 48 L 104 52 Z" fill="#8a8aa0"/>
+        <path d="M 110 54 L 114 48 L 108 52 Z" fill="#8a8aa0"/>
+        <path d="M 68 92 L 62 76 L 74 88 Z" fill="#242440" stroke="#0f0f20" stroke-width="1"/>
+        <path d="M 86 88 L 92 74 L 90 90 Z" fill="#242440" stroke="#0f0f20" stroke-width="1"/>
+        <path d="M 66 88 L 78 80 L 94 84 L 98 94 L 90 102 L 76 102 L 66 96 Z" fill="#242440" stroke="#0f0f20" stroke-width="2.2"/>
+        <path d="M 88 92 Q 96 94 96 98 Q 90 100 86 96 Z" fill="#3a3a5e" opacity="0.7"/>
+        <circle cx="84" cy="90" r="4.5" fill="#aa66ff" filter="url(#glow-displacer)" opacity="0.75"/>
+        <ellipse cx="84" cy="90" rx="5" ry="2.6" fill="#aa66ff" transform="rotate(-6 84 90)"/>
+        <ellipse cx="84" cy="90" rx="0.8" ry="2" fill="#1a0a2e" transform="rotate(-6 84 90)"/>
+      </g>
+
+      <use href="#db-body" opacity="0.25" transform="translate(-9,6)"/>
+      <use href="#db-body" opacity="0.18" transform="translate(7,-5)"/>
+      <use href="#db-body"/>
+    </svg>
+  `,
+
+  'Mimic': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mimic">
+      <defs><filter id="glow-mimic" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.4"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 54 144 L 52 154 L 58 150 Z" fill="#2a1a0a"/>
+      <path d="M 80 144 L 80 156 L 86 150 Z" fill="#2a1a0a"/>
+      <path d="M 104 144 L 108 154 L 100 150 Z" fill="#2a1a0a"/>
+
+      <path d="M 40 100 L 120 100 L 116 144 L 44 144 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="2.5"/>
+      <rect x="40" y="112" width="80" height="5" fill="#5a5a5a" stroke="#2a2a2a" stroke-width="1"/>
+      <rect x="41" y="128" width="78" height="5" fill="#5a5a5a" stroke="#2a2a2a" stroke-width="1"/>
+      <path d="M 55 108 Q 80 112 105 108" stroke="#4a3218" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M 55 124 Q 80 128 105 124" stroke="#4a3218" stroke-width="1" fill="none" opacity="0.5"/>
+
+      <path d="M 40 100 L 120 100 L 108 58 L 52 58 Z" fill="#7a5a34" stroke="#3a2810" stroke-width="2.5" transform="rotate(-18 80 100)"/>
+      <path d="M 76 98 L 84 98 L 82 106 L 78 106 Z" fill="#8a8a8a" stroke="#4a4a4a" stroke-width="1" transform="rotate(25 80 102)"/>
+
+      <path d="M 44 98 L 116 98 L 100 66 L 60 66 Z" fill="#2a0a0a" stroke="#1a0505" stroke-width="1.5"/>
+
+      <path d="M 62 68 L 64 78 L 68 68 Z" fill="#f0ece0"/>
+      <path d="M 70 66 L 72 76 L 76 66 Z" fill="#f0ece0"/>
+      <path d="M 78 66 L 80 78 L 84 66 Z" fill="#f0ece0"/>
+      <path d="M 86 66 L 88 76 L 92 66 Z" fill="#f0ece0"/>
+      <path d="M 94 68 L 96 78 L 100 68 Z" fill="#f0ece0"/>
+      <path d="M 58 96 L 60 86 L 64 96 Z" fill="#f0ece0"/>
+      <path d="M 68 98 L 70 88 L 74 98 Z" fill="#f0ece0"/>
+      <path d="M 84 98 L 86 88 L 90 98 Z" fill="#f0ece0"/>
+      <path d="M 96 96 L 98 86 L 102 96 Z" fill="#f0ece0"/>
+
+      <path d="M 80 92 Q 74 106 80 118 Q 84 124 78 128 Q 70 122 74 110 Q 72 98 78 90 Z" fill="#8a2a2a" stroke="#4a1010" stroke-width="1"/>
+
+      <circle cx="64" cy="60" r="3" fill="#ffcc44" filter="url(#glow-mimic)" opacity="0.7"/>
+      <ellipse cx="64" cy="60" rx="3.5" ry="2" fill="#ffcc44"/>
+      <circle cx="64" cy="60" r="1" fill="#1a1000"/>
+      <circle cx="96" cy="60" r="3" fill="#ffcc44" filter="url(#glow-mimic)" opacity="0.7"/>
+      <ellipse cx="96" cy="60" rx="3.5" ry="2" fill="#ffcc44"/>
+      <circle cx="96" cy="60" r="1" fill="#1a1000"/>
+    </svg>
+  `,
+
+  'Giant': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant">
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="154" rx="52" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 58 118 L 50 140 L 44 156 L 62 156 L 68 138 L 74 118 Z" fill="#8a7a5a" stroke="#3a3020" stroke-width="2.4"/>
+      <path d="M 88 118 L 98 138 L 106 156 L 90 156 L 82 138 L 78 118 Z" fill="#7a6a4a" stroke="#3a3020" stroke-width="2.4"/>
+      <path d="M 44 156 L 40 162 L 64 162 L 62 156 Z" fill="#6a5a3a" stroke="#3a3020" stroke-width="1.5"/>
+      <path d="M 90 156 L 88 162 L 110 162 L 106 156 Z" fill="#6a5a3a" stroke="#3a3020" stroke-width="1.5"/>
+
+      <path d="M 52 112 L 94 110 L 90 124 L 56 126 Z" fill="#5a4028" stroke="#2a1c10" stroke-width="1.5"/>
+
+      <path d="M 48 118 Q 40 78 76 60 Q 110 62 118 88 Q 122 110 108 124 Q 78 136 48 118 Z" fill="#8a7a5a" stroke="#3a3020" stroke-width="3"/>
+      <path d="M 60 86 Q 72 92 84 86" stroke="#6a5a3a" stroke-width="1.8" fill="none" opacity="0.7"/>
+      <path d="M 92 84 Q 100 90 106 82" stroke="#6a5a3a" stroke-width="1.8" fill="none" opacity="0.6"/>
+      <path d="M 58 104 Q 72 112 88 104" stroke="#6a5a3a" stroke-width="1.8" fill="none" opacity="0.6"/>
+      <path d="M 54 78 L 100 92 L 96 98 L 52 84 Z" fill="#4a3620" opacity="0.85"/>
+
+      <path d="M 104 84 Q 118 68 122 46" stroke="#8a7a5a" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M 108 30 Q 118 24 130 30 Q 136 42 128 54 Q 116 60 106 52 Q 100 40 108 30 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="2"/>
+      <circle cx="116" cy="38" r="2" fill="#3a2810" opacity="0.7"/>
+      <circle cx="124" cy="44" r="1.6" fill="#3a2810" opacity="0.7"/>
+
+      <path d="M 54 90 Q 42 96 38 112" stroke="#7a6a4a" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <circle cx="36" cy="114" r="8" fill="#7a6a4a" stroke="#3a3020" stroke-width="2"/>
+
+      <path d="M 72 62 L 96 64 L 92 74 L 76 74 Z" fill="#8a7a5a" stroke="#3a3020" stroke-width="1.8"/>
+      <path d="M 74 48 L 86 42 L 98 46 L 100 58 L 92 66 L 78 66 L 72 58 Z" fill="#8a7a5a" stroke="#3a3020" stroke-width="2.2"/>
+      <path d="M 78 46 L 96 48 L 93 53 L 80 51 Z" fill="#3a3020" opacity="0.85"/>
+      <path d="M 82 60 L 94 60" stroke="#3a3020" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="88" cy="50" r="2.2" fill="#5a4a30" stroke="#2a2010" stroke-width="0.8"/>
+    </svg>
+  `,
+
+  'Basilisk': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Basilisk">
+      <defs><filter id="glow-basilisk" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="152" rx="50" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 52 122 L 44 138 L 40 150" stroke="#7a8a3a" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M 34 148 L 30 154 L 38 152 Z" fill="#2a3a10"/>
+      <path d="M 40 150 L 38 157 L 44 152 Z" fill="#2a3a10"/>
+      <path d="M 92 124 L 100 138 L 106 150" stroke="#8a9a44" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M 100 150 L 98 157 L 104 152 Z" fill="#2a3a10"/>
+      <path d="M 106 150 L 108 157 L 112 151 Z" fill="#2a3a10"/>
+
+      <path d="M 48 118 Q 30 116 22 128 Q 20 134 26 132 Q 34 122 50 122 Z" fill="#7a8a3a" stroke="#2a3a10" stroke-width="2"/>
+
+      <path d="M 44 120 Q 40 100 62 94 Q 86 88 106 100 Q 116 108 110 122 Q 98 132 70 130 Q 50 130 44 120 Z" fill="#7a8a3a" stroke="#2a3a10" stroke-width="2.4"/>
+      <path d="M 54 112 Q 76 122 98 112 Q 88 126 74 126 Q 60 124 54 112 Z" fill="#d8dca0" opacity="0.85"/>
+
+      <path d="M 56 100 L 53 90 L 60 98 Z" fill="#5a6e20"/>
+      <path d="M 66 92 L 64 82 L 71 90 Z" fill="#5a6e20"/>
+      <path d="M 78 88 L 77 78 L 84 87 Z" fill="#5a6e20"/>
+      <path d="M 90 90 L 89 80 L 96 89 Z" fill="#5a6e20"/>
+      <path d="M 100 96 L 100 86 L 106 95 Z" fill="#5a6e20"/>
+
+      <path d="M 96 106 Q 106 96 116 92 Q 124 96 120 104 Q 112 108 104 114 Q 96 114 96 106 Z" fill="#8a9a44" stroke="#2a3a10" stroke-width="2.2"/>
+      <path d="M 106 88 L 96 78 L 110 92 Z" fill="#5a6e20" stroke="#2a3a10" stroke-width="1"/>
+
+      <path d="M 108 90 L 122 86 L 134 92 L 136 100 L 128 106 L 114 106 L 108 98 Z" fill="#8a9a44" stroke="#2a3a10" stroke-width="2.2"/>
+      <path d="M 112 100 Q 122 104 130 100" stroke="#2a3a10" stroke-width="1.5" fill="none"/>
+      <path d="M 134 98 L 144 96" stroke="#8a2a2a" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 142 94 L 148 90" stroke="#8a2a2a" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M 142 98 L 148 100" stroke="#8a2a2a" stroke-width="1.2" stroke-linecap="round"/>
+
+      <circle cx="122" cy="94" r="6" fill="#ccff33" filter="url(#glow-basilisk)" opacity="0.6"/>
+      <circle cx="122" cy="94" r="5.5" fill="none" stroke="#1a2a08" stroke-width="1"/>
+      <circle cx="122" cy="94" r="4" fill="#ccff33"/>
+      <circle cx="122" cy="94" r="2.5" fill="none" stroke="#1a2a08" stroke-width="1"/>
+      <circle cx="122" cy="94" r="1" fill="#1a2a08"/>
+
+      <path d="M 130 140 L 138 138 L 140 146 L 132 148 Z" fill="#8a8a8a" stroke="#5a5a5a" stroke-width="1" opacity="0.8"/>
+      <path d="M 132 140 L 136 145" stroke="#5a5a5a" stroke-width="0.8"/>
+    </svg>
+  `,
+
+  'Wight': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wight">
+      <defs><filter id="glow-wight" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="152" rx="46" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 56 108 Q 50 130 46 152 Q 60 158 74 152 Q 78 130 76 108 Z" fill="#3a3a42" stroke="#1a1a20" stroke-width="2" opacity="0.9"/>
+      <path d="M 76 108 Q 82 132 90 150 Q 100 146 96 152 Q 84 132 78 108 Z" fill="#32323a" stroke="#1a1a20" stroke-width="1.8" opacity="0.85"/>
+      <path d="M 46 150 L 40 160 L 48 154 Z" fill="#3a3a42" opacity="0.4"/>
+      <path d="M 60 154 L 58 164 L 64 156 Z" fill="#3a3a42" opacity="0.35"/>
+      <path d="M 90 148 L 94 160 L 86 152 Z" fill="#32323a" opacity="0.4"/>
+
+      <path d="M 58 108 Q 54 82 72 70 Q 92 66 98 84 Q 100 100 90 110 Q 74 118 58 108 Z" fill="#5a6a7a" stroke="#2a3238" stroke-width="2.2" opacity="0.95"/>
+      <path d="M 60 78 Q 70 68 84 70 Q 92 74 88 84 Q 74 82 62 86 Z" fill="#3a3a42" opacity="0.9"/>
+
+      <path d="M 62 90 Q 54 96 52 108" stroke="#5a6a7a" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+
+      <circle cx="118" cy="74" r="8" fill="#66eeff" filter="url(#glow-wight)" opacity="0.18"/>
+      <path d="M 92 92 Q 108 88 118 74" stroke="#5a6a7a" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M 116 72 L 124 62 L 118 76 Z" fill="#4a5a68" stroke="#2a3238" stroke-width="0.8"/>
+      <path d="M 118 76 L 128 70 L 120 80 Z" fill="#4a5a68" stroke="#2a3238" stroke-width="0.8"/>
+      <path d="M 114 78 L 120 72 L 113 82 Z" fill="#4a5a68" stroke="#2a3238" stroke-width="0.8"/>
+
+      <path d="M 68 62 L 76 52 L 88 52 L 94 60 L 92 72 L 78 76 L 68 70 Z" fill="#5a6a7a" stroke="#2a3238" stroke-width="2.2"/>
+      <path d="M 66 56 Q 78 44 94 54 Q 90 50 78 50 Q 70 50 66 56 Z" fill="#2e2e36" opacity="0.9"/>
+      <ellipse cx="84" cy="66" rx="5" ry="3.5" fill="#3a4650" opacity="0.6"/>
+      <path d="M 78 70 Q 84 74 90 70" stroke="#2a3238" stroke-width="1.3" fill="none"/>
+
+      <circle cx="83" cy="60" r="4.5" fill="#66eeff" filter="url(#glow-wight)" opacity="0.7"/>
+      <circle cx="83" cy="60" r="3.5" fill="#0a1418"/>
+      <circle cx="83" cy="60" r="2" fill="#aaffff" opacity="0.9"/>
+    </svg>
+  `,
+
 };
 
 function getMonsterSprite(type) {
