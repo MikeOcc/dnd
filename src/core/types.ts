@@ -65,6 +65,7 @@ export interface CharacterRoll {
 
 export type StatusEffectType =
   | 'poison'
+  | 'bleeding'
   | 'naked'
   | 'mummified'
   | 'paralyzed'
@@ -139,6 +140,7 @@ export type MonsterType =
   | 'Wizard'
   | 'Beholder'
   | 'Mind Flayer'
+  | 'Sanguinid'
   | 'Black Dragon'
   | 'Green Dragon'
   | 'Blue Dragon'

@@ -131,6 +131,64 @@ describe('Combat formulas', () => {
   });
 });
 
+describe('Sanguinid', () => {
+  it('is eligible to appear on any dungeon level', () => {
+    const def = getDefinition('Sanguinid');
+    expect(def.isUnique).toBe(false);
+    expect(def.minDungeonLevel).toBe(1);
+  });
+
+  it('every successful attack causes bleeding', () => {
+    const char = makeChar({ level: 3, hp: 500, maxHp: 500, constitution: 10, dexterity: 10, resistance: 10 });
+    const monster = createMonster('Sanguinid', 20, 'sg1');
+
+    let bled = 0;
+    const trials = 300;
+    for (let i = 0; i < trials; i++) {
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack({ ...char, statusEffects: [] }, m, new RNG(i));
+      // Re-run just the monster's half deterministically isn't exposed directly,
+      // so inspect the messages for the bleeding cue instead.
+      if (result.messages.some(msg => msg.includes('bleeding'))) bled++;
+    }
+
+    expect(bled).toBe(trials);
+  });
+
+  it('blood-drain has roughly a 3% chance per occurrence to drain a level', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const monster = createMonster('Sanguinid', 20, 'sg2');
+
+    let drains = 0;
+    let bloodDrainHits = 0;
+    const trials = 6000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, level: 15, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 50000));
+      if (result.messages.some(msg => msg.includes('drains your blood'))) bloodDrainHits++;
+      if (result.messages.some(msg => msg.includes('DRAINED'))) drains++;
+    }
+
+    expect(bloodDrainHits).toBeGreaterThan(0);
+    expect(drains).toBeGreaterThan(0);
+    // ~3% of blood-drain hits; generous bounds to avoid a flaky test
+    expect(drains).toBeLessThan(bloodDrainHits * 0.1);
+  });
+
+  it('will not drain a level-1 character below level 1', () => {
+    const char = makeChar({ level: 1, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const monster = createMonster('Sanguinid', 20, 'sg3');
+
+    for (let i = 0; i < 2000; i++) {
+      const c = { ...char, level: 1, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      playerAttack(c, m, new RNG(i + 90000));
+      expect(c.level).toBe(1);
+    }
+  });
+});
+
 describe('XP rewards', () => {
   it('gives more XP for higher-level monsters', () => {
     const xpLow = calculateXPReward(5, 3, false);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import {
-  rollCharacter, createCharacter, checkLevelUp, xpForLevel, calculateLevel, formatRoll,
+  rollCharacter, createCharacter, checkLevelUp, xpForLevel, calculateLevel, formatRoll, applyLevelDrain,
 } from '../src/core/character.js';
 
 describe('Character creation', () => {
@@ -96,5 +96,42 @@ describe('Character leveling', () => {
     const result = checkLevelUp(char, rng);
     expect(result.didLevel).toBe(false);
     expect(char.level).toBe(1);
+  });
+});
+
+describe('Level drain', () => {
+  it('reduces level by 1 and clamps HP/XP to the new level', () => {
+    const rng = new RNG(8);
+    const roll = rollCharacter(rng);
+    const char = createCharacter('test-5', 'Hero', roll);
+    char.level = 10;
+    char.maxHp = 100;
+    char.hp = 100;
+    char.xp = xpForLevel(10) + 500; // partway toward level 11
+
+    const { newLevel, hpLost } = applyLevelDrain(char);
+
+    expect(newLevel).toBe(9);
+    expect(char.level).toBe(9);
+    expect(hpLost).toBeGreaterThan(0);
+    expect(char.maxHp).toBe(100 - hpLost);
+    expect(char.hp).toBeLessThanOrEqual(char.maxHp);
+    expect(char.xp).toBe(xpForLevel(9));
+  });
+
+  it('refuses to drain below level 1', () => {
+    const rng = new RNG(9);
+    const roll = rollCharacter(rng);
+    const char = createCharacter('test-6', 'Hero', roll);
+    char.level = 1;
+    char.maxHp = 20;
+    char.hp = 20;
+
+    const { newLevel, hpLost } = applyLevelDrain(char);
+
+    expect(newLevel).toBe(1);
+    expect(char.level).toBe(1);
+    expect(hpLost).toBe(0);
+    expect(char.maxHp).toBe(20);
   });
 });

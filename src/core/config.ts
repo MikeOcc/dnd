@@ -114,6 +114,12 @@ export const COMBAT = {
 
   // Monster speed effect on run chance
   SPEED_RUN_MODIFIER: 0.1,    // per speed point above 1.0
+
+  // Sanguinid: bleeding DOT applied by any successful hit, plus a rare
+  // level-drain on its blood-drain attack specifically
+  SANGUINID_BLEED_DAMAGE: 3,
+  SANGUINID_BLEED_TURNS: 4,
+  SANGUINID_LEVEL_DRAIN_CHANCE: 0.03,
 } as const;
 
 export const LEVELING = {

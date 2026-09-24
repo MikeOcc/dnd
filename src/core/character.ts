@@ -97,6 +97,23 @@ export function calculateLevel(xp: number): number {
   return Math.min(level, LEVELING.MAX_LEVEL);
 }
 
+/** Drains one character level (minimum level 1). Returns the HP lost, or 0 if already at level 1. */
+export function applyLevelDrain(char: Character): { newLevel: number; hpLost: number } {
+  if (char.level <= 1) {
+    return { newLevel: char.level, hpLost: 0 };
+  }
+
+  const newLevel = char.level - 1;
+  const hpLost = Math.min(char.maxHp - 1, LEVELING.HP_PER_LEVEL_BASE + Math.ceil(LEVELING.HP_PER_LEVEL_RAND / 2));
+
+  char.level = newLevel;
+  char.maxHp = Math.max(1, char.maxHp - hpLost);
+  char.hp = Math.min(char.hp, char.maxHp);
+  char.xp = Math.min(char.xp, xpForLevel(newLevel));
+
+  return { newLevel, hpLost };
+}
+
 export function addStatusEffect(char: Character, effect: StatusEffect): void {
   // Remove existing same type
   char.statusEffects = char.statusEffects.filter(e => e.type !== effect.type);
@@ -134,6 +151,11 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       damageTaken += eff.value;
       messages.push(`Mummification withers you for ${eff.value} damage.`);
     }
+    if (eff.type === 'bleeding') {
+      char.hp = Math.max(1, char.hp - eff.value);
+      damageTaken += eff.value;
+      messages.push(`You are bleeding! You suffer ${eff.value} damage.`);
+    }
     const newTurns = eff.turns - 1;
     if (newTurns > 0) remaining.push({ ...eff, turns: newTurns });
     else {
@@ -141,6 +163,7 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       if (eff.type === 'feared')    messages.push('Your fear subsides.');
       if (eff.type === 'paralyzed') messages.push('You can move again.');
       if (eff.type === 'mummified') messages.push('The mummification crumbles away.');
+      if (eff.type === 'bleeding')  messages.push('The bleeding finally stops.');
       if (eff.type === 'intelligence-reduced') messages.push('Your mind clears.');
       if (eff.type === 'dexterity-reduced')    messages.push('Your coordination returns.');
       if (eff.type === 'strength-reduced')     messages.push('Your strength returns.');

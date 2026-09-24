@@ -1,7 +1,7 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING } from './config.js';
 import type { Character, Monster, StatusEffect } from './types.js';
-import { getEffectiveStats, addStatusEffect } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -262,6 +262,11 @@ function monsterAction(
     ability = pickBeholderAbility(rng);
   }
 
+  // Special Sanguinid logic — always one of its two named attacks
+  if (monster.type === 'Sanguinid') {
+    ability = pickSanguinidAbility(rng);
+  }
+
   // Handle make-naked
   if (ability === 'make-naked') {
     if (rng.float() < 0.02) {
@@ -360,6 +365,39 @@ function monsterAction(
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
   }
 
+  // Handle Sanguinid's great-strength attack — every successful hit draws blood
+  if (ability === 'great-strength') {
+    const dmg = calculateMonsterDamage(monster, char, rng, naked, ability);
+    char.hp = Math.max(0, char.hp - dmg);
+    messages.push(monsterAttackText(monster.type, dmg, ability));
+    addStatusEffect(char, { type: 'bleeding', value: COMBAT.SANGUINID_BLEED_DAMAGE, turns: COMBAT.SANGUINID_BLEED_TURNS });
+    messages.push('The wound is deep. You are bleeding!');
+    const playerDied = char.hp <= 0;
+    return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
+  }
+
+  // Handle Sanguinid's blood-drain attack — bleeding plus a rare level drain
+  if (ability === 'blood-drain') {
+    const dmg = calculateMonsterDamage(monster, char, rng, naked, ability);
+    char.hp = Math.max(0, char.hp - dmg);
+    messages.push(monsterAttackText(monster.type, dmg, ability));
+    addStatusEffect(char, { type: 'bleeding', value: COMBAT.SANGUINID_BLEED_DAMAGE, turns: COMBAT.SANGUINID_BLEED_TURNS });
+    messages.push('The wound is deep. You are bleeding!');
+
+    if (char.hp > 0 && rng.float() < COMBAT.SANGUINID_LEVEL_DRAIN_CHANCE) {
+      if (char.level > 1) {
+        const { newLevel } = applyLevelDrain(char);
+        messages.push('A cold weakness spreads through you as the Sanguinid drains your very essence!');
+        messages.push(`YOU HAVE BEEN DRAINED. You are now Level ${newLevel}.`);
+      } else {
+        messages.push('The Sanguinid tries to drain your essence, but you have nothing left to give.');
+      }
+    }
+
+    const playerDied = char.hp <= 0;
+    return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
+  }
+
   // Handle terror/fear
   if (ability === 'terror' || ability === 'fear' || ability === 'fear-ray' || ability === 'darkness') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked, ability);
@@ -432,6 +470,12 @@ function pickWizardAbility(rng: RNG): string {
   if (roll < 0.65) return 'teleport';
   if (roll < 0.67) return 'make-naked';
   return '';
+}
+
+function pickSanguinidAbility(rng: RNG): string {
+  // Great strength is its primary attack; blood-drain (with the level-drain
+  // chance) is the rarer "second attack."
+  return rng.float() < 0.6 ? 'great-strength' : 'blood-drain';
 }
 
 function pickBeholderAbility(rng: RNG): string {

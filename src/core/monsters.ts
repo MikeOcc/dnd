@@ -178,6 +178,14 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     encounterIntro: ['Tentacles writhe from a pale, bloated face. Its thoughts press against yours.', '', 'You have encountered a Level {LVL} Mind Flayer!'],
     specialAbilities: ['psychic-blast', 'intelligence-drain', 'fear', 'spell-disrupt'],
   },
+  'Sanguinid': {
+    type: 'Sanguinid', isUndead: false, isUnique: false,
+    minLevel: 9, maxLevel: 35, naturalTier: 7, minDungeonLevel: 1, speed: 0.9,
+    baseHpPerLevel: 13, baseAttackPerLevel: 7.5, baseDefensePerLevel: 3.5,
+    fireballResistance: 1.0,
+    encounterIntro: ['A bloated, fanged shape drags itself up from the black water, tentacles writhing.', '', 'You have encountered a Level {LVL} Sanguinid!'],
+    specialAbilities: ['great-strength', 'blood-drain'],
+  },
   'Black Dragon': {
     type: 'Black Dragon', isUndead: false, isUnique: false,
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
@@ -377,6 +385,8 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
     'infernal-healing': `Asmodeus draws on your vitality to heal himself!`,
     'ball-of-doo':      '',
     'terror':           `The ${type} fills you with supernatural terror! You suffer ${damage} damage.`,
+    'great-strength':   `The ${type} seizes you with monstrous strength! You suffer ${damage} damage.`,
+    'blood-drain':      `The ${type} sinks its fangs in and drains your blood! You suffer ${damage} damage.`,
   };
   return actions[ability ?? ''] ?? `The ${type} strikes you for ${damage} damage.`;
 }
@@ -393,6 +403,6 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Displacer Beast', 'Basilisk',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
-  'Wizard', 'Beholder', 'Mind Flayer',
+  'Wizard', 'Beholder', 'Mind Flayer', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon',
 ];
