@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
-import { createMonster, getDefinition } from '../src/core/monsters.js';
+import { createMonster, getDefinition, randomMonsterLevel } from '../src/core/monsters.js';
 import { playerAttack, playerFireball, playerAcid, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -166,6 +166,21 @@ describe('Sanguinid', () => {
     const def = getDefinition('Sanguinid');
     expect(def.isUnique).toBe(false);
     expect(def.minDungeonLevel).toBe(1);
+  });
+
+  it('does not force a level-1 character into an unwinnable fight (regression)', () => {
+    // minLevel used to be 9, which meant a level-1 character at dungeon
+    // depth 1 (minDungeonLevel: 1) could still be clamped into facing a
+    // level-9 Sanguinid and die to a single unavoidable round.
+    const def = getDefinition('Sanguinid');
+    expect(def.minLevel).toBeLessThanOrEqual(3);
+
+    const rng = new RNG(4242);
+    for (let i = 0; i < 200; i++) {
+      const monsterLevel = randomMonsterLevel(1, 1, rng);
+      const monster = createMonster('Sanguinid', monsterLevel, `sg-${i}`);
+      expect(monster.level).toBeLessThanOrEqual(6);
+    }
   });
 
   it('every successful attack causes bleeding', () => {
