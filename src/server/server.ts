@@ -13,9 +13,11 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 const app = express();
 app.use(express.json());
 
-// Serve static web files
+// Serve static web files — no caching so changes are always picked up
 const webDir = join(__dirname, '../../src/web');
-app.use(express.static(webDir));
+app.use(express.static(webDir, {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-store'),
+}));
 
 // Initialize DB
 const db = getDb();

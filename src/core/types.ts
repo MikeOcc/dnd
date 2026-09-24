@@ -80,6 +80,10 @@ export interface StatusEffect {
   turns: number;
 }
 
+export interface Inventory {
+  potions: number;
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -107,6 +111,7 @@ export interface Character {
   statusEffects: StatusEffect[];
   introsSeen: number[];
   rerollsRemaining: number;
+  inventory: Inventory;
   createdAt: number;
   playTime: number;
   lastSaved: number;
@@ -185,7 +190,8 @@ export type GamePhase =
   | 'level-intro'
   | 'death'
   | 'victory'
-  | 'status';
+  | 'status'
+  | 'map';
 
 export interface Choice {
   key: string;

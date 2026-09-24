@@ -98,13 +98,12 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
   }
 
   if (roll < 0.50) {
-    const heal = rng.int(8, 20) + char.level * 2;
-    const actual = Math.min(heal, char.maxHp - char.hp);
-    char.hp = Math.min(char.hp + heal, char.maxHp);
-    if (actual <= 0) {
-      return { messages: ['You find a healing potion, but you are already healthy.'], hpGained: 0 };
-    }
-    return { messages: [`A healing potion! You recover ${actual} hit points.`], hpGained: actual };
+    const count = rng.int(1, 3);
+    char.inventory.potions += count;
+    return { messages: [
+      `You find ${count === 1 ? 'a healing potion' : `${count} healing potions`}!`,
+      `Added to your pack. (${char.inventory.potions} total)`,
+    ]};
   }
 
   if (roll < 0.60) {

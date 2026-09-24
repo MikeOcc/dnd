@@ -6,7 +6,7 @@ import type {
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
-import { computeFOV } from './field-of-view.js';
+import { computeFOV, displayToDungeon } from './field-of-view.js';
 import { playerAttack, playerFireball, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -15,7 +15,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
@@ -43,6 +43,7 @@ export class GameEngine {
   private pace: EncounterPace;
   private rng: RNG;
   private sessionStart: number = Date.now();
+  private restTicks: number = 0;
 
   constructor(repo: Repository) {
     this.repo = repo;
@@ -63,9 +64,7 @@ export class GameEngine {
 
       const lvl = this.getLevel(this.char.dungeonLevel);
       if (lvl) {
-        // Find special symbol in view (ladder, unique boss)
-        const content = lvl.contents.get(`${this.char.x},${this.char.y}`);
-        state.view = this.renderView(content);
+        state.view = this.renderView();
       }
     }
 
@@ -77,17 +76,45 @@ export class GameEngine {
     return state;
   }
 
-  private renderView(currentContent?: CellContent): string[] {
+  private renderView(): string[] {
     if (!this.char) return [];
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return [];
 
-    let special: { dr: number; dc: number; symbol: string } | undefined;
-    if (currentContent?.type === 'ladder-up' || currentContent?.type === 'ladder-down') {
-      special = { dr: 2, dc: 2, symbol: currentContent.type === 'ladder-up' ? '>' : '<' };
+    const ds = this.dungeonState;
+    const specials: { dr: number; dc: number; symbol: string }[] = [];
+
+    for (let dr = 0; dr < 5; dr++) {
+      for (let dc = 0; dc < 5; dc++) {
+        if (dr === 2 && dc === 2) continue; // player position — always shows ^
+        const { dx, dy } = displayToDungeon(this.char.facing, dr, dc);
+        const tx = this.char.x + dx;
+        const ty = this.char.y + dy;
+        const content = lvl.contents.get(`${tx},${ty}`);
+        if (!content) continue;
+
+        let symbol: string | null = null;
+        switch (content.type) {
+          case 'ladder-up':   symbol = '>'; break;
+          case 'ladder-down': symbol = '<'; break;
+          case 'chest':
+            if (!ds?.openedChests.has(content.id)) symbol = '$'; break;
+          case 'altar':
+            if (!ds?.usedAltars.has(content.id)) symbol = '+'; break;
+          case 'book':
+            if (!ds?.readBooks.has(content.id)) symbol = '?'; break;
+          case 'fountain':
+            if (!ds?.usedFountains.has(content.id)) symbol = '~'; break;
+          case 'fixed-monster':
+            if (!ds?.defeatedFixedMonsters.has(content.id)) symbol = 'M'; break;
+          case 'unique-monster':
+            if (!ds?.defeatedUniqueMonsters.has(content.id)) symbol = 'M'; break;
+        }
+        if (symbol) specials.push({ dr, dc, symbol });
+      }
     }
 
-    const fov = computeFOV(lvl.grid, this.char.x, this.char.y, this.char.facing, special);
+    const fov = computeFOV(lvl.grid, this.char.x, this.char.y, this.char.facing, specials);
     return fov.grid;
   }
 
@@ -150,7 +177,7 @@ export class GameEngine {
       `══ CHARACTER STATUS ══════════════════════`,
       `${c.name.padEnd(20)} Level ${c.level}`,
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
-      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}`,
+      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}`,
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
       `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
@@ -165,6 +192,88 @@ export class GameEngine {
     return this.getState();
   }
 
+  showMap(): GameState {
+    if (!this.char || !this.dungeonState) return this.getState();
+
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return this.getState();
+
+    const visited = this.dungeonState.visitedCells;
+    const ds = this.dungeonState;
+    const grid = lvl.grid;
+
+    if (visited.size === 0) {
+      this.phase = 'map';
+      this.messages = [`══ MAP — Level ${this.char.dungeonLevel} ══`, '', '  No area explored yet.'];
+      return this.getState();
+    }
+
+    // Bounding box of visited cells + 1-cell border
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const k of visited) {
+      const [cx, cy] = k.split(',').map(Number);
+      if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+      if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+    }
+    minX = Math.max(0, minX - 1);
+    maxX = Math.min(DUNGEON.WIDTH - 1, maxX + 1);
+    minY = Math.max(0, minY - 1);
+    maxY = Math.min(DUNGEON.HEIGHT - 1, maxY + 1);
+
+    const rows: string[] = [];
+    for (let cy = minY; cy <= maxY; cy++) {
+      let row = '';
+      for (let cx = minX; cx <= maxX; cx++) {
+        const k = `${cx},${cy}`;
+
+        if (cx === this.char!.x && cy === this.char!.y) { row += '@'; continue; }
+
+        if (!visited.has(k)) { row += ' '; continue; }
+
+        // Content symbols take priority
+        const content = lvl.contents.get(k);
+        if (content) {
+          if (content.type === 'ladder-down')                                        { row += '<'; continue; }
+          if (content.type === 'ladder-up')                                          { row += '>'; continue; }
+          if (content.type === 'chest'    && !ds.openedChests.has(content.id))      { row += '$'; continue; }
+          if (content.type === 'altar'    && !ds.usedAltars.has(content.id))        { row += '+'; continue; }
+          if (content.type === 'book'     && !ds.readBooks.has(content.id))         { row += '?'; continue; }
+          if (content.type === 'fountain' && !ds.usedFountains.has(content.id))     { row += '~'; continue; }
+        }
+
+        // Floor character from wall data
+        const cell = grid[cy]?.[cx];
+        if (!cell) { row += '.'; continue; }
+        const { N, S, E, W } = cell.walls;
+        const openCount = [!N, !S, !E, !W].filter(Boolean).length;
+        if (openCount >= 3)      row += '.';   // room interior / junction
+        else if (!N && !S)       row += '|';   // N-S corridor
+        else if (!E && !W)       row += '-';   // E-W corridor
+        else                     row += '.';   // corner
+      }
+      rows.push(row);
+    }
+
+    const w = maxX - minX + 1;
+    this.phase = 'map';
+    this.messages = [
+      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${visited.size} cells explored) ══`,
+      `  ${'─'.repeat(w)}`,
+      ...rows.map(r => `  ${r}`),
+      `  ${'─'.repeat(w)}`,
+      '',
+      `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar`,
+    ];
+    return this.getState();
+  }
+
+  dismissMap(): GameState {
+    if (!this.char) return this.getState();
+    this.phase = 'playing';
+    this.messages = [];
+    return this.getState();
+  }
+
   dismissStatus(): GameState {
     if (!this.char) return this.getState();
     this.phase = 'playing';
@@ -175,6 +284,64 @@ export class GameEngine {
   restoreFromSave(): GameState {
     if (!this.char) return this.getState();
     return this.loadCharacter(this.char.id);
+  }
+
+  usePot(): GameState {
+    if (!this.char) return this.getState();
+    if (this.char.inventory.potions <= 0) {
+      this.messages = ['You have no healing potions.'];
+      return this.getState();
+    }
+    if (this.char.hp >= this.char.maxHp) {
+      this.messages = ['You are already at full health.'];
+      return this.getState();
+    }
+    this.char.inventory.potions--;
+    const heal = this.rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
+      + Math.floor(this.char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR);
+    const actual = Math.min(heal, this.char.maxHp - this.char.hp);
+    this.char.hp += actual;
+    this.messages = [
+      `You drink the healing potion and recover ${actual} HP.`,
+      `(${this.char.inventory.potions} potions remaining)`,
+    ];
+    this.repo.saveCharacter(this.char);
+    return this.getState();
+  }
+
+  wait(): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+
+    this.restTicks++;
+    this.messages = [];
+
+    // Tick status effects
+    const { messages: statusMsgs } = tickStatusEffects(this.char);
+    this.messages = statusMsgs;
+
+    // Passive regen while resting (faster than walking)
+    if (this.restTicks % GAMEPLAY.REGEN_HP_EVERY_N_WAITS === 0 && this.char.hp < this.char.maxHp) {
+      this.char.hp++;
+      this.messages = [...this.messages, 'You rest. Your wounds slowly heal. (+1 HP)'];
+    } else if (this.char.hp >= this.char.maxHp) {
+      this.messages = [...this.messages, 'You rest. You are fully healed.'];
+    } else {
+      this.messages = [...this.messages, 'You wait in the darkness.'];
+    }
+
+    if (this.char.hp <= 0) {
+      return this.handleDeath();
+    }
+
+    // Wandering monster risk after grace period
+    if (this.restTicks > GAMEPLAY.WAIT_ENCOUNTER_GRACE && this.rng.float() < GAMEPLAY.WAIT_ENCOUNTER_CHANCE) {
+      this.messages = [...this.messages, 'Something stirs in the darkness...'];
+      this.repo.saveCharacter(this.char);
+      return this.startRandomEncounter();
+    }
+
+    this.repo.saveCharacter(this.char);
+    return this.getState();
   }
 
   // ─── Character creation ──────────────────────────────────────────────────
@@ -321,10 +488,17 @@ export class GameEngine {
     this.char.x += dx;
     this.char.y += dy;
     this.char.stepsTaken++;
+    this.restTicks = 0;
 
     // Tick status effects
     const { messages: statusMsgs, damageTaken } = tickStatusEffects(this.char);
     this.messages = statusMsgs;
+
+    // Passive HP regeneration
+    if (this.char.stepsTaken % GAMEPLAY.REGEN_HP_EVERY_N_STEPS === 0 && this.char.hp < this.char.maxHp) {
+      this.char.hp++;
+      this.messages = [...this.messages, 'Your wounds slowly knit. (+1 HP)'];
+    }
 
     if (this.char.hp <= 0) {
       return this.handleDeath();

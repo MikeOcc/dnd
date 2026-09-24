@@ -157,6 +157,18 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'restore':
           state = engine.restoreFromSave();
           break;
+        case 'use-potion':
+          state = engine.usePot();
+          break;
+        case 'wait':
+          state = engine.wait();
+          break;
+        case 'show-map':
+          state = engine.showMap();
+          break;
+        case 'dismiss-map':
+          state = engine.dismissMap();
+          break;
         default:
           return res.status(400).json({ error: `Unknown action: ${action}` });
       }

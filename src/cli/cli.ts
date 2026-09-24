@@ -153,6 +153,12 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
+  // Map screen
+  if (phase === 'map') {
+    render(engine.dismissMap());
+    return;
+  }
+
   // Interaction menu
   if (phase === 'interaction') {
     if (key.type === 'char') {
@@ -203,6 +209,9 @@ function handleKey(key: KeyEvent): void {
     if (key.type === 'char') {
       if (key.char === 'u') render(engine.climbUp());
       if (key.char === 'd') render(engine.climbDown());
+      if (key.char === 'p') render(engine.usePot());
+      if (key.char === 'w') render(engine.wait());
+      if (key.char === 'm') render(engine.showMap());
       if (key.char === 't') render(engine.showStatus());
       if (key.char === 'r') render(engine.restoreFromSave());
       if (key.char === 's') render(engine.showMainMenu());

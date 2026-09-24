@@ -9,6 +9,7 @@ const BOLD = '\x1b[1m';
 const RED = '\x1b[31m';
 const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
+const BG_BLACK = '\x1b[40m';
 
 function g(s: string): string { return GREEN + s + RESET; }
 function bg(s: string): string { return BRIGHT_GREEN + s + RESET; }
@@ -17,6 +18,8 @@ function bold(s: string): string { return BOLD + s + RESET; }
 function red(s: string): string { return RED + s + RESET; }
 function yellow(s: string): string { return YELLOW + s + RESET; }
 function cyan(s: string): string { return CYAN + s + RESET; }
+// Bright green on black background — looks the same on light or dark terminals
+function dg(s: string): string { return BG_BLACK + BRIGHT_GREEN + s + RESET; }
 
 export function renderState(state: GameState): string {
   const lines: string[] = [];
@@ -47,6 +50,10 @@ export function renderState(state: GameState): string {
 
     case 'status':
       lines.push(...renderStatus(state));
+      break;
+
+    case 'map':
+      lines.push(...renderMap(state));
       break;
 
     case 'level-intro':
@@ -139,11 +146,11 @@ function renderGame(state: GameState): string[] {
 
   // 5x5 view
   if (state.view) {
-    lines.push(dim('  ╔═══════════╗'));
+    lines.push(g('  ╔═══════════╗'));
     for (const row of state.view) {
-      lines.push(dim('  ║') + g(row) + dim('║'));
+      lines.push(g('  ║') + dg(row) + g('║'));
     }
-    lines.push(dim('  ╚═══════════╝'));
+    lines.push(g('  ╚═══════════╝'));
   }
   lines.push('');
 
@@ -168,11 +175,13 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
   }
 
   return lines;
 }
+
+const COMPASS_ARROW: Record<string, string> = { N: '▲N', E: '▶E', S: '▼S', W: '◀W' };
 
 function renderStatusBar(char: Character, phase: string): string[] {
   const hpColor = char.hp < char.maxHp * 0.25 ? red : char.hp < char.maxHp * 0.5 ? yellow : g;
@@ -181,10 +190,12 @@ function renderStatusBar(char: Character, phase: string): string[] {
   const hp = hpColor(`HP: ${char.hp}/${char.maxHp}`);
   const xpLine = `XP: ${char.xp}`;
   const goldLine = `Gold: ${char.gold}`;
+  const potLine = `Pot: ${char.inventory?.potions ?? 0}`;
+  const compass = COMPASS_ARROW[char.facing] ?? '';
 
   return [
-    bold(bg('  ' + char.name.padEnd(20))) + g(loc.padEnd(12)) + g(charLvl),
-    `  ${hp.padEnd(30)}${g(xpLine.padEnd(16))}${g(goldLine)}`,
+    bold(bg('  ' + char.name.padEnd(20))) + g(loc.padEnd(12)) + g(charLvl) + '  ' + bold(g(compass)),
+    `  ${hp.padEnd(30)}${g(xpLine.padEnd(16))}${g(goldLine.padEnd(14))}${g(potLine)}`,
     g('  ' + '─'.repeat(60)),
   ];
 }
@@ -233,6 +244,30 @@ function renderStatus(state: GameState): string[] {
   for (const msg of state.messages) {
     lines.push(msg.startsWith('═') ? bg('  ' + msg) : g('  ' + msg));
   }
+  lines.push('');
+  lines.push(dim('  PRESS ANY KEY TO RETURN TO GAME'));
+  return lines;
+}
+
+function renderMap(state: GameState): string[] {
+  const lines: string[] = [''];
+  const msgs = state.messages;
+  if (msgs.length === 0) return lines;
+
+  lines.push(bg('  ' + msgs[0])); // header
+
+  for (let i = 1; i < msgs.length; i++) {
+    const msg = msgs[i];
+    if (msg === '') {
+      lines.push('');
+    } else if (msg.startsWith('  ─') || msg.startsWith('  @') || msg.startsWith('  ')) {
+      // Map rows and borders — bright green on black for terminal visibility
+      lines.push(dg(msg));
+    } else {
+      lines.push(g(msg));
+    }
+  }
+
   lines.push('');
   lines.push(dim('  PRESS ANY KEY TO RETURN TO GAME'));
   return lines;

@@ -71,8 +71,11 @@ html, body {
 #hp-display   { color: var(--hp-good); min-width: 100px; }
 #hp-display.warn { color: var(--hp-warn); }
 #hp-display.crit { color: var(--hp-crit); }
-#xp-display   { color: var(--dark-green); }
-#gold-display { color: #aaff44; }
+#xp-display       { color: var(--dark-green); }
+#gold-display     { color: #aaff44; }
+#potions-display  { color: var(--dark-green); }
+#potions-display.has-potions { color: #44ddff; }
+#compass-display  { color: #99ff99; font-weight: bold; margin-left: auto; }
 
 /* Dungeon view */
 #view-container {
@@ -238,6 +241,15 @@ html, body {
 .hp-good { color: var(--hp-good); }
 .hp-warn { color: var(--hp-warn); }
 .hp-crit { color: var(--hp-crit); }
+
+/* Minimap */
+#messages.map-view {
+  font-size: 11px;
+  letter-spacing: 0;
+  line-height: 1.2;
+  color: var(--dark-green);
+  overflow-x: auto;
+}
 
 /* Glow effect for combat / important messages */
 .glow {

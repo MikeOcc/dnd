@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THE SEVEN LEVELS</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <div id="terminal">
@@ -22,6 +22,8 @@
       <span id="hp-display"></span>
       <span id="xp-display"></span>
       <span id="gold-display"></span>
+      <span id="potions-display"></span>
+      <span id="compass-display"></span>
     </div>
 
     <!-- 5×5 dungeon view -->
@@ -56,6 +58,9 @@
       <div class="climb-controls">
         <button class="ctrl-btn" id="btn-climb-up"   title="Climb Up (U)">Up [U]</button>
         <button class="ctrl-btn" id="btn-climb-down" title="Climb Down (D)">Dn [D]</button>
+        <button class="ctrl-btn" id="btn-wait"       title="Wait / Rest (W)">Wt [W]</button>
+        <button class="ctrl-btn" id="btn-map"        title="Show Map (M)">Mp [M]</button>
+        <button class="ctrl-btn" id="btn-potion"     title="Drink Healing Potion (P)">Pt [P]</button>
         <button class="ctrl-btn" id="btn-status"     title="Character Status (T)">St [T]</button>
         <button class="ctrl-btn" id="btn-restore"    title="Restore from Save (R)">Rt [R]</button>
         <button class="ctrl-btn" id="btn-save"       title="Save & Return to Menu (S)">Sv [S]</button>
@@ -69,6 +74,6 @@
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

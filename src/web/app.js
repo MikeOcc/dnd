@@ -57,7 +57,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view);
@@ -76,6 +76,7 @@ function applyState(state) {
   const msgs = (state.messages || []).join('\n');
   const msgEl = document.getElementById('messages');
   msgEl.textContent = msgs;
+  msgEl.classList.toggle('map-view', phase === 'map');
   msgEl.scrollTop = msgEl.scrollHeight;
 
   // Choices
@@ -94,6 +95,8 @@ function applyState(state) {
   }
 }
 
+const COMPASS = { N: '▲ N', E: '▶ E', S: '▼ S', W: '◀ W' };
+
 function updateStatusBar(char) {
   document.getElementById('char-name').textContent = char.name;
   document.getElementById('dungeon-level').textContent = `Level ${char.dungeonLevel}`;
@@ -106,6 +109,13 @@ function updateStatusBar(char) {
 
   document.getElementById('xp-display').textContent = `XP: ${char.xp}`;
   document.getElementById('gold-display').textContent = `Gold: ${char.gold}`;
+
+  const potions = char.inventory?.potions ?? 0;
+  const potEl = document.getElementById('potions-display');
+  potEl.textContent = `Pot: ${potions}`;
+  potEl.className = potions > 0 ? 'has-potions' : '';
+
+  document.getElementById('compass-display').textContent = COMPASS[char.facing] ?? '';
 }
 
 function renderChoices(choices, phase, state) {
@@ -134,6 +144,13 @@ function renderChoices(choices, phase, state) {
   if (phase === 'status') {
     const btn = makeChoiceBtn('X', 'Return to Game');
     btn.onclick = () => apiAction('dismiss-status');
+    area.appendChild(btn);
+    return;
+  }
+
+  if (phase === 'map') {
+    const btn = makeChoiceBtn('M', 'Close Map');
+    btn.onclick = () => apiAction('dismiss-map');
     area.appendChild(btn);
     return;
   }
@@ -217,7 +234,9 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
+    case 'map':
+      hint.textContent = 'M or Esc: Close Map'; break;
     case 'status':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
@@ -227,7 +246,7 @@ function updateHelpLine(phase) {
     case 'name-entry':
       hint.textContent = 'Type your name and press Enter'; break;
     case 'char-roll':
-      hint.textContent = 'A: Accept  B: Reroll (one reroll available)'; break;
+      hint.textContent = 'A: Accept  B: Reroll'; break;
     case 'death':
       hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
     case 'victory':
@@ -342,6 +361,9 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') apiAction('turn-right');
     if (key === 'u') apiAction('climb-up');
     if (key === 'd') apiAction('climb-down');
+    if (key === 'p') apiAction('use-potion');
+    if (key === 'w') apiAction('wait');
+    if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
     if (key === 'r') apiAction('restore');
     if (key === 's') apiAction('main-menu');
@@ -351,6 +373,11 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'status') {
     if (key === 'x' || key === 't' || key === 'escape') apiAction('dismiss-status');
+    return;
+  }
+
+  if (phase === 'map') {
+    if (key === 'm' || key === 'escape') apiAction('dismiss-map');
     return;
   }
 
@@ -389,6 +416,9 @@ document.getElementById('btn-turn-left') ?.addEventListener('click', () => apiAc
 document.getElementById('btn-turn-right')?.addEventListener('click', () => apiAction('turn-right'));
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
+document.getElementById('btn-wait')      ?.addEventListener('click', () => apiAction('wait'));
+document.getElementById('btn-map')       ?.addEventListener('click', () => apiAction('show-map'));
+document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAction('use-potion'));
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
 document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('main-menu'));

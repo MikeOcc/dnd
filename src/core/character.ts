@@ -51,6 +51,7 @@ export function createCharacter(id: string, name: string, roll: CharacterRoll): 
     statusEffects: [],
     introsSeen: [],
     rerollsRemaining: CHARACTER.MAX_REROLLS,
+    inventory: { potions: 0 },
     createdAt: Date.now(),
     playTime: 0,
     lastSaved: Date.now(),

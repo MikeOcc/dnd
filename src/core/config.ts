@@ -4,6 +4,16 @@ export const CHARACTER = {
   MAX_REROLLS: 20,
 } as const;
 
+export const GAMEPLAY = {
+  REGEN_HP_EVERY_N_STEPS: 10,    // +1 HP per N steps walked (passive regen)
+  REGEN_HP_EVERY_N_WAITS: 5,     // +1 HP per N wait actions (resting in place)
+  WAIT_ENCOUNTER_GRACE: 3,       // rest ticks before wandering monster risk begins
+  WAIT_ENCOUNTER_CHANCE: 0.04,   // chance per tick after grace period
+  POTION_HEAL_MIN: 15,
+  POTION_HEAL_MAX: 25,
+  POTION_HEAL_CON_DIVISOR: 4,    // +floor(CON / 4) bonus HP per potion
+} as const;
+
 export const DUNGEON = {
   WIDTH: 80,
   HEIGHT: 60,

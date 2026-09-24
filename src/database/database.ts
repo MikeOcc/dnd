@@ -36,6 +36,12 @@ export function initDb(db?: DatabaseSync): void {
   const schemaPath = join(__dirname, 'schema.sql');
   const schema = readFileSync(schemaPath, 'utf8');
   target.exec(schema);
+
+  // Column migrations: ALTER TABLE IF NOT EXISTS is not supported in SQLite,
+  // so we attempt the add and swallow "duplicate column" errors.
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN inventory TEXT NOT NULL DEFAULT '{"potions":0}'`);
+  } catch { /* column already exists */ }
 }
 
 export function createMemoryDb(): DatabaseSync {

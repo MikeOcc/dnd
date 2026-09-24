@@ -290,7 +290,7 @@ export function computeFOV(
   playerX: number,
   playerY: number,
   facing: Direction,
-  specialSymbol?: { dr: number; dc: number; symbol: string },
+  specialSymbols?: { dr: number; dc: number; symbol: string }[],
 ): FOVResult {
   const h = dungeonGrid.length;
   const w = dungeonGrid[0].length;
@@ -301,13 +301,17 @@ export function computeFOV(
   renderWalls(chars, dungeonGrid, playerX, playerY, facing, visible, h, w);
   clipWallsToVisible(chars, visible);
 
-  // Player symbol always at center
-  chars[5][5] = '^';
-
-  // Optional special symbol (ladder, boss, etc.)
-  if (specialSymbol && visible.has(`${specialSymbol.dr},${specialSymbol.dc}`)) {
-    chars[specialSymbol.dr * 2 + 1][specialSymbol.dc * 2 + 1] = specialSymbol.symbol;
+  // Content symbols for visible non-player cells
+  if (specialSymbols) {
+    for (const s of specialSymbols) {
+      if (visible.has(`${s.dr},${s.dc}`)) {
+        chars[s.dr * 2 + 1][s.dc * 2 + 1] = s.symbol;
+      }
+    }
   }
+
+  // Player symbol always at center (overwrites any content at player position)
+  chars[5][5] = '^';
 
   const displayGrid: DisplayGrid = chars.map(row => row.join(''));
 
