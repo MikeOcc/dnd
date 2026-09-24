@@ -72,6 +72,18 @@ function applyState(state) {
     document.getElementById('dungeon-view').textContent = state.view.join('\n');
   }
 
+  // Monster portrait
+  const portraitEl = document.getElementById('monster-portrait');
+  const monster = phase === 'combat' ? state.combat?.monster : null;
+  if (monster) {
+    const sprite = getMonsterSprite(monster.type);
+    portraitEl.innerHTML = sprite || '';
+    portraitEl.classList.toggle('hidden', !sprite);
+  } else {
+    portraitEl.classList.add('hidden');
+    portraitEl.innerHTML = '';
+  }
+
   // Messages
   const msgs = (state.messages || []).join('\n');
   const msgEl = document.getElementById('messages');

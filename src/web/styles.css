@@ -97,6 +97,18 @@ html, body {
   min-width: 200px;
 }
 
+/* Monster portrait (combat only) */
+#monster-portrait {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+#monster-portrait svg {
+  width: 110px;
+  height: 110px;
+}
+
 /* Messages */
 #message-area {
   flex: 1;
