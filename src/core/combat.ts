@@ -18,6 +18,18 @@ export interface CombatRoundResult {
   ballOfDooResisted?: boolean;
 }
 
+// Elemental resistance/vulnerability call-outs ("particularly vulnerable to
+// fire!", "shrugs off most of the acid!") only need to be said once per
+// monster type per playthrough — after that they're just noise, unless the
+// player is in real danger and the reminder is tactically useful again.
+// Recorded on the character (not in-memory) so it survives a page refresh.
+function shouldWarnElemental(char: Character, key: string): boolean {
+  const alreadyWarned = char.elementalWarnings.includes(key);
+  if (!alreadyWarned) char.elementalWarnings.push(key);
+  const lowHp = char.hp < char.maxHp * 0.25;
+  return !alreadyWarned || lowHp;
+}
+
 // ─── Attack ──────────────────────────────────────────────────────────────────
 
 export function playerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
@@ -75,9 +87,17 @@ export function playerFireball(char: Character, monster: Monster, rng: RNG): Com
   const messages: string[] = [];
 
   if (monster.definition.fireballResistance <= 0.3) {
-    messages.push(`The ${monster.type} shrugs off most of the fire! (${Math.round((1 - monster.definition.fireballResistance) * 100)}% resistant)`);
+    if (shouldWarnElemental(char, `${monster.type}:fireball`)) {
+      messages.push(`The ${monster.type} shrugs off most of the fire! (${Math.round((1 - monster.definition.fireballResistance) * 100)}% resistant)`);
+    } else {
+      messages.push('You cast Fireball!');
+    }
   } else if (monster.definition.fireballResistance >= 1.8) {
-    messages.push(`Fireball! The ${monster.type} is particularly vulnerable to fire!`);
+    if (shouldWarnElemental(char, `${monster.type}:fireball`)) {
+      messages.push(`Fireball! The ${monster.type} is particularly vulnerable to fire!`);
+    } else {
+      messages.push('You cast Fireball!');
+    }
   } else {
     messages.push('You cast Fireball!');
   }
@@ -110,9 +130,17 @@ export function playerAcid(char: Character, monster: Monster, rng: RNG): CombatR
   const messages: string[] = [];
 
   if (acidResistance <= 0.3) {
-    messages.push(`The ${monster.type} shrugs off most of the acid! (${Math.round((1 - acidResistance) * 100)}% resistant)`);
+    if (shouldWarnElemental(char, `${monster.type}:acid`)) {
+      messages.push(`The ${monster.type} shrugs off most of the acid! (${Math.round((1 - acidResistance) * 100)}% resistant)`);
+    } else {
+      messages.push('You cast Acid Spray!');
+    }
   } else if (acidResistance >= 1.8) {
-    messages.push(`Acid Spray! The ${monster.type} is particularly vulnerable to acid!`);
+    if (shouldWarnElemental(char, `${monster.type}:acid`)) {
+      messages.push(`Acid Spray! The ${monster.type} is particularly vulnerable to acid!`);
+    } else {
+      messages.push('You cast Acid Spray!');
+    }
   } else {
     messages.push('You cast Acid Spray!');
   }
@@ -149,9 +177,17 @@ export function playerLightning(char: Character, monster: Monster, rng: RNG): Co
   const messages: string[] = [];
 
   if (lightningResistance <= 0.3) {
-    messages.push(`The ${monster.type} shrugs off most of the lightning! (${Math.round((1 - lightningResistance) * 100)}% resistant)`);
+    if (shouldWarnElemental(char, `${monster.type}:lightning`)) {
+      messages.push(`The ${monster.type} shrugs off most of the lightning! (${Math.round((1 - lightningResistance) * 100)}% resistant)`);
+    } else {
+      messages.push('You cast Lightning!');
+    }
   } else if (lightningResistance >= 1.8) {
-    messages.push(`Lightning! The ${monster.type} is particularly vulnerable to lightning!`);
+    if (shouldWarnElemental(char, `${monster.type}:lightning`)) {
+      messages.push(`Lightning! The ${monster.type} is particularly vulnerable to lightning!`);
+    } else {
+      messages.push('You cast Lightning!');
+    }
   } else {
     messages.push('You cast Lightning!');
   }

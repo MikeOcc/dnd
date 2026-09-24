@@ -109,6 +109,14 @@ describe('Repository — characters', () => {
     const loaded = repo.loadCharacter('c8');
     expect(loaded!.introsSeen).toEqual([1, 2, 3]);
   });
+
+  it('preserves elementalWarnings array', () => {
+    const char = makeChar('c9');
+    char.elementalWarnings = ['White Dragon:fireball', 'Sanguinid:acid'];
+    repo.saveCharacter(char);
+    const loaded = repo.loadCharacter('c9');
+    expect(loaded!.elementalWarnings).toEqual(['White Dragon:fireball', 'Sanguinid:acid']);
+  });
 });
 
 describe('Repository — dungeon levels', () => {

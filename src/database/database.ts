@@ -42,6 +42,9 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN inventory TEXT NOT NULL DEFAULT '{"potions":0}'`);
   } catch { /* column already exists */ }
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN elemental_warnings TEXT NOT NULL DEFAULT '[]'`);
+  } catch { /* column already exists */ }
 }
 
 export function createMemoryDb(): DatabaseSync {

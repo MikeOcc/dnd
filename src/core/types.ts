@@ -112,6 +112,7 @@ export interface Character {
   statusEffects: StatusEffect[];
   introsSeen: number[];
   rerollsRemaining: number;
+  elementalWarnings: string[]; // "{MonsterType}:{fireball|acid|lightning}" already called out this playthrough
   inventory: Inventory;
   createdAt: number;
   playTime: number;

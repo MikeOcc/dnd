@@ -24,14 +24,14 @@ export class Repository {
         hp, max_hp, gold,
         strength, constitution, intelligence, wisdom, dexterity, charisma, resistance,
         death_count, steps_taken, monsters_defeated, unique_monsters_defeated,
-        asmodeus_defeated, status_effects, intros_seen, reroll_used, inventory,
+        asmodeus_defeated, status_effects, intros_seen, reroll_used, inventory, elemental_warnings,
         created_at, play_time, last_saved
       ) VALUES (
         @id, @name, @level, @xp, @dungeon_level, @x, @y, @facing,
         @hp, @max_hp, @gold,
         @strength, @constitution, @intelligence, @wisdom, @dexterity, @charisma, @resistance,
         @death_count, @steps_taken, @monsters_defeated, @unique_monsters_defeated,
-        @asmodeus_defeated, @status_effects, @intros_seen, @reroll_used, @inventory,
+        @asmodeus_defeated, @status_effects, @intros_seen, @reroll_used, @inventory, @elemental_warnings,
         @created_at, @play_time, @last_saved
       )
       ON CONFLICT(id) DO UPDATE SET
@@ -46,7 +46,7 @@ export class Repository {
         unique_monsters_defeated = excluded.unique_monsters_defeated,
         asmodeus_defeated = excluded.asmodeus_defeated, status_effects = excluded.status_effects,
         intros_seen = excluded.intros_seen, reroll_used = excluded.reroll_used,
-        inventory = excluded.inventory,
+        inventory = excluded.inventory, elemental_warnings = excluded.elemental_warnings,
         play_time = excluded.play_time, last_saved = excluded.last_saved
     `).run({
       id: char.id,
@@ -76,6 +76,7 @@ export class Repository {
       intros_seen: JSON.stringify(char.introsSeen),
       reroll_used: CHARACTER.MAX_REROLLS - char.rerollsRemaining,
       inventory: JSON.stringify(char.inventory),
+      elemental_warnings: JSON.stringify(char.elementalWarnings),
       created_at: char.createdAt,
       play_time: char.playTime,
       last_saved: char.lastSaved,
@@ -137,6 +138,7 @@ export class Repository {
       introsSeen:             JSON.parse(row['intros_seen'] as string || '[]'),
       rerollsRemaining:       Math.max(0, CHARACTER.MAX_REROLLS - (row['reroll_used'] as number ?? 0)),
       inventory:              JSON.parse(row['inventory'] as string || '{"potions":0}'),
+      elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,
       lastSaved:              row['last_saved'] as number,

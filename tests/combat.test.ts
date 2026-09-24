@@ -441,6 +441,45 @@ describe('Lightning', () => {
   });
 });
 
+describe('Elemental vulnerability/resistance warnings', () => {
+  it('shows the vulnerability line the first time, then suppresses it at full health', () => {
+    const char = makeChar({ level: 8, intelligence: 16, hp: 100, maxHp: 100 });
+    const monster = createMonster('White Dragon', 10, 'ew1'); // fireballResistance 2.0
+
+    const r1 = playerFireball(char, { ...monster, hp: 100000 }, new RNG(1));
+    expect(r1.messages.some(m => m.includes('particularly vulnerable to fire'))).toBe(true);
+    expect(char.elementalWarnings).toContain('White Dragon:fireball');
+
+    const r2 = playerFireball(char, { ...monster, hp: 100000 }, new RNG(2));
+    expect(r2.messages.some(m => m.includes('particularly vulnerable to fire'))).toBe(false);
+    expect(r2.messages).toContain('You cast Fireball!');
+  });
+
+  it('shows the warning again once the character is low on HP', () => {
+    const char = makeChar({ level: 8, intelligence: 16, hp: 100, maxHp: 100 });
+    const monster = createMonster('White Dragon', 10, 'ew2');
+
+    playerFireball(char, { ...monster, hp: 100000 }, new RNG(1)); // first cast, records the warning
+    char.hp = 20; // < 25% of 100 maxHp
+
+    const result = playerFireball(char, { ...monster, hp: 100000 }, new RNG(2));
+    expect(result.messages.some(m => m.includes('particularly vulnerable to fire'))).toBe(true);
+  });
+
+  it('tracks resistance/vulnerability separately per element for the same monster', () => {
+    const char = makeChar({ level: 8, intelligence: 16, hp: 100, maxHp: 100 });
+    const sanguinid = createMonster('Sanguinid', 10, 'ew3'); // acidResistance 2.0, normal fireballResistance
+
+    playerAcid(char, { ...sanguinid, hp: 100000 }, new RNG(1));
+    expect(char.elementalWarnings).toEqual(['Sanguinid:acid']);
+
+    const fireResult = playerFireball(char, { ...sanguinid, hp: 100000 }, new RNG(2));
+    // Sanguinid has no special fireballResistance, so no vulnerability line — and
+    // critically, the acid warning already recorded shouldn't affect fireball.
+    expect(fireResult.messages).toContain('You cast Fireball!');
+  });
+});
+
 describe('XP rewards', () => {
   it('gives more XP for higher-level monsters', () => {
     const xpLow = calculateXPReward(5, 3, false);
