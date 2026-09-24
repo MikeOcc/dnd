@@ -1167,6 +1167,190 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Death Knight': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Death Knight">
+      <defs><filter id="glow-deathknight" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 56 90 Q 44 120 40 156 Q 50 160 58 154 Q 58 120 66 92 Z" fill="#2a1010" stroke="#140808" stroke-width="1.5" opacity="0.9"/>
+      <path d="M 100 90 Q 112 120 116 156 Q 106 160 98 154 Q 98 120 90 92 Z" fill="#2a1010" stroke="#140808" stroke-width="1.5" opacity="0.9"/>
+
+      <path d="M 62 118 L 56 140 L 52 156 L 66 156 L 70 138 L 74 118 Z" fill="#1a1a1e" stroke="#3a3a42" stroke-width="2"/>
+      <path d="M 86 118 L 92 138 L 96 156 L 110 156 L 106 140 L 100 118 Z" fill="#22222a" stroke="#3a3a42" stroke-width="2"/>
+      <path d="M 52 156 L 48 162 L 68 162 L 66 156 Z" fill="#141418" stroke="#3a3a42" stroke-width="1.3"/>
+      <path d="M 96 156 L 94 162 L 112 162 L 110 156 Z" fill="#141418" stroke="#3a3a42" stroke-width="1.3"/>
+
+      <path d="M 58 118 Q 52 84 78 70 Q 104 72 108 92 Q 110 112 96 122 Q 76 132 58 118 Z" fill="#1e1e24" stroke="#3a3a42" stroke-width="2.5"/>
+      <path d="M 76 92 L 80 86 L 84 92 L 80 98 Z" fill="#5a4a30" opacity="0.85"/>
+      <path d="M 64 96 Q 78 100 92 94" stroke="#3a3a42" stroke-width="1.3" fill="none" opacity="0.7"/>
+      <path d="M 62 108 Q 78 114 94 106" stroke="#3a3a42" stroke-width="1.3" fill="none" opacity="0.6"/>
+
+      <path d="M 52 88 Q 44 82 44 72 Q 50 66 58 70 Q 62 78 58 88 Z" fill="#22222a" stroke="#3a3a42" stroke-width="1.8"/>
+      <path d="M 46 72 L 40 60 L 50 68 Z" fill="#1a1a1e" stroke="#3a3a42" stroke-width="1"/>
+      <path d="M 104 88 Q 114 80 116 68 Q 110 62 102 68 Q 98 78 104 88 Z" fill="#22222a" stroke="#3a3a42" stroke-width="1.8"/>
+      <path d="M 112 70 L 120 56 L 108 66 Z" fill="#1a1a1e" stroke="#3a3a42" stroke-width="1"/>
+
+      <path d="M 100 84 Q 114 74 120 54" stroke="#1e1e24" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <ellipse cx="121" cy="50" rx="5" ry="6" fill="#22222a" stroke="#3a3a42" stroke-width="1.5"/>
+      <path d="M 122 44 L 128 10 L 132 12 L 126 46 Z" fill="#2a2a30" stroke="#0a0a0e" stroke-width="1.2"/>
+      <path d="M 129 12 L 131 13 L 127 45" stroke="#ff4400" stroke-width="0.8" opacity="0.6"/>
+      <path d="M 114 48 L 128 46" stroke="#3a3a42" stroke-width="2.5"/>
+      <path d="M 121 50 L 121 58" stroke="#5a4a30" stroke-width="2.5"/>
+
+      <path d="M 58 90 Q 48 96 46 108" stroke="#1e1e24" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <circle cx="44" cy="110" r="6" fill="#22222a" stroke="#3a3a42" stroke-width="1.5"/>
+
+      <path d="M 70 64 L 78 48 L 90 48 L 98 64 L 94 78 L 74 78 Z" fill="#1a1a1e" stroke="#3a3a42" stroke-width="2.2"/>
+      <path d="M 82 48 L 84 38 L 86 48 Z" fill="#22222a" stroke="#3a3a42" stroke-width="1"/>
+
+      <path d="M 72 66 Q 68 72 70 78" stroke="#ff6622" stroke-width="1.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <path d="M 96 66 Q 100 72 98 78" stroke="#ff6622" stroke-width="1.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+
+      <path d="M 76 62 L 92 62 L 90 66 L 78 66 Z" fill="#0a0a0e"/>
+      <circle cx="85" cy="64" r="6" fill="#ff4400" filter="url(#glow-deathknight)" opacity="0.55"/>
+      <circle cx="80" cy="64" r="1.5" fill="#ffaa44"/>
+      <circle cx="90" cy="64" r="1.5" fill="#ffaa44"/>
+    </svg>
+  `,
+
+  'Beholder': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beholder">
+      <defs><filter id="glow-beholder" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+
+      <path d="M 60 138 Q 80 142 100 138" stroke="#6a4a5a" stroke-width="1.2" fill="none" opacity="0.4"/>
+      <path d="M 64 146 Q 80 149 96 146" stroke="#6a4a5a" stroke-width="1" fill="none" opacity="0.3"/>
+
+      <path d="M 46 62 Q 38 48 32 34" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="30" cy="30" r="4" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="30" cy="30" r="2" fill="#ff4444"/>
+
+      <path d="M 54 54 Q 48 38 44 22" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="43" cy="18" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="43" cy="18" r="1.8" fill="#44ff44"/>
+
+      <path d="M 64 50 Q 62 32 60 16" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="60" cy="12" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="60" cy="12" r="1.8" fill="#ffee44"/>
+
+      <path d="M 74 48 Q 74 30 74 12" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="74" cy="8" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="74" cy="8" r="1.8" fill="#4488ff"/>
+
+      <path d="M 86 48 Q 86 30 86 12" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="86" cy="8" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="86" cy="8" r="1.8" fill="#ff8844"/>
+
+      <path d="M 96 50 Q 98 32 100 16" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="100" cy="12" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="100" cy="12" r="1.8" fill="#cc44ff"/>
+
+      <path d="M 106 54 Q 112 38 116 22" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="117" cy="18" r="3.5" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="117" cy="18" r="1.8" fill="#44ffee"/>
+
+      <path d="M 114 62 Q 122 48 128 34" stroke="#6a4a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="130" cy="30" r="4" fill="#f0f0f0" stroke="#3a2a32" stroke-width="1"/>
+      <circle cx="130" cy="30" r="2" fill="#ffffff" stroke="#3a2a32" stroke-width="0.6"/>
+
+      <circle cx="80" cy="90" r="42" fill="#6a4a5a" stroke="#3a2a32" stroke-width="2.5"/>
+      <ellipse cx="60" cy="75" rx="4" ry="3" fill="#5a3a4a" opacity="0.5"/>
+      <ellipse cx="100" cy="80" rx="3" ry="2.5" fill="#5a3a4a" opacity="0.5"/>
+      <ellipse cx="70" cy="110" rx="3.5" ry="3" fill="#5a3a4a" opacity="0.5"/>
+
+      <path d="M 62 112 Q 80 126 98 112 Q 90 122 80 122 Q 70 122 62 112 Z" fill="#3a1015" stroke="#1a0508" stroke-width="1.5"/>
+      <path d="M 68 114 L 70 120 L 72 114 Z" fill="#f2eee2"/>
+      <path d="M 74 117 L 76 123 L 78 117 Z" fill="#f2eee2"/>
+      <path d="M 82 117 L 84 123 L 86 117 Z" fill="#f2eee2"/>
+      <path d="M 88 114 L 90 120 L 92 114 Z" fill="#f2eee2"/>
+
+      <ellipse cx="80" cy="88" rx="20" ry="16" fill="#f0f0f0" stroke="#3a2a32" stroke-width="2"/>
+      <circle cx="80" cy="88" r="6" fill="#ff2244" filter="url(#glow-beholder)" opacity="0.3"/>
+      <circle cx="80" cy="88" r="11" fill="#8a1a2a"/>
+      <circle cx="80" cy="88" r="5" fill="#0a0508"/>
+      <circle cx="76" cy="84" r="2" fill="#ffffff" opacity="0.8"/>
+    </svg>
+  `,
+
+  'Mind Flayer': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mind Flayer">
+      <defs><filter id="glow-mindflayer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="158" rx="46" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 58 100 Q 52 130 56 156 Q 80 162 104 156 Q 108 130 102 100 Q 80 110 58 100 Z" fill="#2a1a3a" stroke="#140a1e" stroke-width="2"/>
+      <path d="M 64 112 Q 62 134 64 152" stroke="#5a3a70" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M 96 112 Q 98 134 96 152" stroke="#5a3a70" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M 62 96 L 68 74 L 76 84 L 78 96 Z" fill="#2a1a3a" stroke="#140a1e" stroke-width="1.5"/>
+      <path d="M 98 96 L 92 74 L 84 84 L 82 96 Z" fill="#2a1a3a" stroke="#140a1e" stroke-width="1.5"/>
+
+      <path d="M 60 92 Q 50 98 48 110" stroke="#2a1a3a" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+      <circle cx="115" cy="63" r="8" fill="#e0d0ff" opacity="0.15" filter="url(#glow-mindflayer)"/>
+      <path d="M 100 92 Q 112 84 114 66" stroke="#2a1a3a" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <ellipse cx="115" cy="63" rx="3.5" ry="3" fill="#9a7aa0" stroke="#6a4a70" stroke-width="1"/>
+
+      <path d="M 66 58 Q 62 40 80 36 Q 98 40 94 58 Q 92 76 80 80 Q 68 76 66 58 Z" fill="#9a7aa0" stroke="#6a4a70" stroke-width="2"/>
+
+      <path d="M 72 74 Q 66 84 70 94 Q 72 100 66 104" stroke="#7a5a88" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M 77 76 Q 74 88 78 98 Q 80 104 74 110" stroke="#7a5a88" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M 83 76 Q 86 88 82 98 Q 80 104 86 110" stroke="#7a5a88" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M 88 74 Q 94 84 90 94 Q 88 100 94 104" stroke="#7a5a88" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="66" cy="104" r="1.8" fill="#7a5a88"/>
+      <circle cx="74" cy="110" r="1.8" fill="#7a5a88"/>
+      <circle cx="86" cy="110" r="1.8" fill="#7a5a88"/>
+      <circle cx="94" cy="104" r="1.8" fill="#7a5a88"/>
+
+      <ellipse cx="73" cy="54" rx="5" ry="3" fill="#e0d0ff" filter="url(#glow-mindflayer)" opacity="0.7"/>
+      <ellipse cx="73" cy="54" rx="3.5" ry="2" fill="#f0e8ff"/>
+      <ellipse cx="87" cy="54" rx="5" ry="3" fill="#e0d0ff" filter="url(#glow-mindflayer)" opacity="0.7"/>
+      <ellipse cx="87" cy="54" rx="3.5" ry="2" fill="#f0e8ff"/>
+    </svg>
+  `,
+
+  'Lich': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lich">
+      <defs><filter id="glow-lich" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 58 98 Q 50 130 46 156 Q 80 162 114 156 Q 110 130 102 98 Q 80 108 58 98 Z" fill="#2a1030" stroke="#140818" stroke-width="2"/>
+      <path d="M 62 108 Q 58 132 54 154" stroke="#d4af37" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 98 108 Q 102 132 106 154" stroke="#d4af37" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 48 154 Q 80 160 112 154" stroke="#d4af37" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+      <path d="M 60 92 Q 52 98 50 108" stroke="#2a1030" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+      <circle cx="119" cy="58" r="10" fill="#66ccff" opacity="0.12" filter="url(#glow-lich)"/>
+      <path d="M 98 90 Q 112 82 118 62" stroke="#e8e0c8" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 116 60 L 122 50 L 118 62 Z" fill="#e8e0c8" stroke="#8a8070" stroke-width="0.8"/>
+      <path d="M 118 62 L 126 56 L 120 66 Z" fill="#e8e0c8" stroke="#8a8070" stroke-width="0.8"/>
+      <path d="M 114 64 L 120 56 L 113 68 Z" fill="#e8e0c8" stroke="#8a8070" stroke-width="0.8"/>
+      <circle cx="120" cy="54" r="1.5" fill="#66ccff" opacity="0.7"/>
+      <circle cx="126" cy="60" r="1.2" fill="#66ccff" opacity="0.6"/>
+      <circle cx="114" cy="48" r="1" fill="#66ccff" opacity="0.5"/>
+
+      <path d="M 68 58 L 74 46 L 86 44 L 94 52 L 96 64 L 88 74 L 76 76 L 68 68 Z" fill="#e8e0c8" stroke="#8a8070" stroke-width="2"/>
+      <path d="M 88 56 L 91 60 L 87 61 Z" fill="#1a1610"/>
+      <path d="M 74 68 L 88 66 L 92 76 L 80 78 L 72 74 Z" fill="#d8d0b8" stroke="#8a8070" stroke-width="1.5"/>
+      <rect x="76" y="69" width="2" height="4" fill="#f5f0e0"/>
+      <rect x="80" y="69" width="2" height="4" fill="#f5f0e0"/>
+      <rect x="84" y="69" width="2" height="4" fill="#f5f0e0"/>
+
+      <path d="M 70 46 L 74 40 L 80 44 L 86 40 L 90 46" stroke="#d4af37" stroke-width="2" fill="none"/>
+      <circle cx="80" cy="42" r="1.8" fill="#66ccff"/>
+
+      <circle cx="84" cy="58" r="5.5" fill="#66ccff" filter="url(#glow-lich)" opacity="0.85"/>
+      <circle cx="84" cy="58" r="3" fill="#ffffff" opacity="0.95"/>
+      <circle cx="84" cy="58" r="1.5" fill="#aaeeff"/>
+    </svg>
+  `,
+
 };
 
 function getMonsterSprite(type) {
