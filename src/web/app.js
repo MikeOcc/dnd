@@ -299,7 +299,8 @@ function handleChoiceKey(key, phase) {
       const spells = [
         { key: 'a', text: 'Fireball' },
         { key: 'b', text: 'Heal' },
-        { key: 'c', text: 'Cancel' },
+        { key: 'c', text: 'Acid Spray' },
+        { key: 'd', text: 'Cancel' },
       ];
       for (const spell of spells) {
         const btn = makeChoiceBtn(spell.key.toUpperCase(), spell.text);
@@ -395,7 +396,7 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'combat') {
     if (spellMenuOpen) {
-      if (['a','b','c'].includes(key)) {
+      if (['a','b','c','d'].includes(key)) {
         spellMenuOpen = false;
         apiAction('spell', { choice: key });
       }

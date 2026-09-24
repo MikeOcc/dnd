@@ -96,6 +96,41 @@ export function playerFireball(char: Character, monster: Monster, rng: RNG): Com
   };
 }
 
+// ─── Acid Spray ──────────────────────────────────────────────────────────────
+
+export function playerAcid(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+  const acidResistance = monster.definition.acidResistance ?? 1.0;
+
+  const base = char.level * COMBAT.ACID_LEVEL_MULT
+    + Math.floor(eff.intelligence / COMBAT.ACID_INT_DIVISOR);
+  const rand = COMBAT.ACID_RAND_MIN + rng.float() * (COMBAT.ACID_RAND_MAX - COMBAT.ACID_RAND_MIN);
+  const damage = Math.max(1, Math.round(base * rand * acidResistance));
+
+  const messages: string[] = [];
+
+  if (acidResistance <= 0.3) {
+    messages.push(`The ${monster.type} shrugs off most of the acid! (${Math.round((1 - acidResistance) * 100)}% resistant)`);
+  } else if (acidResistance >= 1.8) {
+    messages.push(`Acid Spray! The ${monster.type} is particularly vulnerable to acid!`);
+  } else {
+    messages.push('You cast Acid Spray!');
+  }
+
+  monster.hp -= damage;
+  messages.push(`The ${monster.type} takes ${damage} acid damage.`);
+
+  const monsterDied = monster.hp <= 0;
+  if (monsterDied) messages.push(`The ${monster.type} dissolves!`);
+
+  const res = monsterAction(char, monster, rng, messages);
+  return {
+    ...res,
+    playerDamage: damage,
+    monsterDied,
+  };
+}
+
 // ─── Heal ────────────────────────────────────────────────────────────────────
 
 export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
@@ -118,11 +153,14 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   const eff = getEffectiveStats(char);
   const undead = isUndead(monster.type);
   const isAsmodeus = monster.type === 'Asmodeus';
+  // Light-vulnerable monsters (e.g. Sanguinid) take holy light like undead do,
+  // even though they aren't undead themselves.
+  const lightVulnerable = monster.definition.lightVulnerable === true;
 
   const penalty = monster.prayerPenalty;
   monster.prayerPenalty = Math.min(1, monster.prayerPenalty + COMBAT.PRAYER_PENALTY_PER_USE);
 
-  let baseChance = undead
+  let baseChance = (undead || lightVulnerable)
     ? COMBAT.PRAYER_UNDEAD_BASE_CHANCE
     : COMBAT.PRAYER_NON_UNDEAD_BASE_CHANCE;
   if (isAsmodeus) baseChance *= COMBAT.PRAYER_ASMODEUS_MULT;
@@ -133,7 +171,7 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   let monsterDamage = 0;
 
   if (rng.float() < chance) {
-    if (undead || isAsmodeus) {
+    if (undead || isAsmodeus || lightVulnerable) {
       const base = (char.level + Math.floor(eff.wisdom / 2));
       const rand = COMBAT.PRAYER_UNDEAD_DAMAGE_MIN
         + rng.float() * (COMBAT.PRAYER_UNDEAD_DAMAGE_MAX - COMBAT.PRAYER_UNDEAD_DAMAGE_MIN);
@@ -262,8 +300,18 @@ function monsterAction(
     ability = pickBeholderAbility(rng);
   }
 
-  // Special Sanguinid logic — always one of its two named attacks
+  // Special Sanguinid logic — passively radioactive every round, on top of
+  // whichever of its three named attacks it uses this round
   if (monster.type === 'Sanguinid') {
+    const radDamage = Math.max(
+      1,
+      Math.round(monster.level * COMBAT.SANGUINID_RADIATION_PER_LEVEL) - Math.floor(eff.resistance / COMBAT.DEF_RES_DIVISOR),
+    );
+    char.hp = Math.max(0, char.hp - radDamage);
+    messages.push(`The Sanguinid's radioactive flesh sears you even as it approaches. You suffer ${radDamage} radiation damage.`);
+    if (char.hp <= 0) {
+      return { messages, monsterDamage: radDamage, playerDied: true, monsterDied: false };
+    }
     ability = pickSanguinidAbility(rng);
   }
 
@@ -398,6 +446,17 @@ function monsterAction(
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
   }
 
+  // Handle Sanguinid's flash-burn attack — its rarer, harder-hitting secondary attack
+  if (ability === 'flash-burn') {
+    const dmg = Math.round(calculateMonsterDamage(monster, char, rng, naked, ability) * COMBAT.SANGUINID_FLASH_BURN_MULT);
+    char.hp = Math.max(0, char.hp - dmg);
+    messages.push(monsterAttackText(monster.type, dmg, ability));
+    addStatusEffect(char, { type: 'bleeding', value: COMBAT.SANGUINID_BLEED_DAMAGE, turns: COMBAT.SANGUINID_BLEED_TURNS });
+    messages.push('The wound is deep. You are bleeding!');
+    const playerDied = char.hp <= 0;
+    return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
+  }
+
   // Handle terror/fear
   if (ability === 'terror' || ability === 'fear' || ability === 'fear-ray' || ability === 'darkness') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked, ability);
@@ -465,17 +524,23 @@ function pickAsmodeusAbility(monster: Monster, char: Character, rng: RNG): strin
 
 function pickWizardAbility(rng: RNG): string {
   const roll = rng.float();
-  if (roll < 0.30) return 'fireball';
-  if (roll < 0.55) return 'lightning-bolt';
-  if (roll < 0.65) return 'teleport';
-  if (roll < 0.67) return 'make-naked';
+  if (roll < 0.20) return 'fireball';
+  if (roll < 0.40) return 'lightning-bolt';
+  if (roll < 0.55) return 'acid-bolt';
+  if (roll < 0.70) return 'light-bolt';
+  if (roll < 0.80) return 'teleport';
+  if (roll < 0.82) return 'make-naked';
   return '';
 }
 
 function pickSanguinidAbility(rng: RNG): string {
-  // Great strength is its primary attack; blood-drain (with the level-drain
-  // chance) is the rarer "second attack."
-  return rng.float() < 0.6 ? 'great-strength' : 'blood-drain';
+  // flash-burn is the rare "secondary attack" (1 in 10); the rest splits
+  // between great-strength (primary) and blood-drain (with its level-drain
+  // chance) in roughly the original 60/40 ratio.
+  const roll = rng.float();
+  if (roll < COMBAT.SANGUINID_FLASH_BURN_CHANCE) return 'flash-burn';
+  if (roll < COMBAT.SANGUINID_FLASH_BURN_CHANCE + 0.54) return 'great-strength';
+  return 'blood-drain';
 }
 
 function pickBeholderAbility(rng: RNG): string {

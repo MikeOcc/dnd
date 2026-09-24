@@ -78,6 +78,12 @@ export const COMBAT = {
   FIREBALL_RAND_MIN: 0.8,
   FIREBALL_RAND_MAX: 1.5,
 
+  // Acid Spray: (charLevel*2 + INT/2) * randomFactor
+  ACID_LEVEL_MULT: 2,
+  ACID_INT_DIVISOR: 2,
+  ACID_RAND_MIN: 0.8,
+  ACID_RAND_MAX: 1.4,
+
   // Heal: (charLevel + WIS/2) * randomFactor
   HEAL_LEVEL_WEIGHT: 1.0,
   HEAL_WIS_DIVISOR: 2,
@@ -120,6 +126,9 @@ export const COMBAT = {
   SANGUINID_BLEED_DAMAGE: 3,
   SANGUINID_BLEED_TURNS: 4,
   SANGUINID_LEVEL_DRAIN_CHANCE: 0.03,
+  SANGUINID_FLASH_BURN_CHANCE: 0.10,   // its "secondary attack," on top of great-strength/blood-drain
+  SANGUINID_FLASH_BURN_MULT: 1.5,      // flash-burn hits harder than its other two attacks
+  SANGUINID_RADIATION_PER_LEVEL: 0.4,  // passive damage every round, independent of its chosen attack
 } as const;
 
 export const LEVELING = {

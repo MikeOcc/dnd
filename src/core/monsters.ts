@@ -160,7 +160,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       '',
       'You have encountered a Level {LVL} Wizard!',
     ],
-    specialAbilities: ['fireball', 'lightning-bolt', 'teleport', 'make-naked'],
+    specialAbilities: ['fireball', 'lightning-bolt', 'acid-bolt', 'light-bolt', 'teleport', 'make-naked'],
   },
   'Beholder': {
     type: 'Beholder', isUndead: false, isUnique: false,
@@ -183,8 +183,10 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 9, maxLevel: 35, naturalTier: 7, minDungeonLevel: 1, speed: 0.9,
     baseHpPerLevel: 13, baseAttackPerLevel: 7.5, baseDefensePerLevel: 3.5,
     fireballResistance: 1.0,
+    acidResistance: 2.0,     // weak to acid
+    lightVulnerable: true,   // weak to light — Prayer hits it like undead
     encounterIntro: ['A bloated, fanged shape drags itself up from the black water, tentacles writhing.', '', 'You have encountered a Level {LVL} Sanguinid!'],
-    specialAbilities: ['great-strength', 'blood-drain'],
+    specialAbilities: ['great-strength', 'blood-drain', 'flash-burn'],
   },
   'Black Dragon': {
     type: 'Black Dragon', isUndead: false, isUnique: false,
@@ -206,7 +208,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     type: 'Blue Dragon', isUndead: false, isUnique: false,
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.5, baseDefensePerLevel: 4.0,
-    fireballResistance: 1.0,
+    fireballResistance: 3.0,  // highly susceptible — triple damage from Fireball
     encounterIntro: ['Thunder rolls through the stone corridor.', '', 'You have encountered a Level {LVL} Blue Dragon!'],
     specialAbilities: ['lightning-breath'],
   },
@@ -373,6 +375,8 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
     'psychic-attack':   `The ${type} invades your thoughts! You suffer ${damage} damage.`,
     'fireball':         `The ${type} hurls a fireball! You suffer ${damage} damage.`,
     'lightning-bolt':   `The ${type} casts Lightning Bolt! You suffer ${damage} damage.`,
+    'acid-bolt':        `The ${type} hurls a bolt of searing acid! You suffer ${damage} damage.`,
+    'light-bolt':       `The ${type} unleashes a blinding bolt of light! You suffer ${damage} damage.`,
     'slime-disease':    `The ${type} coats you in slime! You suffer ${damage} damage.`,
     'magic-blast':      `The ${type} fires a magic ray! You suffer ${damage} damage.`,
     'hellfire':         `The ${type} calls down hellfire! You suffer ${damage} damage.`,
@@ -387,6 +391,7 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
     'terror':           `The ${type} fills you with supernatural terror! You suffer ${damage} damage.`,
     'great-strength':   `The ${type} seizes you with monstrous strength! You suffer ${damage} damage.`,
     'blood-drain':      `The ${type} sinks its fangs in and drains your blood! You suffer ${damage} damage.`,
+    'flash-burn':       `The ${type} erupts in a blinding radioactive flash! You suffer ${damage} damage.`,
   };
   return actions[ability ?? ''] ?? `The ${type} strikes you for ${damage} damage.`;
 }

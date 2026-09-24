@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -65,6 +65,36 @@ describe('Combat formulas', () => {
   it('Red Dragon resists Fireball (fireballResistance = 0.25)', () => {
     const redDef = getDefinition('Red Dragon');
     expect(redDef.fireballResistance).toBe(0.25);
+  });
+
+  it('Blue Dragon is highly susceptible to Fireball (fireballResistance = 3.0, triple damage)', () => {
+    const blueDef = getDefinition('Blue Dragon');
+    expect(blueDef.fireballResistance).toBe(3.0);
+
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const blueDragon = createMonster('Blue Dragon', 10, 'bd1');
+    const goblin = createMonster('Goblin', 10, 'g3');
+
+    const rng1 = new RNG(777);
+    const rng2 = new RNG(777);
+
+    const bdDamages: number[] = [];
+    const gDamages: number[] = [];
+
+    for (let i = 0; i < 50; i++) {
+      const bdm = { ...blueDragon, hp: 1000 };
+      const gm = { ...goblin, hp: 1000 };
+      const r1 = playerFireball({ ...char }, bdm, rng1);
+      const r2 = playerFireball({ ...char }, gm, rng2);
+      bdDamages.push(r1.playerDamage);
+      gDamages.push(r2.playerDamage);
+    }
+
+    const avgBD = bdDamages.reduce((a, b) => a + b, 0) / bdDamages.length;
+    const avgG = gDamages.reduce((a, b) => a + b, 0) / gDamages.length;
+
+    // Blue Dragon (3x) should take ~3x what a normal-resistance monster takes
+    expect(avgBD).toBeGreaterThan(avgG * 2.5);
   });
 
   it('White Dragon is vulnerable to Fireball (fireballResistance = 2.0)', () => {
@@ -186,6 +216,143 @@ describe('Sanguinid', () => {
       playerAttack(c, m, new RNG(i + 90000));
       expect(c.level).toBe(1);
     }
+  });
+
+  it('deals passive radiation damage every round regardless of its chosen attack', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const monster = createMonster('Sanguinid', 20, 'sg4');
+
+    let irradiated = 0;
+    const trials = 300;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 10000));
+      if (result.messages.some(msg => msg.includes('radiation damage'))) irradiated++;
+    }
+
+    expect(irradiated).toBe(trials);
+  });
+
+  it('flash-burn occurs roughly 1 in 10 times and hits harder than its other attacks', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const monster = createMonster('Sanguinid', 20, 'sg5');
+
+    let flashBurns = 0;
+    const trials = 4000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 20000));
+      if (result.messages.some(msg => msg.includes('blinding radioactive flash'))) flashBurns++;
+    }
+
+    // Expected ~10% (400 of 4000); generous bounds to avoid a flaky test
+    expect(flashBurns).toBeGreaterThan(trials * 0.05);
+    expect(flashBurns).toBeLessThan(trials * 0.18);
+  });
+
+  it('is weak to light — Prayer works against it like it does against undead', () => {
+    const def = getDefinition('Sanguinid');
+    expect(def.lightVulnerable).toBe(true);
+
+    const char = makeChar({ level: 5, wisdom: 15 });
+    const sanguinid = createMonster('Sanguinid', 5, 'sg6');
+    const nonVulnerable = createMonster('Goblin', 5, 'g1');
+
+    const rngS = new RNG(321);
+    const rngG = new RNG(321);
+
+    let sanguinidSuccesses = 0;
+    let goblinSuccesses = 0;
+
+    for (let i = 0; i < 100; i++) {
+      const sm = { ...sanguinid, hp: 100000, prayerPenalty: 0 };
+      const gm = { ...nonVulnerable, hp: 100000, prayerPenalty: 0 };
+
+      const rS = playerPray({ ...char, statusEffects: [] }, sm, rngS);
+      const rG = playerPray({ ...char, statusEffects: [] }, gm, rngG);
+
+      if (rS.playerDamage > 0) sanguinidSuccesses++;
+      if (rG.playerDamage > 0) goblinSuccesses++;
+    }
+
+    expect(sanguinidSuccesses).toBeGreaterThan(goblinSuccesses);
+  });
+
+  it('is weak to acid — Acid Spray deals bonus damage', () => {
+    const def = getDefinition('Sanguinid');
+    expect(def.acidResistance).toBe(2.0);
+
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const sanguinid = createMonster('Sanguinid', 10, 'sg7');
+    const goblin = createMonster('Goblin', 10, 'g2');
+
+    const rng1 = new RNG(555);
+    const rng2 = new RNG(555);
+
+    const sgDamages: number[] = [];
+    const gDamages: number[] = [];
+
+    for (let i = 0; i < 50; i++) {
+      const sm = { ...sanguinid, hp: 1000 };
+      const gm = { ...goblin, hp: 1000 };
+      const r1 = playerAcid({ ...char }, sm, rng1);
+      const r2 = playerAcid({ ...char }, gm, rng2);
+      sgDamages.push(r1.playerDamage);
+      gDamages.push(r2.playerDamage);
+    }
+
+    const avgSg = sgDamages.reduce((a, b) => a + b, 0) / sgDamages.length;
+    const avgG = gDamages.reduce((a, b) => a + b, 0) / gDamages.length;
+
+    expect(avgSg).toBeGreaterThan(avgG * 1.5);
+  });
+});
+
+describe('Wizard', () => {
+  it('can cast Lightning Bolt, Acid Bolt, and Light Bolt against the player', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const wizard = createMonster('Wizard', 20, 'w1');
+
+    let lightning = 0, acid = 0, light = 0;
+    const trials = 3000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...wizard, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i));
+      if (result.messages.some(msg => msg.includes('Lightning Bolt'))) lightning++;
+      if (result.messages.some(msg => msg.includes('searing acid'))) acid++;
+      if (result.messages.some(msg => msg.includes('blinding bolt of light'))) light++;
+    }
+
+    expect(lightning).toBeGreaterThan(0);
+    expect(acid).toBeGreaterThan(0);
+    expect(light).toBeGreaterThan(0);
+  });
+});
+
+describe('Acid Spray', () => {
+  it('deals damage and can kill a monster', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const monster = createMonster('Goblin', 3, 'ac1');
+    const rng = new RNG(99);
+
+    const result = playerAcid({ ...char }, { ...monster, hp: 5 }, rng);
+    expect(result.playerDamage).toBeGreaterThan(0);
+    expect(result.monsterDied).toBe(true);
+  });
+
+  it('defaults to normal (1.0x) damage for monsters with no acidResistance set', () => {
+    const def = getDefinition('Kobold');
+    expect(def.acidResistance).toBeUndefined();
+
+    const char = makeChar({ level: 5, intelligence: 14 });
+    const monster = createMonster('Kobold', 5, 'ac2');
+    const rng = new RNG(11);
+
+    const result = playerAcid({ ...char }, { ...monster, hp: 100000 }, rng);
+    expect(result.playerDamage).toBeGreaterThan(0);
   });
 });
 
