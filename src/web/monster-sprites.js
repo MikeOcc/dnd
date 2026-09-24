@@ -1351,6 +1351,289 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Aboleth': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth">
+      <defs><filter id="glow-aboleth" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+
+      <path d="M 20 140 Q 50 130 80 138 Q 110 130 140 140 Q 130 150 110 146 Q 80 152 50 146 Q 30 150 20 140 Z" fill="#1a3a4a" opacity="0.7"/>
+      <path d="M 35 136 Q 40 132 45 136" stroke="#6aa0b0" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M 100 138 Q 105 134 110 138" stroke="#6aa0b0" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+      <path d="M 20 100 Q 15 70 45 55 Q 80 40 115 55 Q 145 68 140 98 Q 135 125 100 130 Q 60 132 30 122 Q 15 115 20 100 Z" fill="#3a5a5a" stroke="#1a3234" stroke-width="2.5"/>
+      <path d="M 35 108 Q 70 122 105 110 Q 90 128 65 128 Q 45 126 35 108 Z" fill="#7aa090" opacity="0.85"/>
+      <path d="M 40 68 Q 70 56 100 64" stroke="#5a8a7a" stroke-width="2" fill="none" opacity="0.5"/>
+
+      <path d="M 20 95 Q 6 92 2 78 Q 4 72 10 78 Q 16 88 26 92 Z" fill="#2e4e4e" stroke="#1a3234" stroke-width="1.5"/>
+      <path d="M 130 92 Q 148 88 152 74 Q 148 70 142 76 Q 136 86 126 90 Z" fill="#2e4e4e" stroke="#1a3234" stroke-width="1.5"/>
+      <path d="M 68 42 L 72 24 L 80 40 Z" fill="#2e4e4e" stroke="#1a3234" stroke-width="1.5"/>
+
+      <path d="M 44 88 Q 36 100 40 114" stroke="#3a5a5a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 52 92 Q 46 106 50 120" stroke="#3a5a5a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 60 94 Q 58 108 62 122" stroke="#3a5a5a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 90 94 Q 92 108 88 122" stroke="#3a5a5a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+      <path d="M 46 90 Q 78 100 110 90" stroke="#1a3234" stroke-width="2" fill="none"/>
+
+      <ellipse cx="73" cy="70" rx="26" ry="8" fill="#aaffee" opacity="0.15" filter="url(#glow-aboleth)"/>
+      <circle cx="52" cy="72" r="3.5" fill="#aaffee" stroke="#1a3234" stroke-width="1"/>
+      <circle cx="52" cy="72" r="1.5" fill="#0a1a1a"/>
+      <circle cx="66" cy="68" r="3.5" fill="#aaffee" stroke="#1a3234" stroke-width="1"/>
+      <circle cx="66" cy="68" r="1.5" fill="#0a1a1a"/>
+      <circle cx="80" cy="68" r="3.5" fill="#aaffee" stroke="#1a3234" stroke-width="1"/>
+      <circle cx="80" cy="68" r="1.5" fill="#0a1a1a"/>
+      <circle cx="94" cy="72" r="3.5" fill="#aaffee" stroke="#1a3234" stroke-width="1"/>
+      <circle cx="94" cy="72" r="1.5" fill="#0a1a1a"/>
+
+      <path d="M 30 118 Q 28 126 32 132" stroke="#5a8a7a" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <path d="M 105 116 Q 108 124 104 130" stroke="#5a8a7a" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+    </svg>
+  `,
+
+  'Dracolich': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dracolich">
+      <defs><filter id="glow-dracolich" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#2a2430" stroke="#141018" stroke-width="1.5" opacity="0.8"/>
+      <path d="M 78 65 L 65 38 L 74 18 Z" fill="#3a3242" opacity="0.78"/>
+      <path d="M 65 38 L 74 18 L 58 12 Z" fill="#221e28" opacity="0.75"/>
+      <path d="M 65 38 L 58 12 L 42 18 Z" fill="#3a3242" opacity="0.78"/>
+      <path d="M 65 38 L 42 18 L 32 44 Z" fill="#221e28" opacity="0.75"/>
+      <path d="M 78 65 L 65 38" stroke="#4a4438" stroke-width="1.3"/>
+      <path d="M 65 38 L 74 18" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 65 38 L 58 12" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 65 38 L 42 18" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 65 38 L 32 44" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 74 18 L 79 9 L 76 20 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="0.8"/>
+
+      <g fill="#c8c0a8">
+        <circle cx="52" cy="97" r="6"/>
+        <circle cx="38" cy="90" r="5.5"/>
+        <circle cx="24" cy="92" r="5"/>
+        <circle cx="13" cy="104" r="4.2"/>
+        <circle cx="10" cy="119" r="3.6"/>
+        <circle cx="18" cy="133" r="3"/>
+        <circle cx="14" cy="147" r="2.4"/>
+        <circle cx="7" cy="156" r="2"/>
+      </g>
+      <path d="M 9 154 L 3 148 L 2 160 L 11 161 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1"/>
+
+      <ellipse cx="48" cy="110" rx="6" ry="17" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <ellipse cx="98" cy="100" rx="5.5" ry="15" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
+      <path d="M 40 122 L 36 142 L 50 142 L 52 122 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1.3"/>
+      <path d="M 92 113 L 89 136 L 103 136 L 104 113 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1.3"/>
+      <path d="M 34 142 L 31 153 L 38 143 Z" fill="#e8e0c8"/>
+      <path d="M 40 142 L 39 154 L 45 143 Z" fill="#e8e0c8"/>
+      <path d="M 87 136 L 84 147 L 91 137 Z" fill="#e8e0c8"/>
+      <path d="M 99 136 L 100 148 L 104 137 Z" fill="#e8e0c8"/>
+
+      <path d="M 50 95 Q 55 68 80 64 Q 106 67 108 96 Q 105 120 80 123 Q 55 120 50 95 Z" fill="none" stroke="#4a4438" stroke-width="2.5"/>
+      <g stroke="#d8d0b8" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M 62 78 Q 66 81 70 78"/>
+        <path d="M 72 72 Q 76 75 80 72"/>
+        <path d="M 84 76 Q 88 79 92 76"/>
+        <path d="M 66 96 Q 70 99 74 96"/>
+        <path d="M 86 98 Q 90 101 94 98"/>
+        <path d="M 60 88 Q 64 91 68 88"/>
+        <path d="M 90 88 Q 94 91 98 88"/>
+      </g>
+      <path d="M 80 68 L 80 118" stroke="#c8c0a8" stroke-width="2" opacity="0.7"/>
+
+      <path d="M 82 68 Q 96 54 110 48 Q 120 54 114 64 Q 102 66 92 76 Q 82 78 82 68 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="2"/>
+      <path d="M 108 48 L 96 38 L 110 52 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1"/>
+      <path d="M 116 42 L 100 28 L 123 38 Z" fill="#e8e0c8" stroke="#4a4438" stroke-width="1"/>
+
+      <path d="M 106 46 L 126 39 L 148 45 L 153 53 L 138 56 L 120 58 L 106 58 Z" fill="#d8d0b8" stroke="#4a4438" stroke-width="2"/>
+      <path d="M 112 62 L 132 60 L 147 65 L 151 71 L 136 73 L 118 73 Z" fill="#c8c0a8" stroke="#4a4438" stroke-width="1.6"/>
+      <path d="M 122 58 L 124 64 L 128 58 Z" fill="#f5f0e0"/>
+      <path d="M 131 58 L 133 65 L 137 58 Z" fill="#f5f0e0"/>
+      <path d="M 140 57 L 142 63 L 146 56 Z" fill="#f5f0e0"/>
+      <path d="M 122 66 L 124 60 L 128 66 Z" fill="#f5f0e0"/>
+      <path d="M 133 65 L 135 59 L 139 65 Z" fill="#f5f0e0"/>
+
+      <path d="M 126 68 Q 122 78 128 86" stroke="#66ccff" stroke-width="2" fill="none" opacity="0.7" stroke-linecap="round"/>
+      <circle cx="128" cy="88" r="2" fill="#66ccff" filter="url(#glow-dracolich)" opacity="0.7"/>
+
+      <circle cx="129" cy="50" r="5" fill="#66ccff" filter="url(#glow-dracolich)" opacity="0.85"/>
+      <circle cx="129" cy="50" r="3.5" fill="#0a0a0a"/>
+      <circle cx="129" cy="50" r="1.6" fill="#ffffff" opacity="0.95"/>
+    </svg>
+  `,
+
+  'Nightwalker': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nightwalker">
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+
+      <path d="M 40 158 Q 30 100 45 60 Q 55 30 80 20 Q 105 30 115 60 Q 130 100 120 158 Z" fill="#000000"/>
+
+      <path d="M 42 70 Q 30 66 24 56" stroke="#000000" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <path d="M 118 74 Q 130 70 136 60" stroke="#000000" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <path d="M 48 150 Q 36 154 30 162" stroke="#000000" stroke-width="3" fill="none" opacity="0.5" stroke-linecap="round"/>
+      <path d="M 112 150 Q 124 154 130 162" stroke="#000000" stroke-width="3" fill="none" opacity="0.5" stroke-linecap="round"/>
+      <path d="M 60 156 Q 55 162 50 168" stroke="#000000" stroke-width="2.5" fill="none" opacity="0.4" stroke-linecap="round"/>
+      <path d="M 100 156 Q 105 162 110 168" stroke="#000000" stroke-width="2.5" fill="none" opacity="0.4" stroke-linecap="round"/>
+
+      <circle cx="72" cy="54" r="4" fill="#ffffff" opacity="0.12"/>
+      <circle cx="88" cy="54" r="4" fill="#ffffff" opacity="0.12"/>
+      <circle cx="72" cy="54" r="1.8" fill="#ffffff" opacity="0.95"/>
+      <circle cx="88" cy="54" r="1.8" fill="#ffffff" opacity="0.95"/>
+    </svg>
+  `,
+
+  'Tarrasque': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tarrasque">
+      <defs><filter id="glow-tarrasque" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+
+      <path d="M 20 150 L 35 144 L 40 152 L 25 158 Z" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="1" opacity="0.8"/>
+      <path d="M 120 148 L 135 152 L 132 160 L 118 156 Z" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="1" opacity="0.8"/>
+      <path d="M 45 150 L 55 144 L 62 150" stroke="#2a2a2a" stroke-width="1" fill="none" opacity="0.6"/>
+
+      <path d="M 36 110 Q 14 106 8 86 Q 6 78 12 82 Q 18 100 40 106 Z" fill="#5a4a3a" stroke="#2a2010" stroke-width="2"/>
+      <path d="M 14 88 L 6 78 L 16 84 Z" fill="#d8c8a8"/>
+      <path d="M 20 100 L 12 92 L 22 96 Z" fill="#d8c8a8"/>
+
+      <path d="M 50 122 L 42 142 L 38 156 L 60 156 L 62 140 L 68 122 Z" fill="#5a4a3a" stroke="#2a2010" stroke-width="2.4"/>
+      <path d="M 92 122 L 100 140 L 104 156 L 126 156 L 120 142 L 112 122 Z" fill="#6a5a48" stroke="#2a2010" stroke-width="2.4"/>
+      <path d="M 38 156 L 33 164 L 44 158 Z" fill="#d8c8a8"/>
+      <path d="M 50 156 L 48 165 L 57 158 Z" fill="#d8c8a8"/>
+      <path d="M 104 156 L 109 165 L 116 158 Z" fill="#d8c8a8"/>
+      <path d="M 118 156 L 122 164 L 128 158 Z" fill="#d8c8a8"/>
+
+      <path d="M 34 118 Q 24 72 68 54 Q 110 50 130 78 Q 142 100 128 122 Q 100 138 60 136 Q 30 132 34 118 Z" fill="#5a4a3a" stroke="#2a2010" stroke-width="3"/>
+      <path d="M 46 100 Q 70 116 96 104 Q 84 124 66 122 Q 52 118 46 100 Z" fill="#8a7a64" opacity="0.6"/>
+      <path d="M 50 66 L 58 54 L 66 66 Z" fill="#7a6a54" stroke="#2a2010" stroke-width="1.3"/>
+      <path d="M 68 58 L 76 46 L 84 58 Z" fill="#7a6a54" stroke="#2a2010" stroke-width="1.3"/>
+      <path d="M 86 56 L 94 44 L 102 56 Z" fill="#7a6a54" stroke="#2a2010" stroke-width="1.3"/>
+      <path d="M 104 58 L 112 48 L 118 60 Z" fill="#7a6a54" stroke="#2a2010" stroke-width="1.3"/>
+
+      <path d="M 120 94 Q 132 90 136 78" stroke="#6a5a48" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M 134 76 L 140 68 L 136 78 Z" fill="#d8c8a8"/>
+      <path d="M 138 80 L 144 74 L 138 82 Z" fill="#d8c8a8"/>
+
+      <path d="M 76 46 Q 70 30 58 22 Q 64 36 70 48 Z" fill="#d8c8a8" stroke="#a89868" stroke-width="1.3"/>
+      <path d="M 96 44 Q 104 28 118 22 Q 110 36 102 46 Z" fill="#d8c8a8" stroke="#a89868" stroke-width="1.3"/>
+      <path d="M 84 42 L 86 32 L 90 42 Z" fill="#d8c8a8" stroke="#a89868" stroke-width="1"/>
+
+      <path d="M 70 50 L 84 40 L 102 42 L 112 54 L 108 68 L 88 74 L 72 66 Z" fill="#5a4a3a" stroke="#2a2010" stroke-width="2.6"/>
+
+      <path d="M 80 66 Q 100 88 122 68 Q 112 82 96 84 Q 84 84 76 74 Q 76 68 80 66 Z" fill="#3a0a0a" stroke="#1a0505" stroke-width="1.8"/>
+      <path d="M 84 70 L 86 78 L 90 70 Z" fill="#f2eee2"/>
+      <path d="M 90 72 L 92 82 L 96 72 Z" fill="#f2eee2"/>
+      <path d="M 96 73 L 98 84 L 102 73 Z" fill="#f2eee2"/>
+      <path d="M 102 72 L 104 81 L 108 71 Z" fill="#f2eee2"/>
+      <path d="M 108 70 L 110 78 L 113 69 Z" fill="#f2eee2"/>
+      <path d="M 88 82 L 90 74 L 93 82 Z" fill="#f2eee2"/>
+      <path d="M 96 84 L 98 76 L 101 84 Z" fill="#f2eee2"/>
+      <path d="M 104 82 L 106 75 L 109 82 Z" fill="#f2eee2"/>
+
+      <circle cx="88" cy="54" r="3" fill="#ff3322" filter="url(#glow-tarrasque)" opacity="0.6"/>
+      <ellipse cx="88" cy="54" rx="3" ry="1.8" fill="#ff3322"/>
+      <ellipse cx="88" cy="54" rx="0.6" ry="1" fill="#1a0a00"/>
+    </svg>
+  `,
+
+  'Tiamat': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tiamat">
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="152" rx="52" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 50 90 L 20 60 L 35 68 L 15 40 L 38 58 L 28 30 L 48 52 L 52 72 Q 48 82 50 90 Z" fill="#1a1020" stroke="#0a0512" stroke-width="1.5" opacity="0.92"/>
+      <path d="M 110 90 L 140 60 L 125 68 L 145 40 L 122 58 L 132 30 L 112 52 L 108 72 Q 112 82 110 90 Z" fill="#1a1020" stroke="#0a0512" stroke-width="1.5" opacity="0.92"/>
+
+      <path d="M 48 118 Q 30 122 22 138 Q 20 144 26 140 Q 34 128 50 124 Z" fill="#2a1a30" stroke="#140a18" stroke-width="1.8"/>
+      <path d="M 24 136 L 16 130 L 26 132 Z" fill="#d9cfa8"/>
+
+      <path d="M 55 122 L 50 138 L 46 150" stroke="#2a1a30" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M 100 122 L 106 138 L 110 150" stroke="#2a1a30" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M 44 150 L 40 157 L 48 152 Z" fill="#d9cfa8"/>
+      <path d="M 108 150 L 112 157 L 104 152 Z" fill="#d9cfa8"/>
+
+      <path d="M 45 120 Q 40 95 65 82 Q 95 75 115 90 Q 128 100 122 120 Q 110 135 80 136 Q 55 134 45 120 Z" fill="#2a1a30" stroke="#140a18" stroke-width="2.5"/>
+      <path d="M 60 92 Q 65 88 70 92" stroke="#7a1f1f" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <path d="M 75 88 Q 80 84 85 88" stroke="#1a3a5a" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <path d="M 90 90 Q 95 86 100 90" stroke="#2f8f3f" stroke-width="1.2" fill="none" opacity="0.5"/>
+
+      <path d="M 70 80 Q 55 65 45 42" stroke="#1e2e1e" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 38 38 L 48 32 L 56 38 L 54 46 L 44 48 Z" fill="#1e2e1e" stroke="#0a170a" stroke-width="1.3"/>
+      <path d="M 46 33 L 42 24 L 50 31 Z" fill="#8a9a6a"/>
+      <circle cx="48" cy="40" r="1.8" fill="#ccff33"/>
+
+      <path d="M 76 76 Q 68 56 62 32" stroke="#1a3a5a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 56 26 L 66 20 L 74 26 L 72 34 L 62 36 Z" fill="#1a3a5a" stroke="#0a1a30" stroke-width="1.3"/>
+      <path d="M 64 21 L 61 12 L 68 19 Z" fill="#d0e0f0"/>
+      <circle cx="66" cy="28" r="1.8" fill="#aaeeff"/>
+
+      <path d="M 84 74 Q 84 52 84 28" stroke="#2f8f3f" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M 76 18 L 88 10 L 98 18 L 96 28 L 82 30 Z" fill="#2f8f3f" stroke="#0a2410" stroke-width="1.6"/>
+      <path d="M 87 11 L 84 0 L 92 9 Z" fill="#d9cfa8"/>
+      <circle cx="88" cy="21" r="2.2" fill="#ffb000"/>
+
+      <path d="M 92 76 Q 100 56 106 32" stroke="#d8e8f0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 100 26 L 110 20 L 118 26 L 116 34 L 104 36 Z" fill="#d8e8f0" stroke="#7a98aa" stroke-width="1.3"/>
+      <path d="M 108 21 L 105 12 L 112 19 Z" fill="#e8f4ff"/>
+      <circle cx="110" cy="28" r="1.8" fill="#aaddff"/>
+
+      <path d="M 98 80 Q 113 65 123 42" stroke="#7a1f1f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 116 38 L 126 32 L 134 38 L 132 46 L 122 48 Z" fill="#7a1f1f" stroke="#2a0808" stroke-width="1.3"/>
+      <path d="M 124 33 L 120 24 L 128 31 Z" fill="#2a1a1a"/>
+      <circle cx="126" cy="40" r="1.8" fill="#ff6a1a"/>
+    </svg>
+  `,
+
+  'Asmodeus': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus">
+      <defs><filter id="glow-asmodeus" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
+
+      <path d="M 40 60 L 38 40 L 44 40 L 42 60 Z" fill="#3a3a3a" opacity="0.5"/>
+      <path d="M 118 60 L 116 40 L 122 40 L 120 60 Z" fill="#3a3a3a" opacity="0.5"/>
+
+      <path d="M 55 90 L 30 64 L 40 70 L 22 46 L 42 62 L 34 36 L 50 56 L 56 76 Q 52 84 55 90 Z" fill="#2a0808" stroke="#140404" stroke-width="1.5" opacity="0.9"/>
+      <path d="M 105 90 L 130 64 L 120 70 L 138 46 L 118 62 L 126 36 L 110 56 L 104 76 Q 108 84 105 90 Z" fill="#2a0808" stroke="#140404" stroke-width="1.5" opacity="0.9"/>
+
+      <path d="M 58 118 Q 52 138 50 158 Q 80 164 110 158 Q 108 138 102 118 Q 80 128 58 118 Z" fill="#1a0808" stroke="#0a0404" stroke-width="2"/>
+      <path d="M 62 128 Q 58 144 56 156" stroke="#b08030" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 98 128 Q 102 144 104 156" stroke="#b08030" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <path d="M 60 156 Q 58 148 62 142" stroke="#ff8a3d" stroke-width="1.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+      <path d="M 100 156 Q 102 148 98 142" stroke="#ff8a3d" stroke-width="1.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+      <path d="M 58 118 Q 52 84 80 70 Q 108 84 102 118 Q 90 128 80 128 Q 68 128 58 118 Z" fill="#1a0808" stroke="#0a0404" stroke-width="2.4"/>
+      <path d="M 76 92 L 80 84 L 84 92 L 80 100 Z" fill="#b08030"/>
+
+      <path d="M 62 88 Q 52 94 48 106" stroke="#1a0808" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="46" cy="108" rx="3" ry="2.5" fill="#7a1010" stroke="#4a0808" stroke-width="1"/>
+      <path d="M 44 110 L 40 116 L 44 112 Z" fill="#7a1010"/>
+
+      <path d="M 96 86 Q 108 78 112 58" stroke="#1a0808" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <ellipse cx="112" cy="55" rx="3.5" ry="3" fill="#7a1010" stroke="#4a0808" stroke-width="1"/>
+      <path d="M 112 55 L 116 22" stroke="#4a4a4a" stroke-width="2.5"/>
+      <path d="M 110 22 L 116 12 L 122 22 L 116 28 Z" fill="#b08030" stroke="#6a4a18" stroke-width="1"/>
+      <circle cx="116" cy="18" r="3" fill="#ffaa22" filter="url(#glow-asmodeus)" opacity="0.7"/>
+      <circle cx="116" cy="18" r="1.8" fill="#ffdd44"/>
+
+      <path d="M 70 50 Q 54 44 48 28 Q 46 18 54 24 Q 62 34 72 44 Q 74 48 70 50 Z" fill="#3a1a1a" stroke="#1a0a0a" stroke-width="1.3"/>
+      <path d="M 90 50 Q 106 44 112 28 Q 114 18 106 24 Q 98 34 88 44 Q 86 48 90 50 Z" fill="#3a1a1a" stroke="#1a0a0a" stroke-width="1.3"/>
+
+      <path d="M 68 62 L 74 48 L 86 48 L 92 62 L 88 76 L 72 76 Z" fill="#7a1010" stroke="#4a0808" stroke-width="2"/>
+      <path d="M 74 70 Q 80 73 86 70" stroke="#3a0808" stroke-width="1.3" fill="none"/>
+
+      <circle cx="76" cy="60" r="4" fill="#ffdd44" filter="url(#glow-asmodeus)" opacity="0.85"/>
+      <ellipse cx="76" cy="60" rx="3" ry="2" fill="#ffdd44"/>
+      <circle cx="84" cy="60" r="4" fill="#ffdd44" filter="url(#glow-asmodeus)" opacity="0.85"/>
+      <ellipse cx="84" cy="60" rx="3" ry="2" fill="#ffdd44"/>
+    </svg>
+  `,
+
 };
 
 function getMonsterSprite(type) {
