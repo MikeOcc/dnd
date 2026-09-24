@@ -1634,6 +1634,88 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Sanguinid': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sanguinid">
+      <defs>
+        <filter id="glow-sanguinid-eye" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.6"/></filter>
+        <filter id="glow-sanguinid-aura" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4"/></filter>
+      </defs>
+
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+
+      <circle cx="82" cy="95" r="55" fill="#66ff44" opacity="0.06" filter="url(#glow-sanguinid-aura)"/>
+
+      <path d="M 30 148 Q 60 142 80 146 Q 100 142 130 148 Q 120 154 90 152 Q 60 154 30 148 Z" fill="#1a3a2a" opacity="0.6"/>
+      <path d="M 45 146 Q 50 142 55 146" stroke="#4a8a6a" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <path d="M 108 146 Q 113 142 118 146" stroke="#4a8a6a" stroke-width="1.2" fill="none" opacity="0.5"/>
+
+      <path d="M 62 118 L 55 138 L 50 152 L 64 152 L 70 136 L 74 118 Z" fill="#4a6a4a" stroke="#1a2e1a" stroke-width="2.2"/>
+      <path d="M 88 118 L 96 136 L 102 152 L 88 152 L 82 136 L 78 118 Z" fill="#3e5c3e" stroke="#1a2e1a" stroke-width="2.2"/>
+      <path d="M 50 152 L 45 159 L 53 153 Z" fill="#c9c9a0"/>
+      <path d="M 57 152 L 55 160 L 62 154 Z" fill="#c9c9a0"/>
+      <path d="M 88 152 L 86 160 L 93 154 Z" fill="#c9c9a0"/>
+      <path d="M 96 152 L 98 160 L 102 153 Z" fill="#c9c9a0"/>
+
+      <path d="M 55 118 Q 48 82 76 66 Q 104 68 110 92 Q 112 114 98 124 Q 74 134 55 118 Z" fill="#4a6a4a" stroke="#1a2e1a" stroke-width="2.6"/>
+
+      <g stroke="#1a2e1a" stroke-width="0.8">
+        <path d="M 66 84 L 70 78 L 74 84 L 70 90 Z" fill="#3e5c3e"/>
+        <path d="M 76 80 L 80 74 L 84 80 L 80 86 Z" fill="#5a7a5a"/>
+        <path d="M 86 82 L 90 76 L 94 82 L 90 88 Z" fill="#3e5c3e"/>
+        <path d="M 62 98 L 66 92 L 70 98 L 66 104 Z" fill="#5a7a5a"/>
+        <path d="M 72 96 L 76 90 L 80 96 L 76 102 Z" fill="#3e5c3e"/>
+        <path d="M 82 98 L 86 92 L 90 98 L 86 104 Z" fill="#5a7a5a"/>
+        <path d="M 92 100 L 96 94 L 100 100 L 96 106 Z" fill="#3e5c3e"/>
+        <path d="M 66 110 L 70 104 L 74 110 L 70 116 Z" fill="#3e5c3e"/>
+        <path d="M 78 112 L 82 106 L 86 112 L 82 118 Z" fill="#5a7a5a"/>
+        <path d="M 90 110 L 94 104 L 98 110 L 94 116 Z" fill="#3e5c3e"/>
+      </g>
+
+      <path d="M 100 88 Q 112 80 116 62" stroke="#4a6a4a" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M 114 60 L 120 52 L 116 62 Z" fill="#c9c9a0"/>
+      <path d="M 117 62 L 124 56 L 119 64 Z" fill="#c9c9a0"/>
+      <path d="M 111 58 L 116 49 L 113 60 Z" fill="#c9c9a0"/>
+
+      <path d="M 58 92 Q 48 98 44 112" stroke="#3e5c3e" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 42 110 L 36 116 L 44 112 Z" fill="#c9c9a0"/>
+      <path d="M 44 114 L 40 122 L 46 116 Z" fill="#c9c9a0"/>
+
+      <path d="M 66 66 L 74 54 L 98 54 L 108 66 L 102 82 L 72 82 Z" fill="#4a6a4a" stroke="#1a2e1a" stroke-width="2.4"/>
+
+      <path d="M 86 54 Q 85 40 88 26" stroke="#3e5c3e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="88" cy="25" r="2.4" fill="#8afa6a" opacity="0.85"/>
+      <circle cx="88" cy="25" r="4" fill="#8afa6a" opacity="0.3" filter="url(#glow-sanguinid-aura)"/>
+
+      <path d="M 68 76 Q 58 80 50 76" stroke="#3e5c3e" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 106 76 Q 116 80 124 76" stroke="#3e5c3e" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+      <path d="M 68 76 L 106 76 L 100 90 L 74 90 Z" fill="#2a0a0a" stroke="#1a0505" stroke-width="1.5"/>
+      <circle cx="74" cy="80" r="2.6" fill="#6a8a5a" stroke="#2a3e1a" stroke-width="0.6"/>
+      <circle cx="80" cy="82" r="2.8" fill="#7a9a6a" stroke="#2a3e1a" stroke-width="0.6"/>
+      <circle cx="87" cy="83" r="3" fill="#6a8a5a" stroke="#2a3e1a" stroke-width="0.6"/>
+      <circle cx="94" cy="82" r="2.8" fill="#7a9a6a" stroke="#2a3e1a" stroke-width="0.6"/>
+      <circle cx="100" cy="80" r="2.6" fill="#6a8a5a" stroke="#2a3e1a" stroke-width="0.6"/>
+      <circle cx="77" cy="87" r="2.2" fill="#7a9a6a" stroke="#2a3e1a" stroke-width="0.5"/>
+      <circle cx="84" cy="88" r="2.4" fill="#6a8a5a" stroke="#2a3e1a" stroke-width="0.5"/>
+      <circle cx="91" cy="87" r="2.2" fill="#7a9a6a" stroke="#2a3e1a" stroke-width="0.5"/>
+
+      <path d="M 70 88 Q 68 94 71 98" stroke="#8a1a1a" stroke-width="1.8" fill="none" opacity="0.8" stroke-linecap="round"/>
+
+      <circle cx="78" cy="62" r="8" fill="#e8f0e0" stroke="#1a2e1a" stroke-width="1.5"/>
+      <circle cx="78" cy="62" r="4" fill="#ff3333" filter="url(#glow-sanguinid-eye)" opacity="0.5"/>
+      <circle cx="78" cy="62" r="4.5" fill="#8a2020"/>
+      <circle cx="78" cy="62" r="2" fill="#1a0505"/>
+      <circle cx="76.5" cy="60.5" r="1" fill="#ffffff" opacity="0.8"/>
+
+      <circle cx="96" cy="62" r="8" fill="#e8f0e0" stroke="#1a2e1a" stroke-width="1.5"/>
+      <circle cx="96" cy="62" r="4" fill="#ff3333" filter="url(#glow-sanguinid-eye)" opacity="0.5"/>
+      <circle cx="96" cy="62" r="4.5" fill="#8a2020"/>
+      <circle cx="96" cy="62" r="2" fill="#1a0505"/>
+      <circle cx="94.5" cy="60.5" r="1" fill="#ffffff" opacity="0.8"/>
+    </svg>
+  `,
+
 };
 
 function getMonsterSprite(type) {
