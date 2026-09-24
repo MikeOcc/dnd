@@ -76,7 +76,7 @@ The browser interface works with keyboard controls (same as terminal) and also p
 To use a different port:
 
 ```bash
-PORT=8080 npm run web
+PORT=3030 npm run web
 ```
 
 ---
