@@ -9,6 +9,15 @@ let characterId = null;
 let spellMenuOpen = false;
 let awaitingAnyKey = false;   // for title / intro / death / victory
 
+// ─── Resume across page refresh ────────────────────────────────────────────
+// The server already persists character + dungeon state to disk on nearly
+// every action; the only thing a refresh loses client-side is "which
+// character was active." Stash that id in localStorage so a refresh can
+// resume the same character instead of dropping back to the title screen.
+
+const CHAR_ID_KEY = 'sevenLevelsCharacterId';
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'death', 'victory'];
+
 // ─── API ─────────────────────────────────────────────────────────────────────
 
 async function apiAction(action, payload) {
@@ -50,6 +59,13 @@ function applyState(state) {
   spellMenuOpen = false;
 
   const phase = state.phase;
+
+  // Remember (or forget) which character to resume on refresh
+  if (RESUMABLE_PHASES.includes(phase) && characterId) {
+    localStorage.setItem(CHAR_ID_KEY, characterId);
+  } else if (phase === 'main-menu' || phase === 'title') {
+    localStorage.removeItem(CHAR_ID_KEY);
+  }
 
   // Status bar
   const statusBar = document.getElementById('status-bar');
@@ -439,7 +455,16 @@ document.getElementById('btn-save')      ?.addEventListener('click', () => apiAc
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 (async () => {
-  // Show title screen immediately
+  const savedCharacterId = localStorage.getItem(CHAR_ID_KEY);
+  if (savedCharacterId) {
+    // Resume where we left off. If the character no longer exists,
+    // loadCharacter() leaves us on the title phase and applyState()
+    // clears the stale id, so this degrades gracefully either way.
+    await apiAction('load', { characterId: savedCharacterId });
+    return;
+  }
+
+  // No character to resume — show the title screen.
   applyState({
     phase: 'title',
     messages: [
