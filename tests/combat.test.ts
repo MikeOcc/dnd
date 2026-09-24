@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -368,6 +368,76 @@ describe('Acid Spray', () => {
 
     const result = playerAcid({ ...char }, { ...monster, hp: 100000 }, rng);
     expect(result.playerDamage).toBeGreaterThan(0);
+  });
+});
+
+describe('Lightning', () => {
+  it('deals damage and can kill a monster', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const monster = createMonster('Owlbear', 3, 'lt1');
+    const rng = new RNG(99);
+
+    const result = playerLightning({ ...char }, { ...monster, hp: 5 }, rng);
+    expect(result.playerDamage).toBeGreaterThan(0);
+    expect(result.monsterDied).toBe(true);
+  });
+
+  it.each(['Kobold', 'Mold', 'Slime Mold', 'Beholder', 'Black Dragon', 'Red Dragon'] as const)(
+    '%s is explicitly tagged weak to lightning (2.0x)',
+    (type) => {
+      const def = getDefinition(type);
+      expect(def.lightningResistance).toBe(2.0);
+    },
+  );
+
+  it('undead take double lightning damage by default, even without an explicit tag', () => {
+    const def = getDefinition('Skeleton');
+    expect(def.lightningResistance).toBeUndefined();
+
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const skeleton = createMonster('Skeleton', 10, 'lt2');
+    const goblin = createMonster('Goblin', 10, 'lt3');
+
+    const rng1 = new RNG(555);
+    const rng2 = new RNG(555);
+
+    const skDamages: number[] = [];
+    const gDamages: number[] = [];
+    for (let i = 0; i < 50; i++) {
+      const sm = { ...skeleton, hp: 1000 };
+      const gm = { ...goblin, hp: 1000 };
+      skDamages.push(playerLightning({ ...char }, sm, rng1).playerDamage);
+      gDamages.push(playerLightning({ ...char }, gm, rng2).playerDamage);
+    }
+
+    const avgSk = skDamages.reduce((a, b) => a + b, 0) / skDamages.length;
+    const avgG = gDamages.reduce((a, b) => a + b, 0) / gDamages.length;
+    expect(avgSk).toBeGreaterThan(avgG * 1.5);
+  });
+
+  it('an explicit lightningResistance tag overrides the undead default', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const skeleton = createMonster('Skeleton', 10, 'lt4');
+    // Undead default to 2.0x; force this one down to 0.4x and confirm the
+    // explicit tag wins over the isUndead() fallback in playerLightning().
+    const resistantSkeleton = {
+      ...skeleton,
+      definition: { ...skeleton.definition, lightningResistance: 0.4 },
+    };
+
+    const rngDefault = new RNG(321);
+    const rngOverride = new RNG(321);
+
+    const defaultDamages: number[] = [];
+    const overrideDamages: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      defaultDamages.push(playerLightning({ ...char }, { ...skeleton, hp: 1000 }, rngDefault).playerDamage);
+      overrideDamages.push(playerLightning({ ...char }, { ...resistantSkeleton, hp: 1000 }, rngOverride).playerDamage);
+    }
+
+    const avgDefault = defaultDamages.reduce((a, b) => a + b, 0) / defaultDamages.length;
+    const avgOverride = overrideDamages.reduce((a, b) => a + b, 0) / overrideDamages.length;
+    expect(avgOverride).toBeLessThan(avgDefault / 2);
   });
 });
 

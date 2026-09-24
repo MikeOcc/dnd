@@ -84,6 +84,12 @@ export const COMBAT = {
   ACID_RAND_MIN: 0.8,
   ACID_RAND_MAX: 1.4,
 
+  // Lightning: (charLevel*2 + INT/2) * randomFactor
+  LIGHTNING_LEVEL_MULT: 2,
+  LIGHTNING_INT_DIVISOR: 2,
+  LIGHTNING_RAND_MIN: 0.8,
+  LIGHTNING_RAND_MAX: 1.4,
+
   // Heal: (charLevel + WIS/2) * randomFactor
   HEAL_LEVEL_WEIGHT: 1.0,
   HEAL_WIS_DIVISOR: 2,

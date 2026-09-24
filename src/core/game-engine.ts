@@ -7,7 +7,7 @@ import type {
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { computeFOV, displayToDungeon } from './field-of-view.js';
-import { playerAttack, playerFireball, playerAcid, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, resolveBook, resolveAltar, resolveFountain,
@@ -819,6 +819,7 @@ export class GameEngine {
     if (spell === 'a') return this.combatFireball();
     if (spell === 'b') return this.combatHeal();
     if (spell === 'c') return this.combatAcid();
+    if (spell === 'd') return this.combatLightning();
     // Cancel — back to combat
     this.phase = 'combat';
     this.messages = ['You reconsider.'];
@@ -832,7 +833,8 @@ export class GameEngine {
       { key: 'a', text: 'Fireball' },
       { key: 'b', text: 'Heal' },
       { key: 'c', text: 'Acid Spray' },
-      { key: 'd', text: 'Cancel' },
+      { key: 'd', text: 'Lightning' },
+      { key: 'e', text: 'Cancel' },
     ];
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
     return spellState;
@@ -850,6 +852,11 @@ export class GameEngine {
 
   private combatAcid(): GameState {
     const result = playerAcid(this.char!, this.combat!.monster, this.rng);
+    return this.processCombatResult(result);
+  }
+
+  private combatLightning(): GameState {
+    const result = playerLightning(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 

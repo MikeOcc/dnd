@@ -8,6 +8,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 1, maxLevel: 6, naturalTier: 1, minDungeonLevel: 1, speed: 1.2,
     baseHpPerLevel: 4, baseAttackPerLevel: 1.5, baseDefensePerLevel: 0.8,
     fireballResistance: 1.0,
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['A scaly little creature leaps from the shadows.', '', 'You have encountered a Level {LVL} Kobold!'],
     specialAbilities: [],
   },
@@ -64,6 +65,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 1, maxLevel: 10, naturalTier: 1, minDungeonLevel: 1, speed: 0.3,
     baseHpPerLevel: 6, baseAttackPerLevel: 2.0, baseDefensePerLevel: 0.5,
     fireballResistance: 1.0,
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['A pulsating mass of mold oozes toward you.', '', 'You have encountered a Level {LVL} Mold!'],
     specialAbilities: ['spore-poison'],
   },
@@ -72,6 +74,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 2, maxLevel: 12, naturalTier: 2, minDungeonLevel: 1, speed: 0.4,
     baseHpPerLevel: 8, baseAttackPerLevel: 2.5, baseDefensePerLevel: 1.0,
     fireballResistance: 1.0,
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['A glistening slime mold absorbs the light around it.', '', 'You have encountered a Level {LVL} Slime Mold!'],
     specialAbilities: ['acid-touch'],
   },
@@ -167,6 +170,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 12, baseAttackPerLevel: 6.0, baseDefensePerLevel: 3.5,
     fireballResistance: 0.9,
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['A great floating sphere covered in eyes rotates slowly toward you.', '', 'You have encountered a Level {LVL} Beholder!'],
     specialAbilities: ['magic-blast', 'paralyze-ray', 'fear-ray', 'life-drain-ray', 'weaken-ray', 'spell-interrupt'],
   },
@@ -193,6 +197,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.0, baseDefensePerLevel: 4.0,
     fireballResistance: 1.0,
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['Acid hisses as it strikes the stone floor.', '', 'You have encountered a Level {LVL} Black Dragon!'],
     specialAbilities: ['acid-breath'],
   },
@@ -225,6 +230,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 10, maxLevel: 50, naturalTier: 8, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 16, baseAttackPerLevel: 8.0, baseDefensePerLevel: 4.5,
     fireballResistance: 0.25,  // strongly resistant to fireball
+    lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['Heat floods the corridor. Flame flickers in the distance.', '', 'You have encountered a Level {LVL} Red Dragon!'],
     specialAbilities: ['fire-breath'],
   },

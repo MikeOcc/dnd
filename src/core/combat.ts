@@ -131,6 +131,45 @@ export function playerAcid(char: Character, monster: Monster, rng: RNG): CombatR
   };
 }
 
+// ─── Lightning ───────────────────────────────────────────────────────────────
+
+export function playerLightning(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+  // Undead are vulnerable to lightning as a category; specific monsters
+  // (Kobold, Slime Mold, Mold, Black Dragon, Red Dragon, Beholder) are
+  // tagged individually. Explicit tags always win over the undead default.
+  const lightningResistance = monster.definition.lightningResistance
+    ?? (isUndead(monster.type) ? 2.0 : 1.0);
+
+  const base = char.level * COMBAT.LIGHTNING_LEVEL_MULT
+    + Math.floor(eff.intelligence / COMBAT.LIGHTNING_INT_DIVISOR);
+  const rand = COMBAT.LIGHTNING_RAND_MIN + rng.float() * (COMBAT.LIGHTNING_RAND_MAX - COMBAT.LIGHTNING_RAND_MIN);
+  const damage = Math.max(1, Math.round(base * rand * lightningResistance));
+
+  const messages: string[] = [];
+
+  if (lightningResistance <= 0.3) {
+    messages.push(`The ${monster.type} shrugs off most of the lightning! (${Math.round((1 - lightningResistance) * 100)}% resistant)`);
+  } else if (lightningResistance >= 1.8) {
+    messages.push(`Lightning! The ${monster.type} is particularly vulnerable to lightning!`);
+  } else {
+    messages.push('You cast Lightning!');
+  }
+
+  monster.hp -= damage;
+  messages.push(`The ${monster.type} takes ${damage} lightning damage.`);
+
+  const monsterDied = monster.hp <= 0;
+  if (monsterDied) messages.push(`The ${monster.type} is charred by the bolt!`);
+
+  const res = monsterAction(char, monster, rng, messages);
+  return {
+    ...res,
+    playerDamage: damage,
+    monsterDied,
+  };
+}
+
 // ─── Heal ────────────────────────────────────────────────────────────────────
 
 export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
