@@ -83,3 +83,48 @@ describe('GameEngine — death screen', () => {
     expect(state.phase).toBe('main-menu');
   });
 });
+
+describe('GameEngine — unique boss level rolls', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it("Asmodeus's level varies between 40 and 100 across encounters", () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+
+    const levels = new Set<number>();
+    for (let i = 0; i < 60; i++) {
+      const state = e.startFixedEncounter(
+        { id: `unique-asmodeus-${i}`, type: 'unique-monster', monsterId: 'Asmodeus' },
+        'Asmodeus',
+      );
+      levels.add(state.combat.monster.level);
+      expect(state.combat.monster.level).toBeGreaterThanOrEqual(40);
+      expect(state.combat.monster.level).toBeLessThanOrEqual(100);
+    }
+    // Should see real variation, not the same roll every time
+    expect(levels.size).toBeGreaterThan(5);
+  });
+
+  it('other unique bosses (fixed min===max range) still always roll the same level', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+
+    for (let i = 0; i < 20; i++) {
+      const state = e.startFixedEncounter(
+        { id: `unique-tarrasque-${i}`, type: 'unique-monster', monsterId: 'Tarrasque' },
+        'Tarrasque',
+      );
+      expect(state.combat.monster.level).toBe(40);
+    }
+  });
+});

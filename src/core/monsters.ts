@@ -315,7 +315,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Asmodeus': {
     type: 'Asmodeus', isUndead: false, isUnique: true,
-    minLevel: 50, maxLevel: 50, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
+    minLevel: 40, maxLevel: 100, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 30, baseAttackPerLevel: 14.0, baseDefensePerLevel: 8.0,
     fireballResistance: 0.25,
     encounterIntro: [

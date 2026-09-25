@@ -555,6 +555,20 @@ describe('Chromatic dragon elemental oppositions', () => {
   });
 });
 
+describe('Asmodeus level range', () => {
+  it('has a wide 40-100 range instead of a single fixed level', () => {
+    const def = getDefinition('Asmodeus');
+    expect(def.minLevel).toBe(40);
+    expect(def.maxLevel).toBe(100);
+  });
+
+  it('createMonster clamps within that range', () => {
+    expect(createMonster('Asmodeus', 10, 'a1').level).toBe(40);
+    expect(createMonster('Asmodeus', 500, 'a2').level).toBe(100);
+    expect(createMonster('Asmodeus', 75, 'a3').level).toBe(75);
+  });
+});
+
 describe('XP rewards', () => {
   it('gives more XP for higher-level monsters', () => {
     const xpLow = calculateXPReward(5, 3, false);

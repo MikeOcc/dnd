@@ -766,8 +766,12 @@ export class GameEngine {
   private startFixedEncounter(content: CellContent, monsterType: import('./types.js').MonsterType): GameState {
     if (!this.char) return this.getState();
     const def = getDefinition(monsterType);
+    // Unique bosses roll a level in their own [minLevel, maxLevel] range each
+    // encounter. For every boss except Asmodeus that range is a single fixed
+    // value (min === max), so this is a no-op for them — Asmodeus is the only
+    // one with real spread (40-100).
     const lvl = content.type === 'unique-monster'
-      ? def.minLevel
+      ? this.rng.int(def.minLevel, def.maxLevel)
       : Math.max(def.minLevel, Math.min(def.maxLevel,
           this.char.level + (this.char.dungeonLevel - 1) + this.rng.int(-2, 2)));
 
