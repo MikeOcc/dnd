@@ -6,7 +6,7 @@ export const CHARACTER = {
 
 export const GAMEPLAY = {
   REGEN_HP_EVERY_N_STEPS: 10,    // +1 HP per N steps walked (passive regen)
-  REGEN_HP_EVERY_N_WAITS: 5,     // +1 HP per N wait actions (resting in place)
+  REGEN_HP_EVERY_N_WAITS: 3,     // +1 HP per N wait actions (resting in place)
   WAIT_ENCOUNTER_GRACE: 3,       // rest ticks before wandering monster risk begins
   WAIT_ENCOUNTER_CHANCE: 0.04,   // chance per tick after grace period
   POTION_HEAL_MIN: 15,
@@ -34,8 +34,8 @@ export const CONTENT_PER_LEVEL = {
   BOOKS_MAX: 4,
   ALTARS_MIN: 1,
   ALTARS_MAX: 3,
-  FOUNTAINS_MIN: 1,
-  FOUNTAINS_MAX: 2,
+  FOUNTAINS_MIN: 2,
+  FOUNTAINS_MAX: 4,
   TRAPS_MIN: 5,
   TRAPS_MAX: 10,
   FIXED_MONSTERS_MIN: 2,

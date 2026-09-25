@@ -3,9 +3,9 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
-  resolveFountain, applyDeath,
+  resolveFountain, resolveChest, applyDeath,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY } from '../src/core/config.js';
 
 function makeChar() {
   const rng = new RNG(1);
@@ -121,6 +121,53 @@ describe('Fountain healing', () => {
       }
     }
     expect(found).toBe(true);
+  });
+});
+
+describe('Chest loot', () => {
+  it('grants potions at approximately 20% rate (statistical)', () => {
+    const rng = new RNG(2468);
+    let potionChests = 0;
+    const trials = 10000;
+
+    for (let i = 0; i < trials; i++) {
+      const char = makeChar();
+      const before = char.inventory.potions;
+      resolveChest(char, rng);
+      if (char.inventory.potions > before) potionChests++;
+    }
+
+    const rate = potionChests / trials;
+    expect(rate).toBeGreaterThan(0.15);
+    expect(rate).toBeLessThan(0.25);
+  });
+
+  it('can grant multiple potions in a single chest (1-4)', () => {
+    const rng = new RNG(13579);
+    const counts = new Set<number>();
+
+    for (let i = 0; i < 2000; i++) {
+      const char = makeChar();
+      const before = char.inventory.potions;
+      resolveChest(char, rng);
+      const gained = char.inventory.potions - before;
+      if (gained > 0) counts.add(gained);
+    }
+
+    expect(Math.max(...counts)).toBeGreaterThan(1);
+    expect(Math.max(...counts)).toBeLessThanOrEqual(4);
+    expect(Math.min(...counts)).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('Level generation tuning', () => {
+  it('places more fountains per level than the old 1-2 range', () => {
+    expect(CONTENT_PER_LEVEL.FOUNTAINS_MIN).toBeGreaterThanOrEqual(2);
+    expect(CONTENT_PER_LEVEL.FOUNTAINS_MAX).toBeGreaterThan(2);
+  });
+
+  it('waiting regenerates HP faster than the old every-5 rate', () => {
+    expect(GAMEPLAY.REGEN_HP_EVERY_N_WAITS).toBeLessThan(5);
   });
 });
 

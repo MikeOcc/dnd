@@ -97,8 +97,8 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     return { messages: [`You find ${gold} gold coins!`], goldGained: gold };
   }
 
-  if (roll < 0.50) {
-    const count = rng.int(1, 3);
+  if (roll < 0.55) {
+    const count = rng.int(1, 4);
     char.inventory.potions += count;
     return { messages: [
       `You find ${count === 1 ? 'a healing potion' : `${count} healing potions`}!`,
@@ -106,13 +106,13 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     ]};
   }
 
-  if (roll < 0.60) {
+  if (roll < 0.65) {
     const xp = rng.int(20, 60) * char.level;
     char.xp += xp;
     return { messages: [`A glowing crystal. You gain ${xp} experience.`], xpGained: xp };
   }
 
-  if (roll < 0.65) {
+  if (roll < 0.70) {
     const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma', 'resistance'] as const;
     const stat = rng.pick([...stats]);
     (char[stat] as number) += 1;
@@ -122,7 +122,7 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     };
   }
 
-  if (roll < 0.78) {
+  if (roll < 0.80) {
     return { messages: ['The chest is empty. Disappointing.'] };
   }
 
@@ -133,7 +133,7 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     return { messages: [`TRAP! A blade springs from the chest! You take ${dmg} damage.`] };
   }
 
-  if (roll < 0.93) {
+  if (roll < 0.92) {
     const stat = 'constitution';
     (char[stat] as number) = Math.max(3, (char[stat] as number) - 1);
     return {
