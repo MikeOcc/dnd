@@ -242,7 +242,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Aboleth': {
     type: 'Aboleth', isUndead: false, isUnique: true,
-    minLevel: 30, maxLevel: 30, naturalTier: 9, minDungeonLevel: 6, speed: 0.8,
+    minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 6, speed: 0.8,
     baseHpPerLevel: 20, baseAttackPerLevel: 9.0, baseDefensePerLevel: 5.0,
     fireballResistance: 1.0,
     encounterIntro: [
@@ -257,7 +257,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Dracolich': {
     type: 'Dracolich', isUndead: true, isUnique: true,
-    minLevel: 35, maxLevel: 35, naturalTier: 9, minDungeonLevel: 6, speed: 0.9,
+    minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 6, speed: 0.9,
     baseHpPerLevel: 18, baseAttackPerLevel: 9.5, baseDefensePerLevel: 5.5,
     fireballResistance: 0.9,
     encounterIntro: [
@@ -272,7 +272,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Nightwalker': {
     type: 'Nightwalker', isUndead: true, isUnique: true,
-    minLevel: 35, maxLevel: 35, naturalTier: 9, minDungeonLevel: 7, speed: 1.1,
+    minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 7, speed: 1.1,
     baseHpPerLevel: 16, baseAttackPerLevel: 10.0, baseDefensePerLevel: 5.0,
     fireballResistance: 1.0,
     encounterIntro: [
@@ -286,7 +286,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Tarrasque': {
     type: 'Tarrasque', isUndead: false, isUnique: true,
-    minLevel: 40, maxLevel: 40, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
+    minLevel: 72, maxLevel: 90, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 25, baseAttackPerLevel: 12.0, baseDefensePerLevel: 7.0,
     fireballResistance: 0.5,
     encounterIntro: [
@@ -301,7 +301,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Tiamat': {
     type: 'Tiamat', isUndead: false, isUnique: true,
-    minLevel: 45, maxLevel: 45, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
+    minLevel: 72, maxLevel: 90, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 22, baseAttackPerLevel: 11.0, baseDefensePerLevel: 6.5,
     fireballResistance: 0.5,  // has white dragon head so vulnerable in one sense, but multi-headed
     encounterIntro: [
@@ -315,7 +315,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Asmodeus': {
     type: 'Asmodeus', isUndead: false, isUnique: true,
-    minLevel: 40, maxLevel: 100, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
+    minLevel: 80, maxLevel: 100, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 30, baseAttackPerLevel: 14.0, baseDefensePerLevel: 8.0,
     fireballResistance: 0.25,
     encounterIntro: [
@@ -365,7 +365,8 @@ export function randomMonsterLevel(
 ): number {
   const ranges = MONSTER_SCALING.LEVEL_RANGE_BY_DUNGEON_LEVEL;
   const range = ranges[Math.max(0, Math.min(ranges.length - 1, dungeonDepth - 1))];
-  const cappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
+  const uncappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
+  const cappedMax = Math.min(MONSTER_SCALING.HARD_LEVEL_CAP, uncappedMax);
   return rng.int(range.min, Math.max(range.min, cappedMax));
 }
 

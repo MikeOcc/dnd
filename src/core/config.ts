@@ -166,10 +166,19 @@ export const COMBAT = {
 } as const;
 
 export const LEVELING = {
-  // XP thresholds for each character level (index = level)
-  XP_TABLE: [0, 0, 100, 300, 700, 1500, 3000, 5500, 9000, 14000, 21000,
-             30000, 42000, 57000, 75000, 97000, 125000, 159000, 200000, 249000, 307000],
-  MAX_LEVEL: 20,
+  // XP thresholds for each character level (index = level). Levels 1-20
+  // follow the original curve; 21-60 continue it with a decaying growth
+  // ratio (approaching ~1.10x per level) so the climb keeps steepening
+  // without exploding into absurd numbers by the level-60 cap.
+  XP_TABLE: [
+    0, 0, 100, 300, 700, 1500, 3000, 5500, 9000, 14000, 21000,
+    30000, 42000, 57000, 75000, 97000, 125000, 159000, 200000, 249000, 307000,
+    375400, 455800, 550000, 660000, 788100, 936900, 1109300, 1308500, 1538100, 1802200,
+    2105300, 2452400, 2849100, 3301700, 3817100, 4403000, 5068000, 5821600, 6674400, 7638100,
+    8725600, 9951300, 11331100, 12882600, 14625300, 16580700, 18772600, 21227300, 23973900, 27044500,
+    30474500, 34303100, 38573500, 43333400, 48635400, 54537600, 61104000, 68405300, 76519400, 85532200,
+  ],
+  MAX_LEVEL: 60,
 
   // HP gain per level: const + CON_DIVISOR roll
   HP_PER_LEVEL_BASE: 4,
@@ -211,6 +220,12 @@ export const MONSTER_SCALING = {
   // A stronger character pushes what they run into even on the same floor:
   // the level ceiling always gets + floor(characterLevel / this) added on top.
   CHAR_LEVEL_CAP_DIVISOR: 4,
+
+  // Ordinary (non-unique) monsters never exceed this regardless of depth or
+  // character-level bonus. Unique bosses are exempt — they roll within their
+  // own per-boss range instead, which starts where this cap ends (60) and
+  // climbs to 100 for Asmodeus.
+  HARD_LEVEL_CAP: 60,
 } as const;
 
 export const TREASURE = {

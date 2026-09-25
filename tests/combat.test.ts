@@ -650,16 +650,16 @@ describe('Chromatic dragon elemental oppositions', () => {
 });
 
 describe('Asmodeus level range', () => {
-  it('has a wide 40-100 range instead of a single fixed level', () => {
+  it('has a wide 80-100 range, the top of the unique-boss band', () => {
     const def = getDefinition('Asmodeus');
-    expect(def.minLevel).toBe(40);
+    expect(def.minLevel).toBe(80);
     expect(def.maxLevel).toBe(100);
   });
 
   it('createMonster clamps within that range', () => {
-    expect(createMonster('Asmodeus', 10, 'a1').level).toBe(40);
+    expect(createMonster('Asmodeus', 10, 'a1').level).toBe(80);
     expect(createMonster('Asmodeus', 500, 'a2').level).toBe(100);
-    expect(createMonster('Asmodeus', 75, 'a3').level).toBe(75);
+    expect(createMonster('Asmodeus', 90, 'a3').level).toBe(90);
   });
 });
 
@@ -689,9 +689,18 @@ describe('randomMonsterLevel — dungeon-depth scaling', () => {
       expect(lvl1).toBeGreaterThanOrEqual(5);
       expect(lvl1).toBeLessThanOrEqual(20);
 
+      // Level-7 band is 50-90 before the hard cap, so it's clamped to 60.
       const lvl7 = randomMonsterLevel(1, 7, rng);
       expect(lvl7).toBeGreaterThanOrEqual(50);
-      expect(lvl7).toBeLessThanOrEqual(90);
+      expect(lvl7).toBeLessThanOrEqual(60);
+    }
+  });
+
+  it('never exceeds the hard level-60 cap for ordinary monsters, even deep with a high-level character', () => {
+    const rng = new RNG(909);
+    for (let i = 0; i < 300; i++) {
+      const lvl = randomMonsterLevel(100, 7, rng);
+      expect(lvl).toBeLessThanOrEqual(60);
     }
   });
 
@@ -719,7 +728,7 @@ describe('randomMonsterLevel — dungeon-depth scaling', () => {
 
       const aboveRange = randomMonsterLevel(1, 99, rng);
       expect(aboveRange).toBeGreaterThanOrEqual(50);
-      expect(aboveRange).toBeLessThanOrEqual(90);
+      expect(aboveRange).toBeLessThanOrEqual(60);
     }
   });
 });

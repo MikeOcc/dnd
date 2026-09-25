@@ -96,7 +96,7 @@ describe('GameEngine — unique boss level rolls', () => {
     db.close();
   });
 
-  it("Asmodeus's level varies between 40 and 100 across encounters", () => {
+  it("Asmodeus's level varies between 80 and 100 across encounters", () => {
     const engine = makeReadyEngine(db);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
@@ -108,24 +108,37 @@ describe('GameEngine — unique boss level rolls', () => {
         'Asmodeus',
       );
       levels.add(state.combat.monster.level);
-      expect(state.combat.monster.level).toBeGreaterThanOrEqual(40);
+      expect(state.combat.monster.level).toBeGreaterThanOrEqual(80);
       expect(state.combat.monster.level).toBeLessThanOrEqual(100);
     }
     // Should see real variation, not the same roll every time
     expect(levels.size).toBeGreaterThan(5);
   });
 
-  it('other unique bosses (fixed min===max range) still always roll the same level', () => {
+  it('every unique boss now has a real range and rolls a fresh level each encounter', () => {
     const engine = makeReadyEngine(db);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
 
-    for (let i = 0; i < 20; i++) {
-      const state = e.startFixedEncounter(
-        { id: `unique-tarrasque-${i}`, type: 'unique-monster', monsterId: 'Tarrasque' },
-        'Tarrasque',
-      );
-      expect(state.combat.monster.level).toBe(40);
+    for (const [monsterId, min, max] of [
+      ['Aboleth', 60, 75],
+      ['Dracolich', 60, 75],
+      ['Nightwalker', 60, 75],
+      ['Tarrasque', 72, 90],
+      ['Tiamat', 72, 90],
+    ] as const) {
+      const levels = new Set<number>();
+      for (let i = 0; i < 40; i++) {
+        const state = e.startFixedEncounter(
+          { id: `unique-${monsterId}-${i}`, type: 'unique-monster', monsterId },
+          monsterId,
+        );
+        levels.add(state.combat.monster.level);
+        expect(state.combat.monster.level).toBeGreaterThanOrEqual(min);
+        expect(state.combat.monster.level).toBeLessThanOrEqual(max);
+      }
+      // Should see real variation, not the same roll every time
+      expect(levels.size).toBeGreaterThan(3);
     }
   });
 });
