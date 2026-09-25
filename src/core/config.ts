@@ -25,6 +25,7 @@ export const DUNGEON = {
   EXTRA_LOOPS: 8,
   BOSS_X: 40,  // Asmodeus target column on level 7
   BOSS_Y: 30,  // Asmodeus target row on level 7
+  MAP_VIEW_RADIUS: 12,  // the M command shows a (2*R+1)-square window centered on the player
 } as const;
 
 export const CONTENT_PER_LEVEL = {
@@ -115,6 +116,21 @@ export const COMBAT = {
   PRAYER_NON_UNDEAD_BASE_CHANCE: 0.30,
   PRAYER_PENALTY_PER_USE: 0.20,  // each prayer reduces chance by 20%
   PRAYER_ASMODEUS_MULT: 0.35,
+
+  // Prayer vs powerful-but-not-undead monsters (Beholders, Dragons, and
+  // other naturalTier>=7 non-undead) — a fainter echo of the undead effect.
+  PRAYER_POWERFUL_NATURAL_TIER: 7,
+  PRAYER_POWERFUL_BASE_CHANCE: 0.40,
+  PRAYER_POWERFUL_DAMAGE_MIN: 0.3,
+  PRAYER_POWERFUL_DAMAGE_MAX: 0.9,
+
+  // The more desperate the prayer, the more likely it's heard.
+  PRAYER_LOW_HP_CHANCE_BONUS: 0.25,  // added at 0 HP, scaled by missing-HP fraction
+
+  // Heaven won't smite something far beneath you — and may rebuke the attempt.
+  PRAYER_WEAK_MONSTER_LEVEL_RATIO: 0.5,  // monster.level < char.level * this => unworthy
+  PRAYER_BACKFIRE_CHANCE: 0.15,
+  PRAYER_BACKFIRE_DAMAGE_MULT: 0.4,
 
   // Run
   RUN_BASE_CHANCE: 0.55,

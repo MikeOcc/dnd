@@ -161,6 +161,92 @@ describe('Combat formulas', () => {
   });
 });
 
+describe('Prayer — tiered targets', () => {
+  it('hits powerful non-undead foes (Beholder, dragons) more often than ordinary ones, but less than undead', () => {
+    const char = makeChar({ level: 20, wisdom: 15 });
+    const undead = createMonster('Spectre', 20, 'u1');
+    const powerful = createMonster('Beholder', 20, 'p1');
+    const ordinary = createMonster('Goblin', 20, 'o1');
+
+    let undeadHits = 0, powerfulHits = 0, ordinaryHits = 0;
+    for (let trial = 0; trial < 300; trial++) {
+      const um = { ...undead, hp: 100000, prayerPenalty: 0 };
+      const pm = { ...powerful, hp: 100000, prayerPenalty: 0 };
+      const om = { ...ordinary, hp: 100000, prayerPenalty: 0 };
+
+      const rU = playerPray(makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 }), um, new RNG(trial));
+      const rP = playerPray(makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 }), pm, new RNG(trial));
+      const rO = playerPray(makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 }), om, new RNG(trial));
+
+      if (rU.playerDamage > 0) undeadHits++;
+      if (rP.playerDamage > 0) powerfulHits++;
+      if (rO.playerDamage > 0) ordinaryHits++;
+    }
+
+    expect(undeadHits).toBeGreaterThan(powerfulHits);
+    expect(powerfulHits).toBeGreaterThan(ordinaryHits);
+  });
+
+  it('powerful non-undead foes take noticeably less holy damage per hit than true undead', () => {
+    const undead = createMonster('Spectre', 20, 'u2');
+    const powerful = createMonster('Beholder', 20, 'p2');
+
+    const undeadDamages: number[] = [];
+    const powerfulDamages: number[] = [];
+    for (let trial = 0; trial < 200; trial++) {
+      const um = { ...undead, hp: 100000, prayerPenalty: 0 };
+      const pm = { ...powerful, hp: 100000, prayerPenalty: 0 };
+      const rU = playerPray(makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 }), um, new RNG(trial));
+      const rP = playerPray(makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 }), pm, new RNG(trial));
+      if (rU.playerDamage > 0) undeadDamages.push(rU.playerDamage);
+      if (rP.playerDamage > 0) powerfulDamages.push(rP.playerDamage);
+    }
+
+    const avgUndead = undeadDamages.reduce((a, b) => a + b, 0) / undeadDamages.length;
+    const avgPowerful = powerfulDamages.reduce((a, b) => a + b, 0) / powerfulDamages.length;
+    expect(avgUndead).toBeGreaterThan(avgPowerful);
+  });
+
+  it('low HP increases the chance prayer is answered', () => {
+    const undead = createMonster('Skeleton', 10, 's1');
+
+    let fullHpHits = 0, lowHpHits = 0;
+    for (let trial = 0; trial < 300; trial++) {
+      const m1 = { ...undead, hp: 100000, prayerPenalty: 0 };
+      const m2 = { ...undead, hp: 100000, prayerPenalty: 0 };
+      const fullHpChar = makeChar({ level: 10, wisdom: 15, hp: 1000, maxHp: 1000 });
+      const lowHpChar = makeChar({ level: 10, wisdom: 15, hp: 10, maxHp: 1000 });
+
+      const rFull = playerPray(fullHpChar, m1, new RNG(trial));
+      const rLow = playerPray(lowHpChar, m2, new RNG(trial));
+
+      if (rFull.playerDamage > 0) fullHpHits++;
+      if (rLow.playerDamage > 0) lowHpHits++;
+    }
+
+    expect(lowHpHits).toBeGreaterThan(fullHpHits);
+  });
+
+  it('never succeeds against a monster far weaker than the character, and can backfire', () => {
+    const weakling = createMonster('Kobold', 1, 'w1');
+    const char = makeChar({ level: 20, wisdom: 15, hp: 1000, maxHp: 1000 });
+
+    let sawBackfire = false;
+    for (let trial = 0; trial < 200; trial++) {
+      const wm = { ...weakling, level: 1, hp: 1000, prayerPenalty: 0 };
+      const r = playerPray({ ...char, statusEffects: [] }, wm, new RNG(trial));
+
+      // A prayer against something this weak never deals holy damage or kills it.
+      expect(r.playerDamage).toBe(0);
+      expect(r.monsterDied).toBe(false);
+
+      if (r.messages.some(m => m.includes('disembodied voice'))) sawBackfire = true;
+    }
+
+    expect(sawBackfire).toBe(true);
+  });
+});
+
 describe('Sanguinid', () => {
   it('is eligible to appear on any dungeon level', () => {
     const def = getDefinition('Sanguinid');

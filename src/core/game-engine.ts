@@ -214,17 +214,14 @@ export class GameEngine {
       return this.getState();
     }
 
-    // Bounding box of visited cells + 1-cell border
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const k of visited) {
-      const [cx, cy] = k.split(',').map(Number);
-      if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
-      if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
-    }
-    minX = Math.max(0, minX - 1);
-    maxX = Math.min(DUNGEON.WIDTH - 1, maxX + 1);
-    minY = Math.max(0, minY - 1);
-    maxY = Math.min(DUNGEON.HEIGHT - 1, maxY + 1);
+    // Fixed-size window centered on the player, so the map is always
+    // oriented around where you currently are rather than the whole
+    // explored area.
+    const radius = DUNGEON.MAP_VIEW_RADIUS;
+    const minX = Math.max(0, this.char.x - radius);
+    const maxX = Math.min(DUNGEON.WIDTH - 1, this.char.x + radius);
+    const minY = Math.max(0, this.char.y - radius);
+    const maxY = Math.min(DUNGEON.HEIGHT - 1, this.char.y + radius);
 
     const rows: string[] = [];
     for (let cy = minY; cy <= maxY; cy++) {

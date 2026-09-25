@@ -317,22 +317,49 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   // Light-vulnerable monsters (e.g. Sanguinid) take holy light like undead do,
   // even though they aren't undead themselves.
   const lightVulnerable = monster.definition.lightVulnerable === true;
+  const divine = undead || isAsmodeus || lightVulnerable;
+  // Powerful-but-not-undead foes (high-tier beholders, dragons, aberrations)
+  // draw a fainter echo of prayer's power; ordinary creatures barely register.
+  const powerful = !divine && monster.definition.naturalTier >= COMBAT.PRAYER_POWERFUL_NATURAL_TIER;
 
   const penalty = monster.prayerPenalty;
   monster.prayerPenalty = Math.min(1, monster.prayerPenalty + COMBAT.PRAYER_PENALTY_PER_USE);
 
-  let baseChance = (undead || lightVulnerable)
+  let baseChance = divine
     ? COMBAT.PRAYER_UNDEAD_BASE_CHANCE
-    : COMBAT.PRAYER_NON_UNDEAD_BASE_CHANCE;
+    : powerful
+      ? COMBAT.PRAYER_POWERFUL_BASE_CHANCE
+      : COMBAT.PRAYER_NON_UNDEAD_BASE_CHANCE;
   if (isAsmodeus) baseChance *= COMBAT.PRAYER_ASMODEUS_MULT;
 
-  const chance = Math.max(0, baseChance - penalty);
+  // The more desperate the prayer, the more likely it's heard.
+  const hpMissingFrac = 1 - char.hp / char.maxHp;
+  baseChance += hpMissingFrac * COMBAT.PRAYER_LOW_HP_CHANCE_BONUS;
+
+  // Heaven won't smite something far beneath you.
+  const unworthy = monster.level < char.level * COMBAT.PRAYER_WEAK_MONSTER_LEVEL_RATIO;
+
+  const chance = unworthy ? 0 : Math.max(0, baseChance - penalty);
   const messages: string[] = ['You pray.'];
   let monsterDied = false;
   let monsterDamage = 0;
+  let playerSelfDamage = 0;
 
-  if (rng.float() < chance) {
-    if (undead || isAsmodeus || lightVulnerable) {
+  if (unworthy) {
+    if (rng.float() < COMBAT.PRAYER_BACKFIRE_CHANCE) {
+      const base = (char.level + Math.floor(eff.wisdom / 2));
+      playerSelfDamage = Math.max(1, Math.round(base * COMBAT.PRAYER_BACKFIRE_DAMAGE_MULT));
+      char.hp = Math.max(0, char.hp - playerSelfDamage);
+      messages.push('A disembodied voice thunders: "SAVE YOUR PRAYERS FOR A WORTHY FOE."');
+      messages.push(`A wave of heavenly reproach washes over you. (-${playerSelfDamage} HP)`);
+      if (char.hp <= 0) {
+        return { messages, playerDamage: 0, monsterDamage: playerSelfDamage, playerDied: true, monsterDied: false };
+      }
+    } else {
+      messages.push(`This foe is unworthy of divine wrath. No answer comes from above.`);
+    }
+  } else if (rng.float() < chance) {
+    if (divine) {
       const base = (char.level + Math.floor(eff.wisdom / 2));
       const rand = COMBAT.PRAYER_UNDEAD_DAMAGE_MIN
         + rng.float() * (COMBAT.PRAYER_UNDEAD_DAMAGE_MAX - COMBAT.PRAYER_UNDEAD_DAMAGE_MIN);
@@ -356,8 +383,19 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
           messages.push(`The ${monster.type} recoils from the holy light!`);
         }
       }
+    } else if (powerful) {
+      const base = (char.level + Math.floor(eff.wisdom / 2));
+      const rand = COMBAT.PRAYER_POWERFUL_DAMAGE_MIN
+        + rng.float() * (COMBAT.PRAYER_POWERFUL_DAMAGE_MAX - COMBAT.PRAYER_POWERFUL_DAMAGE_MIN);
+      monsterDamage = Math.max(1, Math.round(base * rand));
+
+      messages.push('A faint light gathers, and strikes true.');
+      messages.push(`The ${monster.type} suffers ${monsterDamage} holy damage.`);
+      monster.hp -= monsterDamage;
+      monsterDied = monster.hp <= 0;
+      if (monsterDied) messages.push(`The ${monster.type} is destroyed!`);
     } else {
-      // Non-undead prayer benefits
+      // Non-undead, non-powerful prayer benefits
       const roll = rng.float();
       if (roll < 0.4) {
         const heal = Math.round(char.level * 0.5 + 3);

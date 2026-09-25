@@ -3,6 +3,7 @@ import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
 import { createMonster } from '../src/core/monsters.js';
+import { DUNGEON } from '../src/core/config.js';
 
 // Using 'any' intentionally: DatabaseSync type is lazy-loaded at runtime.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,5 +127,65 @@ describe('GameEngine — unique boss level rolls', () => {
       );
       expect(state.combat.monster.level).toBe(40);
     }
+  });
+});
+
+describe('GameEngine — map centering', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it("shows a fixed-size window with the player's @ at its exact center", () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+
+    // Move the player well away from the map edges and mark cells visited
+    // both near the player and far outside the view radius, to prove the
+    // window is centered on the player rather than fit to everything explored.
+    e.char.x = 40;
+    e.char.y = 30;
+    e.dungeonState.visitedCells = new Set([
+      '40,30',
+      '35,30',
+      '45,30',
+      '0,0',
+      `${DUNGEON.WIDTH - 1},${DUNGEON.HEIGHT - 1}`,
+    ]);
+
+    const state = e.showMap();
+    const r = DUNGEON.MAP_VIEW_RADIUS;
+
+    // Rows: header, top border, (2r+1) map rows, bottom border, blank, legend
+    const mapRows = state.messages.slice(2, 2 + (2 * r + 1));
+    expect(mapRows.length).toBe(2 * r + 1);
+
+    const centerRow = mapRows[r];
+    // Each row is prefixed with two spaces of indentation.
+    const atIndex = centerRow.indexOf('@');
+    expect(atIndex).toBe(2 + r);
+  });
+
+  it('clamps the window near the edge of the dungeon without losing centering on the clamped axis', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+
+    e.char.x = 0;
+    e.char.y = 0;
+    e.dungeonState.visitedCells = new Set(['0,0']);
+
+    const state = e.showMap();
+    const r = DUNGEON.MAP_VIEW_RADIUS;
+    const mapRows = state.messages.slice(2, 2 + (r + 1));
+
+    // Player is in the corner, so the window is clamped to start at (0,0)
+    // and the '@' should be the very first visible cell.
+    const topRow = mapRows[0];
+    expect(topRow.indexOf('@')).toBe(2);
   });
 });
