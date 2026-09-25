@@ -186,23 +186,36 @@ html, body {
 /* Movement controls */
 #movement-controls {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 16px;
   padding: 4px 0;
-  justify-content: center;
+  justify-content: space-between;
 }
 
 .controls-grid {
   display: grid;
-  grid-template-columns: repeat(3, 36px);
-  grid-template-rows: repeat(2, 30px);
-  gap: 3px;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(2, 44px);
+  gap: 4px;
+}
+
+.arrow-btn {
+  font-size: 20px;
 }
 
 .climb-controls {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+/* Status/Save — its own widget, pushed to the far right */
+.status-save-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
 }
 
 .ctrl-btn {
