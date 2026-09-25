@@ -183,39 +183,33 @@ html, body {
   caret-color: var(--green);
 }
 
-/* Movement controls */
+/* Movement controls — compact D-pad (bottom-left) + horizontal command bar */
 #movement-controls {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   padding: 4px 0;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
-.controls-grid {
+.dpad {
   display: grid;
   grid-template-columns: repeat(3, 52px);
   grid-template-rows: repeat(2, 44px);
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .arrow-btn {
   font-size: 20px;
 }
 
-.climb-controls {
+.command-bar {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-/* Status/Save — its own widget, pushed to the far right */
-.status-save-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-left: 14px;
-  border-left: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: center;
 }
 
 .ctrl-btn {
@@ -228,12 +222,19 @@ html, body {
   padding: 2px 4px;
   min-width: 36px;
   height: 30px;
-  transition: background 0.1s;
+  border-radius: 0;
+  transition: background 0.1s, color 0.1s;
 }
 
 .ctrl-btn:hover {
   background: var(--dark-green);
   color: var(--bg);
+}
+
+.ctrl-btn:active {
+  background: var(--green);
+  color: var(--bg);
+  border-color: var(--green);
 }
 
 .ctrl-btn.empty {
