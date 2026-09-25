@@ -226,7 +226,7 @@ The `GameEngine` class is shared by both the CLI and the web server. Neither the
 - Face the direction you want to move, then press Up.
 - Ladders appear as `<` (up) or `>` (down) in the view. Press U or D to use them.
 - Chests, books, altars, fountains, and traps trigger automatically when you step on them.
-- Combat offers: Attack / Spell (Fireball, Heal, Acid Spray, or Lightning) / Pray / Run
+- Combat offers: Attack / Spell (Fireball, Heal, Acid Spray, Lightning, Frost Bolt, or Poison Spray) / Pray / Run
 - Prayer is especially effective against undead.
 - Death returns you to the level entrance. You lose 15% of your gold.
 - Defeat Asmodeus at the center of Level 7 to win.

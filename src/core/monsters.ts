@@ -198,6 +198,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     baseHpPerLevel: 14, baseAttackPerLevel: 7.0, baseDefensePerLevel: 4.0,
     fireballResistance: 1.0,
     lightningResistance: 2.0,  // weak to lightning
+    acidResistance: 0.3,       // resistant to its own breath weapon
     encounterIntro: ['Acid hisses as it strikes the stone floor.', '', 'You have encountered a Level {LVL} Black Dragon!'],
     specialAbilities: ['acid-breath'],
   },
@@ -206,6 +207,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 6.5, baseDefensePerLevel: 4.0,
     fireballResistance: 1.0,
+    acidResistance: 2.0,       // weak to acid
+    poisonResistance: 0.3,     // resistant to its own breath weapon
     encounterIntro: ['Venomous mist curls from enormous jaws.', '', 'You have encountered a Level {LVL} Green Dragon!'],
     specialAbilities: ['poison-breath'],
   },
@@ -214,6 +217,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.5, baseDefensePerLevel: 4.0,
     fireballResistance: 3.0,  // highly susceptible — triple damage from Fireball
+    lightningResistance: 0.3, // resistant to its own breath weapon
     encounterIntro: ['Thunder rolls through the stone corridor.', '', 'You have encountered a Level {LVL} Blue Dragon!'],
     specialAbilities: ['lightning-breath'],
   },
@@ -222,6 +226,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 0.9,
     baseHpPerLevel: 13, baseAttackPerLevel: 6.5, baseDefensePerLevel: 3.8,
     fireballResistance: 2.0,  // vulnerable to fireball
+    coldResistance: 0.3,      // resistant to its own breath weapon
     encounterIntro: ['Frost rimes the walls as a pale shape descends.', '', 'You have encountered a Level {LVL} White Dragon!'],
     specialAbilities: ['frost-breath'],
   },
@@ -229,8 +234,9 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     type: 'Red Dragon', isUndead: false, isUnique: false,
     minLevel: 10, maxLevel: 50, naturalTier: 8, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 16, baseAttackPerLevel: 8.0, baseDefensePerLevel: 4.5,
-    fireballResistance: 0.25,  // strongly resistant to fireball
+    fireballResistance: 0.25,  // strongly resistant to its own breath weapon
     lightningResistance: 2.0,  // weak to lightning
+    coldResistance: 2.0,       // weak to cold
     encounterIntro: ['Heat floods the corridor. Flame flickers in the distance.', '', 'You have encountered a Level {LVL} Red Dragon!'],
     specialAbilities: ['fire-breath'],
   },

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -477,6 +477,81 @@ describe('Elemental vulnerability/resistance warnings', () => {
     // Sanguinid has no special fireballResistance, so no vulnerability line — and
     // critically, the acid warning already recorded shouldn't affect fireball.
     expect(fireResult.messages).toContain('You cast Fireball!');
+  });
+});
+
+describe('Frost Bolt', () => {
+  it('deals damage and can kill a monster', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const monster = createMonster('Owlbear', 3, 'fr1');
+    const rng = new RNG(99);
+
+    const result = playerFrost({ ...char }, { ...monster, hp: 5 }, rng);
+    expect(result.playerDamage).toBeGreaterThan(0);
+    expect(result.monsterDied).toBe(true);
+  });
+
+  it('Red Dragon is weak to frost (2.0x)', () => {
+    const def = getDefinition('Red Dragon');
+    expect(def.coldResistance).toBe(2.0);
+  });
+
+  it('White Dragon resists its own frost breath (0.3x)', () => {
+    const def = getDefinition('White Dragon');
+    expect(def.coldResistance).toBe(0.3);
+  });
+});
+
+describe('Poison Spray', () => {
+  it('deals damage and can kill a monster', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const monster = createMonster('Owlbear', 3, 'po1');
+    const rng = new RNG(99);
+
+    const result = playerPoison({ ...char }, { ...monster, hp: 5 }, rng);
+    expect(result.playerDamage).toBeGreaterThan(0);
+    expect(result.monsterDied).toBe(true);
+  });
+
+  it('Green Dragon resists its own poison breath (0.3x)', () => {
+    const def = getDefinition('Green Dragon');
+    expect(def.poisonResistance).toBe(0.3);
+  });
+});
+
+describe('Chromatic dragon elemental oppositions', () => {
+  it('each dragon resists its own breath weapon', () => {
+    expect(getDefinition('Red Dragon').fireballResistance).toBeLessThanOrEqual(0.3);
+    expect(getDefinition('White Dragon').coldResistance).toBeLessThanOrEqual(0.3);
+    expect(getDefinition('Black Dragon').acidResistance).toBeLessThanOrEqual(0.3);
+    expect(getDefinition('Blue Dragon').lightningResistance).toBeLessThanOrEqual(0.3);
+    expect(getDefinition('Green Dragon').poisonResistance).toBeLessThanOrEqual(0.3);
+  });
+
+  it('Fire and Cold are mutual opposites (Red <-> White)', () => {
+    expect(getDefinition('Red Dragon').coldResistance).toBeGreaterThanOrEqual(1.8);
+    expect(getDefinition('White Dragon').fireballResistance).toBeGreaterThanOrEqual(1.8);
+  });
+
+  it('Green Dragon is weak to acid', () => {
+    expect(getDefinition('Green Dragon').acidResistance).toBeGreaterThanOrEqual(1.8);
+  });
+
+  it('a dragon takes less damage from its own element than from its counter-element', () => {
+    const char = makeChar({ level: 8, intelligence: 16 });
+    const redDragon = createMonster('Red Dragon', 10, 'op1');
+
+    const rngFire = new RNG(444);
+    const rngFrost = new RNG(444);
+    const fireDamages: number[] = [];
+    const frostDamages: number[] = [];
+    for (let i = 0; i < 40; i++) {
+      fireDamages.push(playerFireball({ ...char }, { ...redDragon, hp: 100000 }, rngFire).playerDamage);
+      frostDamages.push(playerFrost({ ...char }, { ...redDragon, hp: 100000 }, rngFrost).playerDamage);
+    }
+    const avgFire = fireDamages.reduce((a, b) => a + b, 0) / fireDamages.length;
+    const avgFrost = frostDamages.reduce((a, b) => a + b, 0) / frostDamages.length;
+    expect(avgFrost).toBeGreaterThan(avgFire * 3);
   });
 });
 

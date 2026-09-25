@@ -7,7 +7,7 @@ import type {
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { computeFOV, displayToDungeon } from './field-of-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, resolveBook, resolveAltar, resolveFountain,
@@ -820,6 +820,8 @@ export class GameEngine {
     if (spell === 'b') return this.combatHeal();
     if (spell === 'c') return this.combatAcid();
     if (spell === 'd') return this.combatLightning();
+    if (spell === 'e') return this.combatFrost();
+    if (spell === 'f') return this.combatPoison();
     // Cancel — back to combat
     this.phase = 'combat';
     this.messages = ['You reconsider.'];
@@ -834,7 +836,9 @@ export class GameEngine {
       { key: 'b', text: 'Heal' },
       { key: 'c', text: 'Acid Spray' },
       { key: 'd', text: 'Lightning' },
-      { key: 'e', text: 'Cancel' },
+      { key: 'e', text: 'Frost Bolt' },
+      { key: 'f', text: 'Poison Spray' },
+      { key: 'g', text: 'Cancel' },
     ];
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
     return spellState;
@@ -857,6 +861,16 @@ export class GameEngine {
 
   private combatLightning(): GameState {
     const result = playerLightning(this.char!, this.combat!.monster, this.rng);
+    return this.processCombatResult(result);
+  }
+
+  private combatFrost(): GameState {
+    const result = playerFrost(this.char!, this.combat!.monster, this.rng);
+    return this.processCombatResult(result);
+  }
+
+  private combatPoison(): GameState {
+    const result = playerPoison(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 

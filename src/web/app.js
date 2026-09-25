@@ -317,7 +317,9 @@ function handleChoiceKey(key, phase) {
         { key: 'b', text: 'Heal' },
         { key: 'c', text: 'Acid Spray' },
         { key: 'd', text: 'Lightning' },
-        { key: 'e', text: 'Cancel' },
+        { key: 'e', text: 'Frost Bolt' },
+        { key: 'f', text: 'Poison Spray' },
+        { key: 'g', text: 'Cancel' },
       ];
       for (const spell of spells) {
         const btn = makeChoiceBtn(spell.key.toUpperCase(), spell.text);
@@ -413,7 +415,7 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'combat') {
     if (spellMenuOpen) {
-      if (['a','b','c','d','e'].includes(key)) {
+      if (['a','b','c','d','e','f','g'].includes(key)) {
         spellMenuOpen = false;
         apiAction('spell', { choice: key });
       }

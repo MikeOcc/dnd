@@ -187,7 +187,9 @@ function handleKey(key: KeyEvent): void {
           { key: 'b', text: 'Heal' },
           { key: 'c', text: 'Acid Spray' },
           { key: 'd', text: 'Lightning' },
-          { key: 'e', text: 'Cancel' },
+          { key: 'e', text: 'Frost Bolt' },
+          { key: 'f', text: 'Poison Spray' },
+          { key: 'g', text: 'Cancel' },
         ];
         state.messages = ['Choose a spell:'];
         render(state);

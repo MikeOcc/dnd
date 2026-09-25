@@ -206,6 +206,92 @@ export function playerLightning(char: Character, monster: Monster, rng: RNG): Co
   };
 }
 
+// ─── Frost Bolt ──────────────────────────────────────────────────────────────
+
+export function playerFrost(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+  const coldResistance = monster.definition.coldResistance ?? 1.0;
+
+  const base = char.level * COMBAT.FROST_LEVEL_MULT
+    + Math.floor(eff.intelligence / COMBAT.FROST_INT_DIVISOR);
+  const rand = COMBAT.FROST_RAND_MIN + rng.float() * (COMBAT.FROST_RAND_MAX - COMBAT.FROST_RAND_MIN);
+  const damage = Math.max(1, Math.round(base * rand * coldResistance));
+
+  const messages: string[] = [];
+
+  if (coldResistance <= 0.3) {
+    if (shouldWarnElemental(char, `${monster.type}:cold`)) {
+      messages.push(`The ${monster.type} shrugs off most of the frost! (${Math.round((1 - coldResistance) * 100)}% resistant)`);
+    } else {
+      messages.push('You cast Frost Bolt!');
+    }
+  } else if (coldResistance >= 1.8) {
+    if (shouldWarnElemental(char, `${monster.type}:cold`)) {
+      messages.push(`Frost Bolt! The ${monster.type} is particularly vulnerable to cold!`);
+    } else {
+      messages.push('You cast Frost Bolt!');
+    }
+  } else {
+    messages.push('You cast Frost Bolt!');
+  }
+
+  monster.hp -= damage;
+  messages.push(`The ${monster.type} takes ${damage} cold damage.`);
+
+  const monsterDied = monster.hp <= 0;
+  if (monsterDied) messages.push(`The ${monster.type} freezes solid and shatters!`);
+
+  const res = monsterAction(char, monster, rng, messages);
+  return {
+    ...res,
+    playerDamage: damage,
+    monsterDied,
+  };
+}
+
+// ─── Poison Spray ────────────────────────────────────────────────────────────
+
+export function playerPoison(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+  const poisonResistance = monster.definition.poisonResistance ?? 1.0;
+
+  const base = char.level * COMBAT.POISON_LEVEL_MULT
+    + Math.floor(eff.intelligence / COMBAT.POISON_INT_DIVISOR);
+  const rand = COMBAT.POISON_RAND_MIN + rng.float() * (COMBAT.POISON_RAND_MAX - COMBAT.POISON_RAND_MIN);
+  const damage = Math.max(1, Math.round(base * rand * poisonResistance));
+
+  const messages: string[] = [];
+
+  if (poisonResistance <= 0.3) {
+    if (shouldWarnElemental(char, `${monster.type}:poison`)) {
+      messages.push(`The ${monster.type} shrugs off most of the poison! (${Math.round((1 - poisonResistance) * 100)}% resistant)`);
+    } else {
+      messages.push('You cast Poison Spray!');
+    }
+  } else if (poisonResistance >= 1.8) {
+    if (shouldWarnElemental(char, `${monster.type}:poison`)) {
+      messages.push(`Poison Spray! The ${monster.type} is particularly vulnerable to poison!`);
+    } else {
+      messages.push('You cast Poison Spray!');
+    }
+  } else {
+    messages.push('You cast Poison Spray!');
+  }
+
+  monster.hp -= damage;
+  messages.push(`The ${monster.type} takes ${damage} poison damage.`);
+
+  const monsterDied = monster.hp <= 0;
+  if (monsterDied) messages.push(`The ${monster.type} succumbs to the poison!`);
+
+  const res = monsterAction(char, monster, rng, messages);
+  return {
+    ...res,
+    playerDamage: damage,
+    monsterDied,
+  };
+}
+
 // ─── Heal ────────────────────────────────────────────────────────────────────
 
 export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatRoundResult {

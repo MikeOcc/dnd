@@ -167,6 +167,8 @@ export interface MonsterDefinition {
   fireballResistance: number;
   acidResistance?: number;      // damage multiplier for Acid Spray; defaults to 1.0
   lightningResistance?: number; // damage multiplier for Lightning; undead default to 2.0, others 1.0
+  coldResistance?: number;      // damage multiplier for Frost Bolt; defaults to 1.0
+  poisonResistance?: number;    // damage multiplier for Poison Spray; defaults to 1.0
   lightVulnerable?: boolean;  // treated like undead for Prayer's holy-light damage
   minDungeonLevel: number;
   speed: number;

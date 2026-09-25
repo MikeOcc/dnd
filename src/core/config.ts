@@ -90,6 +90,18 @@ export const COMBAT = {
   LIGHTNING_RAND_MIN: 0.8,
   LIGHTNING_RAND_MAX: 1.4,
 
+  // Frost Bolt: (charLevel*2 + INT/2) * randomFactor
+  FROST_LEVEL_MULT: 2,
+  FROST_INT_DIVISOR: 2,
+  FROST_RAND_MIN: 0.8,
+  FROST_RAND_MAX: 1.4,
+
+  // Poison Spray: (charLevel*2 + INT/2) * randomFactor
+  POISON_LEVEL_MULT: 2,
+  POISON_INT_DIVISOR: 2,
+  POISON_RAND_MIN: 0.8,
+  POISON_RAND_MAX: 1.4,
+
   // Heal: (charLevel + WIS/2) * randomFactor
   HEAL_LEVEL_WEIGHT: 1.0,
   HEAL_WIS_DIVISOR: 2,
