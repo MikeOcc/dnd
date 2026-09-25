@@ -945,7 +945,7 @@ export class GameEngine {
 
     const monster = this.combat.monster;
     const def = monster.definition;
-    const xpGained = calculateXPReward(this.char.level, monster.level, def.isUnique);
+    const xpGained = calculateXPReward(this.char.level, monster.level, def.isUnique, def.naturalTier);
 
     this.char.xp += xpGained;
     this.char.monstersDefeated++;

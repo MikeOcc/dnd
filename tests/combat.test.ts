@@ -749,6 +749,28 @@ describe('XP rewards', () => {
     const unique = calculateXPReward(5, 10, true);
     expect(unique).toBeGreaterThan(normal * 2);
   });
+
+  it('gives more XP for inherently more dangerous monster tiers at the same level', () => {
+    // Same charLevel, same monsterLevel, same isUnique — only naturalTier differs.
+    const kobold = calculateXPReward(10, 10, false, getDefinition('Kobold').naturalTier);
+    const dragon = calculateXPReward(10, 10, false, getDefinition('Red Dragon').naturalTier);
+    const lich = calculateXPReward(10, 10, false, getDefinition('Lich').naturalTier);
+
+    expect(dragon).toBeGreaterThan(kobold);
+    expect(lich).toBeGreaterThan(kobold);
+  });
+
+  it('does not change tier-1 monster XP (Kobold/Goblin baseline unaffected)', () => {
+    const withoutTier = calculateXPReward(5, 5, false);
+    const tier1 = calculateXPReward(5, 5, false, getDefinition('Kobold').naturalTier);
+    expect(tier1).toBe(withoutTier);
+  });
+
+  it('tier bonus and unique bonus stack for the most dangerous bosses', () => {
+    const genericUnique = calculateXPReward(20, 40, true, 1);
+    const asmodeus = calculateXPReward(20, 40, true, getDefinition('Asmodeus').naturalTier);
+    expect(asmodeus).toBeGreaterThan(genericUnique);
+  });
 });
 
 describe('Running from combat', () => {

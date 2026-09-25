@@ -754,13 +754,22 @@ function pickBeholderAbility(rng: RNG): string {
 
 // ─── XP calculation ──────────────────────────────────────────────────────────
 
-export function calculateXPReward(charLevel: number, monsterLevel: number, isUnique: boolean): number {
+export function calculateXPReward(
+  charLevel: number,
+  monsterLevel: number,
+  isUnique: boolean,
+  naturalTier: number = 1,
+): number {
   const base = monsterLevel * LEVELING.XP_PER_MONSTER_LEVEL;
   const diff = monsterLevel - charLevel;
   let mult = 1.0;
 
   if (diff > 0) mult += diff * LEVELING.XP_LEVEL_DIFF_BONUS;
   if (diff < 0) mult = Math.max(LEVELING.XP_MIN_FRACTION, mult + diff * LEVELING.XP_LEVEL_DIFF_PENALTY);
+
+  // Inherent danger of the monster's kind, independent of the level it rolled.
+  mult *= 1 + (naturalTier - 1) * LEVELING.XP_TIER_BONUS_PER_TIER;
+
   if (isUnique) mult *= LEVELING.UNIQUE_MONSTER_XP_MULT;
 
   return Math.max(1, Math.round(base * mult));

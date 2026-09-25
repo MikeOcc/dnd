@@ -178,11 +178,19 @@ export const LEVELING = {
   // Chance to gain +1 to a random stat on level up
   STAT_GAIN_CHANCE: 0.3,
 
-  // XP reward: monsterLevel * XP_PER_MONSTER_LEVEL * levelDiffBonus
+  // XP reward: monsterLevel * XP_PER_MONSTER_LEVEL * levelDiffBonus * tierBonus
   XP_PER_MONSTER_LEVEL: 12,
   XP_LEVEL_DIFF_BONUS: 0.2,   // +20% per level monster is above player
   XP_LEVEL_DIFF_PENALTY: 0.1, // -10% per level monster is below player
   XP_MIN_FRACTION: 0.05,      // always at least 5% of base XP
+
+  // A monster's naturalTier (1-10) reflects its inherent danger independent
+  // of the numeric level it happens to roll — a dragon or lich is a bigger
+  // threat than a kobold of the "same" level. Each tier above 1 adds this
+  // fraction to the XP multiplier, so tier-1 trash (Kobold, Goblin, Mold,
+  // Skeleton) is unaffected while tier-7/8 threats (dragons, Lich, Beholder)
+  // and tier-9/10 uniques pay out proportionally more.
+  XP_TIER_BONUS_PER_TIER: 0.15,
 
   UNIQUE_MONSTER_XP_MULT: 4.0,
 } as const;
