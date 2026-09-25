@@ -254,19 +254,27 @@ describe('Sanguinid', () => {
     expect(def.minDungeonLevel).toBe(1);
   });
 
-  it('does not force a level-1 character into an unwinnable fight (regression)', () => {
+  it('never has an artificial forced floor above the dungeon-1 level range (regression)', () => {
     // minLevel used to be 9, which meant a level-1 character at dungeon
-    // depth 1 (minDungeonLevel: 1) could still be clamped into facing a
-    // level-9 Sanguinid and die to a single unavoidable round.
+    // depth 1 (minDungeonLevel: 1) was *always* clamped up to at least a
+    // level-9 Sanguinid regardless of the roll. minLevel is now 1, so the
+    // dungeon-depth level range (5-20 on depth 1, by design) is free to
+    // produce its full spread instead of being floored by the monster type.
     const def = getDefinition('Sanguinid');
     expect(def.minLevel).toBeLessThanOrEqual(3);
 
     const rng = new RNG(4242);
+    const levels = new Set<number>();
     for (let i = 0; i < 200; i++) {
       const monsterLevel = randomMonsterLevel(1, 1, rng);
       const monster = createMonster('Sanguinid', monsterLevel, `sg-${i}`);
-      expect(monster.level).toBeLessThanOrEqual(6);
+      // Depth-1 range is 5-20 for a level-1 character (no char-level cap bonus).
+      expect(monster.level).toBeGreaterThanOrEqual(5);
+      expect(monster.level).toBeLessThanOrEqual(20);
+      levels.add(monster.level);
     }
+    // Should see real variation across the whole range, not stuck at one floor.
+    expect(levels.size).toBeGreaterThan(5);
   });
 
   it('every successful attack causes bleeding', () => {
@@ -652,6 +660,67 @@ describe('Asmodeus level range', () => {
     expect(createMonster('Asmodeus', 10, 'a1').level).toBe(40);
     expect(createMonster('Asmodeus', 500, 'a2').level).toBe(100);
     expect(createMonster('Asmodeus', 75, 'a3').level).toBe(75);
+  });
+});
+
+describe('randomMonsterLevel — dungeon-depth scaling', () => {
+  it('produces higher level bands on deeper dungeon levels', () => {
+    const rng = new RNG(101);
+    const samples = (depth: number) => {
+      const levels: number[] = [];
+      for (let i = 0; i < 100; i++) levels.push(randomMonsterLevel(1, depth, rng));
+      return levels;
+    };
+
+    const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+
+    const depth1 = avg(samples(1));
+    const depth4 = avg(samples(4));
+    const depth7 = avg(samples(7));
+
+    expect(depth4).toBeGreaterThan(depth1);
+    expect(depth7).toBeGreaterThan(depth4);
+  });
+
+  it('stays within the documented range for dungeon level 1 and level 7', () => {
+    const rng = new RNG(202);
+    for (let i = 0; i < 200; i++) {
+      const lvl1 = randomMonsterLevel(1, 1, rng);
+      expect(lvl1).toBeGreaterThanOrEqual(5);
+      expect(lvl1).toBeLessThanOrEqual(20);
+
+      const lvl7 = randomMonsterLevel(1, 7, rng);
+      expect(lvl7).toBeGreaterThanOrEqual(50);
+      expect(lvl7).toBeLessThanOrEqual(90);
+    }
+  });
+
+  it('raises the level ceiling as the character levels up, even on the same dungeon floor', () => {
+    const rng = new RNG(303);
+    const maxAt = (charLevel: number) => {
+      let max = 0;
+      for (let i = 0; i < 200; i++) max = Math.max(max, randomMonsterLevel(charLevel, 3, rng));
+      return max;
+    };
+
+    const lowCharMax = maxAt(1);   // +floor(1/4) = +0
+    const highCharMax = maxAt(40); // +floor(40/4) = +10
+
+    expect(highCharMax).toBeGreaterThan(lowCharMax);
+    expect(highCharMax).toBeGreaterThanOrEqual(30 + 10);
+  });
+
+  it('clamps out-of-range dungeon depths to the nearest defined band', () => {
+    const rng = new RNG(404);
+    for (let i = 0; i < 50; i++) {
+      const belowRange = randomMonsterLevel(1, 0, rng);
+      expect(belowRange).toBeGreaterThanOrEqual(5);
+      expect(belowRange).toBeLessThanOrEqual(20);
+
+      const aboveRange = randomMonsterLevel(1, 99, rng);
+      expect(aboveRange).toBeGreaterThanOrEqual(50);
+      expect(aboveRange).toBeLessThanOrEqual(90);
+    }
   });
 });
 

@@ -15,7 +15,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
@@ -766,11 +766,11 @@ export class GameEngine {
     // Unique bosses roll a level in their own [minLevel, maxLevel] range each
     // encounter. For every boss except Asmodeus that range is a single fixed
     // value (min === max), so this is a no-op for them — Asmodeus is the only
-    // one with real spread (40-100).
+    // one with real spread (40-100). Ordinary fixed monsters use the same
+    // dungeon-depth/character-level scaled range as random encounters.
     const lvl = content.type === 'unique-monster'
       ? this.rng.int(def.minLevel, def.maxLevel)
-      : Math.max(def.minLevel, Math.min(def.maxLevel,
-          this.char.level + (this.char.dungeonLevel - 1) + this.rng.int(-2, 2)));
+      : randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng);
 
     const monster = createMonster(monsterType, lvl, content.id);
     return this.beginCombat(monster);
@@ -961,9 +961,9 @@ export class GameEngine {
       }
     }
 
-    // Gold from monster
-    const goldDrop = this.rng.float() < 0.4
-      ? this.rng.int(1, 15) * monster.level
+    // Gold from monster — already scales with dungeon depth via monster.level
+    const goldDrop = this.rng.float() < TREASURE.MONSTER_DROP_CHANCE
+      ? this.rng.int(TREASURE.MONSTER_DROP_MIN, TREASURE.MONSTER_DROP_MAX) * monster.level
       : 0;
     if (goldDrop > 0) {
       this.char.gold += goldDrop;

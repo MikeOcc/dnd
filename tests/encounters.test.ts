@@ -158,6 +158,42 @@ describe('Chest loot', () => {
     expect(Math.max(...counts)).toBeLessThanOrEqual(4);
     expect(Math.min(...counts)).toBeGreaterThanOrEqual(1);
   });
+
+  it('can grant gemstones as a distinct, richer find alongside gold', () => {
+    const rng = new RNG(9911);
+    let sawGems = false;
+
+    for (let i = 0; i < 2000; i++) {
+      const char = makeChar();
+      const result = resolveChest(char, rng);
+      if (result.messages.some(m => m.includes('gemstones'))) sawGems = true;
+    }
+
+    expect(sawGems).toBe(true);
+  });
+
+  it('gold and gemstone value scale up with dungeon level', () => {
+    const rng1 = new RNG(555);
+    const rng2 = new RNG(555);
+
+    const shallowGold: number[] = [];
+    const deepGold: number[] = [];
+
+    for (let i = 0; i < 500; i++) {
+      const shallow = makeChar();
+      shallow.dungeonLevel = 1;
+      const r1 = resolveChest(shallow, rng1);
+      if (r1.goldGained) shallowGold.push(r1.goldGained);
+
+      const deep = makeChar();
+      deep.dungeonLevel = 7;
+      const r2 = resolveChest(deep, rng2);
+      if (r2.goldGained) deepGold.push(r2.goldGained);
+    }
+
+    const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    expect(avg(deepGold)).toBeGreaterThan(avg(shallowGold) * 2);
+  });
 });
 
 describe('Level generation tuning', () => {

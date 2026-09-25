@@ -188,9 +188,41 @@ export const LEVELING = {
 } as const;
 
 export const MONSTER_SCALING = {
-  // Random monster level: charLevel + dungeonDepth - 1 + rand(-SPREAD, SPREAD)
-  DEPTH_BONUS: 1,
-  SPREAD: 3,
+  // Monster level range by dungeon depth (index 0 = dungeon level 1), before
+  // the character-level cap bonus below is added to the max. Deeper levels
+  // widen the band — both the floor and the ceiling climb with depth.
+  LEVEL_RANGE_BY_DUNGEON_LEVEL: [
+    { min: 5,  max: 20 },  // level 1
+    { min: 10, max: 22 },  // level 2
+    { min: 18, max: 30 },  // level 3
+    { min: 26, max: 45 },  // level 4
+    { min: 34, max: 60 },  // level 5
+    { min: 42, max: 75 },  // level 6
+    { min: 50, max: 90 },  // level 7
+  ],
+  // A stronger character pushes what they run into even on the same floor:
+  // the level ceiling always gets + floor(characterLevel / this) added on top.
+  CHAR_LEVEL_CAP_DIVISOR: 4,
+} as const;
+
+export const TREASURE = {
+  // Chest gold: rng.int(GOLD_MIN, GOLD_MAX) * dungeonLevel, plus a modest
+  // character-level bonus so treasure keeps pace with a leveled-up character
+  // revisiting shallow floors.
+  GOLD_MIN: 10,
+  GOLD_MAX: 80,
+  GOLD_CHAR_LEVEL_MULT: 2,
+
+  // Rarer, richer gemstone find: scales more steeply with dungeon depth.
+  GEM_MIN: 30,
+  GEM_MAX: 120,
+  GEM_CHAR_LEVEL_MULT: 3,
+
+  // Monster gold drop chance/amount (amount already scales via monster.level,
+  // which itself now scales with dungeon depth).
+  MONSTER_DROP_CHANCE: 0.4,
+  MONSTER_DROP_MIN: 1,
+  MONSTER_DROP_MAX: 15,
 } as const;
 
 export const DEATH = {

@@ -363,9 +363,10 @@ export function randomMonsterLevel(
   dungeonDepth: number,
   rng: RNG,
 ): number {
-  const base = characterLevel + (dungeonDepth - 1) * MONSTER_SCALING.DEPTH_BONUS;
-  const spread = rng.int(-MONSTER_SCALING.SPREAD, MONSTER_SCALING.SPREAD);
-  return Math.max(1, base + spread);
+  const ranges = MONSTER_SCALING.LEVEL_RANGE_BY_DUNGEON_LEVEL;
+  const range = ranges[Math.max(0, Math.min(ranges.length - 1, dungeonDepth - 1))];
+  const cappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
+  return rng.int(range.min, Math.max(range.min, cappedMax));
 }
 
 export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterType {

@@ -1,6 +1,6 @@
 import type { Character, Monster, StatusEffect } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, BOOK, DEATH } from './config.js';
+import { ENCOUNTER, FOUNTAIN, BOOK, DEATH, TREASURE } from './config.js';
 import { addStatusEffect } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
@@ -91,13 +91,21 @@ export interface ChestResult {
 export function resolveChest(char: Character, rng: RNG): ChestResult {
   const roll = rng.float();
 
-  if (roll < 0.35) {
-    const gold = rng.int(10, 80) * char.dungeonLevel;
+  if (roll < 0.32) {
+    const gold = rng.int(TREASURE.GOLD_MIN, TREASURE.GOLD_MAX) * char.dungeonLevel
+      + rng.int(0, char.level) * TREASURE.GOLD_CHAR_LEVEL_MULT;
     char.gold += gold;
     return { messages: [`You find ${gold} gold coins!`], goldGained: gold };
   }
 
-  if (roll < 0.55) {
+  if (roll < 0.40) {
+    const value = rng.int(TREASURE.GEM_MIN, TREASURE.GEM_MAX) * char.dungeonLevel
+      + rng.int(0, char.level) * TREASURE.GEM_CHAR_LEVEL_MULT;
+    char.gold += value;
+    return { messages: [`A pouch of glittering gemstones! Worth ${value} gold.`], goldGained: value };
+  }
+
+  if (roll < 0.60) {
     const count = rng.int(1, 4);
     char.inventory.potions += count;
     return { messages: [
@@ -106,13 +114,13 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     ]};
   }
 
-  if (roll < 0.65) {
+  if (roll < 0.70) {
     const xp = rng.int(20, 60) * char.level;
     char.xp += xp;
     return { messages: [`A glowing crystal. You gain ${xp} experience.`], xpGained: xp };
   }
 
-  if (roll < 0.70) {
+  if (roll < 0.75) {
     const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma', 'resistance'] as const;
     const stat = rng.pick([...stats]);
     (char[stat] as number) += 1;
