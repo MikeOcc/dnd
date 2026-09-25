@@ -220,9 +220,9 @@ function renderDeath(state: GameState): string[] {
     red('                YOU HAVE DIED.'),
     red('  * * * * * * * * * * * * * * * * * * * *'),
     '',
-    ...state.messages.slice(1).map(m => g('  ' + m)),
+    ...state.messages.map(m => g('  ' + m)),
     '',
-    dim('  PRESS ANY KEY TO CONTINUE'),
+    bold(g('  [C] Continue')) + '   ' + dim('[Q] Quit to Main Menu'),
   ];
 }
 

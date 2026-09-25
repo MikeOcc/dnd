@@ -114,8 +114,8 @@ function applyState(state) {
   updateHelpLine(phase);
 
   // Awaiting any key
-  awaitingAnyKey = ['title', 'level-intro', 'death', 'victory'].includes(phase);
-  // status uses X key, not any-key
+  awaitingAnyKey = ['title', 'level-intro', 'victory'].includes(phase);
+  // status uses X key, death uses C/Q, not any-key
 
   // Name input focus
   if (phase === 'name-entry') {
@@ -162,7 +162,7 @@ function renderChoices(choices, phase, state) {
     return;
   }
 
-  if (phase === 'level-intro' || phase === 'death' || phase === 'victory') {
+  if (phase === 'level-intro' || phase === 'victory') {
     const btn = makeChoiceBtn('Any key', 'Continue');
     btn.onclick = handleAnyKey;
     area.appendChild(btn);
@@ -276,7 +276,7 @@ function updateHelpLine(phase) {
     case 'char-roll':
       hint.textContent = 'A: Accept  B: Reroll'; break;
     case 'death':
-      hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
+      hint.textContent = 'C: Continue  Q: Quit to Main Menu'; break;
     case 'victory':
       hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
     default:
@@ -290,7 +290,6 @@ function handleAnyKey() {
   const phase = currentState.phase;
   if (phase === 'title')       { apiAction('main-menu'); return; }
   if (phase === 'level-intro') { apiAction('dismiss-intro'); return; }
-  if (phase === 'death')       { apiAction('dismiss-death'); return; }
   if (phase === 'victory')     { apiAction('main-menu'); return; }
 }
 
@@ -298,6 +297,12 @@ function handleChoiceKey(key, phase) {
   if (phase === 'char-roll') {
     if (key === 'a') apiAction('accept');
     if (key === 'b') apiAction('reroll');
+    return;
+  }
+
+  if (phase === 'death') {
+    if (key === 'c') apiAction('dismiss-death');
+    if (key === 'q') apiAction('main-menu');
     return;
   }
 
@@ -410,6 +415,12 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'map') {
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
+    return;
+  }
+
+  if (phase === 'death') {
+    if (key === 'c') apiAction('dismiss-death');
+    if (key === 'q') apiAction('main-menu');
     return;
   }
 

@@ -135,9 +135,12 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
-  // Death screen
+  // Death screen — Continue or Quit
   if (phase === 'death') {
-    render(engine.dismissDeath());
+    if (key.type === 'char') {
+      if (key.char === 'c') render(engine.dismissDeath());
+      if (key.char === 'q') render(engine.showMainMenu());
+    }
     return;
   }
 

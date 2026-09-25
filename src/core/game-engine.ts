@@ -136,6 +136,12 @@ export class GameEngine {
     if (this.phase === 'status') {
       return [{ key: 'x', text: 'Return to Game' }];
     }
+    if (this.phase === 'death') {
+      return [
+        { key: 'c', text: 'Continue' },
+        { key: 'q', text: 'Quit to Main Menu' },
+      ];
+    }
     if (this.phase === 'combat' && this.combat) {
       return [
         { key: 'a', text: 'Attack' },
@@ -330,7 +336,7 @@ export class GameEngine {
     }
 
     if (this.char.hp <= 0) {
-      return this.handleDeath();
+      return this.handleDeath('Your wounds proved fatal as you rested.');
     }
 
     // Wandering monster risk after grace period
@@ -501,7 +507,7 @@ export class GameEngine {
     }
 
     if (this.char.hp <= 0) {
-      return this.handleDeath();
+      return this.handleDeath('Your wounds proved fatal as you walked.');
     }
 
     incrementPace(this.pace);
@@ -637,7 +643,7 @@ export class GameEngine {
             return this.startRandomEncounter();
           }
           if (this.char.hp <= 0) {
-            return this.handleDeath();
+            return this.handleDeath(this.trapDeathCause(variant));
           }
           this.repo.saveCharacter(this.char);
           return null;
@@ -885,10 +891,13 @@ export class GameEngine {
   }
 
   private combatRun(): GameState {
-    const result = playerRun(this.char!, this.combat!.monster, this.rng);
+    const monster = this.combat!.monster;
+    const result = playerRun(this.char!, monster, this.rng);
     this.messages = result.messages;
 
-    if (result.playerDied) return this.handleDeath();
+    if (result.playerDied) {
+      return this.handleDeath(`Killed by a Level ${monster.level} ${monster.type} as you tried to flee.`);
+    }
 
     if (result.ran) {
       // Return to pre-combat position
@@ -918,7 +927,8 @@ export class GameEngine {
     }
 
     if (result.playerDied) {
-      return this.handleDeath();
+      const monster = this.combat!.monster;
+      return this.handleDeath(`Killed by a Level ${monster.level} ${monster.type}.`);
     }
 
     if (result.monsterDied) {
@@ -986,14 +996,16 @@ export class GameEngine {
     return this.getState();
   }
 
-  private handleDeath(): GameState {
+  private handleDeath(cause: string): GameState {
     if (!this.char) return this.getState();
 
     const lvl = this.getLevel(this.char.dungeonLevel);
     const entrance = lvl?.entrance ?? { x: 0, y: 0 };
 
     const result = applyDeath(this.char, entrance.x, entrance.y);
-    this.messages = result.messages;
+    // result.messages leads with 'YOU HAVE DIED.' — renderers already show
+    // that as a banner, so skip it (and the blank line after it) here.
+    this.messages = [cause, '', ...result.messages.slice(2)];
 
     this.endCombat(false);
     this.phase = 'death';
@@ -1009,6 +1021,16 @@ export class GameEngine {
     this.phase = 'playing';
     this.messages = [];
     return this.getState();
+  }
+
+  private trapDeathCause(variant: string): string {
+    const causes: Record<string, string> = {
+      'pit': 'You fell into a pit trap and did not survive the drop.',
+      'falling-stone': 'A falling stone trap crushed you.',
+      'fire-blast': 'A fire-blast trap burned you to death.',
+      'acid-spray': 'An acid-spray trap dissolved you.',
+    };
+    return causes[variant] ?? 'A trap killed you.';
   }
 
   private handleVictory(): GameState {
@@ -1192,7 +1214,7 @@ export class GameEngine {
       return this.startRandomEncounter();
     }
     if (this.char.hp <= 0) {
-      return this.handleDeath();
+      return this.handleDeath(this.trapDeathCause(variant));
     }
 
     return this.closeInteractionWithSave();
