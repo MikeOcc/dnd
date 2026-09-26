@@ -141,6 +141,7 @@ export type MonsterType =
   | 'Wizard'
   | 'Beholder'
   | 'Mind Flayer'
+  | 'Elder Oblex'
   | 'Sanguinid'
   | 'Black Dragon'
   | 'Green Dragon'

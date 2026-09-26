@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateLevel, floodFill, canMove } from '../src/core/dungeon.js';
 import { DUNGEON } from '../src/core/config.js';
+import { LEVEL_FIXED_MONSTERS } from '../src/core/dungeon-data.js';
 
 describe('Dungeon generation', () => {
   it('generates a level with correct dimensions', () => {
@@ -118,5 +119,19 @@ describe('Dungeon generation', () => {
     const contents = new Map(lvl.contents.map(c => [c.key, c.value]));
     const hasLadder = [...contents.values()].some(v => v.type === 'ladder-down');
     expect(hasLadder).toBe(true);
+  });
+});
+
+describe('Elder Oblex placement', () => {
+  it('is a guaranteed fixed encounter on dungeon levels 5, 6, and 7 only', () => {
+    for (let level = 1; level <= 7; level++) {
+      const fixed = LEVEL_FIXED_MONSTERS[level] ?? [];
+      const hasOblex = fixed.some(fm => fm.type === 'Elder Oblex');
+      if (level >= 5) {
+        expect(hasOblex).toBe(true);
+      } else {
+        expect(hasOblex).toBe(false);
+      }
+    }
   });
 });

@@ -27,18 +27,21 @@ export const LEVEL_FIXED_MONSTERS: Record<number, FixedMonsterDef[]> = {
     { id: 'fm-5-1', type: 'Black Dragon' },
     { id: 'fm-5-2', type: 'Green Dragon' },
     { id: 'fm-5-3', type: 'Red Dragon' },
+    { id: 'fm-5-4', type: 'Elder Oblex' },
   ],
   6: [
     { id: 'fm-6-1', type: 'Lich' },
     { id: 'fm-6-2', type: 'Beholder' },
     { id: 'fm-6-3', type: 'Vampire' },
     { id: 'fm-6-4', type: 'Blue Dragon' },
+    { id: 'fm-6-5', type: 'Elder Oblex' },
   ],
   7: [
     { id: 'fm-7-1', type: 'Death Knight' },
     { id: 'fm-7-2', type: 'Red Dragon' },
     { id: 'fm-7-3', type: 'Mind Flayer' },
     { id: 'fm-7-4', type: 'Lich' },
+    { id: 'fm-7-5', type: 'Elder Oblex' },
   ],
 };
 

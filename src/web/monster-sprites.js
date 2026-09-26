@@ -1312,6 +1312,46 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Elder Oblex': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elder Oblex">
+      <defs><filter id="glow-oblex" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
+      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="150" rx="52" ry="7" fill="#000000" opacity="0.5"/>
+
+      <path d="M 34 90 Q 26 60 52 42 Q 80 26 108 42 Q 134 60 126 90 Q 132 118 104 138 Q 80 152 56 138 Q 28 118 34 90 Z"
+            fill="#183a2c" stroke="#0c2018" stroke-width="2" opacity="0.92"/>
+      <path d="M 40 88 Q 34 62 58 46" stroke="#3a6a4a" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M 120 88 Q 126 62 102 46" stroke="#3a6a4a" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <ellipse cx="80" cy="92" rx="46" ry="44" fill="#22503a" opacity="0.35"/>
+
+      <ellipse cx="56" cy="66" rx="9" ry="7" fill="#e8e8d8" opacity="0.55" filter="url(#glow-oblex)"/>
+      <circle cx="54" cy="65" r="1.6" fill="#1a1a1a"/>
+      <circle cx="59" cy="66" r="1.6" fill="#1a1a1a"/>
+      <path d="M 51 71 Q 56 74 61 71" stroke="#1a1a1a" stroke-width="1" fill="none"/>
+
+      <ellipse cx="100" cy="80" rx="10" ry="8" fill="#e8e8d8" opacity="0.5" filter="url(#glow-oblex)"/>
+      <circle cx="97" cy="79" r="1.7" fill="#1a1a1a"/>
+      <circle cx="103" cy="79" r="1.7" fill="#1a1a1a"/>
+      <path d="M 95 86 Q 100 82 105 86" stroke="#1a1a1a" stroke-width="1" fill="none"/>
+
+      <ellipse cx="72" cy="112" rx="8" ry="6.5" fill="#e8e8d8" opacity="0.45" filter="url(#glow-oblex)"/>
+      <circle cx="70" cy="111" r="1.4" fill="#1a1a1a"/>
+      <circle cx="75" cy="111" r="1.4" fill="#1a1a1a"/>
+      <path d="M 68 116 Q 72 119 77 116" stroke="#1a1a1a" stroke-width="1" fill="none"/>
+
+      <ellipse cx="92" cy="118" rx="7" ry="5.5" fill="#e8e8d8" opacity="0.4" filter="url(#glow-oblex)"/>
+      <circle cx="90" cy="117" r="1.3" fill="#1a1a1a"/>
+      <circle cx="94" cy="117" r="1.3" fill="#1a1a1a"/>
+
+      <path d="M 34 92 Q 24 100 20 118" stroke="#183a2c" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 126 92 Q 136 100 140 118" stroke="#183a2c" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <circle cx="80" cy="60" r="3" fill="#aaffcc" opacity="0.5" filter="url(#glow-oblex)"/>
+      <circle cx="66" cy="98" r="2" fill="#aaffcc" opacity="0.35" filter="url(#glow-oblex)"/>
+      <circle cx="108" cy="104" r="2" fill="#aaffcc" opacity="0.35" filter="url(#glow-oblex)"/>
+    </svg>
+  `,
+
   'Lich': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lich">
       <defs><filter id="glow-lich" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>

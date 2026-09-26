@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
-import { createMonster, getDefinition, randomMonsterLevel } from '../src/core/monsters.js';
+import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -416,6 +416,40 @@ describe('Sanguinid', () => {
     const avgG = gDamages.reduce((a, b) => a + b, 0) / gDamages.length;
 
     expect(avgSg).toBeGreaterThan(avgG * 1.5);
+  });
+});
+
+describe('Elder Oblex', () => {
+  it('is a high-tier, non-unique monster restricted to dungeon levels 5-7', () => {
+    const def = getDefinition('Elder Oblex');
+    expect(def.isUnique).toBe(false);
+    expect(def.isUndead).toBe(false);
+    expect(def.minDungeonLevel).toBe(5);
+    expect(def.naturalTier).toBeGreaterThanOrEqual(7);
+  });
+
+  it('never appears in the random encounter pool before dungeon level 5', () => {
+    const rng = new RNG(1357);
+    for (let depth = 1; depth <= 4; depth++) {
+      for (let i = 0; i < 300; i++) {
+        expect(pickRandomMonsterType(depth, rng)).not.toBe('Elder Oblex');
+      }
+    }
+  });
+
+  it('can appear in the random encounter pool from dungeon level 5 onward', () => {
+    const rng = new RNG(2468);
+    let seen = false;
+    for (let i = 0; i < 2000; i++) {
+      if (pickRandomMonsterType(7, rng) === 'Elder Oblex') seen = true;
+    }
+    expect(seen).toBe(true);
+  });
+
+  it('createMonster clamps within its own defined level range', () => {
+    const def = getDefinition('Elder Oblex');
+    expect(createMonster('Elder Oblex', 1, 'eo1').level).toBe(def.minLevel);
+    expect(createMonster('Elder Oblex', 500, 'eo2').level).toBe(def.maxLevel);
   });
 });
 

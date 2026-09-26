@@ -182,6 +182,14 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     encounterIntro: ['Tentacles writhe from a pale, bloated face. Its thoughts press against yours.', '', 'You have encountered a Level {LVL} Mind Flayer!'],
     specialAbilities: ['psychic-blast', 'intelligence-drain', 'fear', 'spell-disrupt'],
   },
+  'Elder Oblex': {
+    type: 'Elder Oblex', isUndead: false, isUnique: false,
+    minLevel: 15, maxLevel: 60, naturalTier: 8, minDungeonLevel: 5, speed: 0.8,
+    baseHpPerLevel: 15, baseAttackPerLevel: 7.0, baseDefensePerLevel: 4.0,
+    fireballResistance: 1.0,
+    encounterIntro: ['A translucent, glistening mass pulses in the dark.', '', 'Dozens of half-formed faces surface within it and scream in borrowed voices.', '', 'You have encountered a Level {LVL} Elder Oblex!'],
+    specialAbilities: ['psychic-blast', 'intelligence-drain', 'memory-theft', 'spell-disrupt'],
+  },
   'Sanguinid': {
     type: 'Sanguinid', isUndead: false, isUnique: false,
     minLevel: 1, maxLevel: 35, naturalTier: 7, minDungeonLevel: 1, speed: 0.9,
@@ -406,6 +414,7 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
     'great-strength':   `The ${type} seizes you with monstrous strength! You suffer ${damage} damage.`,
     'blood-drain':      `The ${type} sinks its fangs in and drains your blood! You suffer ${damage} damage.`,
     'flash-burn':       `The ${type} erupts in a blinding radioactive flash! You suffer ${damage} damage.`,
+    'memory-theft':     `The ${type} pulls at your memories with grasping thoughts! You suffer ${damage} damage.`,
   };
   return actions[ability ?? ''] ?? `The ${type} strikes you for ${damage} damage.`;
 }
@@ -422,6 +431,6 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Displacer Beast', 'Basilisk',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
-  'Wizard', 'Beholder', 'Mind Flayer', 'Sanguinid',
+  'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon',
 ];
