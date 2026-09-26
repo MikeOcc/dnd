@@ -1,17 +1,23 @@
 /* THE SEVEN LEVELS — browser interface */
 
 :root {
-  --green: #33ff33;
-  --dark-green: #00aa00;
-  --amber: #ffb000;
-  --bg: #000000;
-  --dim: #1a2a1a;
+  /* Semantic terminal palette — see the color hierarchy in the CSS comments
+     below for how each is used. Everything stays green-phosphor except the
+     two sparingly-used accents (amber for warnings/treasure, red for
+     critical danger). */
+  --terminal-green: #33ff33;         /* normal text — standard phosphor */
+  --terminal-green-bright: #99ff99;  /* player indicator, active controls */
+  --terminal-green-dim: #00aa00;     /* dungeon walls / structural geometry, secondary labels */
+  --terminal-amber: #ffb000;         /* HP warning, gold/treasure, important temp messages */
+  --terminal-red: #ff3333;           /* critical danger */
+  --terminal-bg: #000000;
+
+  /* Structural chrome — hairline dividers, panel fills. Deliberately much
+     darker than --terminal-green-dim: these are near-invisible borders, not
+     readable text, so they stay a separate, lower-contrast shade. */
   --panel: #000000;
   --border: #1a3a1a;
   --font: 'Courier New', Courier, monospace;
-  --hp-good: #33ff33;
-  --hp-warn: #ffb000;
-  --hp-crit: #ff3333;
 }
 
 * {
@@ -21,8 +27,8 @@
 }
 
 html, body {
-  background: var(--bg);
-  color: var(--green);
+  background: var(--terminal-bg);
+  color: var(--terminal-green);
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.4;
@@ -50,7 +56,7 @@ html, body {
 }
 
 #game-title {
-  color: var(--green);
+  color: var(--terminal-green);
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 4px;
@@ -66,17 +72,20 @@ html, body {
   font-size: 13px;
 }
 
-#char-name    { color: #99ff99; font-weight: bold; flex: 1; }
-#dungeon-level { color: var(--dark-green); }
-#char-level   { color: var(--dark-green); }
-#hp-display   { color: var(--hp-good); min-width: 100px; }
-#hp-display.warn { color: var(--hp-warn); }
-#hp-display.crit { color: var(--hp-crit); }
-#xp-display       { color: var(--dark-green); }
-#gold-display     { color: #aaff44; }
-#potions-display  { color: var(--dark-green); }
-#potions-display.has-potions { color: #44ddff; }
-#compass-display  { color: #99ff99; font-weight: bold; margin-left: auto; }
+/* Player-identifying elements get the bright accent; plain stat labels stay
+   dim; HP escalates from normal -> amber -> red as danger rises; gold and
+   potions (treasure/resources) are amber. */
+#char-name    { color: var(--terminal-green-bright); font-weight: bold; flex: 1; }
+#dungeon-level { color: var(--terminal-green-dim); }
+#char-level   { color: var(--terminal-green-dim); }
+#hp-display   { color: var(--terminal-green); min-width: 100px; }
+#hp-display.warn { color: var(--terminal-amber); }
+#hp-display.crit { color: var(--terminal-red); }
+#xp-display       { color: var(--terminal-green-dim); }
+#gold-display     { color: var(--terminal-amber); }
+#potions-display  { color: var(--terminal-green-dim); }
+#potions-display.has-potions { color: var(--terminal-amber); }
+#compass-display  { color: var(--terminal-green-bright); font-weight: bold; margin-left: auto; }
 
 /* Dungeon view — the main visual focus of the screen */
 #view-container {
@@ -90,7 +99,9 @@ html, body {
   background: var(--panel);
   border: 1px solid var(--border);
   padding: 8px 12px;
-  color: var(--green);
+  /* The corridor render is almost entirely walls/ceiling/floor geometry —
+     dim green, per the "structural geometry" rule. */
+  color: var(--terminal-green-dim);
   font-size: 13px;
   line-height: 1.15;
   letter-spacing: 0;
@@ -124,7 +135,7 @@ html, body {
 }
 
 #messages {
-  color: var(--green);
+  color: var(--terminal-green);
   white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 13px;
@@ -140,10 +151,11 @@ html, body {
   min-height: 32px;
 }
 
+/* Buttons are "active controls" — bright green text, dim structural border. */
 .choice-btn {
   background: var(--panel);
-  border: 1px solid var(--dark-green);
-  color: var(--green);
+  border: 1px solid var(--terminal-green-dim);
+  color: var(--terminal-green-bright);
   font-family: var(--font);
   font-size: 13px;
   padding: 4px 12px;
@@ -152,12 +164,12 @@ html, body {
 }
 
 .choice-btn:hover {
-  background: var(--dark-green);
-  color: var(--bg);
+  background: var(--terminal-green-dim);
+  color: var(--terminal-bg);
 }
 
 .choice-btn .key {
-  color: #99ff99;
+  color: var(--terminal-green-bright);
   font-weight: bold;
   margin-right: 4px;
 }
@@ -171,19 +183,19 @@ html, body {
 }
 
 .prompt {
-  color: var(--green);
+  color: var(--terminal-green);
 }
 
 #name-input {
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--green);
-  color: var(--green);
+  border-bottom: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
   font-family: var(--font);
   font-size: 14px;
   outline: none;
   width: 240px;
-  caret-color: var(--green);
+  caret-color: var(--terminal-green);
 }
 
 /* Movement controls — compact D-pad (bottom-left) + horizontal command bar */
@@ -217,8 +229,8 @@ html, body {
 
 .ctrl-btn {
   background: var(--panel);
-  border: 1px solid var(--dark-green);
-  color: var(--green);
+  border: 1px solid var(--terminal-green-dim);
+  color: var(--terminal-green-bright);
   font-family: var(--font);
   font-size: 13px;
   cursor: pointer;
@@ -230,14 +242,14 @@ html, body {
 }
 
 .ctrl-btn:hover {
-  background: var(--dark-green);
-  color: var(--bg);
+  background: var(--terminal-green-dim);
+  color: var(--terminal-bg);
 }
 
 .ctrl-btn:active {
-  background: var(--green);
-  color: var(--bg);
-  border-color: var(--green);
+  background: var(--terminal-green-bright);
+  color: var(--terminal-bg);
+  border-color: var(--terminal-green-bright);
 }
 
 .ctrl-btn.empty {
@@ -254,7 +266,7 @@ html, body {
 }
 
 #key-hint {
-  color: var(--dim);
+  color: var(--terminal-green-dim);
   font-size: 11px;
 }
 
@@ -263,24 +275,30 @@ html, body {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--dark-green); }
+::-webkit-scrollbar-track { background: var(--terminal-bg); }
+::-webkit-scrollbar-thumb { background: var(--terminal-green-dim); }
 
 /* HP colors */
-.hp-good { color: var(--hp-good); }
-.hp-warn { color: var(--hp-warn); }
-.hp-crit { color: var(--hp-crit); }
+.hp-good { color: var(--terminal-green); }
+.hp-warn { color: var(--terminal-amber); }
+.hp-crit { color: var(--terminal-red); }
 
 /* Minimap */
 #messages.map-view {
   font-size: 11px;
   letter-spacing: 0;
   line-height: 1.2;
-  color: var(--dark-green);
+  color: var(--terminal-green-dim);
   overflow-x: auto;
 }
 
-/* Glow effect for combat / important messages */
+/* Emphasis for important temporary messages (level-ups, big finds, etc.) */
 .glow {
-  text-shadow: 0 0 8px var(--green);
+  color: var(--terminal-green-bright);
+  text-shadow: 0 0 8px var(--terminal-green-bright);
+}
+
+.glow.amber {
+  color: var(--terminal-amber);
+  text-shadow: 0 0 8px var(--terminal-amber);
 }
