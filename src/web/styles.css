@@ -93,6 +93,7 @@ html, body {
    full width of #terminal; content that's narrower than the panel (the
    fixed-width corridor render, the monster sprite) is centered within it. */
 #view-container {
+  position: relative;
   flex-shrink: 0;
 }
 
@@ -112,13 +113,16 @@ html, body {
   overflow-x: auto;
 }
 
-/* Monster portrait (combat only) */
+/* Monster portrait (combat only) — overlaid directly on the corridor view,
+   no border/background of its own, so it reads as something standing in
+   the passage rather than a separate boxed widget. */
 #monster-portrait {
+  position: absolute;
+  inset: 0;
   display: flex;
+  align-items: center;
   justify-content: center;
-  background: var(--panel);
-  border: 1px solid var(--terminal-green-dim);
-  padding: 8px 12px;
+  pointer-events: none;
 }
 
 #monster-portrait svg {
