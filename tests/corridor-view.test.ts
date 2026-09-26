@@ -429,6 +429,23 @@ describe('renderCorridorView', () => {
     // No vanishing-point marker when it's a dead end, not an open corridor.
     expect(view).not.toContain('*');
   });
+
+  it('the entity-marker seam is a no-op by default (architecture only, not new gameplay)', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    const withDefaultArgs = renderCorridorView(grid, 5, 5, 'E').join('\n');
+    const withExplicitEmptyList = renderCorridorView(grid, 5, 5, 'E', {}, undefined, []).join('\n');
+    expect(withExplicitEmptyList).toBe(withDefaultArgs);
+  });
+
+  it('draws an entity marker glyph at the requested depth when one is supplied', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    const withoutEntity = renderCorridorView(grid, 5, 5, 'E').join('\n');
+    const withEntity = renderCorridorView(grid, 5, 5, 'E', {}, undefined, [{ depth: 0, glyph: '@' }]).join('\n');
+    expect(withEntity).not.toBe(withoutEntity);
+    expect(withEntity).toContain('@');
+  });
 });
 
 // ─── Required test cases A-L ────────────────────────────────────────────────
