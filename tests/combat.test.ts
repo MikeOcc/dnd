@@ -245,6 +245,23 @@ describe('Prayer — tiered targets', () => {
 
     expect(sawBackfire).toBe(true);
   });
+
+  it('Vampires are always susceptible to Prayer, even far below the character\'s level', () => {
+    const char = makeChar({ level: 40, wisdom: 15, hp: 1000, maxHp: 1000 });
+    const weakVampire = createMonster('Vampire', 1, 'v1');
+
+    let sawHit = false;
+    let sawBackfire = false;
+    for (let trial = 0; trial < 300; trial++) {
+      const vm = { ...weakVampire, level: 1, hp: 100000, prayerPenalty: 0 };
+      const r = playerPray({ ...char, statusEffects: [] }, vm, new RNG(trial));
+      if (r.playerDamage > 0) sawHit = true;
+      if (r.messages.some(m => m.includes('disembodied voice'))) sawBackfire = true;
+    }
+
+    expect(sawHit).toBe(true);
+    expect(sawBackfire).toBe(false);
+  });
 });
 
 describe('Sanguinid', () => {

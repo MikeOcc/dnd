@@ -336,8 +336,10 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   const hpMissingFrac = 1 - char.hp / char.maxHp;
   baseChance += hpMissingFrac * COMBAT.PRAYER_LOW_HP_CHANCE_BONUS;
 
-  // Heaven won't smite something far beneath you.
-  const unworthy = monster.level < char.level * COMBAT.PRAYER_WEAK_MONSTER_LEVEL_RATIO;
+  // Heaven won't smite something far beneath you — except Vampires, which
+  // are always susceptible to Prayer regardless of the level gap.
+  const unworthy = monster.type !== 'Vampire'
+    && monster.level < char.level * COMBAT.PRAYER_WEAK_MONSTER_LEVEL_RATIO;
 
   const chance = unworthy ? 0 : Math.max(0, baseChance - penalty);
   const messages: string[] = ['You pray.'];
