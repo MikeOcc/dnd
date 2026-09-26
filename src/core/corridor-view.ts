@@ -172,9 +172,9 @@ export interface CorridorViewOptions {
 }
 
 export const CORRIDOR_VIEW_DEFAULTS = {
-  WIDTH: 53,
-  HEIGHT: 17,
-  MAX_DEPTH: 5, // "approximately 4 to 6 visible depth levels"
+  WIDTH: 79,
+  HEIGHT: 25,
+  MAX_DEPTH: 6, // "approximately 4 to 6 visible depth levels"
   // Perspective decay: scale(i) = 1 / (1 + DECAY * i)
   DECAY: 0.45,
 } as const;
