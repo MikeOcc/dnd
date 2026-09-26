@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { scanCorridor, renderCorridorView, CORRIDOR_VIEW_DEFAULTS } from '../src/core/corridor-view.js';
+import {
+  scanCorridor, renderCorridorView, CORRIDOR_VIEW_DEFAULTS, isBlockingEdge,
+  type EdgeInfoLookup, type EdgeType,
+} from '../src/core/corridor-view.js';
 import type { DungeonCell, Direction } from '../src/core/types.js';
 
 // Helper: fully walled-off grid (every cell closed on all four sides).
@@ -30,6 +33,25 @@ function carve(grid: DungeonCell[][], x0: number, y0: number, len: number, dir: 
   }
 }
 
+/** Builds an EdgeInfoLookup from a plain map of "x,y,dir" -> EdgeType. */
+function lookupFrom(entries: Record<string, EdgeType>): EdgeInfoLookup {
+  return (x, y, dir) => entries[`${x},${y},${dir}`];
+}
+
+describe('isBlockingEdge', () => {
+  it('treats wall, secret, door-closed, and door-locked as blocking', () => {
+    expect(isBlockingEdge('wall')).toBe(true);
+    expect(isBlockingEdge('secret')).toBe(true);
+    expect(isBlockingEdge('door-closed')).toBe(true);
+    expect(isBlockingEdge('door-locked')).toBe(true);
+  });
+
+  it('treats passage and door-open as non-blocking', () => {
+    expect(isBlockingEdge('passage')).toBe(false);
+    expect(isBlockingEdge('door-open')).toBe(false);
+  });
+});
+
 describe('scanCorridor', () => {
   it('reports endCapped with a single step when a wall is immediately ahead', () => {
     const grid = closedGrid(10, 10);
@@ -54,17 +76,27 @@ describe('scanCorridor', () => {
     expect(scan.endCapped).toBe(false);
   });
 
-  it('correctly reports left/right wall state relative to facing, for all four facings', () => {
+  it('with no lookup, every boundary resolves to plain wall/passage (backward-compatible default)', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 3, 'E');
+    grid[5][6].walls.N = false; // open left at depth 1
+    const scan = scanCorridor(grid, 5, 5, 'E', 5);
+    expect(scan.steps[0].left).toBe('wall');
+    expect(scan.steps[0].right).toBe('wall');
+    expect(scan.steps[0].front).toBe('passage');
+    expect(scan.steps[1].left).toBe('passage');
+    expect(scan.steps[1].right).toBe('wall');
+  });
+
+  it('correctly reports left/right edges relative to facing, for all four facings', () => {
     // Facing E: left = dungeon N, right = dungeon S
     {
       const grid = closedGrid(10, 10);
       carve(grid, 5, 5, 3, 'E');
       grid[5][6].walls.N = false; // open left at depth 1
       const scan = scanCorridor(grid, 5, 5, 'E', 5);
-      expect(scan.steps[0].leftWall).toBe(true);
-      expect(scan.steps[0].rightWall).toBe(true);
-      expect(scan.steps[1].leftWall).toBe(false);
-      expect(scan.steps[1].rightWall).toBe(true);
+      expect(scan.steps[1].left).toBe('passage');
+      expect(scan.steps[1].right).toBe('wall');
     }
     // Facing N: left = dungeon W, right = dungeon E
     {
@@ -72,8 +104,8 @@ describe('scanCorridor', () => {
       carve(grid, 5, 5, 3, 'N');
       grid[4][5].walls.W = false; // open left at depth 1
       const scan = scanCorridor(grid, 5, 5, 'N', 5);
-      expect(scan.steps[1].leftWall).toBe(false);
-      expect(scan.steps[1].rightWall).toBe(true);
+      expect(scan.steps[1].left).toBe('passage');
+      expect(scan.steps[1].right).toBe('wall');
     }
     // Facing S: left = dungeon E, right = dungeon W
     {
@@ -81,8 +113,8 @@ describe('scanCorridor', () => {
       carve(grid, 5, 5, 3, 'S');
       grid[6][5].walls.E = false; // open left at depth 1
       const scan = scanCorridor(grid, 5, 5, 'S', 5);
-      expect(scan.steps[1].leftWall).toBe(false);
-      expect(scan.steps[1].rightWall).toBe(true);
+      expect(scan.steps[1].left).toBe('passage');
+      expect(scan.steps[1].right).toBe('wall');
     }
     // Facing W: left = dungeon S, right = dungeon N
     {
@@ -90,8 +122,8 @@ describe('scanCorridor', () => {
       carve(grid, 5, 5, 3, 'W');
       grid[5][4].walls.S = false; // open left at depth 1
       const scan = scanCorridor(grid, 5, 5, 'W', 5);
-      expect(scan.steps[1].leftWall).toBe(false);
-      expect(scan.steps[1].rightWall).toBe(true);
+      expect(scan.steps[1].left).toBe('passage');
+      expect(scan.steps[1].right).toBe('wall');
     }
   });
 
@@ -114,6 +146,39 @@ describe('scanCorridor', () => {
     expect(scan.steps).toHaveLength(3);
   });
 
+  it('a closed door directly ahead stops the scan, same as a wall would', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E'); // open for 3 steps
+    const lookup = lookupFrom({ '8,5,E': 'door-closed' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 10, lookup);
+    expect(scan.endCapped).toBe(true);
+    expect(scan.steps[scan.steps.length - 1].front).toBe('door-closed');
+  });
+
+  it('an open door directly ahead does not stop the scan', () => {
+    const grid = closedGrid(15, 15);
+    carve(grid, 5, 5, 6, 'E'); // open for 5 steps
+    const lookup = lookupFrom({ '8,5,E': 'door-open' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 4, lookup);
+    // maxDepth (4) is reached before the door stops anything.
+    expect(scan.endCapped).toBe(false);
+    expect(scan.steps).toHaveLength(4);
+  });
+
+  it('a secret wall blocks the scan exactly like a plain wall', () => {
+    const gridSecret = closedGrid(10, 10);
+    carve(gridSecret, 5, 5, 4, 'E');
+    const secretLookup = lookupFrom({ '8,5,E': 'secret' });
+    const secretScan = scanCorridor(gridSecret, 5, 5, 'E', 10, secretLookup);
+
+    const gridWall = closedGrid(10, 10);
+    carve(gridWall, 5, 5, 4, 'E');
+    const wallScan = scanCorridor(gridWall, 5, 5, 'E', 10);
+
+    expect(secretScan.endCapped).toBe(true);
+    expect(secretScan.steps).toHaveLength(wallScan.steps.length);
+  });
+
   describe('step classification (StepKind)', () => {
     it('classifies a plain straight run', () => {
       const grid = closedGrid(10, 10);
@@ -134,7 +199,7 @@ describe('scanCorridor', () => {
       expect(scanCorridor(gridR, 5, 5, 'E', 5).steps[1].kind).toBe('right-passage');
     });
 
-    it('classifies a crossroads when both sides are open and forward continues', () => {
+    it('classifies a crossroads (four-way intersection) when both sides are open and forward continues', () => {
       const grid = closedGrid(10, 10);
       carve(grid, 5, 5, 4, 'E');
       grid[5][6].walls.N = false;
@@ -171,26 +236,40 @@ describe('scanCorridor', () => {
       const scan = scanCorridor(grid, 5, 5, 'E', 5);
       expect(scan.steps[scan.steps.length - 1].kind).toBe('t-junction');
     });
+
+    it('a closed door counts as blocking for topology purposes (turn-left, not left-passage)', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 3, 'E');
+      grid[5][7].walls.N = false; // left open at final cell
+      grid[5][7].walls.S = false; // right also open at final cell, but...
+      const lookup = lookupFrom({ '7,5,S': 'door-closed' }); // ...it's a closed door
+      const scan = scanCorridor(grid, 5, 5, 'E', 5, lookup);
+      const lastStep = scan.steps[scan.steps.length - 1];
+      expect(lastStep.right).toBe('door-closed');
+      expect(lastStep.kind).toBe('turn-left'); // right (door) counts as blocked, left (open) does not
+    });
   });
 
-  describe('door hook', () => {
-    it('marks a door only where a side is actually open and the lookup says so', () => {
+  describe('EdgeInfoLookup overrides', () => {
+    it('marks a door only where the lookup says so, and only affects that boundary', () => {
       const grid = closedGrid(10, 10);
       carve(grid, 5, 5, 4, 'E');
       grid[5][6].walls.N = false; // open left at depth 1
+      const lookup = lookupFrom({ '6,5,N': 'door-open' });
 
-      const scan = scanCorridor(grid, 5, 5, 'E', 5, (x, y, dir) => x === 6 && y === 5 && dir === 'N');
-      expect(scan.steps[1].leftDoor).toBe(true);
-      expect(scan.steps[1].rightDoor).toBe(false);
+      const scan = scanCorridor(grid, 5, 5, 'E', 5, lookup);
+      expect(scan.steps[1].left).toBe('door-open');
+      expect(scan.steps[1].right).toBe('wall');
     });
 
-    it('never reports a door on a side that has a wall, even if the lookup says yes', () => {
+    it('an undefined lookup result falls back to the plain wall boolean', () => {
       const grid = closedGrid(10, 10);
-      carve(grid, 5, 5, 4, 'E'); // left/right stay walled at every depth
-      const scan = scanCorridor(grid, 5, 5, 'E', 5, () => true);
+      carve(grid, 5, 5, 4, 'E');
+      const scan = scanCorridor(grid, 5, 5, 'E', 5, () => undefined);
       for (const step of scan.steps) {
-        expect(step.leftDoor).toBe(false);
-        expect(step.rightDoor).toBe(false);
+        expect(['wall', 'passage']).toContain(step.left);
+        expect(['wall', 'passage']).toContain(step.right);
+        expect(['wall', 'passage']).toContain(step.front);
       }
     });
   });
@@ -251,19 +330,61 @@ describe('renderCorridorView', () => {
     expect(turnView).not.toBe(tView);
   });
 
-  it('draws a door glyph on an open side when the door lookup marks one', () => {
+  it('fills a closed side door edge-to-edge with a bracket panel', () => {
     const grid = closedGrid(10, 10);
     carve(grid, 5, 5, 4, 'E');
     grid[5][6].walls.N = false; // open left at depth 1
+    const lookup = lookupFrom({ '6,5,N': 'door-closed' });
 
+    const withDoor = renderCorridorView(grid, 5, 5, 'E', {}, lookup).join('\n');
     const withoutDoor = renderCorridorView(grid, 5, 5, 'E').join('\n');
-    const withDoor = renderCorridorView(
-      grid, 5, 5, 'E', {},
-      (x, y, dir) => x === 6 && y === 5 && dir === 'N',
-    ).join('\n');
 
     expect(withDoor).toContain('[');
     expect(withDoor).not.toBe(withoutDoor);
+  });
+
+  it('renders a closed side door differently from a plain open passage on the same side', () => {
+    const gridPassage = closedGrid(10, 10);
+    carve(gridPassage, 5, 5, 4, 'E');
+    gridPassage[5][6].walls.N = false;
+    const passageView = renderCorridorView(gridPassage, 5, 5, 'E').join('\n');
+
+    const gridDoor = closedGrid(10, 10);
+    carve(gridDoor, 5, 5, 4, 'E');
+    gridDoor[5][6].walls.N = false;
+    const doorLookup = lookupFrom({ '6,5,N': 'door-closed' });
+    const doorView = renderCorridorView(gridDoor, 5, 5, 'E', {}, doorLookup).join('\n');
+
+    expect(doorView).not.toBe(passageView);
+  });
+
+  it('renders a door directly ahead as an inset panel, distinct from a plain dead-end wall', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E'); // open for 3 steps
+    const lookup = lookupFrom({ '8,5,E': 'door-closed' });
+    const doorAheadView = renderCorridorView(grid, 5, 5, 'E', {}, lookup).join('\n');
+
+    const gridWall = closedGrid(10, 10);
+    carve(gridWall, 5, 5, 4, 'E');
+    const wallAheadView = renderCorridorView(gridWall, 5, 5, 'E').join('\n');
+
+    expect(doorAheadView).not.toBe(wallAheadView);
+    // The inset panel's corners/edges use the same primitives as everywhere else.
+    expect(doorAheadView).toContain('+');
+    expect(doorAheadView).toContain('|');
+  });
+
+  it('a secret wall renders byte-for-byte identical to a plain wall', () => {
+    const gridWall = closedGrid(10, 10);
+    carve(gridWall, 5, 5, 4, 'E');
+    const wallView = renderCorridorView(gridWall, 5, 5, 'E').join('\n');
+
+    const gridSecret = closedGrid(10, 10);
+    carve(gridSecret, 5, 5, 4, 'E');
+    const secretLookup = lookupFrom({ '8,5,E': 'secret' });
+    const secretView = renderCorridorView(gridSecret, 5, 5, 'E', {}, secretLookup).join('\n');
+
+    expect(secretView).toBe(wallView);
   });
 
   it('fills the innermost frame with a wall texture when the corridor dead-ends', () => {
@@ -307,5 +428,149 @@ describe('renderCorridorView', () => {
     expect(view).toContain('=');
     // No vanishing-point marker when it's a dead end, not an open corridor.
     expect(view).not.toContain('*');
+  });
+});
+
+// ─── Required test cases A-L ────────────────────────────────────────────────
+// One test per scenario named in the spec, asserting on the resolved
+// EdgeType/StepKind data (the ground truth the renderer draws from) so each
+// case is verified independently of the exact ASCII art.
+
+describe('Required test cases', () => {
+  it('A. straight corridor, no branches', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    expect(scan.steps[0].kind).toBe('straight');
+    expect(scan.steps[1].kind).toBe('straight');
+    expect(scan.steps[scan.steps.length - 1].kind).toBe('dead-end');
+  });
+
+  it('B. corridor with right passage one square ahead', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    grid[5][5].walls.S = false; // right side of the player's own cell (depth 0)
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    expect(scan.steps[0].right).toBe('passage');
+    expect(scan.steps[0].kind).toBe('right-passage');
+  });
+
+  it('C. corridor with left passage two squares ahead', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    grid[5][7].walls.N = false; // left side, depth 2
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    expect(scan.steps[2].left).toBe('passage');
+    expect(scan.steps[2].kind).toBe('left-passage');
+  });
+
+  it('D. right-side closed door one square ahead', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    grid[6][5].walls.S = false; // right side open at depth 1
+    const lookup = lookupFrom({ '6,5,S': 'door-closed' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 10, lookup);
+    expect(scan.steps[1].right).toBe('door-closed');
+  });
+
+  it('E. left-side closed door two squares ahead', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    grid[7][5].walls.N = false; // left side open at depth 2
+    const lookup = lookupFrom({ '7,5,N': 'door-closed' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 10, lookup);
+    expect(scan.steps[2].left).toBe('door-closed');
+  });
+
+  it('F. closed door directly ahead', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 5, 'E');
+    const lookup = lookupFrom({ '8,5,E': 'door-closed' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 10, lookup);
+    expect(scan.endCapped).toBe(true);
+    expect(scan.steps[scan.steps.length - 1].front).toBe('door-closed');
+
+    const view = renderCorridorView(grid, 5, 5, 'E', {}, lookup).join('\n');
+    const plainWallGrid = closedGrid(10, 10);
+    carve(plainWallGrid, 5, 5, 5, 'E');
+    const plainWallView = renderCorridorView(plainWallGrid, 5, 5, 'E').join('\n');
+    expect(view).not.toBe(plainWallView);
+  });
+
+  it('G. open doorway directly ahead', () => {
+    const grid = closedGrid(15, 15);
+    carve(grid, 5, 5, 6, 'E');
+    const lookup = lookupFrom({ '8,5,E': 'door-open' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 4, lookup);
+    // The open door doesn't block sight, so the scan runs to maxDepth, not
+    // stopping at the door the way it would for a wall or closed door.
+    expect(scan.endCapped).toBe(false);
+    expect(scan.steps.some(s => s.front === 'door-open')).toBe(true);
+  });
+
+  it('H. T intersection', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 3, 'E');
+    grid[5][7].walls.N = false;
+    grid[5][7].walls.S = false;
+    const scan = scanCorridor(grid, 5, 5, 'E', 5);
+    expect(scan.steps[scan.steps.length - 1].kind).toBe('t-junction');
+  });
+
+  it('I. four-way intersection', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 5, 'E');
+    grid[5][7].walls.N = false;
+    grid[5][7].walls.S = false;
+    const scan = scanCorridor(grid, 5, 5, 'E', 5);
+    // Forward still open at that depth, both sides open -> crossroads, not
+    // a T (which requires forward to be blocked).
+    expect(scan.steps[2].kind).toBe('crossroads');
+  });
+
+  it('J. side passages at multiple depths', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 5, 'E');
+    grid[5][5].walls.S = false; // right passage at depth 0
+    grid[5][7].walls.N = false; // left passage at depth 2
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    expect(scan.steps[0].right).toBe('passage');
+    expect(scan.steps[0].kind).toBe('right-passage');
+    expect(scan.steps[2].left).toBe('passage');
+    expect(scan.steps[2].kind).toBe('left-passage');
+  });
+
+  it('K. side door plus passage visible at different depths', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 5, 'E');
+    grid[5][5].walls.S = false; // right side open at depth 0 -> door
+    grid[5][7].walls.N = false; // left side open at depth 2 -> plain passage
+    const lookup = lookupFrom({ '5,5,S': 'door-closed' });
+    const scan = scanCorridor(grid, 5, 5, 'E', 10, lookup);
+    expect(scan.steps[0].right).toBe('door-closed');
+    expect(scan.steps[2].left).toBe('passage');
+
+    const view = renderCorridorView(grid, 5, 5, 'E', {}, lookup).join('\n');
+    expect(view).toContain(']'); // the door bracket on the right side
+  });
+
+  it('L. secret door remains visually identical to wall until discovered', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    // Undiscovered: the lookup reports 'secret'.
+    const hiddenLookup = lookupFrom({ '8,5,E': 'secret' });
+    const hiddenView = renderCorridorView(grid, 5, 5, 'E', {}, hiddenLookup).join('\n');
+
+    const plainWallGrid = closedGrid(10, 10);
+    carve(plainWallGrid, 5, 5, 4, 'E');
+    const plainWallView = renderCorridorView(plainWallGrid, 5, 5, 'E').join('\n');
+
+    expect(hiddenView).toBe(plainWallView); // indistinguishable while hidden
+
+    // Once "discovered" (the game's own discovery rules would flip what the
+    // lookup reports, not this module), it renders differently.
+    const discoveredLookup = lookupFrom({ '8,5,E': 'door-closed' });
+    const discoveredView = renderCorridorView(grid, 5, 5, 'E', {}, discoveredLookup).join('\n');
+    expect(discoveredView).not.toBe(hiddenView);
   });
 });
