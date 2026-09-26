@@ -12,11 +12,11 @@
   --terminal-red: #ff3333;           /* critical danger */
   --terminal-bg: #000000;
 
-  /* Structural chrome — hairline dividers, panel fills. Deliberately much
-     darker than --terminal-green-dim: these are near-invisible borders, not
-     readable text, so they stay a separate, lower-contrast shade. */
+  /* Structural chrome — panel fills. Borders/dividers all use
+     --terminal-green-dim throughout, so every rule on screen — panel
+     outlines and section dividers alike — is drawn with the same weight
+     and color, like one consistent line-drawing character set. */
   --panel: #000000;
-  --border: #1a3a1a;
   --font: 'Courier New', Courier, monospace;
 }
 
@@ -50,7 +50,7 @@ html, body {
 
 /* Header */
 #header {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--terminal-green-dim);
   padding-bottom: 4px;
   text-align: center;
 }
@@ -68,7 +68,7 @@ html, body {
   gap: 16px;
   flex-wrap: wrap;
   padding: 4px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--terminal-green-dim);
   font-size: 13px;
 }
 
@@ -145,12 +145,26 @@ html, body {
   line-height: 1.5;
 }
 
-/* Choices */
+/* Choices — same panel treatment as the controls bar below: this and
+   #movement-controls occupy the same "control strip" slot (one has combat/
+   interaction choices, the other has movement keys) and are never really
+   both in use at once, so they share one visual language. */
 #choices-area {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   min-height: 32px;
+  border: 1px solid var(--terminal-green-dim);
+  padding: 8px 12px;
+}
+
+/* While playing, movement is handled by #movement-controls and this area
+   has no buttons at all — collapse it instead of showing an empty box. */
+#choices-area:empty {
+  border: none;
+  padding: 0;
+  min-height: 0;
 }
 
 /* Buttons are "active controls" — bright green text, dim structural border.
@@ -217,6 +231,8 @@ html, body {
   gap: 16px;
   justify-content: flex-start;
   flex-wrap: wrap;
+  border: 1px solid var(--terminal-green-dim);
+  padding: 8px 12px;
 }
 
 .dpad {
@@ -273,7 +289,7 @@ html, body {
 /* Help line */
 #help-line {
   padding: 2px 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--terminal-green-dim);
   min-height: 20px;
 }
 
