@@ -102,6 +102,98 @@ describe('scanCorridor', () => {
     const scan = scanCorridor(grid, 1, 1, 'E', 5);
     expect(scan.endCapped).toBe(true);
   });
+
+  it('never reveals cells beyond a blocking wall (requirement 7)', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 3, 'E'); // open for 2 steps, wall on the 3rd cell
+    // Poke an obviously-detectable marker into a cell well past the wall.
+    grid[5][9].walls.N = false;
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    // Only the 3 reachable-and-visible cells were scanned; the scan simply
+    // never reaches (9,5), so its state can't leak into the result.
+    expect(scan.steps).toHaveLength(3);
+  });
+
+  describe('step classification (StepKind)', () => {
+    it('classifies a plain straight run', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 3, 'E');
+      const scan = scanCorridor(grid, 5, 5, 'E', 5);
+      expect(scan.steps[0].kind).toBe('straight');
+    });
+
+    it('classifies a left/right passage while the corridor continues', () => {
+      const gridL = closedGrid(10, 10);
+      carve(gridL, 5, 5, 4, 'E');
+      gridL[5][6].walls.N = false; // open left at depth 1
+      expect(scanCorridor(gridL, 5, 5, 'E', 5).steps[1].kind).toBe('left-passage');
+
+      const gridR = closedGrid(10, 10);
+      carve(gridR, 5, 5, 4, 'E');
+      gridR[5][6].walls.S = false; // open right at depth 1
+      expect(scanCorridor(gridR, 5, 5, 'E', 5).steps[1].kind).toBe('right-passage');
+    });
+
+    it('classifies a crossroads when both sides are open and forward continues', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 4, 'E');
+      grid[5][6].walls.N = false;
+      grid[5][6].walls.S = false;
+      expect(scanCorridor(grid, 5, 5, 'E', 5).steps[1].kind).toBe('crossroads');
+    });
+
+    it('classifies a dead end when forward is blocked and both sides are walled', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 3, 'E');
+      const scan = scanCorridor(grid, 5, 5, 'E', 5);
+      expect(scan.steps[scan.steps.length - 1].kind).toBe('dead-end');
+    });
+
+    it('classifies a turn when forward is blocked and exactly one side is open', () => {
+      const gridL = closedGrid(10, 10);
+      carve(gridL, 5, 5, 3, 'E');
+      gridL[5][7].walls.N = false; // open left at the final (capped) cell
+      const scanL = scanCorridor(gridL, 5, 5, 'E', 5);
+      expect(scanL.steps[scanL.steps.length - 1].kind).toBe('turn-left');
+
+      const gridR = closedGrid(10, 10);
+      carve(gridR, 5, 5, 3, 'E');
+      gridR[5][7].walls.S = false; // open right at the final (capped) cell
+      const scanR = scanCorridor(gridR, 5, 5, 'E', 5);
+      expect(scanR.steps[scanR.steps.length - 1].kind).toBe('turn-right');
+    });
+
+    it('classifies a T-junction when forward is blocked and both sides are open', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 3, 'E');
+      grid[5][7].walls.N = false;
+      grid[5][7].walls.S = false;
+      const scan = scanCorridor(grid, 5, 5, 'E', 5);
+      expect(scan.steps[scan.steps.length - 1].kind).toBe('t-junction');
+    });
+  });
+
+  describe('door hook', () => {
+    it('marks a door only where a side is actually open and the lookup says so', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 4, 'E');
+      grid[5][6].walls.N = false; // open left at depth 1
+
+      const scan = scanCorridor(grid, 5, 5, 'E', 5, (x, y, dir) => x === 6 && y === 5 && dir === 'N');
+      expect(scan.steps[1].leftDoor).toBe(true);
+      expect(scan.steps[1].rightDoor).toBe(false);
+    });
+
+    it('never reports a door on a side that has a wall, even if the lookup says yes', () => {
+      const grid = closedGrid(10, 10);
+      carve(grid, 5, 5, 4, 'E'); // left/right stay walled at every depth
+      const scan = scanCorridor(grid, 5, 5, 'E', 5, () => true);
+      for (const step of scan.steps) {
+        expect(step.leftDoor).toBe(false);
+        expect(step.rightDoor).toBe(false);
+      }
+    });
+  });
 });
 
 describe('renderCorridorView', () => {
@@ -120,12 +212,58 @@ describe('renderCorridorView', () => {
     carve(grid, 5, 5, 10, 'E');
     grid[5][7].walls.N = false; // an open side, for a bit more variety
     const view = renderCorridorView(grid, 5, 5, 'E');
-    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=']);
+    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=', '[', ']']);
     for (const row of view) {
       for (const ch of row) {
         expect(allowed.has(ch)).toBe(true);
       }
     }
+  });
+
+  it('renders a T-junction with gaps on both sides of the dead-end wall texture', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 3, 'E');
+    grid[5][7].walls.N = false;
+    grid[5][7].walls.S = false;
+    const view = renderCorridorView(grid, 5, 5, 'E');
+
+    // A plain dead end (both sides walled) for comparison.
+    const gridDead = closedGrid(10, 10);
+    carve(gridDead, 5, 5, 3, 'E');
+    const deadView = renderCorridorView(gridDead, 5, 5, 'E');
+
+    expect(view.join('\n')).not.toBe(deadView.join('\n'));
+    expect(view.join('\n')).toContain('='); // still a wall dead ahead
+  });
+
+  it('renders a single turn differently from a T-junction', () => {
+    const gridTurn = closedGrid(10, 10);
+    carve(gridTurn, 5, 5, 3, 'E');
+    gridTurn[5][7].walls.N = false; // only left open
+    const turnView = renderCorridorView(gridTurn, 5, 5, 'E').join('\n');
+
+    const gridT = closedGrid(10, 10);
+    carve(gridT, 5, 5, 3, 'E');
+    gridT[5][7].walls.N = false;
+    gridT[5][7].walls.S = false; // both sides open
+    const tView = renderCorridorView(gridT, 5, 5, 'E').join('\n');
+
+    expect(turnView).not.toBe(tView);
+  });
+
+  it('draws a door glyph on an open side when the door lookup marks one', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    grid[5][6].walls.N = false; // open left at depth 1
+
+    const withoutDoor = renderCorridorView(grid, 5, 5, 'E').join('\n');
+    const withDoor = renderCorridorView(
+      grid, 5, 5, 'E', {},
+      (x, y, dir) => x === 6 && y === 5 && dir === 'N',
+    ).join('\n');
+
+    expect(withDoor).toContain('[');
+    expect(withDoor).not.toBe(withoutDoor);
   });
 
   it('fills the innermost frame with a wall texture when the corridor dead-ends', () => {
