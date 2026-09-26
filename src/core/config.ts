@@ -209,7 +209,7 @@ export const MONSTER_SCALING = {
   // the character-level cap bonus below is added to the max. Deeper levels
   // widen the band — both the floor and the ceiling climb with depth.
   LEVEL_RANGE_BY_DUNGEON_LEVEL: [
-    { min: 5,  max: 20 },  // level 1
+    { min: 1,  max: 6 },   // level 1 — gentle enough for a fresh level-1 character to survive
     { min: 10, max: 22 },  // level 2
     { min: 18, max: 30 },  // level 3
     { min: 26, max: 45 },  // level 4

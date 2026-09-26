@@ -275,7 +275,7 @@ describe('Sanguinid', () => {
     // minLevel used to be 9, which meant a level-1 character at dungeon
     // depth 1 (minDungeonLevel: 1) was *always* clamped up to at least a
     // level-9 Sanguinid regardless of the roll. minLevel is now 1, so the
-    // dungeon-depth level range (5-20 on depth 1, by design) is free to
+    // dungeon-depth level range (1-6 on depth 1, by design) is free to
     // produce its full spread instead of being floored by the monster type.
     const def = getDefinition('Sanguinid');
     expect(def.minLevel).toBeLessThanOrEqual(3);
@@ -285,13 +285,13 @@ describe('Sanguinid', () => {
     for (let i = 0; i < 200; i++) {
       const monsterLevel = randomMonsterLevel(1, 1, rng);
       const monster = createMonster('Sanguinid', monsterLevel, `sg-${i}`);
-      // Depth-1 range is 5-20 for a level-1 character (no char-level cap bonus).
-      expect(monster.level).toBeGreaterThanOrEqual(5);
-      expect(monster.level).toBeLessThanOrEqual(20);
+      // Depth-1 range is 1-6 for a level-1 character (no char-level cap bonus).
+      expect(monster.level).toBeGreaterThanOrEqual(1);
+      expect(monster.level).toBeLessThanOrEqual(6);
       levels.add(monster.level);
     }
     // Should see real variation across the whole range, not stuck at one floor.
-    expect(levels.size).toBeGreaterThan(5);
+    expect(levels.size).toBeGreaterThan(3);
   });
 
   it('every successful attack causes bleeding', () => {
@@ -737,8 +737,8 @@ describe('randomMonsterLevel — dungeon-depth scaling', () => {
     const rng = new RNG(202);
     for (let i = 0; i < 200; i++) {
       const lvl1 = randomMonsterLevel(1, 1, rng);
-      expect(lvl1).toBeGreaterThanOrEqual(5);
-      expect(lvl1).toBeLessThanOrEqual(20);
+      expect(lvl1).toBeGreaterThanOrEqual(1);
+      expect(lvl1).toBeLessThanOrEqual(6);
 
       // Level-7 band is 50-90 before the hard cap, so it's clamped to 60.
       const lvl7 = randomMonsterLevel(1, 7, rng);
@@ -774,8 +774,8 @@ describe('randomMonsterLevel — dungeon-depth scaling', () => {
     const rng = new RNG(404);
     for (let i = 0; i < 50; i++) {
       const belowRange = randomMonsterLevel(1, 0, rng);
-      expect(belowRange).toBeGreaterThanOrEqual(5);
-      expect(belowRange).toBeLessThanOrEqual(20);
+      expect(belowRange).toBeGreaterThanOrEqual(1);
+      expect(belowRange).toBeLessThanOrEqual(6);
 
       const aboveRange = randomMonsterLevel(1, 99, rng);
       expect(aboveRange).toBeGreaterThanOrEqual(50);
