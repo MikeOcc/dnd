@@ -87,17 +87,18 @@ html, body {
 #potions-display.has-potions { color: var(--terminal-amber); }
 #compass-display  { color: var(--terminal-green-bright); font-weight: bold; margin-left: auto; }
 
-/* Dungeon view — the main visual focus of the screen */
+/* Dungeon view, monster portrait, and messages are all the same "panel"
+   primitive — same border weight/color, same padding — so they read as
+   panes of one terminal rather than separate widgets. Each panel spans the
+   full width of #terminal; content that's narrower than the panel (the
+   fixed-width corridor render, the monster sprite) is centered within it. */
 #view-container {
-  display: flex;
-  justify-content: center;
-  padding: 6px 0;
   flex-shrink: 0;
 }
 
 #dungeon-view {
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--terminal-green-dim);
   padding: 8px 12px;
   /* The corridor render is almost entirely walls/ceiling/floor geometry —
      dim green, per the "structural geometry" rule. */
@@ -105,7 +106,7 @@ html, body {
   font-size: 13px;
   line-height: 1.15;
   letter-spacing: 0;
-  text-align: left;
+  text-align: center;
   min-height: 300px;
   max-width: 100%;
   overflow-x: auto;
@@ -115,7 +116,9 @@ html, body {
 #monster-portrait {
   display: flex;
   justify-content: center;
-  padding: 6px 0;
+  background: var(--panel);
+  border: 1px solid var(--terminal-green-dim);
+  padding: 8px 12px;
 }
 
 #monster-portrait svg {
@@ -128,8 +131,8 @@ html, body {
   flex: 1;
   overflow-y: auto;
   background: var(--panel);
-  border: 1px solid var(--border);
-  padding: 6px 10px;
+  border: 1px solid var(--terminal-green-dim);
+  padding: 8px 12px;
   min-height: 80px;
   max-height: 260px;
 }
@@ -147,14 +150,17 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 4px 0;
   min-height: 32px;
 }
 
-/* Buttons are "active controls" — bright green text, dim structural border. */
+/* Buttons are "active controls" — bright green text, dim structural border.
+   Same primitive as .ctrl-btn below: square corners, no native button
+   chrome, identical hover/press behavior. */
 .choice-btn {
+  appearance: none;
   background: var(--panel);
   border: 1px solid var(--terminal-green-dim);
+  border-radius: 0;
   color: var(--terminal-green-bright);
   font-family: var(--font);
   font-size: 13px;
@@ -166,6 +172,12 @@ html, body {
 .choice-btn:hover {
   background: var(--terminal-green-dim);
   color: var(--terminal-bg);
+}
+
+.choice-btn:active {
+  background: var(--terminal-green-bright);
+  color: var(--terminal-bg);
+  border-color: var(--terminal-green-bright);
 }
 
 .choice-btn .key {
@@ -203,7 +215,6 @@ html, body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 4px 0;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
@@ -228,6 +239,7 @@ html, body {
 }
 
 .ctrl-btn {
+  appearance: none;
   background: var(--panel);
   border: 1px solid var(--terminal-green-dim);
   color: var(--terminal-green-bright);
