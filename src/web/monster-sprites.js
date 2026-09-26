@@ -1,6 +1,8 @@
 // THE SEVEN LEVELS — inline SVG monster portraits, keyed by MonsterType.
-// Each sprite is a self-contained 0..160 viewBox square (frame + creature).
-// Sizing is controlled by CSS on the container, not on the <svg> itself.
+// Each sprite is a self-contained 0..160 viewBox square with a transparent
+// background — no border/panel of its own, so it blends into whatever's
+// behind it (the corridor view during combat). Sizing is controlled by CSS
+// on the container, not on the <svg> itself.
 
 'use strict';
 
@@ -9,8 +11,6 @@ const MONSTER_SPRITES = {
   'Green Dragon': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Green Dragon">
       <defs><filter id="glow-dragon" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#123018" stroke="#0a2410" stroke-width="1.5" opacity="0.92"/>
@@ -106,8 +106,6 @@ const MONSTER_SPRITES = {
   'Kobold': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kobold">
       <defs><filter id="glow-kobold" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="45" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 68 116 Q 50 120 40 134 Q 38 138 42 136 Q 52 124 66 120 Z" fill="#7a4a2a" stroke="#3a2210" stroke-width="1.5"/>
@@ -145,8 +143,6 @@ const MONSTER_SPRITES = {
   'Goblin': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Goblin">
       <defs><filter id="glow-goblin" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="45" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 64 118 L 58 136 L 54 148 L 64 148 L 70 134 L 72 118 Z" fill="#4a7a2a" stroke="#1e3a10" stroke-width="2"/>
@@ -188,8 +184,6 @@ const MONSTER_SPRITES = {
   'Mold': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mold">
       <defs><filter id="glow-mold" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="50" ry="6" fill="#000000" opacity="0.5"/>
 
       <ellipse cx="60" cy="125" rx="30" ry="20" fill="#5a4a20" stroke="#2a2210" stroke-width="2"/>
@@ -223,8 +217,6 @@ const MONSTER_SPRITES = {
 
   'Slime Mold': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Slime Mold">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="50" ry="6" fill="#000000" opacity="0.5"/>
 
       <ellipse cx="80" cy="115" rx="42" ry="32" fill="#8ac93c" opacity="0.55" stroke="#4a6a10" stroke-width="2"/>
@@ -250,8 +242,6 @@ const MONSTER_SPRITES = {
 
   'Gelatinous Cube': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gelatinous Cube">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="50" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 35 55 Q 80 45 125 55 Q 132 60 130 135 Q 128 142 80 145 Q 32 142 30 135 Q 28 60 35 55 Z" fill="#7ac9c9" opacity="0.45" stroke="#2a6a6a" stroke-width="2.5"/>
@@ -281,8 +271,6 @@ const MONSTER_SPRITES = {
   'Skeleton': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skeleton">
       <defs><filter id="glow-skeleton" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="148" rx="45" ry="6" fill="#000000" opacity="0.5"/>
 
       <ellipse cx="66" cy="112" rx="5" ry="15" fill="#d8d0b8" stroke="#4a4438" stroke-width="1.5"/>
@@ -336,8 +324,6 @@ const MONSTER_SPRITES = {
 
   'Zombie': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zombie">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="148" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 62 118 L 54 134 L 48 150 L 58 150 L 66 134 L 70 118 Z" fill="#5a6e4a" stroke="#2a3a1a" stroke-width="2"/>
@@ -382,8 +368,6 @@ const MONSTER_SPRITES = {
   'Orc': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Orc">
       <defs><filter id="glow-orc" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="50" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 62 118 L 54 138 L 48 152 L 60 152 L 68 136 L 72 118 Z" fill="#4a6a2a" stroke="#1e2e10" stroke-width="2.2"/>
@@ -425,8 +409,6 @@ const MONSTER_SPRITES = {
   'Owlbear': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Owlbear">
       <defs><filter id="glow-owlbear" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 60 116 L 52 136 L 46 152 L 60 152 L 68 134 L 70 116 Z" fill="#6a4a2a" stroke="#3a2810" stroke-width="2.2"/>
@@ -466,8 +448,6 @@ const MONSTER_SPRITES = {
   'Displacer Beast': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Displacer Beast">
       <defs><filter id="glow-displacer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <g id="db-body">
@@ -503,8 +483,6 @@ const MONSTER_SPRITES = {
   'Mimic': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mimic">
       <defs><filter id="glow-mimic" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.4"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 54 144 L 52 154 L 58 150 Z" fill="#2a1a0a"/>
@@ -545,8 +523,6 @@ const MONSTER_SPRITES = {
 
   'Giant': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="154" rx="52" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 58 118 L 50 140 L 44 156 L 62 156 L 68 138 L 74 118 Z" fill="#8a7a5a" stroke="#3a3020" stroke-width="2.4"/>
@@ -581,8 +557,6 @@ const MONSTER_SPRITES = {
   'Basilisk': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Basilisk">
       <defs><filter id="glow-basilisk" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="152" rx="50" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 52 122 L 44 138 L 40 150" stroke="#7a8a3a" stroke-width="10" fill="none" stroke-linecap="round"/>
@@ -626,8 +600,6 @@ const MONSTER_SPRITES = {
   'Wight': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wight">
       <defs><filter id="glow-wight" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="152" rx="46" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 56 108 Q 50 130 46 152 Q 60 158 74 152 Q 78 130 76 108 Z" fill="#3a3a42" stroke="#1a1a20" stroke-width="2" opacity="0.9"/>
@@ -661,8 +633,6 @@ const MONSTER_SPRITES = {
   'Black Dragon': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Black Dragon">
       <defs><filter id="glow-blackdragon" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#0d1f0d" stroke="#050d05" stroke-width="1.5" opacity="0.92"/>
@@ -761,8 +731,6 @@ const MONSTER_SPRITES = {
   'Blue Dragon': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Blue Dragon">
       <defs><filter id="glow-bluedragon" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#0d2038" stroke="#050f1c" stroke-width="1.5" opacity="0.92"/>
@@ -858,8 +826,6 @@ const MONSTER_SPRITES = {
   'White Dragon': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="White Dragon">
       <defs><filter id="glow-whitedragon" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#a8c0d0" stroke="#5a7688" stroke-width="1.5" opacity="0.85"/>
@@ -956,8 +922,6 @@ const MONSTER_SPRITES = {
   'Red Dragon': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Red Dragon">
       <defs><filter id="glow-reddragon" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#2e0a0a" stroke="#180404" stroke-width="1.5" opacity="0.92"/>
@@ -1055,8 +1019,6 @@ const MONSTER_SPRITES = {
   'Spectre': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spectre">
       <defs><filter id="glow-spectre" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <circle cx="84" cy="90" r="52" fill="#4a6a80" opacity="0.08" filter="url(#glow-spectre)"/>
 
@@ -1087,8 +1049,6 @@ const MONSTER_SPRITES = {
   'Vampire': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vampire">
       <defs><filter id="glow-vampire" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="152" rx="46" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 66 140 L 62 156 L 74 156 L 76 140 Z" fill="#1a0a2a" stroke="#0a0510" stroke-width="1.5"/>
@@ -1128,8 +1088,6 @@ const MONSTER_SPRITES = {
   'Wizard': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wizard">
       <defs><filter id="glow-wizard" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="158" rx="46" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 58 96 Q 50 130 46 156 Q 80 162 114 156 Q 110 130 102 96 Q 80 108 58 96 Z" fill="#2a2a5a" stroke="#141430" stroke-width="2"/>
@@ -1170,8 +1128,6 @@ const MONSTER_SPRITES = {
   'Death Knight': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Death Knight">
       <defs><filter id="glow-deathknight" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 56 90 Q 44 120 40 156 Q 50 160 58 154 Q 58 120 66 92 Z" fill="#2a1010" stroke="#140808" stroke-width="1.5" opacity="0.9"/>
@@ -1218,8 +1174,6 @@ const MONSTER_SPRITES = {
   'Beholder': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beholder">
       <defs><filter id="glow-beholder" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <path d="M 60 138 Q 80 142 100 138" stroke="#6a4a5a" stroke-width="1.2" fill="none" opacity="0.4"/>
       <path d="M 64 146 Q 80 149 96 146" stroke="#6a4a5a" stroke-width="1" fill="none" opacity="0.3"/>
@@ -1278,8 +1232,6 @@ const MONSTER_SPRITES = {
   'Mind Flayer': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mind Flayer">
       <defs><filter id="glow-mindflayer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="158" rx="46" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 58 100 Q 52 130 56 156 Q 80 162 104 156 Q 108 130 102 100 Q 80 110 58 100 Z" fill="#2a1a3a" stroke="#140a1e" stroke-width="2"/>
@@ -1315,8 +1267,6 @@ const MONSTER_SPRITES = {
   'Elder Oblex': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elder Oblex">
       <defs><filter id="glow-oblex" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="150" rx="52" ry="7" fill="#000000" opacity="0.5"/>
 
       <path d="M 34 90 Q 26 60 52 42 Q 80 26 108 42 Q 134 60 126 90 Q 132 118 104 138 Q 80 152 56 138 Q 28 118 34 90 Z"
@@ -1355,8 +1305,6 @@ const MONSTER_SPRITES = {
   'Lich': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lich">
       <defs><filter id="glow-lich" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 58 98 Q 50 130 46 156 Q 80 162 114 156 Q 110 130 102 98 Q 80 108 58 98 Z" fill="#2a1030" stroke="#140818" stroke-width="2"/>
@@ -1394,8 +1342,6 @@ const MONSTER_SPRITES = {
   'Aboleth': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth">
       <defs><filter id="glow-aboleth" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <path d="M 20 140 Q 50 130 80 138 Q 110 130 140 140 Q 130 150 110 146 Q 80 152 50 146 Q 30 150 20 140 Z" fill="#1a3a4a" opacity="0.7"/>
       <path d="M 35 136 Q 40 132 45 136" stroke="#6aa0b0" stroke-width="1.5" fill="none" opacity="0.6"/>
@@ -1434,8 +1380,6 @@ const MONSTER_SPRITES = {
   'Dracolich': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dracolich">
       <defs><filter id="glow-dracolich" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="146" rx="55" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 65 38 L 32 44 Q 52 78 78 65 Z" fill="#2a2430" stroke="#141018" stroke-width="1.5" opacity="0.8"/>
@@ -1506,8 +1450,6 @@ const MONSTER_SPRITES = {
 
   'Nightwalker': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nightwalker">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <path d="M 40 158 Q 30 100 45 60 Q 55 30 80 20 Q 105 30 115 60 Q 130 100 120 158 Z" fill="#000000"/>
 
@@ -1528,8 +1470,6 @@ const MONSTER_SPRITES = {
   'Tarrasque': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tarrasque">
       <defs><filter id="glow-tarrasque" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <path d="M 20 150 L 35 144 L 40 152 L 25 158 Z" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="1" opacity="0.8"/>
       <path d="M 120 148 L 135 152 L 132 160 L 118 156 Z" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="1" opacity="0.8"/>
@@ -1581,8 +1521,6 @@ const MONSTER_SPRITES = {
 
   'Tiamat': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tiamat">
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="152" rx="52" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 50 90 L 20 60 L 35 68 L 15 40 L 38 58 L 28 30 L 48 52 L 52 72 Q 48 82 50 90 Z" fill="#1a1020" stroke="#0a0512" stroke-width="1.5" opacity="0.92"/>
@@ -1631,8 +1569,6 @@ const MONSTER_SPRITES = {
   'Asmodeus': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus">
       <defs><filter id="glow-asmodeus" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
       <ellipse cx="80" cy="160" rx="48" ry="6" fill="#000000" opacity="0.5"/>
 
       <path d="M 40 60 L 38 40 L 44 40 L 42 60 Z" fill="#3a3a3a" opacity="0.5"/>
@@ -1681,8 +1617,6 @@ const MONSTER_SPRITES = {
         <filter id="glow-sanguinid-aura" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4"/></filter>
       </defs>
 
-      <rect x="4" y="4" width="152" height="152" fill="#04170a" stroke="#33ff33" stroke-width="3"/>
-      <rect x="9" y="9" width="142" height="142" fill="none" stroke="#661111" stroke-width="1" opacity="0.5"/>
 
       <circle cx="82" cy="95" r="55" fill="#66ff44" opacity="0.06" filter="url(#glow-sanguinid-aura)"/>
 
