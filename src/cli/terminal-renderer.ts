@@ -144,13 +144,14 @@ function renderGame(state: GameState): string[] {
   }
   lines.push('');
 
-  // 5x5 view
-  if (state.view) {
-    lines.push(g('  ╔═══════════╗'));
+  // First-person corridor view
+  if (state.view && state.view.length > 0) {
+    const viewWidth = state.view[0].length;
+    lines.push(g('  ╔' + '═'.repeat(viewWidth) + '╗'));
     for (const row of state.view) {
       lines.push(g('  ║') + dg(row) + g('║'));
     }
-    lines.push(g('  ╚═══════════╝'));
+    lines.push(g('  ╚' + '═'.repeat(viewWidth) + '╝'));
   }
   lines.push('');
 

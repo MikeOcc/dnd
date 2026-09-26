@@ -6,7 +6,7 @@ import type {
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
-import { computeFOV, displayToDungeon } from './field-of-view.js';
+import { renderCorridorView } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -76,46 +76,15 @@ export class GameEngine {
     return state;
   }
 
+  // First-person pseudo-3D corridor view (see corridor-view.ts). Content
+  // symbols (monsters, treasure, stairs) directly ahead are a planned
+  // follow-up — not yet projected into this view.
   private renderView(): string[] {
     if (!this.char) return [];
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return [];
 
-    const ds = this.dungeonState;
-    const specials: { dr: number; dc: number; symbol: string }[] = [];
-
-    for (let dr = 0; dr < 5; dr++) {
-      for (let dc = 0; dc < 5; dc++) {
-        if (dr === 2 && dc === 2) continue; // player position — always shows ^
-        const { dx, dy } = displayToDungeon(this.char.facing, dr, dc);
-        const tx = this.char.x + dx;
-        const ty = this.char.y + dy;
-        const content = lvl.contents.get(`${tx},${ty}`);
-        if (!content) continue;
-
-        let symbol: string | null = null;
-        switch (content.type) {
-          case 'ladder-up':   symbol = '>'; break;
-          case 'ladder-down': symbol = '<'; break;
-          case 'chest':
-            if (!ds?.openedChests.has(content.id)) symbol = '$'; break;
-          case 'altar':
-            if (!ds?.usedAltars.has(content.id)) symbol = '+'; break;
-          case 'book':
-            if (!ds?.readBooks.has(content.id)) symbol = '?'; break;
-          case 'fountain':
-            if (!ds?.usedFountains.has(content.id)) symbol = '~'; break;
-          case 'fixed-monster':
-            if (!ds?.defeatedFixedMonsters.has(content.id)) symbol = 'M'; break;
-          case 'unique-monster':
-            if (!ds?.defeatedUniqueMonsters.has(content.id)) symbol = 'M'; break;
-        }
-        if (symbol) specials.push({ dr, dc, symbol });
-      }
-    }
-
-    const fov = computeFOV(lvl.grid, this.char.x, this.char.y, this.char.facing, specials);
-    return fov.grid;
+    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing);
   }
 
   private buildChoices(): Choice[] {
