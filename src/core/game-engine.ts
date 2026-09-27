@@ -6,7 +6,8 @@ import type {
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
-import { renderCorridorView } from './corridor-view.js';
+import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS } from './corridor-view.js';
+import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -76,15 +77,35 @@ export class GameEngine {
     return state;
   }
 
-  // First-person pseudo-3D corridor view (see corridor-view.ts). Content
-  // symbols (monsters, treasure, stairs) directly ahead are a planned
-  // follow-up — not yet projected into this view.
+  // First-person pseudo-3D corridor view (see corridor-view.ts). Ladders
+  // visible ahead are projected in via the entity-marker seam; other
+  // content symbols (monsters, treasure) are a planned follow-up.
   private renderView(): string[] {
     if (!this.char) return [];
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return [];
 
-    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing);
+    const entities = this.findVisibleLadders(lvl);
+    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, {}, undefined, entities);
+  }
+
+  /** Scans the same visible depth the corridor renderer will draw and marks
+   * any ladder-up/ladder-down cell along it — the renderer itself never
+   * looks at CellContent, so this is done here and handed in as plain
+   * entity markers. */
+  private findVisibleLadders(lvl: LevelCache): EntityMarker[] {
+    if (!this.char) return [];
+    const scan = scanCorridor(
+      lvl.grid, this.char.x, this.char.y, this.char.facing, CORRIDOR_VIEW_DEFAULTS.MAX_DEPTH,
+    );
+
+    const entities: EntityMarker[] = [];
+    scan.steps.forEach((step, depth) => {
+      const content = lvl.contents.get(`${step.x},${step.y}`);
+      if (content?.type === 'ladder-down') entities.push({ depth, glyph: '<' });
+      if (content?.type === 'ladder-up') entities.push({ depth, glyph: '>' });
+    });
+    return entities;
   }
 
   private buildChoices(): Choice[] {

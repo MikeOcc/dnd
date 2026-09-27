@@ -117,6 +117,11 @@ export type StepKind =
   | 't-junction';    // forward blocked, both sides open
 
 export interface CorridorStep {
+  /** Dungeon coordinates of the cell this depth represents — lets a caller
+   * correlate a visible depth back to real map content (ladders, items,
+   * monsters) without this module needing to know anything about content. */
+  x: number;
+  y: number;
   left: EdgeType;
   right: EdgeType;
   front: EdgeType;
@@ -171,7 +176,7 @@ export function scanCorridor(
     const right = resolveEdge(cell, rightDir, cx, cy, edgeLookup);
     const front = resolveEdge(cell, facing, cx, cy, edgeLookup);
 
-    steps.push({ left, right, front, kind: classifyStep(left, right, front) });
+    steps.push({ x: cx, y: cy, left, right, front, kind: classifyStep(left, right, front) });
 
     if (isBlockingEdge(front)) {
       endCapped = true;

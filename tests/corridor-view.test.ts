@@ -88,6 +88,15 @@ describe('scanCorridor', () => {
     expect(scan.steps[1].right).toBe('wall');
   });
 
+  it('reports the dungeon (x,y) coordinates of each visible depth', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    const scan = scanCorridor(grid, 5, 5, 'E', 10);
+    expect(scan.steps[0]).toMatchObject({ x: 5, y: 5 });
+    expect(scan.steps[1]).toMatchObject({ x: 6, y: 5 });
+    expect(scan.steps[2]).toMatchObject({ x: 7, y: 5 });
+  });
+
   it('correctly reports left/right edges relative to facing, for all four facings', () => {
     // Facing E: left = dungeon N, right = dungeon S
     {

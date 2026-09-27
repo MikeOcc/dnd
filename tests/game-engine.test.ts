@@ -4,6 +4,18 @@ import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
 import { createMonster } from '../src/core/monsters.js';
 import { DUNGEON } from '../src/core/config.js';
+import type { DungeonCell } from '../src/core/types.js';
+
+function openGrid(w: number, h: number): DungeonCell[][] {
+  const grid: DungeonCell[][] = [];
+  for (let y = 0; y < h; y++) {
+    grid[y] = [];
+    for (let x = 0; x < w; x++) {
+      grid[y][x] = { x, y, walls: { N: true, E: false, S: true, W: false } };
+    }
+  }
+  return grid;
+}
 
 // Using 'any' intentionally: DatabaseSync type is lazy-loaded at runtime.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -200,5 +212,65 @@ describe('GameEngine — map centering', () => {
     // and the '@' should be the very first visible cell.
     const topRow = mapRows[0];
     expect(topRow.indexOf('@')).toBe(2);
+  });
+});
+
+describe('GameEngine — ladders projected into the corridor view', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('shows a ladder-down glyph when one is visible ahead', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+
+    e.char.x = 5;
+    e.char.y = 5;
+    e.char.facing = 'E';
+    e.char.dungeonLevel = 1;
+    const grid = openGrid(20, 20);
+    const contents = new Map([[`7,5`, { type: 'ladder-down', id: 'ladder-down' }]]);
+    e.levelCache.set(1, { grid, entrance: { x: 5, y: 5 }, exit: null, contents });
+
+    const state = e.getState();
+    expect(state.view.join('\n')).toContain('<');
+  });
+
+  it('shows a ladder-up glyph when one is visible ahead', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+
+    e.char.x = 5;
+    e.char.y = 5;
+    e.char.facing = 'E';
+    e.char.dungeonLevel = 1;
+    const grid = openGrid(20, 20);
+    const contents = new Map([[`6,5`, { type: 'ladder-up', id: 'ladder-up' }]]);
+    e.levelCache.set(1, { grid, entrance: { x: 5, y: 5 }, exit: null, contents });
+
+    const state = e.getState();
+    expect(state.view.join('\n')).toContain('>');
+  });
+
+  it('does not show a ladder glyph when none is within view distance', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+
+    e.char.x = 5;
+    e.char.y = 5;
+    e.char.facing = 'E';
+    e.char.dungeonLevel = 1;
+    const grid = openGrid(20, 20);
+    e.levelCache.set(1, { grid, entrance: { x: 5, y: 5 }, exit: null, contents: new Map() });
+
+    const state = e.getState();
+    expect(state.view.join('\n')).not.toContain('<');
+    expect(state.view.join('\n')).not.toContain('>');
   });
 });
