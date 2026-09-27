@@ -41,6 +41,33 @@ export function drawDiagonal(
   }
 }
 
+// A cheap, deterministic spatial hash — same (x, y) always produces the
+// same result, so decorative choices (which walls get a torch, which
+// fountains look like wells) are stable across renders instead of
+// flickering, without needing to store anything.
+export function spatialHash(x: number, y: number, salt: number): number {
+  let h = (x * 374761393 + y * 668265263 + salt * 2246822519) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+  return h;
+}
+
+// Roughly 1 in 6 solid wall segments gets a torch — sparse ("here and
+// there"), not a torch on every wall.
+const TORCH_CHANCE_DENOM = 6;
+
+/** Wall-mounted torches are purely decorative and placed the same way
+ * whether the edge is an ordinary wall or a secret one (the decision only
+ * depends on (x, y), never on the edge type), so a secret wall's odds of
+ * showing a torch are statistically identical to an ordinary wall's —
+ * required to keep it indistinguishable until discovered. */
+function maybeDrawTorch(chars: string[][], f: Frame, col: number, x: number, y: number, side: 'left' | 'right'): void {
+  if (f.bottom - f.top < 4) return; // frame too small to place one cleanly
+  const salt = side === 'left' ? 11 : 17;
+  if (spatialHash(x, y, salt) % TORCH_CHANCE_DENOM !== 0) return;
+  const row = f.top + Math.round((f.bottom - f.top) * 0.35);
+  if (row > f.top && row < f.bottom) chars[row][col] = '^';
+}
+
 /** Draws one side edge of a frame per its EdgeType: solid wall/secret, a
  * bracket-filled door panel, or an open gap (plain passage or open door)
  * with a short perspective hint of the corridor beyond it. */
@@ -50,9 +77,12 @@ export function drawSideEdge(
   col: number,
   edge: CorridorStep['left'],
   side: 'left' | 'right',
+  x = 0,
+  y = 0,
 ): void {
   if (edge === 'wall' || edge === 'secret') {
     for (let r = f.top; r <= f.bottom; r++) chars[r][col] = '|';
+    maybeDrawTorch(chars, f, col, x, y, side);
     return;
   }
 
@@ -101,8 +131,8 @@ export function drawFrame(
     chars[f.bottom][c] = '-';
   }
 
-  drawSideEdge(chars, f, f.left, step?.left ?? 'wall', 'left');
-  drawSideEdge(chars, f, f.right, step?.right ?? 'wall', 'right');
+  drawSideEdge(chars, f, f.left, step?.left ?? 'wall', 'left', step?.x, step?.y);
+  drawSideEdge(chars, f, f.right, step?.right ?? 'wall', 'right', step?.x, step?.y);
 
   chars[f.top][f.left] = '+';
   chars[f.top][f.right] = '+';
@@ -183,18 +213,56 @@ export function fillDoorAhead(chars: string[][], f: Frame): void {
 export interface EntityMarker {
   /** Index into the scanned steps/frames array this entity appears at. */
   depth: number;
-  glyph: string;
+  /** A small ASCII pattern, one string per row, centered on the frame at
+   * that depth. A space is transparent — it leaves whatever's already
+   * drawn there (floor, wall texture) showing through, so a pattern
+   * doesn't need to be a solid rectangle to read as an object sitting in
+   * the scene. */
+  pattern: string[];
 }
 
-/** Draws entity markers at the center of their frame. Called with an empty
- * list today (see corridor-view.ts), so it's a no-op in current gameplay —
- * wire real entity data through here once the game has any to show. */
+/** Draws entity markers centered in their frame. Called with an empty list
+ * by default (see corridor-view.ts) — wire real entity data through here
+ * once the game has some to show (see game-engine.ts's findVisibleEntities
+ * for the current ladder/chest/book/altar/fountain wiring). */
 export function drawEntities(chars: string[][], frames: Frame[], entities: EntityMarker[]): void {
   for (const entity of entities) {
     const f = frames[entity.depth];
     if (!f) continue;
-    const row = Math.round((f.top + f.bottom) / 2);
-    const col = Math.round((f.left + f.right) / 2);
-    if (chars[row]?.[col] !== undefined) chars[row][col] = entity.glyph;
+
+    const centerRow = Math.round((f.top + f.bottom) / 2);
+    const centerCol = Math.round((f.left + f.right) / 2);
+    const rowOffset = Math.floor(entity.pattern.length / 2);
+
+    entity.pattern.forEach((rowStr, i) => {
+      const r = centerRow - rowOffset + i;
+      const colOffset = Math.floor(rowStr.length / 2);
+      for (let j = 0; j < rowStr.length; j++) {
+        const ch = rowStr[j];
+        if (ch === ' ') continue;
+        const c = centerCol - colOffset + j;
+        if (chars[r]?.[c] !== undefined) chars[r][c] = ch;
+      }
+    });
   }
 }
+
+// ─── Decorative content glyphs ───────────────────────────────────────────────
+//
+// Small ASCII motifs for the dungeon fixtures the game already has content
+// types for. Each is 1-3 short rows built only from the renderer's existing
+// character set (+ - | / \ = [ ] ~ ^ *), designed to read as a distinct
+// silhouette at a glance rather than a label. Fountain has two variants
+// (picked deterministically per-fountain by the caller, via spatialHash on
+// the content id) purely for visual variety between fountains in the same
+// dungeon.
+
+export const CONTENT_PATTERNS = {
+  ladderUp: ['>'],
+  ladderDown: ['<'],
+  chest: ['+=+', '[=]'],
+  book: ['/=\\', ' | '],
+  altar: ['+-+', '|+|', '+-+'],
+  fountain: ['~~~', '[=]'],
+  well: ['+-+', '|~|', '+-+'],
+} as const;

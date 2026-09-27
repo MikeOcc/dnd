@@ -2,9 +2,10 @@ import type { DungeonCell, Direction } from './types.js';
 import { scanCorridor } from './corridor-scan.js';
 import type { EdgeInfoLookup } from './corridor-scan.js';
 import { computeFrames } from './corridor-geometry.js';
-import { drawFrame, fillWallTexture, fillDoorAhead, drawEntities } from './corridor-render.js';
+import { drawFrame, fillWallTexture, fillDoorAhead, drawEntities, CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
 import type { EntityMarker } from './corridor-render.js';
 export type { EntityMarker } from './corridor-render.js';
+export { CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 //

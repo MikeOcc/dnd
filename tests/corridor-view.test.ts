@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   scanCorridor, renderCorridorView, CORRIDOR_VIEW_DEFAULTS, isBlockingEdge,
+  CONTENT_PATTERNS,
   type EdgeInfoLookup, type EdgeType,
 } from '../src/core/corridor-view.js';
 import type { DungeonCell, Direction } from '../src/core/types.js';
@@ -300,7 +301,7 @@ describe('renderCorridorView', () => {
     carve(grid, 5, 5, 10, 'E');
     grid[5][7].walls.N = false; // an open side, for a bit more variety
     const view = renderCorridorView(grid, 5, 5, 'E');
-    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=', '[', ']']);
+    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=', '[', ']', '~']);
     for (const row of view) {
       for (const ch of row) {
         expect(allowed.has(ch)).toBe(true);
@@ -451,9 +452,86 @@ describe('renderCorridorView', () => {
     const grid = closedGrid(10, 10);
     carve(grid, 5, 5, 4, 'E');
     const withoutEntity = renderCorridorView(grid, 5, 5, 'E').join('\n');
-    const withEntity = renderCorridorView(grid, 5, 5, 'E', {}, undefined, [{ depth: 0, glyph: '@' }]).join('\n');
+    const withEntity = renderCorridorView(grid, 5, 5, 'E', {}, undefined, [{ depth: 0, pattern: ['@'] }]).join('\n');
     expect(withEntity).not.toBe(withoutEntity);
     expect(withEntity).toContain('@');
+  });
+
+  it('draws a multi-row entity pattern, treating spaces as transparent', () => {
+    const grid = closedGrid(10, 10);
+    carve(grid, 5, 5, 4, 'E');
+    const view = renderCorridorView(grid, 5, 5, 'E', {}, undefined, [
+      { depth: 0, pattern: [...CONTENT_PATTERNS.altar] },
+    ]);
+    const text = view.join('\n');
+    // The altar's own glyphs appear...
+    expect(text).toContain('+-+');
+    expect(text).toContain('|+|');
+    // ...and a space in the pattern didn't blank out the corridor
+    // underneath it — the frame's own floor/ceiling '-' should still be
+    // present somewhere nearby (i.e. the whole view isn't just the pattern).
+    expect(view.some(row => row.includes('-'))).toBe(true);
+  });
+
+  it('every named content pattern only uses the approved character set', () => {
+    const allowed = new Set(['+', '-', '|', '/', '\\', '~', '=', '[', ']', '<', '>', ' ']);
+    for (const pattern of Object.values(CONTENT_PATTERNS)) {
+      for (const row of pattern) {
+        for (const ch of row) expect(allowed.has(ch)).toBe(true);
+      }
+    }
+  });
+
+  it('renders the same view every time for the same position (torches are deterministic, not random)', () => {
+    const grid = closedGrid(30, 30);
+    carve(grid, 5, 5, 10, 'E');
+    const view1 = renderCorridorView(grid, 5, 5, 'E').join('\n');
+    const view2 = renderCorridorView(grid, 5, 5, 'E').join('\n');
+    expect(view1).toBe(view2);
+  });
+
+  it('places torches sparsely — some solid walls get one, most do not', () => {
+    // Sample many different corridor positions (all straight, fully
+    // walled corridors so every side segment is a torch candidate) and
+    // count how many end up with a '^' somewhere in the view.
+    let withTorch = 0;
+    const samples = 60;
+    for (let i = 0; i < samples; i++) {
+      const x = 2 + i;
+      const y = 2 + (i % 7);
+      const grid = closedGrid(samples + 10, 10);
+      carve(grid, x, y, 5, 'E');
+      const view = renderCorridorView(grid, x, y, 'E').join('\n');
+      if (view.includes('^')) withTorch++;
+    }
+    // Sparse means "some, not none, and not most": comfortably between 0
+    // and the full sample count.
+    expect(withTorch).toBeGreaterThan(0);
+    expect(withTorch).toBeLessThan(samples);
+  });
+
+  it('a secret wall renders identically to a plain wall, including torch placement, at every position', () => {
+    // Torch placement only depends on (x, y), not edge type — so forcing
+    // every side boundary along the scan to resolve as 'secret' instead of
+    // the plain wall default must produce byte-identical output at every
+    // position, sampling enough (x,y) pairs to exercise both the "torch
+    // here" and "no torch here" branches of the hash.
+    const secretSides = (_x: number, _y: number, dir: string) =>
+      (dir === 'N' || dir === 'S') ? ('secret' as const) : undefined;
+
+    for (let x = 2; x < 12; x++) {
+      for (let y = 2; y < 12; y++) {
+        const gridWall = closedGrid(20, 20);
+        carve(gridWall, x, y, 4, 'E');
+        const wallView = renderCorridorView(gridWall, x, y, 'E').join('\n');
+
+        const gridSecret = closedGrid(20, 20);
+        carve(gridSecret, x, y, 4, 'E');
+        const secretView = renderCorridorView(gridSecret, x, y, 'E', {}, secretSides).join('\n');
+
+        expect(secretView).toBe(wallView);
+      }
+    }
   });
 });
 

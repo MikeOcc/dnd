@@ -275,6 +275,97 @@ describe('GameEngine — ladders projected into the corridor view', () => {
   });
 });
 
+describe('GameEngine — dungeon fixtures projected into the corridor view', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  function place(engine: any, contentType: string, id = 'fixture-1') {
+    engine.char.x = 5;
+    engine.char.y = 5;
+    engine.char.facing = 'E';
+    engine.char.dungeonLevel = 1;
+    const grid = openGrid(20, 20);
+    const contents = new Map([[`7,5`, { type: contentType, id }]]);
+    engine.levelCache.set(1, { grid, entrance: { x: 5, y: 5 }, exit: null, contents });
+  }
+
+  it('shows an unopened chest', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'chest');
+    expect(engine.getState().view.join('\n')).toContain('+=+');
+  });
+
+  it('hides a chest that has already been opened', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'chest', 'chest-1');
+    engine.dungeonState.openedChests.add('chest-1');
+    expect(engine.getState().view.join('\n')).not.toContain('+=+');
+  });
+
+  it('shows an unread book', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'book');
+    expect(engine.getState().view.join('\n')).toContain('/=\\');
+  });
+
+  it('hides a book that has already been read', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'book', 'book-1');
+    engine.dungeonState.readBooks.add('book-1');
+    expect(engine.getState().view.join('\n')).not.toContain('/=\\');
+  });
+
+  it('shows an unused altar', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'altar');
+    expect(engine.getState().view.join('\n')).toContain('|+|');
+  });
+
+  it('hides an altar that has already been used', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'altar', 'altar-1');
+    engine.dungeonState.usedAltars.add('altar-1');
+    expect(engine.getState().view.join('\n')).not.toContain('|+|');
+  });
+
+  it('shows an unused fountain as either the fountain or well variant', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'fountain');
+    const text = engine.getState().view.join('\n');
+    expect(text.includes('~~~') || text.includes('|~|')).toBe(true);
+  });
+
+  it('hides a fountain that has already been used', () => {
+    const engine = makeReadyEngine(db) as any;
+    place(engine, 'fountain', 'fountain-1');
+    engine.dungeonState.usedFountains.add('fountain-1');
+    const text = engine.getState().view.join('\n');
+    expect(text.includes('~~~') || text.includes('|~|')).toBe(false);
+  });
+
+  it('picks the same fountain/well variant every time for the same fountain', () => {
+    const engineA = makeReadyEngine(db) as any;
+    place(engineA, 'fountain', 'same-fountain-id');
+    const viewA = engineA.getState().view.join('\n');
+
+    const dbB = createMemoryDb();
+    const engineB = makeReadyEngine(dbB) as any;
+    place(engineB, 'fountain', 'same-fountain-id');
+    const viewB = engineB.getState().view.join('\n');
+    dbB.close();
+
+    expect(viewA.includes('~~~')).toBe(viewB.includes('~~~'));
+    expect(viewA.includes('|~|')).toBe(viewB.includes('|~|'));
+  });
+});
+
 describe('GameEngine — inventory screen', () => {
   let db: any;
 

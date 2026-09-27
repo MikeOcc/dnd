@@ -6,7 +6,7 @@ import type {
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
-import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS } from './corridor-view.js';
+import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
@@ -77,24 +77,27 @@ export class GameEngine {
     return state;
   }
 
-  // First-person pseudo-3D corridor view (see corridor-view.ts). Ladders
-  // visible ahead are projected in via the entity-marker seam; other
-  // content symbols (monsters, treasure) are a planned follow-up.
+  // First-person pseudo-3D corridor view (see corridor-view.ts). Ladders,
+  // chests, books, altars, and fountains visible ahead are projected in via
+  // the entity-marker seam; monsters are a planned follow-up (they already
+  // get their own dedicated portrait during combat).
   private renderView(): string[] {
     if (!this.char) return [];
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return [];
 
-    const entities = this.findVisibleLadders(lvl);
+    const entities = this.findVisibleEntities(lvl);
     return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, {}, undefined, entities);
   }
 
   /** Scans the same visible depth the corridor renderer will draw and marks
-   * any ladder-up/ladder-down cell along it — the renderer itself never
-   * looks at CellContent, so this is done here and handed in as plain
-   * entity markers. */
-  private findVisibleLadders(lvl: LevelCache): EntityMarker[] {
-    if (!this.char) return [];
+   * any dungeon fixture along it — the renderer itself never looks at
+   * CellContent, so this is done here and handed in as plain entity
+   * markers. Already-opened/read/used fixtures are skipped, same as the
+   * old map view's rule for them. */
+  private findVisibleEntities(lvl: LevelCache): EntityMarker[] {
+    if (!this.char || !this.dungeonState) return [];
+    const ds = this.dungeonState;
     const scan = scanCorridor(
       lvl.grid, this.char.x, this.char.y, this.char.facing, CORRIDOR_VIEW_DEFAULTS.MAX_DEPTH,
     );
@@ -102,8 +105,33 @@ export class GameEngine {
     const entities: EntityMarker[] = [];
     scan.steps.forEach((step, depth) => {
       const content = lvl.contents.get(`${step.x},${step.y}`);
-      if (content?.type === 'ladder-down') entities.push({ depth, glyph: '<' });
-      if (content?.type === 'ladder-up') entities.push({ depth, glyph: '>' });
+      if (!content) return;
+
+      switch (content.type) {
+        case 'ladder-down':
+          entities.push({ depth, pattern: [...CONTENT_PATTERNS.ladderDown] });
+          break;
+        case 'ladder-up':
+          entities.push({ depth, pattern: [...CONTENT_PATTERNS.ladderUp] });
+          break;
+        case 'chest':
+          if (!ds.openedChests.has(content.id)) entities.push({ depth, pattern: [...CONTENT_PATTERNS.chest] });
+          break;
+        case 'book':
+          if (!ds.readBooks.has(content.id)) entities.push({ depth, pattern: [...CONTENT_PATTERNS.book] });
+          break;
+        case 'altar':
+          if (!ds.usedAltars.has(content.id)) entities.push({ depth, pattern: [...CONTENT_PATTERNS.altar] });
+          break;
+        case 'fountain':
+          if (!ds.usedFountains.has(content.id)) {
+            // Purely cosmetic variety between fountains — same fixture
+            // always looks the same, different fountains may not.
+            const isWell = spatialHash(step.x, step.y, 29) % 2 === 0;
+            entities.push({ depth, pattern: [...(isWell ? CONTENT_PATTERNS.well : CONTENT_PATTERNS.fountain)] });
+          }
+          break;
+      }
     });
     return entities;
   }
