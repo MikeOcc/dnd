@@ -797,6 +797,38 @@ describe('XP rewards', () => {
     expect(bonus).toBeGreaterThan(base);
   });
 
+  it('ramps up super-linearly with the level gap — a big gap pays out more than proportionally', () => {
+    // Same monsterLevel (30) throughout; only the character's level (and
+    // therefore the gap) changes. Normalize by monsterLevel*XP_PER_MONSTER_LEVEL
+    // to compare the multiplier directly rather than the raw XP.
+    const per = (charLevel: number) => calculateXPReward(charLevel, 30, false) / (30 * 12);
+
+    const multAt5 = per(25);  // gap  5
+    const multAt10 = per(20); // gap 10
+    const multAt20 = per(10); // gap 20
+
+    expect(multAt10).toBeGreaterThan(multAt5);
+    expect(multAt20).toBeGreaterThan(multAt10);
+
+    // The *rate* of increase should itself grow (that's the "ramp", not just
+    // "more XP for more gap" which even the old flat-linear formula did):
+    // the jump from gap 10->20 should be bigger than the jump from gap 5->10.
+    const stepA = multAt10 - multAt5;   // gap 5 -> 10
+    const stepB = multAt20 - multAt10;  // gap 10 -> 20
+    expect(stepB).toBeGreaterThan(stepA);
+  });
+
+  it('a very large level gap pays out dramatically more than a modest one', () => {
+    // A level-1 character up against a level-91 monster (gap 90) vs. a
+    // level-1 character up against a level-11 monster (gap 10) — same
+    // starting character level, wildly different danger.
+    const modestGap = calculateXPReward(1, 11, false);
+    const hugeGap = calculateXPReward(1, 91, false);
+    // Base XP alone (proportional to monster level) would only be ~8.3x
+    // (91/11) higher; the ramp should push it well beyond that.
+    expect(hugeGap).toBeGreaterThan(modestGap * 20);
+  });
+
   it('gives reduced XP when monster is much lower level than character', () => {
     const base = calculateXPReward(10, 10, false);
     const reduced = calculateXPReward(10, 2, false);

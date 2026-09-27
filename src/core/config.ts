@@ -189,7 +189,13 @@ export const LEVELING = {
 
   // XP reward: monsterLevel * XP_PER_MONSTER_LEVEL * levelDiffBonus * tierBonus
   XP_PER_MONSTER_LEVEL: 12,
-  XP_LEVEL_DIFF_BONUS: 0.2,   // +20% per level monster is above player
+  // Bonus for a monster above the player's level ramps up rather than
+  // scaling flat with the gap: +20% per level plus +1% per level *squared*,
+  // so a 20-level gap pays out far more than 20x a 1-level gap does, and a
+  // 40+ level gap (taking on something built for a much higher character)
+  // is a genuine jackpot rather than a marginal bump.
+  XP_LEVEL_DIFF_BONUS_LINEAR: 0.2,
+  XP_LEVEL_DIFF_BONUS_QUADRATIC: 0.01,
   XP_LEVEL_DIFF_PENALTY: 0.1, // -10% per level monster is below player
   XP_MIN_FRACTION: 0.05,      // always at least 5% of base XP
 

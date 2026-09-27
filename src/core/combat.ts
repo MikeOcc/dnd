@@ -766,7 +766,11 @@ export function calculateXPReward(
   const diff = monsterLevel - charLevel;
   let mult = 1.0;
 
-  if (diff > 0) mult += diff * LEVELING.XP_LEVEL_DIFF_BONUS;
+  if (diff > 0) {
+    // Ramps up rather than scaling flat with the gap — see config.ts.
+    mult += diff * LEVELING.XP_LEVEL_DIFF_BONUS_LINEAR
+      + diff * diff * LEVELING.XP_LEVEL_DIFF_BONUS_QUADRATIC;
+  }
   if (diff < 0) mult = Math.max(LEVELING.XP_MIN_FRACTION, mult + diff * LEVELING.XP_LEVEL_DIFF_PENALTY);
 
   // Inherent danger of the monster's kind, independent of the level it rolled.
