@@ -126,6 +126,9 @@ export class GameEngine {
     if (this.phase === 'status') {
       return [{ key: 'x', text: 'Return to Game' }];
     }
+    if (this.phase === 'inventory') {
+      return [{ key: 'x', text: 'Return to Game' }];
+    }
     if (this.phase === 'death') {
       return [
         { key: 'c', text: 'Continue' },
@@ -185,6 +188,37 @@ export class GameEngine {
         ? [``, `Active effects:`, ...c.statusEffects.map(e => `  ${e.type} (${e.turns} turns)`)]
         : []),
     ];
+    return this.getState();
+  }
+
+  showInventory(): GameState {
+    if (!this.char) return this.getState();
+    const c = this.char;
+    this.phase = 'inventory';
+
+    const rows: { name: string; type: string; qty: string }[] = [
+      { name: 'Healing Potion', type: 'Consumable', qty: `x${c.inventory.potions}` },
+      { name: 'Gold', type: 'Currency', qty: `${c.gold}` },
+    ];
+    const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
+    const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
+
+    this.messages = [
+      `══ INVENTORY ═════════════════════════════`,
+      `${'ITEM'.padEnd(nameW)}${'TYPE'.padEnd(typeW)}QTY`,
+      `${'-'.repeat(nameW - 1)} ${'-'.repeat(typeW - 1)} ---`,
+      ...rows.map(r => `${r.name.padEnd(nameW)}${r.type.padEnd(typeW)}${r.qty}`),
+      ...(c.inventory.potions === 0
+        ? [``, `Your pack holds nothing but your coin purse.`]
+        : []),
+    ];
+    return this.getState();
+  }
+
+  dismissInventory(): GameState {
+    if (!this.char) return this.getState();
+    this.phase = 'playing';
+    this.messages = [];
     return this.getState();
   }
 

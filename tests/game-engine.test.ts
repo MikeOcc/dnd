@@ -274,3 +274,50 @@ describe('GameEngine — ladders projected into the corridor view', () => {
     expect(state.view.join('\n')).not.toContain('>');
   });
 });
+
+describe('GameEngine — inventory screen', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('lists potions and gold with their type and quantity', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.potions = 3;
+    e.char.gold = 42;
+
+    const state = engine.showInventory();
+    expect(state.phase).toBe('inventory');
+    const text = state.messages.join('\n');
+    expect(text).toContain('Healing Potion');
+    expect(text).toContain('Consumable');
+    expect(text).toContain('x3');
+    expect(text).toContain('Gold');
+    expect(text).toContain('Currency');
+    expect(text).toContain('42');
+  });
+
+  it('notes an empty pack when there are no potions', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.potions = 0;
+
+    const state = engine.showInventory();
+    expect(state.messages.join('\n')).toContain('nothing but your coin purse');
+  });
+
+  it('offers a single "Return to Game" choice, and dismissing returns to play', () => {
+    const engine = makeReadyEngine(db);
+    const afterShow = engine.showInventory();
+    expect(afterShow.choices).toEqual([{ key: 'x', text: 'Return to Game' }]);
+
+    const afterDismiss = engine.dismissInventory();
+    expect(afterDismiss.phase).toBe('playing');
+  });
+});

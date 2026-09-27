@@ -200,7 +200,8 @@ export type GamePhase =
   | 'death'
   | 'victory'
   | 'status'
-  | 'map';
+  | 'map'
+  | 'inventory';
 
 export interface Choice {
   key: string;

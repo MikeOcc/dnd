@@ -16,7 +16,7 @@ let awaitingAnyKey = false;   // for title / intro / death / victory
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'death', 'victory'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -73,11 +73,11 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view);
-  movementControls.classList.toggle('hidden', !['playing', 'status'].includes(phase));
+  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase));
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -176,6 +176,13 @@ function renderChoices(choices, phase, state) {
     return;
   }
 
+  if (phase === 'inventory') {
+    const btn = makeChoiceBtn('X', 'Return to Game');
+    btn.onclick = () => apiAction('dismiss-inventory');
+    area.appendChild(btn);
+    return;
+  }
+
   if (phase === 'map') {
     const btn = makeChoiceBtn('M', 'Close Map');
     btn.onclick = () => apiAction('dismiss-map');
@@ -262,10 +269,12 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'M or Esc: Close Map'; break;
     case 'status':
+      hint.textContent = 'X: Return to Game'; break;
+    case 'inventory':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
       hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run'; break;
@@ -402,6 +411,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'w') apiAction('wait');
     if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
+    if (key === 'i') apiAction('show-inventory');
     if (key === 'r') apiAction('restore');
     if (key === 's') apiAction('main-menu');
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
@@ -410,6 +420,11 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'status') {
     if (key === 'x' || key === 't' || key === 'escape') apiAction('dismiss-status');
+    return;
+  }
+
+  if (phase === 'inventory') {
+    if (key === 'x' || key === 'i' || key === 'escape') apiAction('dismiss-inventory');
     return;
   }
 
@@ -463,6 +478,7 @@ document.getElementById('btn-wait')      ?.addEventListener('click', () => apiAc
 document.getElementById('btn-map')       ?.addEventListener('click', () => apiAction('show-map'));
 document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAction('use-potion'));
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
+document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
 document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('main-menu'));
 

@@ -156,6 +156,12 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
+  // Inventory screen
+  if (phase === 'inventory') {
+    render(engine.dismissInventory());
+    return;
+  }
+
   // Map screen
   if (phase === 'map') {
     render(engine.dismissMap());
@@ -220,6 +226,7 @@ function handleKey(key: KeyEvent): void {
       if (key.char === 'w') render(engine.wait());
       if (key.char === 'm') render(engine.showMap());
       if (key.char === 't') render(engine.showStatus());
+      if (key.char === 'i') render(engine.showInventory());
       if (key.char === 'r') render(engine.restoreFromSave());
       if (key.char === 's') render(engine.showMainMenu());
       if (key.char === 'q') exit();

@@ -49,6 +49,7 @@ export function renderState(state: GameState): string {
       break;
 
     case 'status':
+    case 'inventory':
       lines.push(...renderStatus(state));
       break;
 
@@ -176,7 +177,7 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
   }
 
   return lines;

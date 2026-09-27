@@ -154,6 +154,12 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'dismiss-status':
           state = engine.dismissStatus();
           break;
+        case 'show-inventory':
+          state = engine.showInventory();
+          break;
+        case 'dismiss-inventory':
+          state = engine.dismissInventory();
+          break;
         case 'restore':
           state = engine.restoreFromSave();
           break;
