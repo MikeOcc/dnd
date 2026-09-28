@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster } from '../src/core/monsters.js';
 import { knownSpells, spellMenu, spellForKey, spellsLearnedBetween } from '../src/core/spells.js';
-import { banishChance, playerBanish } from '../src/core/combat.js';
+import { banishFailFaces, playerBanish } from '../src/core/combat.js';
 import { SPELLS } from '../src/core/config.js';
 
 function makeChar(level: number) {
@@ -43,46 +43,48 @@ describe('Spell unlocks', () => {
 });
 
 describe('Banish', () => {
-  it('fails more often against tougher monsters', () => {
-    const wizard = makeChar(40);
-    const goblin = banishChance(wizard, createMonster('Goblin', 5, 'g'));
-    const beholder = banishChance(wizard, createMonster('Beholder', 25, 'b'));
-    const oblex = banishChance(wizard, createMonster('Elder Oblex', 50, 'o'));
-    const tiamat = banishChance(wizard, createMonster('Tiamat', 85, 't'));
-    expect(goblin).toBe(SPELLS.BANISH_MAX);
-    expect(beholder).toBeLessThan(goblin);
-    expect(oblex).toBeLessThan(beholder);
-    expect(tiamat).toBe(SPELLS.BANISH_MIN);
+  it('always works on ordinary monsters', () => {
+    expect(banishFailFaces(createMonster('Goblin', 5, 'g'))).toBe(0);
+    expect(banishFailFaces(createMonster('Beholder', 25, 'b'))).toBe(0);
+    const rng = new RNG(5);
+    for (let i = 0; i < 50; i++) {
+      expect(playerBanish(makeChar(40), createMonster('Orc', 10, 'o'), rng).banished).toBe(true);
+    }
   });
 
-  it('unique bosses resist it more than an ordinary monster of the same tier and level', () => {
-    const wizard = makeChar(80);
-    const tarrasque = createMonster('Tarrasque', 80, 't');
-    const ordinary = { ...tarrasque, definition: { ...tarrasque.definition, isUnique: false } };
-    expect(banishChance(wizard, tarrasque)).toBeCloseTo(banishChance(wizard, ordinary) * SPELLS.BANISH_UNIQUE_MULT, 5);
+  it('very powerful monsters resist on a d12, more so by tier', () => {
+    expect(banishFailFaces(createMonster('Lich', 20, 'l'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[8]);
+    expect(banishFailFaces(createMonster('Dracolich', 65, 'd'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[9]);
+    expect(banishFailFaces(createMonster('Tiamat', 85, 't'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
+  });
+
+  it('high-level dragons and undead resist too, low-level ones do not', () => {
+    expect(banishFailFaces(createMonster('Black Dragon', 48, 'k'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
+    expect(banishFailFaces(createMonster('Black Dragon', 10, 'k'))).toBe(0);
+    expect(banishFailFaces(createMonster('Vampire', 24, 'v'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
+    expect(banishFailFaces(createMonster('Vampire', 9, 'v'))).toBe(0);
+    expect(banishFailFaces(createMonster('Skeleton', 10, 's'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
+  });
+
+  it('fails exactly on the low faces of the d12', () => {
+    const rng = new RNG(11);
+    let banished = 0, failed = 0;
+    for (let i = 0; i < 600; i++) {
+      const res = playerBanish(makeChar(80), createMonster('Tiamat', 85, 't'), rng);
+      const roll = Number(res.messages.join(' ').match(/d12: (\d+)/)![1]);
+      expect(res.banished ?? false).toBe(roll > SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
+      if (res.banished) banished++; else failed++;
+    }
+    // 5 of 12 faces succeed against Tiamat
+    expect(banished / 600).toBeGreaterThan(0.33);
+    expect(banished / 600).toBeLessThan(0.5);
+    expect(failed).toBeGreaterThan(0);
   });
 
   it('never works on Asmodeus', () => {
     const rng = new RNG(3);
-    const wizard = makeChar(100);
     for (let i = 0; i < 50; i++) {
-      const res = playerBanish(wizard, createMonster('Asmodeus', 80, 'a'), rng);
-      expect(res.banished).toBeFalsy();
-      wizard.hp = 100000;
+      expect(playerBanish(makeChar(100), createMonster('Asmodeus', 80, 'a'), rng).banished).toBeFalsy();
     }
-  });
-
-  it('either removes the monster or costs the turn', () => {
-    const rng = new RNG(11);
-    let banished = 0, failed = 0;
-    for (let i = 0; i < 300; i++) {
-      const wizard = makeChar(40);
-      const m = createMonster('Beholder', 25, 'b');
-      const res = playerBanish(wizard, m, rng);
-      if (res.banished) banished++;
-      else { failed++; expect(res.messages.join(' ')).toContain('tears itself free'); }
-    }
-    expect(banished).toBeGreaterThan(0);
-    expect(failed).toBeGreaterThan(0);
   });
 });

@@ -11,6 +11,11 @@ const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
 const BG_BLACK = '\x1b[40m';
 const BRIGHT_WHITE = '\x1b[97m';
+const INVERSE_RED = '\x1b[41m\x1b[97m\x1b[1m';
+
+// Set for a single render right after the character is hurt: the status
+// line flashes inverse red, then cli.ts redraws it normally.
+let hurtFlash = false;
 
 function g(s: string): string { return GREEN + s + RESET; }
 function bg(s: string): string { return BRIGHT_GREEN + s + RESET; }
@@ -23,7 +28,8 @@ function cyan(s: string): string { return CYAN + s + RESET; }
 // green UI chrome around it — looks the same on light or dark terminals.
 function dg(s: string): string { return BG_BLACK + BRIGHT_WHITE + s + RESET; }
 
-export function renderState(state: GameState): string {
+export function renderState(state: GameState, opts: { hurt?: boolean } = {}): string {
+  hurtFlash = !!opts.hurt;
   const lines: string[] = [];
 
   switch (state.phase) {
@@ -197,12 +203,19 @@ function renderStatusBar(char: Character, phase: string): string[] {
   const hpColor = char.hp < char.maxHp * 0.25 ? red : char.hp < char.maxHp * 0.5 ? yellow : g;
   const loc = `Level ${char.dungeonLevel}`;
   const charLvl = `Char Lv ${char.level}`;
-  const hp = hpColor(`HP: ${char.hp}/${char.maxHp}`);
+  const hp = hurtFlash ? INVERSE_RED + ` HP: ${char.hp}/${char.maxHp} ` + RESET : hpColor(`HP: ${char.hp}/${char.maxHp}`);
   const xpLine = `XP: ${char.xp}`;
   const goldLine = `Gold: ${char.gold}`;
   const potLine = `Pot: ${char.inventory?.potions ?? 0}`;
   const compass = COMPASS_ARROW[char.facing] ?? '';
 
+  if (hurtFlash) {
+    return [
+      INVERSE_RED + ('  ' + char.name.padEnd(20) + loc.padEnd(12) + charLvl + '  ' + compass).padEnd(62) + RESET,
+      `  ${hp}${' '.repeat(Math.max(1, 30 - (` HP: ${char.hp}/${char.maxHp} `).length))}${g(xpLine.padEnd(16))}${g(goldLine.padEnd(14))}${g(potLine)}`,
+      red('  ' + '━'.repeat(60)),
+    ];
+  }
   return [
     bold(bg('  ' + char.name.padEnd(20))) + g(loc.padEnd(12)) + g(charLvl) + '  ' + bold(g(compass)),
     `  ${hp.padEnd(30)}${g(xpLine.padEnd(16))}${g(goldLine.padEnd(14))}${g(potLine)}`,

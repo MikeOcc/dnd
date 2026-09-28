@@ -25,14 +25,14 @@ export class Repository {
         strength, constitution, intelligence, wisdom, dexterity, charisma, resistance,
         death_count, steps_taken, monsters_defeated, unique_monsters_defeated,
         asmodeus_defeated, status_effects, intros_seen, reroll_used, inventory, elemental_warnings,
-        created_at, play_time, last_saved
+        banish_cast_at, created_at, play_time, last_saved
       ) VALUES (
         @id, @name, @level, @xp, @dungeon_level, @x, @y, @facing,
         @hp, @max_hp, @gold,
         @strength, @constitution, @intelligence, @wisdom, @dexterity, @charisma, @resistance,
         @death_count, @steps_taken, @monsters_defeated, @unique_monsters_defeated,
         @asmodeus_defeated, @status_effects, @intros_seen, @reroll_used, @inventory, @elemental_warnings,
-        @created_at, @play_time, @last_saved
+        @banish_cast_at, @created_at, @play_time, @last_saved
       )
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name, level = excluded.level, xp = excluded.xp,
@@ -47,6 +47,7 @@ export class Repository {
         asmodeus_defeated = excluded.asmodeus_defeated, status_effects = excluded.status_effects,
         intros_seen = excluded.intros_seen, reroll_used = excluded.reroll_used,
         inventory = excluded.inventory, elemental_warnings = excluded.elemental_warnings,
+        banish_cast_at = excluded.banish_cast_at,
         play_time = excluded.play_time, last_saved = excluded.last_saved
     `).run({
       id: char.id,
@@ -77,6 +78,7 @@ export class Repository {
       reroll_used: CHARACTER.MAX_REROLLS - char.rerollsRemaining,
       inventory: JSON.stringify(char.inventory),
       elemental_warnings: JSON.stringify(char.elementalWarnings),
+      banish_cast_at: char.banishCastAt ?? null,
       created_at: char.createdAt,
       play_time: char.playTime,
       last_saved: char.lastSaved,
@@ -144,6 +146,7 @@ export class Repository {
       rerollsRemaining:       Math.max(0, CHARACTER.MAX_REROLLS - (row['reroll_used'] as number ?? 0)),
       inventory,
       elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
+      banishCastAt:           (row['banish_cast_at'] as number | null) ?? undefined,
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,
       lastSaved:              row['last_saved'] as number,

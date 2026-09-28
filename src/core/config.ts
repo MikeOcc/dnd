@@ -328,16 +328,14 @@ export const SPELLS = {
     lightning: 35,
     banish: 40,
   },
-  // Banish: success = BASE − tier × PER_TIER − levels the monster is above
-  // you × PER_LEVEL_ABOVE + levels you're above it × PER_LEVEL_BELOW, halved
-  // for unique bosses, clamped to [MIN, MAX]. Asmodeus can't be banished.
-  BANISH_BASE: 0.9,
-  BANISH_PER_TIER: 0.05,
-  BANISH_PER_LEVEL_ABOVE: 0.02,
-  BANISH_PER_LEVEL_BELOW: 0.005,
-  BANISH_UNIQUE_MULT: 0.5,
-  BANISH_MIN: 0.05,
-  BANISH_MAX: 0.9,
+  // Banish always works on ordinary monsters. Against very powerful ones it
+  // rolls a d12 and fails on a 1..N: N by tier for tier 8+, and N for any
+  // dragon or undead in the top 30% of its own level range. Asmodeus is
+  // immune. One cast per hour of play time.
+  BANISH_FAIL_FACES_BY_TIER: { 8: 3, 9: 5, 10: 7 } as Record<number, number>,
+  BANISH_HIGH_LEVEL_FAIL_FACES: 3,
+  BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this
+  BANISH_COOLDOWN_SECONDS: 3600,
 } as const;
 
 export const CHEST_TRAPS = {

@@ -3,6 +3,7 @@ import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
+  Fx, FxElement, ChestTrapType,
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
@@ -18,8 +19,9 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
+import { MENU_LORE } from '../content/menu-lore.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
 
@@ -47,6 +49,19 @@ function dropLegacyVisitedKeys(ds: DungeonState): void {
   }
 }
 
+/** What each trap hits with, for the hit effects. */
+function trapElement(variant: string): FxElement {
+  if (variant === 'fire-blast') return 'fire';
+  if (variant === 'acid-spray') return 'acid';
+  if (variant === 'poison-needle') return 'poison';
+  if (variant === 'attribute-rune') return 'arcane';
+  return 'physical';
+}
+
+const CHEST_TRAP_ELEMENT: Record<ChestTrapType, FxElement> = {
+  needle: 'poison', blade: 'physical', gas: 'poison', 'fire-glyph': 'fire', alarm: 'physical',
+};
+
 const GEM_PLURAL: Record<GemType, string> = {
   ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals',
 };
@@ -68,6 +83,7 @@ export class GameEngine {
   private phase: GamePhase = 'title';
   private messages: string[] = [];
   private mapFull = false;
+  private fx: Fx = {};   // hit-effect hints gathered during the current action
   private pendingRoll: CharacterRoll | null = null;
   private pendingName: string | null = null;
   private pace: EncounterPace;
@@ -84,6 +100,7 @@ export class GameEngine {
   // ─── Session bootstrap ───────────────────────────────────────────────────
 
   getState(): GameState {
+    this.bankPlayTime();
     const state: GameState = {
       phase: this.phase,
       messages: [...this.messages],
@@ -102,7 +119,11 @@ export class GameEngine {
     if (this.interaction) state.interaction = { ...this.interaction };
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
     if (this.phase === 'map') state.mapFull = this.mapFull;
-    if (this.phase === 'combat' && this.char) state.spellChoices = spellMenu(this.char.level);
+    if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
+    // Hit-effect hints belong to the action that just happened, so hand them
+    // out once and start fresh for the next one.
+    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked) state.fx = this.fx;
+    this.fx = {};
 
     state.choices = this.buildChoices();
     return state;
@@ -224,7 +245,9 @@ export class GameEngine {
     this.phase = 'main-menu';
     this.messages = ['========================================',
                      '          THE SEVEN LEVELS',
-                     '========================================'];
+                     '========================================',
+                     '',
+                     ...this.rng.pick(MENU_LORE)];
     return this.getState();
   }
 
@@ -558,6 +581,8 @@ export class GameEngine {
     }
     const id = `char-${Date.now()}-${this.rng.int(1000, 9999)}`;
     this.char.id = id;
+    this.sessionStart = Date.now();  // play time starts now, not while rolling stats
+    this.char.playTime = 0;
 
     // Character must exist in DB before dungeon levels (foreign key constraint)
     this.repo.saveCharacter(this.char);
@@ -666,8 +691,10 @@ export class GameEngine {
     this.restTicks = 0;
 
     // Tick status effects
+    const dot = this.char.statusEffects.find(e => e.type === 'poison' || e.type === 'mummified' || e.type === 'bleeding');
     const { messages: statusMsgs, damageTaken } = tickStatusEffects(this.char);
     this.messages = statusMsgs;
+    if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' ? 'drain' : 'physical';
 
     // Passive HP regeneration
     if (this.char.stepsTaken % GAMEPLAY.REGEN_HP_EVERY_N_STEPS === 0 && this.char.hp < this.char.maxHp) {
@@ -809,6 +836,7 @@ export class GameEngine {
         // Some traps trigger immediately
         if (['pit', 'falling-stone', 'fire-blast', 'acid-spray'].includes(variant)) {
           const result = resolveTrapTriggered(this.char, variant, this.rng);
+          this.fx.player = trapElement(variant);
           ds.triggeredTraps.add(content.id);
           this.messages = [...this.messages, '', ...result.messages];
 
@@ -1119,6 +1147,7 @@ export class GameEngine {
   }
 
   private useOpal(): GameState {
+    this.fx.monster = 'holy';
     this.char!.inventory.gems.opal--;
     const result = playerOpal(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
@@ -1134,6 +1163,10 @@ export class GameEngine {
       this.messages = ['You reconsider.'];
       return this.getState();
     }
+    if (spell === 'banish' && this.banishReadyIn() > 0) {
+      this.messages = [`Banish is still gathering power. It will be ready in ${this.banishReadyText()}.`];
+      return this.getState();
+    }
     if (this.isHeld()) return this.combatHeld();
     const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
     if (negated) return this.processCombatResult(negated);
@@ -1145,14 +1178,17 @@ export class GameEngine {
       case 'acid':      return this.combatAcid();
       case 'frost':     return this.combatFrost();
       case 'lightning': return this.combatLightning();
-      case 'banish':    return this.processCombatResult(playerBanish(this.char, this.combat.monster, this.rng));
+      case 'banish':
+        this.fx.monster = 'arcane';
+        this.char.banishCastAt = this.char.playTime;
+        return this.processCombatResult(playerBanish(this.char, this.combat.monster, this.rng));
     }
   }
 
   private showSpellMenu(): GameState {
     this.messages = ['Choose a spell:'];
     const spellState = this.getState();
-    spellState.choices = spellMenu(this.char!.level);
+    spellState.choices = this.spellChoices();
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
     return spellState;
   }
@@ -1172,6 +1208,47 @@ export class GameEngine {
     ];
   }
 
+  /** Records what the monster did this round, for the hit effects. */
+  private noteMonsterTurn(result: { monsterElement?: FxElement }): void {
+    if (!result.monsterElement) return;
+    this.fx.player = result.monsterElement;
+    this.fx.monsterAttacked = true;
+  }
+
+  /** Adds the time since the last action to the character's play time.
+   * Called on every state read, so every save carries an up-to-date total. */
+  private bankPlayTime(): void {
+    const now = Date.now();
+    if (this.char) {
+      const secs = Math.floor((now - this.sessionStart) / 1000);
+      this.char.playTime += secs;
+      this.sessionStart += secs * 1000;
+    } else {
+      this.sessionStart = now;
+    }
+  }
+
+  /** Seconds of play time until Banish can be cast again (0 = ready). */
+  private banishReadyIn(): number {
+    if (!this.char || this.char.banishCastAt === undefined) return 0;
+    return Math.max(0, this.char.banishCastAt + SPELLS.BANISH_COOLDOWN_SECONDS - this.char.playTime);
+  }
+
+  private banishReadyText(): string {
+    const mins = Math.ceil(this.banishReadyIn() / 60);
+    return `${mins} minute${mins === 1 ? '' : 's'}`;
+  }
+
+  /** The spell menu, with Banish showing how long it has left to recharge. */
+  private spellChoices(): Choice[] {
+    const choices = spellMenu(this.char!.level);
+    if (this.banishReadyIn() > 0) {
+      const banish = choices.find(c => c.text === 'Banish');
+      if (banish) banish.text = `Banish (recharging: ${this.banishReadyText()})`;
+    }
+    return choices;
+  }
+
   private isHeld(): boolean {
     return (this.char?.heldRounds ?? 0) > 0;
   }
@@ -1183,31 +1260,37 @@ export class GameEngine {
   }
 
   private combatAttack(): GameState {
+    this.fx.monster = 'physical';
     const result = playerAttack(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 
   private combatFireball(): GameState {
+    this.fx.monster = 'fire';
     const result = playerFireball(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 
   private combatAcid(): GameState {
+    this.fx.monster = 'acid';
     const result = playerAcid(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 
   private combatLightning(): GameState {
+    this.fx.monster = 'lightning';
     const result = playerLightning(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 
   private combatFrost(): GameState {
+    this.fx.monster = 'cold';
     const result = playerFrost(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
 
   private combatPoison(): GameState {
+    this.fx.monster = 'poison';
     const result = playerPoison(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
@@ -1218,6 +1301,7 @@ export class GameEngine {
   }
 
   private combatPray(): GameState {
+    this.fx.monster = 'holy';
     const result = playerPray(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
   }
@@ -1225,6 +1309,7 @@ export class GameEngine {
   private combatRun(): GameState {
     const monster = this.combat!.monster;
     const result = playerRun(this.char!, monster, this.rng);
+    this.noteMonsterTurn(result);
     this.messages = result.messages;
 
     if (result.playerDied) {
@@ -1246,6 +1331,7 @@ export class GameEngine {
 
   private processCombatResult(result: import('./combat.js').CombatRoundResult): GameState {
     if (!this.char || !this.combat) return this.getState();
+    this.noteMonsterTurn(result);
 
     this.messages = result.messages;
     this.combat.round++;
@@ -1366,8 +1452,8 @@ export class GameEngine {
   private handleVictory(): GameState {
     if (!this.char) return this.getState();
 
-    const playSeconds = Math.round((Date.now() - this.sessionStart) / 1000) + this.char.playTime;
-    this.char.playTime = playSeconds;
+    this.bankPlayTime();
+    const playSeconds = this.char.playTime;
 
     this.repo.saveCharacter(this.char);
 
@@ -1483,6 +1569,7 @@ export class GameEngine {
     if (trap) {
       messages.push('TRAP!');
       const sprung = springChestTrap(this.char, trap, this.rng);
+      this.fx.player = CHEST_TRAP_ELEMENT[trap];
       messages.push(...sprung.messages, '');
       alarm = !!sprung.triggerMonster;
     }
@@ -1579,6 +1666,7 @@ export class GameEngine {
     }
 
     if (result.resolved) this.dungeonState.triggeredTraps.add(id);
+    if (result.damageDealt || result.statusAdded) this.fx.player = trapElement(variant);
 
     this.messages = result.messages;
 

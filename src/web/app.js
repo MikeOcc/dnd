@@ -65,6 +65,7 @@ async function deleteCharacter(id) {
 
 function applyState(state) {
   if (!state) return;
+  const prev = currentState;
   currentState = state;
   spellMenuOpen = false;
   gemMenuOpen = false;
@@ -115,6 +116,8 @@ function applyState(state) {
     portraitEl.innerHTML = '';
   }
 
+  playHitEffects(prev, state);
+
   // Messages
   const msgs = (state.messages || []).join('\n');
   const msgEl = document.getElementById('messages');
@@ -136,6 +139,106 @@ function applyState(state) {
   // Name input focus
   if (phase === 'name-entry') {
     setTimeout(() => document.getElementById('name-input').focus(), 50);
+  }
+}
+
+// ─── Hit effects ─────────────────────────────────────────────────────────────
+//
+// Amounts come from comparing HP before and after each action, so every
+// source of harm or healing is covered (attacks, spells, traps, poison,
+// potions). The engine's state.fx says what kind of hit it was, which picks
+// the colour. Order within a round: the character acts first (the monster
+// recoils), then the monster replies (it lunges, and the view flashes).
+
+const FX_COLOR = {
+  physical: '#ff2a2a', fire: '#ff7a1a', cold: '#7ad0ff', lightning: '#ffffff', acid: '#9aff30',
+  poison: '#50d040', drain: '#9a4aff', psychic: '#ff50e0', holy: '#ffe890', arcane: '#c080ff',
+};
+
+function restartAnimation(el, cls) {
+  el.classList.remove(cls);
+  void el.offsetWidth;  // force a reflow so the animation plays again
+  el.classList.add(cls);
+}
+
+function fxFlash(element, big) {
+  const layer = document.getElementById('fx-layer');
+  const flash = document.createElement('div');
+  flash.className = 'fx-flash' + (element === 'lightning' ? ' fx-flicker' : '') + (big ? ' fx-big' : '');
+  flash.style.setProperty('--fx', FX_COLOR[element] || FX_COLOR.physical);
+  flash.addEventListener('animationend', () => flash.remove());
+  layer.appendChild(flash);
+}
+
+function fxShake(ratio) {
+  const view = document.getElementById('view-container');
+  const px = Math.min(14, Math.max(2, ratio * 40));
+  view.style.setProperty('--shake', `${px}px`);
+  restartAnimation(view, 'fx-shake');
+}
+
+function fxNumber(text, kind, where, element, big) {
+  const layer = document.getElementById('fx-layer');
+  const num = document.createElement('div');
+  num.className = `fx-num ${kind}` + (big ? ' big' : '');
+  num.textContent = text;
+  num.style.left = `${50 + (Math.random() * 16 - 8)}%`;
+  num.style.top = where === 'monster' ? '28%' : '60%';
+  num.style.setProperty('--fx', FX_COLOR[element] || '#000');
+  num.addEventListener('animationend', () => num.remove());
+  layer.appendChild(num);
+}
+
+function fxMonster(cls, element) {
+  const portrait = document.getElementById('monster-portrait');
+  if (portrait.classList.contains('hidden')) return;
+  portrait.style.setProperty('--fx', FX_COLOR[element] || '#ffffff');
+  restartAnimation(portrait, cls);
+}
+
+function playHitEffects(prev, state) {
+  const view = document.getElementById('view-container');
+  const nc = state.character;
+  const inDungeon = ['playing', 'combat', 'interaction'].includes(state.phase);
+  view.classList.toggle('fx-lowhp', !!nc && inDungeon && nc.hp / nc.maxHp < 0.25);
+  if (view.classList.contains('hidden') || !prev) return;
+
+  const fx = state.fx || {};
+  const pc = prev.character;
+
+  // Death: the character's HP is already restored on the death screen, so
+  // just land one heavy blow.
+  if (state.phase === 'death' && prev.phase !== 'death') {
+    fxFlash(fx.player || 'physical', true);
+    fxShake(0.5);
+    return;
+  }
+
+  const samePlayer = pc && nc && pc.id === nc.id && prev.phase !== 'death';
+  const playerDelta = samePlayer ? nc.hp - pc.hp : 0;
+  const pm = prev.combat?.monster;
+  const nm = state.combat?.monster;
+  const monsterDelta = pm && nm && pm.id === nm.id ? nm.hp - pm.hp : 0;
+
+  let delay = 0;
+  if (monsterDelta < 0) {
+    fxMonster('fx-recoil', fx.monster || 'physical');
+    fxNumber(`${monsterDelta}`, 'hit', 'monster', fx.monster, -monsterDelta >= pm.maxHp * 0.25);
+    delay = 280;
+  }
+  if (fx.monsterAttacked && nm) {
+    setTimeout(() => fxMonster('fx-lunge'), delay);
+    delay += 160;
+  }
+  if (playerDelta < 0) {
+    const ratio = -playerDelta / nc.maxHp;
+    setTimeout(() => {
+      fxFlash(fx.player || 'physical', ratio >= 0.25);
+      fxShake(ratio);
+      fxNumber(`${playerDelta}`, 'hurt', 'player', fx.player || 'physical', ratio >= 0.25);
+    }, delay);
+  } else if (playerDelta > 0) {
+    fxNumber(`+${playerDelta}`, 'heal', 'player', 'holy');
   }
 }
 

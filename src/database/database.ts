@@ -45,6 +45,9 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN elemental_warnings TEXT NOT NULL DEFAULT '[]'`);
   } catch { /* column already exists */ }
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN banish_cast_at INTEGER`);
+  } catch { /* column already exists */ }
 }
 
 export function createMemoryDb(): DatabaseSync {

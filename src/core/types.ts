@@ -117,6 +117,7 @@ export interface Character {
   invulnerableTurns?: number; // from reading a magic book — blocks the monster's next N combat rounds entirely
   heldRounds?: number;        // combat rounds the character loses (paralyzed, asleep, cowering...) — in-memory, cleared when combat ends
   heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
+  banishCastAt?: number;      // play-time second of the last Banish (one per hour of play)
   introsSeen: number[];
   rerollsRemaining: number;
   elementalWarnings: string[]; // "{MonsterType}:{fireball|acid|lightning}" already called out this playthrough
@@ -196,6 +197,17 @@ export interface Monster {
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
 }
 
+/** Kinds of harm, for the client's hit effects (flash colour, tint). */
+export type FxElement = 'physical' | 'fire' | 'cold' | 'lightning' | 'acid' | 'poison' | 'drain' | 'psychic' | 'holy' | 'arcane';
+
+/** Per-action hints for the client's hit effects. Amounts come from the
+ * client comparing HP before and after; these say what kind of hit it was. */
+export interface Fx {
+  player?: FxElement;        // what hurt the character this action
+  monster?: FxElement;       // what the character hit the monster with
+  monsterAttacked?: boolean; // the monster took a swing (portrait lunges)
+}
+
 export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed';
 
 /** The Beholder's eye rays, one per eyestalk. */
@@ -267,6 +279,7 @@ export interface GameState {
   saveSlots?: CharacterSummary[];
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
+  fx?: Fx;                     // hit-effect hints for this action only
 }
 
 export interface CharacterSummary {

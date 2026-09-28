@@ -26,7 +26,24 @@ let saveSlots: CharacterSummary[] = [];
 let deleteConfirmTarget: CharacterSummary | null = null;
 
 function render(state: GameState): void {
+  const prev = currentState;
   currentState = state;
+
+  // Hurt? Flash the status line inverse red for a moment, then redraw it
+  // normally. Big hits (a quarter of max HP or more) ring the terminal bell
+  // if SEVEN_LEVELS_BELL=1.
+  const pc = prev.character;
+  const nc = state.character;
+  const lost = pc && nc && pc.id === nc.id && state.phase !== 'death' && prev.phase !== 'death' ? pc.hp - nc.hp : 0;
+  if (lost > 0) {
+    if (process.env.SEVEN_LEVELS_BELL === '1' && lost >= nc!.maxHp * 0.25) process.stdout.write('\x07');
+    process.stdout.write(renderState(state, { hurt: true }) + '\n');
+    setTimeout(() => {
+      if (currentState === state) process.stdout.write(renderState(state) + '\n');
+    }, 220);
+    return;
+  }
+
   process.stdout.write(renderState(state));
   process.stdout.write('\n');
 }

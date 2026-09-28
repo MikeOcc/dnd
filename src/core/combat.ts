@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS, SPELLS } from './config.js';
-import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition } from './types.js';
+import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
@@ -14,6 +14,7 @@ export interface CombatRoundResult {
   playerTeleported?: boolean;
   ran?: boolean;
   banished?: boolean;   // Banish worked: the monster is gone (no XP, like the sapphire)
+  monsterElement?: FxElement;  // what the monster hit the character with this round, if it acted
   runFailed?: boolean;
   ballOfDooFired?: boolean;
   ballOfDooResisted?: boolean;
@@ -457,30 +458,37 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
 
 // ─── Banish ──────────────────────────────────────────────────────────────────
 
-/** Chance Banish removes this monster: tougher (higher tier, higher level
- * than you, unique) means likelier to fail. Asmodeus is at home in the Hells. */
-export function banishChance(char: Character, monster: Monster): number {
-  if (monster.type === 'Asmodeus') return 0;
-  const above = Math.max(0, monster.level - char.level);
-  const below = Math.max(0, char.level - monster.level);
-  let chance = SPELLS.BANISH_BASE
-    - monster.definition.naturalTier * SPELLS.BANISH_PER_TIER
-    - above * SPELLS.BANISH_PER_LEVEL_ABOVE
-    + below * SPELLS.BANISH_PER_LEVEL_BELOW;
-  if (monster.definition.isUnique) chance *= SPELLS.BANISH_UNIQUE_MULT;
-  return Math.max(SPELLS.BANISH_MIN, Math.min(SPELLS.BANISH_MAX, chance));
+/** How many faces of a d12 make Banish fail against this monster (0 = it
+ * always works). Very powerful monsters resist by tier; any high-level
+ * dragon or undead resists too. Asmodeus is at home in the Hells. */
+export function banishFailFaces(monster: Monster): number {
+  if (monster.type === 'Asmodeus') return 12;
+  const byTier = SPELLS.BANISH_FAIL_FACES_BY_TIER[monster.definition.naturalTier] ?? 0;
+  const dragonOrUndead = monster.type.includes('Dragon') || monster.definition.isUndead;
+  const highLevel = monster.level >= monster.definition.maxLevel * SPELLS.BANISH_HIGH_LEVEL_FRACTION;
+  const byKind = dragonOrUndead && highLevel ? SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES : 0;
+  return Math.max(byTier, byKind);
 }
 
 export function playerBanish(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   const messages = ['You cast Banish, and a rift to the outer dark tears open behind the ' + monster.type + '!'];
+  const failFaces = banishFailFaces(monster);
+  let banished: boolean;
   if (monster.type === 'Asmodeus') {
     messages.push('Asmodeus laughs. "Banish me? From my own Hells?" The rift gutters out.');
-  } else if (rng.float() < banishChance(char, monster)) {
+    banished = false;
+  } else if (failFaces === 0) {
+    banished = true;
+  } else {
+    const roll = rng.die(12);
+    banished = roll > failFaces;
+    messages.push(`The ${monster.type} fights the pull. (d12: ${roll}, fails on 1–${failFaces})`);
+  }
+  if (banished) {
     messages.push(`The ${monster.type} is dragged screaming into the rift, and it snaps shut.`, 'You are free to move on.');
     return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false, banished: true };
-  } else {
-    messages.push(`The ${monster.type} braces against the pull and tears itself free. The rift collapses.`);
   }
+  if (monster.type !== 'Asmodeus') messages.push(`The ${monster.type} tears itself free. The rift collapses.`);
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: 0, monsterDied: false };
 }
@@ -521,12 +529,39 @@ export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRo
 
 // ─── Monster action ──────────────────────────────────────────────────────────
 
-function monsterAction(
+/** What kind of harm a monster ability does — drives the colour of the
+ * client's hit effects. Order matters: the first match wins. */
+export function abilityElement(ability: string | undefined): FxElement {
+  if (!ability) return 'physical';
+  if (ability === 'telekinetic-ray') return 'physical';
+  if (/disintegrate|petrify|paralyze-ray|slow-ray|magic|teleport|naked|light-bolt/.test(ability)) return 'arcane';
+  if (/fire|flame|burn|infernal/.test(ability)) return 'fire';
+  if (/frost|cold|ice/.test(ability)) return 'cold';
+  if (/lightning|thunder/.test(ability)) return 'lightning';
+  if (/acid|slime|engulf/.test(ability)) return 'acid';
+  if (/poison|spore|venom|radiation/.test(ability)) return 'poison';
+  if (/drain|enervation|death|life|blood|mummif/.test(ability)) return 'drain';
+  if (/psychic|mind|memory|fear|terror|charm|sleep|intelligence|disrupt|darkness|gaze/.test(ability)) return 'psychic';
+  return 'physical';
+}
+
+type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number; monsterElement?: FxElement };
+
+/** The monster's turn. Also reports the element of whatever it did
+ * (monsterElement), or nothing if it didn't get to act. */
+function monsterAction(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
+  const out: { acted?: boolean; ability?: string } = {};
+  const res = monsterActionInner(char, monster, rng, messages, out);
+  return out.acted ? { ...res, monsterElement: abilityElement(out.ability) } : res;
+}
+
+function monsterActionInner(
   char: Character,
   monster: Monster,
   rng: RNG,
   messages: string[],
-): { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number } {
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
   if (monster.hp <= 0) {
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: true };
   }
@@ -538,6 +573,7 @@ function monsterAction(
       return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
     }
   }
+  out.acted = true;
 
   if ((char.invulnerableTurns ?? 0) > 0) {
     char.invulnerableTurns!--;
@@ -573,6 +609,7 @@ function monsterAction(
   // Special Beholder logic: a bite, or one eyestalk's ray
   if (monster.type === 'Beholder') {
     ability = pickBeholderAbility(monster, rng);
+    out.ability = ability;
     if (ability) return resolveBeholderRay(ability as BeholderRay, char, monster, rng, messages, naked);
   }
 
@@ -586,6 +623,7 @@ function monsterAction(
     char.hp = Math.max(0, char.hp - radDamage);
     messages.push(`The Sanguinid's radioactive flesh sears you even as it approaches. You suffer ${radDamage} radiation damage.`);
     if (char.hp <= 0) {
+      out.ability = 'radiation';
       return { messages, monsterDamage: radDamage, playerDied: true, monsterDied: false };
     }
     ability = pickSanguinidAbility(rng);
@@ -606,6 +644,7 @@ function monsterAction(
       ability = rng.pick(['fireball', 'lightning-bolt']);
     }
   }
+  out.ability = ability;
 
   // Handle teleport (Wizard)
   if (ability === 'teleport') {

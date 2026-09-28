@@ -1,0 +1,25 @@
+// Teasers shown on the main menu — one drawn at random each time it appears,
+// so the New / Continue / Delete screen always has something to pull you in.
+
+export const MENU_LORE: string[][] = [
+  ['The torches on the third level were lit by no living hand.', 'They have never gone out.'],
+  ['Somewhere below, a Beholder is counting its eyes.', 'It always comes up one short. It is looking for yours.'],
+  ['A chest on the second level has been waiting a very long time.', 'It is patient. It is hungry. It is not a chest.'],
+  ['The fountains of the deep levels run clear and cold.', 'Most who drink from them wake up. Most.'],
+  ['Asmodeus keeps a ledger of every soul that enters the Seven Levels.', 'Your name is already written in it.'],
+  ['The dead do not rest easy beneath the fortress.', 'Listen. That scraping sound is getting closer.'],
+  ['An old wizard went down to the fifth level to write a book.', 'The book came back. The wizard did not.'],
+  ['They say the Tarrasque sleeps on the seventh level.', 'They are wrong. It is only resting its eyes.'],
+  ['Every step you take is remembered by the stone.', 'Some of it would like you to stay.'],
+  ['The deeper you go, the more the walls seem to breathe.', 'Try not to match their rhythm.'],
+  ['Gold glitters brightest just before the trap springs.', 'Check the lock. Then check it again.'],
+  ['A Mind Flayer has already heard you thinking about coming down.', 'It thought it was a lovely idea.'],
+  ['The Gelatinous Cube leaves the corridors spotless.', 'It keeps the bones as souvenirs.'],
+  ['Five heads. Five colours. Five ways to die.', 'Tiamat waits where the seventh level ends.'],
+  ['The Nightwalker does not hurry.', 'It has never needed to.'],
+  ['Magic tomes whisper in the dark to anyone who will listen.', 'Read one, and it may whisper back something useful.'],
+  ['No adventurer has ever returned from the seventh level.', 'Perhaps you will be the first. Perhaps you will be the next.'],
+  ['The Lich keeps its heart in a jar of green fire.', 'Find the jar, and even death can die.'],
+  ['Deep water on the lower levels is never still.', 'Something pale and many-eyed swims just beneath it.'],
+  ['The stairs down are always easier to find than the stairs up.', 'The dungeon prefers it that way.'],
+];

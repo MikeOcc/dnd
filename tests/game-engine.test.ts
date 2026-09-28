@@ -5,6 +5,8 @@ import { GameEngine } from '../src/core/game-engine.js';
 import { createMonster } from '../src/core/monsters.js';
 import { chestTrapFor } from '../src/core/encounters.js';
 import { xpForLevel } from '../src/core/character.js';
+import { abilityElement } from '../src/core/combat.js';
+import { MENU_LORE } from '../src/content/menu-lore.js';
 import { DUNGEON } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
@@ -1177,6 +1179,43 @@ describe('GameEngine — spells by level', () => {
     expect(lines).toContain('You have learned Lightning!');
   });
 
+  it('Banish recharges for an hour of play time, and trying early costs no turn', () => {
+    const { engine, e } = inCombat(40, 'Goblin', 1);
+    const key = () => engine.getState().spellChoices!.find(c => c.text.startsWith('Banish'))!.key;
+    engine.spellAction(key());
+    expect(e.char.banishCastAt).toBe(e.char.playTime);
+
+    // back into a fresh fight straight away
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Goblin', 1, 'm2'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    const hp = e.combat.monster.hp;
+    expect(engine.getState().spellChoices!.find(c => c.text.startsWith('Banish'))!.text).toContain('recharging');
+    const early = engine.spellAction(key());
+    expect(early.messages[0]).toContain('still gathering power');
+    expect(early.phase).toBe('combat');
+    expect(e.combat.monster.hp).toBe(hp);
+
+    // an hour of play later it is ready again
+    e.char.playTime += 3600;
+    expect(engine.getState().spellChoices!.find(c => c.text.startsWith('Banish'))!.text).toBe('Banish');
+  });
+
+  it('the Banish cooldown survives saving and loading', () => {
+    const { e } = inCombat(40);
+    e.char.banishCastAt = 1234;
+    const repo = new Repository(db);
+    repo.saveCharacter(e.char);
+    expect(repo.loadCharacter(e.char.id)!.banishCastAt).toBe(1234);
+  });
+
+  it('play time accumulates on the character and is saved', () => {
+    const { engine, e } = inCombat(5);
+    const before = e.char.playTime;
+    e.sessionStart -= 90_000;   // pretend 90 seconds have passed
+    engine.getState();
+    expect(e.char.playTime).toBe(before + 90);
+  });
+
   it('a successful Banish ends the fight without XP', () => {
     let done = false;
     for (let i = 0; i < 40 && !done; i++) {
@@ -1192,5 +1231,90 @@ describe('GameEngine — spells by level', () => {
       }
     }
     expect(done).toBe(true);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — hit-effect hints', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('maps monster attacks to elements', () => {
+    expect(abilityElement(undefined)).toBe('physical');
+    expect(abilityElement('fireball')).toBe('fire');
+    expect(abilityElement('frost-breath')).toBe('cold');
+    expect(abilityElement('lightning-bolt')).toBe('lightning');
+    expect(abilityElement('acid-bolt')).toBe('acid');
+    expect(abilityElement('poison-breath')).toBe('poison');
+    expect(abilityElement('life-drain')).toBe('drain');
+    expect(abilityElement('psychic-blast')).toBe('psychic');
+    expect(abilityElement('telekinetic-ray')).toBe('physical');
+    expect(abilityElement('disintegrate-ray')).toBe('arcane');
+  });
+
+  it("reports the spell's element and the monster's reply, once", () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.hp = e.char.maxHp = 100000;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Orc', 5, 'o1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat.monster.hp = e.combat.monster.maxHp = 100000;
+
+    const state = engine.spellAction('a');  // Fireball
+    expect(state.fx?.monster).toBe('fire');
+    expect(state.fx?.monsterAttacked).toBe(true);
+    expect(state.fx?.player).toBeDefined();
+    expect(engine.getState().fx).toBeUndefined();
+  });
+
+  it('tags a chest trap with its element', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    let id = '';
+    for (let i = 0; i < 5000 && !id; i++) if (chestTrapFor(e.char, `chest-9-${i}`) === 'fire-glyph') id = `chest-9-${i}`;
+    e.phase = 'interaction';
+    e.interaction = { type: 'chest', contentId: id, choices: [] };
+    e.char.hp = e.char.maxHp = 10000;
+    expect(engine.interactionChoice('a').fx?.player).toBe('fire');
+  });
+
+  it('tags poison ticking while walking', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.hp = e.char.maxHp = 10000;
+    e.char.statusEffects = [{ type: 'poison', value: 5, turns: 20 }];
+    let tagged = false;
+    for (let i = 0; i < 40 && !tagged; i++) {
+      for (const f of ['N', 'E', 'S', 'W']) {
+        // A step can start a fight or a prompt; put us back to walking each time.
+        e.phase = 'playing'; e.combat = null; e.interaction = null;
+        e.char.statusEffects = [{ type: 'poison', value: 5, turns: 20 }];
+        e.char.facing = f;
+        const hp = e.char.hp;
+        const state = engine.moveForward();
+        if (e.char.hp < hp && state.phase === 'playing') { expect(state.fx?.player).toBe('poison'); tagged = true; break; }
+      }
+    }
+    expect(tagged).toBe(true);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — main menu', () => {
+  it('always shows one of the dungeon teasers under the title', () => {
+    const engine = new GameEngine(new Repository(createMemoryDb()));
+    for (let i = 0; i < 20; i++) {
+      const msgs = engine.showMainMenu().messages;
+      const teaser = msgs.slice(4);
+      expect(MENU_LORE.some(l => l.join('\n') === teaser.join('\n'))).toBe(true);
+    }
   });
 });
