@@ -119,6 +119,7 @@ function applyState(state) {
   const msgEl = document.getElementById('messages');
   msgEl.textContent = msgs;
   msgEl.classList.toggle('map-view', phase === 'map');
+  msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
   msgEl.scrollTop = msgEl.scrollHeight;
 
   // Choices
@@ -204,6 +205,9 @@ function renderChoices(choices, phase, state) {
   }
 
   if (phase === 'map') {
+    const toggle = makeChoiceBtn('F', state.mapFull ? 'Centered View' : 'Full Floor');
+    toggle.onclick = () => apiAction('toggle-map-view');
+    area.appendChild(toggle);
     const btn = makeChoiceBtn('M', 'Close Map');
     btn.onclick = () => apiAction('dismiss-map');
     area.appendChild(btn);
@@ -335,7 +339,7 @@ function updateHelpLine(phase) {
     case 'playing':
       hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
     case 'map':
-      hint.textContent = 'M or Esc: Close Map'; break;
+      hint.textContent = 'F: Full Floor / Centered  |  M or Esc: Close Map'; break;
     case 'status':
       hint.textContent = 'X: Return to Game'; break;
     case 'inventory':
@@ -548,6 +552,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'map') {
+    if (key === 'f') apiAction('toggle-map-view');
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
     return;
   }

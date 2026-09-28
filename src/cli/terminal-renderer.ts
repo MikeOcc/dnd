@@ -279,6 +279,6 @@ function renderMap(state: GameState): string[] {
   }
 
   lines.push('');
-  lines.push(dim('  PRESS ANY KEY TO RETURN TO GAME'));
+  lines.push(dim(`  F: ${state.mapFull ? 'CENTERED VIEW' : 'FULL FLOOR'}  |  ANY OTHER KEY TO RETURN TO GAME`));
   return lines;
 }

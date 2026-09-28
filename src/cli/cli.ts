@@ -180,7 +180,8 @@ function handleKey(key: KeyEvent): void {
 
   // Map screen
   if (phase === 'map') {
-    render(engine.dismissMap());
+    if (key.type === 'char' && key.char === 'f') render(engine.toggleMapView());
+    else render(engine.dismissMap());
     return;
   }
 

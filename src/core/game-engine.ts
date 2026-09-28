@@ -23,6 +23,28 @@ import type { Repository } from '../database/repositories.js';
 
 // ─── In-memory session state ─────────────────────────────────────────────────
 
+/** Undug rock: generation starts every cell fully walled and only carves
+ * rooms and corridors, so a cell with no open side isn't part of the level. */
+function isSolidRock(cell: DungeonCell): boolean {
+  const { N, S, E, W } = cell.walls;
+  return N && S && E && W;
+}
+
+/** visitedCells keys carry the dungeon level: the same (x, y) is a different
+ * square on every level. */
+function visitedKey(level: number, x: number, y: number): string {
+  return `${level}:${x},${y}`;
+}
+
+/** Saves from before per-level tracking stored bare "x,y" keys, which can't
+ * be attributed to a level (and a full-map reveal on one level leaked onto
+ * the others). Drop them rather than guess. */
+function dropLegacyVisitedKeys(ds: DungeonState): void {
+  for (const k of ds.visitedCells) {
+    if (!k.includes(':')) ds.visitedCells.delete(k);
+  }
+}
+
 const GEM_PLURAL: Record<GemType, string> = {
   ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals',
 };
@@ -43,6 +65,7 @@ export class GameEngine {
   private interaction: InteractionState | null = null;
   private phase: GamePhase = 'title';
   private messages: string[] = [];
+  private mapFull = false;
   private pendingRoll: CharacterRoll | null = null;
   private pendingName: string | null = null;
   private pace: EncounterPace;
@@ -76,6 +99,7 @@ export class GameEngine {
     if (this.combat) state.combat = { ...this.combat };
     if (this.interaction) state.interaction = { ...this.interaction };
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
+    if (this.phase === 'map') state.mapFull = this.mapFull;
 
     state.choices = this.buildChoices();
     return state;
@@ -269,30 +293,54 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** M always opens the centered window; F on the map screen toggles to the
+   * whole explored floor and back. */
   showMap(): GameState {
+    this.mapFull = false;
+    return this.renderMap();
+  }
+
+  toggleMapView(): GameState {
+    if (this.phase !== 'map') return this.getState();
+    this.mapFull = !this.mapFull;
+    return this.renderMap();
+  }
+
+  private renderMap(): GameState {
     if (!this.char || !this.dungeonState) return this.getState();
 
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return this.getState();
 
-    const visited = this.dungeonState.visitedCells;
+    const level = this.char.dungeonLevel;
     const ds = this.dungeonState;
     const grid = lvl.grid;
+    const isVisited = (x: number, y: number) => ds.visitedCells.has(visitedKey(level, x, y));
 
-    if (visited.size === 0) {
+    let explored = 0;
+    let exMinX = this.char.x, exMaxX = this.char.x, exMinY = this.char.y, exMaxY = this.char.y;
+    for (const row of grid) {
+      for (const cell of row) {
+        if (isSolidRock(cell) || !isVisited(cell.x, cell.y)) continue;
+        explored++;
+        exMinX = Math.min(exMinX, cell.x); exMaxX = Math.max(exMaxX, cell.x);
+        exMinY = Math.min(exMinY, cell.y); exMaxY = Math.max(exMaxY, cell.y);
+      }
+    }
+
+    if (explored === 0) {
       this.phase = 'map';
       this.messages = [`══ MAP — Level ${this.char.dungeonLevel} ══`, '', '  No area explored yet.'];
       return this.getState();
     }
 
-    // Fixed-size window centered on the player, so the map is always
-    // oriented around where you currently are rather than the whole
-    // explored area.
+    // Centered: a fixed-size window around the player, so the map orients on
+    // where you are. Full: cropped to everything explored on this floor.
     const radius = DUNGEON.MAP_VIEW_RADIUS;
-    const minX = Math.max(0, this.char.x - radius);
-    const maxX = Math.min(DUNGEON.WIDTH - 1, this.char.x + radius);
-    const minY = Math.max(0, this.char.y - radius);
-    const maxY = Math.min(DUNGEON.HEIGHT - 1, this.char.y + radius);
+    const minX = this.mapFull ? exMinX : Math.max(0, this.char.x - radius);
+    const maxX = this.mapFull ? exMaxX : Math.min(DUNGEON.WIDTH - 1, this.char.x + radius);
+    const minY = this.mapFull ? exMinY : Math.max(0, this.char.y - radius);
+    const maxY = this.mapFull ? exMaxY : Math.min(DUNGEON.HEIGHT - 1, this.char.y + radius);
 
     const rows: string[] = [];
     for (let cy = minY; cy <= maxY; cy++) {
@@ -302,7 +350,11 @@ export class GameEngine {
 
         if (cx === this.char!.x && cy === this.char!.y) { row += '@'; continue; }
 
-        if (!visited.has(k)) { row += ' '; continue; }
+        if (!isVisited(cx, cy)) { row += ' '; continue; }
+
+        // Guards saves where an earlier full-map reveal marked rock visited.
+        const cell = grid[cy]?.[cx];
+        if (cell && isSolidRock(cell)) { row += ' '; continue; }
 
         // Content symbols take priority
         const content = lvl.contents.get(k);
@@ -316,7 +368,6 @@ export class GameEngine {
         }
 
         // Floor character from wall data
-        const cell = grid[cy]?.[cx];
         if (!cell) { row += '.'; continue; }
         const { N, S, E, W } = cell.walls;
         const openCount = [!N, !S, !E, !W].filter(Boolean).length;
@@ -331,7 +382,7 @@ export class GameEngine {
     const w = maxX - minX + 1;
     this.phase = 'map';
     this.messages = [
-      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${visited.size} cells explored) ══`,
+      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${explored} cells explored)${this.mapFull ? ' — FULL FLOOR' : ''} ══`,
       `  ${'─'.repeat(w)}`,
       ...rows.map(r => `  ${r}`),
       `  ${'─'.repeat(w)}`,
@@ -539,6 +590,8 @@ export class GameEngine {
     this.char = char;
     this.dungeonState = this.repo.loadDungeonState(id);
     if (!this.dungeonState) this.dungeonState = this.emptyDungeonState();
+    dropLegacyVisitedKeys(this.dungeonState);
+    this.dungeonState.visitedCells.add(visitedKey(char.dungeonLevel, char.x, char.y));
 
     this.loadLevelIntoCache(char.dungeonLevel);
 
@@ -615,7 +668,7 @@ export class GameEngine {
     }
 
     incrementPace(this.pace);
-    this.dungeonState!.visitedCells.add(`${this.char.x},${this.char.y}`);
+    this.dungeonState!.visitedCells.add(visitedKey(this.char.dungeonLevel, this.char.x, this.char.y));
 
     // Check cell content
     const cellKey = `${this.char.x},${this.char.y}`;
@@ -840,7 +893,7 @@ export class GameEngine {
     this.pace.atLevelEntry = true;
     this.pace.movesSinceCombat = 0;
 
-    this.dungeonState!.visitedCells.add(`${this.char.x},${this.char.y}`);
+    this.dungeonState!.visitedCells.add(visitedKey(this.char.dungeonLevel, this.char.x, this.char.y));
 
     this.repo.saveCharacter(this.char);
     this.repo.saveDungeonState(this.char.id, this.dungeonState!);
@@ -1017,7 +1070,8 @@ export class GameEngine {
 
     for (const row of lvl.grid) {
       for (const cell of row) {
-        this.dungeonState.visitedCells.add(`${cell.x},${cell.y}`);
+        if (isSolidRock(cell)) continue;
+        this.dungeonState.visitedCells.add(visitedKey(this.char.dungeonLevel, cell.x, cell.y));
       }
     }
     return true;
@@ -1457,8 +1511,10 @@ export class GameEngine {
     if (!lvl) return;
 
     const ds = this.dungeonState;
-    const visited = [...ds.visitedCells]
-      .map(k => { const [x, y] = k.split(',').map(Number); return { x, y }; })
+    const level = this.char.dungeonLevel;
+    const visited = lvl.grid.flat()
+      .filter(cell => !isSolidRock(cell) && ds.visitedCells.has(visitedKey(level, cell.x, cell.y)))
+      .map(cell => ({ x: cell.x, y: cell.y }))
       .filter(pos => {
         if (pos.x === this.char!.x && pos.y === this.char!.y) return false;
         const content = lvl.contents.get(`${pos.x},${pos.y}`);

@@ -188,6 +188,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'show-map':
           state = engine.showMap();
           break;
+        case 'toggle-map-view':
+          state = engine.toggleMapView();
+          break;
         case 'dismiss-map':
           state = engine.dismissMap();
           break;

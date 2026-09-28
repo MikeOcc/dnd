@@ -251,6 +251,7 @@ export interface GameState {
   levelIntroText?: string[];
   finalScore?: ScoreResult;
   saveSlots?: CharacterSummary[];
+  mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
 }
 
 export interface CharacterSummary {

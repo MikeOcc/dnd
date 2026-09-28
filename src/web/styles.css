@@ -327,6 +327,13 @@ html, body {
   overflow-x: auto;
 }
 
+/* Whole-floor map: up to 80×60 cells, so shrink to fit the panel. */
+#messages.map-view.map-full {
+  font-size: 7px;
+  line-height: 1.1;
+  overflow-y: auto;
+}
+
 /* Emphasis for important temporary messages (level-ups, big finds, etc.) */
 .glow {
   color: var(--terminal-green-bright);

@@ -175,12 +175,15 @@ describe('GameEngine — map centering', () => {
     // window is centered on the player rather than fit to everything explored.
     e.char.x = 40;
     e.char.y = 30;
+    const L = e.char.dungeonLevel;
+    const carved = e.getLevel(L).grid.flat().find((c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W));
     e.dungeonState.visitedCells = new Set([
-      '40,30',
-      '35,30',
-      '45,30',
-      '0,0',
-      `${DUNGEON.WIDTH - 1},${DUNGEON.HEIGHT - 1}`,
+      `${L}:40,30`,
+      `${L}:35,30`,
+      `${L}:45,30`,
+      `${L}:0,0`,
+      `${L}:${DUNGEON.WIDTH - 1},${DUNGEON.HEIGHT - 1}`,
+      `${L}:${carved.x},${carved.y}`,
     ]);
 
     const state = e.showMap();
@@ -202,7 +205,9 @@ describe('GameEngine — map centering', () => {
 
     e.char.x = 0;
     e.char.y = 0;
-    e.dungeonState.visitedCells = new Set(['0,0']);
+    const L = e.char.dungeonLevel;
+    const carved = e.getLevel(L).grid.flat().find((c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W));
+    e.dungeonState.visitedCells = new Set([`${L}:0,0`, `${L}:${carved.x},${carved.y}`]);
 
     const state = e.showMap();
     const r = DUNGEON.MAP_VIEW_RADIUS;
@@ -498,9 +503,8 @@ describe('GameEngine — gems', () => {
     const engine = makeReadyEngine(db);
     const e = setupGemUser(engine, 'Kobold');
     // Mark several cells visited so teleportPlayer() has somewhere to send us.
-    for (let x = 0; x < 5; x++) {
-      for (let y = 0; y < 5; y++) e.dungeonState.visitedCells.add(`${x},${y}`);
-    }
+    const L = e.char.dungeonLevel;
+    for (const c of e.getLevel(L).grid.flat()) e.dungeonState.visitedCells.add(`${L}:${c.x},${c.y}`);
 
     const state = engine.gemAction('a');
     expect(e.char.inventory.gems.ruby).toBe(0);
@@ -531,15 +535,17 @@ describe('GameEngine — gems', () => {
     expect(state.phase).toBe(phaseBefore);
   });
 
-  it('Diamond consumes itself and reveals every cell of the current level', () => {
+  it('Diamond consumes itself and reveals every room and corridor of the current level', () => {
     const engine = makeReadyEngine(db);
     const e = setupGemUser(engine, 'Kobold');
     const lvl = e.getLevel(e.char.dungeonLevel);
-    const totalCells = lvl.grid.length * lvl.grid[0].length;
+    const carvedCells = lvl.grid.flat().filter(
+      (c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W),
+    ).length;
 
     const state = engine.gemAction('c');
     expect(e.char.inventory.gems.diamond).toBe(0);
-    expect(e.dungeonState.visitedCells.size).toBe(totalCells);
+    expect(e.dungeonState.visitedCells.size).toBe(carvedCells);
     expect(state.messages.join(' ')).toContain('full map');
   });
 
@@ -592,18 +598,20 @@ describe('GameEngine — magic books', () => {
     expect(state.messages.length).toBeGreaterThan(0);
   });
 
-  it('a map-reveal read marks every cell of the current level visited', () => {
+  it('a map-reveal read marks every room and corridor of the current level visited', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.char.inventory.books = 200; // enough tries to be confident we hit map-reveal at least once
     const lvl = e.getLevel(e.char.dungeonLevel);
-    const totalCells = lvl.grid.length * lvl.grid[0].length;
+    const carvedCells = lvl.grid.flat().filter(
+      (c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W),
+    ).length;
 
     let sawFullReveal = false;
     for (let i = 0; i < 200 && e.char.inventory.books > 0; i++) {
       e.dungeonState.visitedCells.clear();
       engine.useBook();
-      if (e.dungeonState.visitedCells.size === totalCells) { sawFullReveal = true; break; }
+      if (e.dungeonState.visitedCells.size === carvedCells) { sawFullReveal = true; break; }
     }
     expect(sawFullReveal).toBe(true);
   });
@@ -734,12 +742,13 @@ describe('GameEngine — diamond while exploring', () => {
   it('reveals the whole level map and consumes one diamond', () => {
     const { engine, e } = explorer();
     const lvl = e.getLevel(e.char.dungeonLevel);
-    const totalCells = lvl.grid.length * lvl.grid[0].length;
+    const isRock = (c: DungeonCell) => c.walls.N && c.walls.S && c.walls.E && c.walls.W;
+    const carved = lvl.grid.flat().filter((c: DungeonCell) => !isRock(c));
 
     const state = engine.useDiamondExploring();
     expect(state.phase).toBe('playing');
     expect(e.char.inventory.gems.diamond).toBe(1);
-    expect(e.dungeonState.visitedCells.size).toBe(totalCells);
+    expect(e.dungeonState.visitedCells.size).toBe(carved.length);
     expect(state.messages.join('\n')).toContain('map has been revealed');
   });
 
@@ -759,5 +768,184 @@ describe('GameEngine — diamond while exploring', () => {
 
     engine.useDiamondExploring();
     expect(e.char.inventory.gems.diamond).toBe(2);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — map after a full reveal', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  const isRock = (c: DungeonCell) => c.walls.N && c.walls.S && c.walls.E && c.walls.W;
+
+  it('never marks solid rock as explored', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.intelligence = 18;
+    e.char.inventory.gems.diamond = 1;
+
+    engine.useDiamondExploring();
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const rockMarked = lvl.grid.flat().filter(
+      (c: DungeonCell) => isRock(c) && e.dungeonState.visitedCells.has(`${e.char.dungeonLevel}:${c.x},${c.y}`),
+    );
+    expect(rockMarked).toEqual([]);
+  });
+
+  it('draws rock as blank even when it is marked visited', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    // Every cell, rock included, marked visited.
+    const L = e.char.dungeonLevel;
+    for (const c of lvl.grid.flat()) e.dungeonState.visitedCells.add(`${L}:${c.x},${c.y}`);
+
+    const state = engine.showMap();
+    const carved = lvl.grid.flat().filter((c: DungeonCell) => !isRock(c)).length;
+    expect(state.messages[0]).toContain(`(${carved} cells explored)`);
+
+    // Every rock cell inside the map window must render as a space.
+    const radius = DUNGEON.MAP_VIEW_RADIUS;
+    const minX = Math.max(0, e.char.x - radius);
+    const minY = Math.max(0, e.char.y - radius);
+    const rows = state.messages.slice(2, -3).map((r: string) => r.slice(2));
+    let rockSeen = 0;
+    rows.forEach((row: string, dy: number) => {
+      [...row].forEach((ch, dx) => {
+        const cell = lvl.grid[minY + dy]?.[minX + dx];
+        if (cell && isRock(cell)) {
+          rockSeen++;
+          expect(ch).toBe(' ');
+        }
+      });
+    });
+    expect(rockSeen).toBeGreaterThan(0);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — explored squares are tracked per level', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  const isRock = (c: DungeonCell) => c.walls.N && c.walls.S && c.walls.E && c.walls.W;
+
+  it("a full reveal on one level doesn't show up on the next level's map", () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.intelligence = 18;
+    e.char.inventory.gems.diamond = 1;
+    engine.useDiamondExploring();
+
+    // Arrive on level 2 at its entrance, as climbing down would.
+    e.char.dungeonLevel = 2;
+    const lvl2 = e.getLevel(2);
+    e.char.x = lvl2.entrance.x;
+    e.char.y = lvl2.entrance.y;
+    e.dungeonState.visitedCells.add(`2:${e.char.x},${e.char.y}`);
+
+    const state = engine.showMap();
+    expect(state.messages[0]).toContain('(1 cells explored)');
+  });
+
+  it('drops pre-per-level explored squares when a save is loaded', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const id = e.char.id;
+    e.dungeonState.visitedCells = new Set(['5,5', '6,5', '7,5']);
+    const repo = new Repository(db);
+    repo.saveDungeonState(id, e.dungeonState);
+
+    engine.loadCharacter(id);
+    const keys = [...e.dungeonState.visitedCells];
+    expect(keys).toEqual([`${e.char.dungeonLevel}:${e.char.x},${e.char.y}`]);
+  });
+
+  it('a ruby never teleports into solid rock, even if rock is marked explored', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const L = e.char.dungeonLevel;
+    const lvl = e.getLevel(L);
+    for (const c of lvl.grid.flat()) e.dungeonState.visitedCells.add(`${L}:${c.x},${c.y}`);
+
+    for (let i = 0; i < 50; i++) {
+      e.teleportPlayer();
+      expect(isRock(lvl.grid[e.char.y][e.char.x])).toBe(false);
+    }
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — full-floor map toggle', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  function revealedEngine(): { engine: GameEngine; e: any } {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.intelligence = 18;
+    e.char.inventory.gems.diamond = 1;
+    engine.useDiamondExploring();
+    return { engine, e };
+  }
+
+  it('M opens the centered window; F switches to the whole explored floor', () => {
+    const { engine, e } = revealedEngine();
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const carved = lvl.grid.flat().filter((c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W));
+    const width = Math.max(...carved.map((c: DungeonCell) => c.x), e.char.x)
+      - Math.min(...carved.map((c: DungeonCell) => c.x), e.char.x) + 1;
+
+    const centered = engine.showMap();
+    expect(centered.mapFull).toBe(false);
+    expect(centered.messages[2].length - 2).toBeLessThanOrEqual(2 * DUNGEON.MAP_VIEW_RADIUS + 1);
+
+    const full = engine.toggleMapView();
+    expect(full.phase).toBe('map');
+    expect(full.mapFull).toBe(true);
+    expect(full.messages[0]).toContain('FULL FLOOR');
+    expect(full.messages[2].length - 2).toBe(width);
+    expect(full.messages.join('\n')).toContain('@');
+  });
+
+  it('F toggles back, and reopening the map always starts centered', () => {
+    const { engine } = revealedEngine();
+    engine.showMap();
+    engine.toggleMapView();
+    expect(engine.toggleMapView().mapFull).toBe(false);
+
+    engine.toggleMapView();
+    engine.dismissMap();
+    expect(engine.showMap().mapFull).toBe(false);
+  });
+
+  it('is ignored outside the map screen', () => {
+    const { engine } = revealedEngine();
+    expect(engine.toggleMapView().phase).toBe('playing');
   });
 });
