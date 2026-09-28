@@ -115,6 +115,8 @@ export interface Character {
   asmodeusDefeated: boolean;
   statusEffects: StatusEffect[];
   invulnerableTurns?: number; // from reading a magic book — blocks the monster's next N combat rounds entirely
+  heldRounds?: number;        // combat rounds the character loses (paralyzed, asleep, cowering...) — in-memory, cleared when combat ends
+  heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
   introsSeen: number[];
   rerollsRemaining: number;
   elementalWarnings: string[]; // "{MonsterType}:{fireball|acid|lightning}" already called out this playthrough
@@ -191,7 +193,15 @@ export interface Monster {
   definition: MonsterDefinition;
   prayerPenalty: number;
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
+  petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
 }
+
+export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed';
+
+/** The Beholder's eye rays, one per eyestalk. */
+export type BeholderRay =
+  | 'fear-ray' | 'slow-ray' | 'enervation-ray' | 'telekinetic-ray' | 'paralyze-ray'
+  | 'sleep-ray' | 'charm-ray' | 'petrify-ray' | 'disintegrate-ray' | 'death-ray';
 
 export type GamePhase =
   | 'title'

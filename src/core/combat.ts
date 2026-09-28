@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS } from './config.js';
-import type { Character, Monster, StatusEffect } from './types.js';
+import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
@@ -539,9 +539,10 @@ function monsterAction(
     ability = pickWizardAbility(rng);
   }
 
-  // Special Beholder logic
+  // Special Beholder logic: a bite, or one eyestalk's ray
   if (monster.type === 'Beholder') {
-    ability = pickBeholderAbility(rng);
+    ability = pickBeholderAbility(monster, rng);
+    if (ability) return resolveBeholderRay(ability as BeholderRay, char, monster, rng, messages, naked);
   }
 
   // Special Sanguinid logic — passively radioactive every round, on top of
@@ -644,13 +645,18 @@ function monsterAction(
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
   }
 
-  // Handle paralysis
+  // Handle paralysis (Basilisk gaze, Gelatinous Cube engulf, Lich touch):
+  // a paralyzed character loses their next rounds.
   if (ability === 'gaze-paralyze' || ability === 'engulf-paralyze' || ability === 'paralysis-touch') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked);
     char.hp = Math.max(0, char.hp - dmg);
-    if (rng.float() < 0.4) {
+    if (rng.float() < COMBAT.PARALYSIS_CHANCE) {
       addStatusEffect(char, { type: 'paralyzed', value: 0, turns: 2 });
-      messages.push(`The ${monster.type} paralyzes you!`);
+      const engulfed = ability === 'engulf-paralyze';
+      holdCharacter(char, COMBAT.PARALYSIS_ROUNDS, engulfed ? 'engulfed' : 'paralyzed');
+      messages.push(engulfed
+        ? `The ${monster.type} engulfs you! You are trapped inside it, unable to move.`
+        : `The ${monster.type} paralyzes you! You cannot move.`);
     }
     messages.push(`You suffer ${dmg} damage.`);
     const playerDied = char.hp <= 0;
@@ -815,14 +821,211 @@ function pickSanguinidAbility(rng: RNG): string {
   return 'blood-drain';
 }
 
-function pickBeholderAbility(rng: RNG): string {
-  const roll = rng.float();
-  if (roll < 0.25) return 'magic-blast';
-  if (roll < 0.40) return 'paralyze-ray';
-  if (roll < 0.55) return 'fear-ray';
-  if (roll < 0.65) return 'life-drain-ray';
-  if (roll < 0.75) return 'weaken-ray';
-  return 'spell-interrupt';
+// ─── Beholder ────────────────────────────────────────────────────────────────
+
+/** The rays a Beholder of this level has unlocked. */
+export function beholderRaysFor(level: number): BeholderRay[] {
+  return COMBAT.BEHOLDER_RAYS.filter(r => level >= r.minLevel).map(r => r.ray as BeholderRay);
+}
+
+/** '' is a plain bite; otherwise a weighted pick among the unlocked rays. */
+function pickBeholderAbility(monster: Monster, rng: RNG): string {
+  if (rng.float() < COMBAT.BEHOLDER_BITE_CHANCE) return '';
+  const unlocked = COMBAT.BEHOLDER_RAYS.filter(r => monster.level >= r.minLevel);
+  if (unlocked.length === 0) return '';
+  const total = unlocked.reduce((sum, r) => sum + r.weight, 0);
+  let roll = rng.float() * total;
+  for (const r of unlocked) {
+    roll -= r.weight;
+    if (roll < 0) return r.ray;
+  }
+  return unlocked[unlocked.length - 1].ray;
+}
+
+function rayEye(ray: BeholderRay): string {
+  return COMBAT.BEHOLDER_RAYS.find(r => r.ray === ray)?.eye ?? 'glaring';
+}
+
+/** d20 + a third of the listed attributes' average + level/5, against the
+ * Beholder's DC. Averaging keeps a multi-attribute save from becoming
+ * automatic for a well-rounded character. */
+function beholderSave(char: Character, monster: Monster, rng: RNG, stats: ('constitution' | 'resistance' | 'wisdom' | 'dexterity' | 'strength' | 'charisma')[]): boolean {
+  const eff = getEffectiveStats(char);
+  const avg = stats.reduce((sum, st) => sum + eff[st], 0) / stats.length;
+  const bonus = Math.floor(avg / 3);
+  const roll = rng.die(20) + bonus + Math.floor(char.level / 5);
+  return roll >= COMBAT.BEHOLDER_RAY_DC_BASE + Math.floor(monster.level / 3);
+}
+
+function holdCharacter(char: Character, rounds: number, why: HeldCondition): void {
+  char.heldRounds = Math.max(char.heldRounds ?? 0, rounds);
+  char.heldBy = why;
+}
+
+function resolveBeholderRay(
+  ray: BeholderRay,
+  char: Character,
+  monster: Monster,
+  rng: RNG,
+  messages: string[],
+  naked: boolean,
+): { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean } {
+  const hit = (mult: number) => {
+    const dmg = Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked) * mult));
+    char.hp = Math.max(0, char.hp - dmg);
+    return dmg;
+  };
+  const done = (dmg: number) => ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false });
+
+  messages.push(`The Beholder's ${rayEye(ray)} eyestalk swivels toward you and fires!`);
+
+  switch (ray) {
+    case 'fear-ray': {
+      const dmg = hit(0.5);
+      messages.push(`FEAR RAY. Dread claws at your mind for ${dmg} damage.`);
+      if (beholderSave(char, monster, rng, ['wisdom'])) {
+        messages.push('You steel your nerves against the terror.');
+      } else {
+        addStatusEffect(char, { type: 'feared', value: 0, turns: 2 });
+        holdCharacter(char, 1, 'feared');
+        messages.push('Terror floods you. You cower, unable to act!');
+      }
+      return done(dmg);
+    }
+    case 'slow-ray': {
+      const dmg = hit(0.5);
+      messages.push(`SLOWING RAY. It strikes for ${dmg} damage.`);
+      if (beholderSave(char, monster, rng, ['dexterity'])) {
+        messages.push('You shake off the sluggishness.');
+      } else {
+        addStatusEffect(char, { type: 'dexterity-reduced', value: COMBAT.BEHOLDER_SLOW_DEX_REDUCTION, turns: 6 });
+        messages.push('Your limbs turn heavy and slow. Your Dexterity is reduced!');
+      }
+      return done(dmg);
+    }
+    case 'enervation-ray': {
+      const dmg = hit(1.3);
+      messages.push(`ENERVATION RAY. Withering energy rots your flesh for ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'telekinetic-ray': {
+      const dmg = hit(1.0);
+      messages.push(`TELEKINETIC RAY. You are hurled into the wall for ${dmg} damage.`);
+      if (char.hp > 0 && !beholderSave(char, monster, rng, ['strength'])) {
+        holdCharacter(char, 1, 'dazed');
+        messages.push('You slump to the floor, dazed!');
+      }
+      return done(dmg);
+    }
+    case 'paralyze-ray': {
+      messages.push('PARALYZING RAY.');
+      if (beholderSave(char, monster, rng, ['constitution', 'resistance'])) {
+        messages.push('Your muscles lock for an instant, then you tear free.');
+      } else {
+        addStatusEffect(char, { type: 'paralyzed', value: 0, turns: 2 });
+        holdCharacter(char, 2, 'paralyzed');
+        messages.push('Every muscle locks rigid. YOU ARE PARALYZED!');
+      }
+      return done(0);
+    }
+    case 'sleep-ray': {
+      messages.push('SLEEP RAY.');
+      if (beholderSave(char, monster, rng, ['wisdom'])) {
+        messages.push('Your eyelids droop, but you force them open.');
+      } else {
+        holdCharacter(char, 2, 'asleep');
+        messages.push('A heavy drowsiness drags you down. You fall asleep!');
+      }
+      return done(0);
+    }
+    case 'charm-ray': {
+      messages.push('CHARM RAY.');
+      if (beholderSave(char, monster, rng, ['wisdom', 'charisma'])) {
+        messages.push('A honeyed voice fills your head. You shut it out.');
+        return done(0);
+      }
+      const eff = getEffectiveStats(char);
+      const own = (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT) + Math.floor(eff.strength / COMBAT.DAMAGE_STR_DIVISOR);
+      const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
+      const dmg = Math.max(1, Math.round(own * rand * 0.5));
+      char.hp = Math.max(0, char.hp - dmg);
+      holdCharacter(char, 1, 'charmed');
+      messages.push(`The Beholder is your dearest friend. You turn your weapon on yourself for ${dmg} damage!`);
+      return done(dmg);
+    }
+    case 'petrify-ray': {
+      messages.push('PETRIFICATION RAY.');
+      if (beholderSave(char, monster, rng, ['constitution', 'resistance'])) {
+        messages.push('Your skin stiffens to grey, then softens again.');
+        return done(0);
+      }
+      if ((monster.petrifyStage ?? 0) >= 1) {
+        char.hp = 0;
+        messages.push('The stone creeps over your chest, your throat, your eyes.');
+        messages.push('YOU HAVE BEEN TURNED TO STONE.');
+        return done(0);
+      }
+      monster.petrifyStage = 1;
+      addStatusEffect(char, { type: 'dexterity-reduced', value: COMBAT.BEHOLDER_PETRIFY_DEX_REDUCTION, turns: 8 });
+      holdCharacter(char, 1, 'petrifying');
+      messages.push('Your legs turn to grey stone! Another hit like that will finish the job.');
+      return done(0);
+    }
+    case 'disintegrate-ray': {
+      const saved = beholderSave(char, monster, rng, ['dexterity']);
+      const dmg = hit(saved ? 1.5 : 3.0);
+      messages.push(saved
+        ? `DISINTEGRATION RAY. You twist aside and it only grazes you for ${dmg} damage.`
+        : `DISINTEGRATION RAY. It strikes you full on for ${dmg} damage!`);
+      if (char.hp <= 0) messages.push('Your body crumbles into fine grey dust.');
+      return done(dmg);
+    }
+    case 'death-ray': {
+      messages.push('DEATH RAY.');
+      if (beholderSave(char, monster, rng, ['constitution', 'resistance', 'wisdom'])) {
+        const dmg = hit(1.5);
+        messages.push(`Your heart stutters but keeps beating. You suffer ${dmg} damage.`);
+        return done(dmg);
+      }
+      char.hp = 0;
+      messages.push('The white eye opens wide. YOUR HEART STOPS.');
+      return done(0);
+    }
+  }
+}
+
+const HELD_TEXT: Record<HeldCondition, string> = {
+  feared:     'You cower in terror and cannot act!',
+  dazed:      'You are still dazed and cannot act!',
+  paralyzed:  'You are paralyzed and cannot move!',
+  asleep:     'You are fast asleep!',
+  charmed:    'You gaze adoringly at the Beholder and do nothing.',
+  engulfed:   'You struggle inside the quivering jelly but cannot break free!',
+  petrifying: 'Your stone legs will not obey you!',
+};
+
+/** A round the character loses to being held: they do nothing and the
+ * monster acts. */
+export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const messages = [HELD_TEXT[char.heldBy ?? 'paralyzed']];
+  char.heldRounds = Math.max(0, (char.heldRounds ?? 1) - 1);
+  if (char.heldRounds === 0) char.heldBy = undefined;
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
+}
+
+/** The Beholder's central eye: a chance to cancel a spell or gem outright,
+ * spending the character's turn. Returns null when the magic gets through. */
+export function beholderAntimagic(char: Character, monster: Monster, rng: RNG, what: 'spell' | 'gem'): CombatRoundResult | null {
+  if (monster.type !== 'Beholder' || rng.float() >= COMBAT.BEHOLDER_ANTIMAGIC_CHANCE) return null;
+  const messages = [
+    'The Beholder turns its great central eye upon you.',
+    what === 'spell'
+      ? 'Your spell unravels in its antimagic gaze!'
+      : 'Your gem goes dark in its antimagic gaze, then slowly rekindles.',
+  ];
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
 }
 
 // ─── XP calculation ──────────────────────────────────────────────────────────

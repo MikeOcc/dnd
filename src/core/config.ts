@@ -147,6 +147,34 @@ export const COMBAT = {
   LEVEL_DRAIN_CHANCE: 0.08,
   LEVEL_DRAIN_MIN_LEVEL_FRACTION: 0.7,  // monster.level must be >= maxLevel * this
 
+  // Beholder eye rays. Each eyestalk has its own ray; a Beholder only uses
+  // the rays its level has unlocked, so the extreme ones (petrification,
+  // disintegration, death) belong to the elder specimens. Weights are
+  // relative within whatever is unlocked. Saves: d20 + (average of the
+  // save's attributes) / 3 + level/5 against BEHOLDER_RAY_DC_BASE +
+  // beholder level / 3.
+  BEHOLDER_RAYS: [
+    { ray: 'fear-ray',         eye: 'violet',     minLevel: 10, weight: 3 },
+    { ray: 'slow-ray',         eye: 'blue',       minLevel: 10, weight: 3 },
+    { ray: 'enervation-ray',   eye: 'green',      minLevel: 10, weight: 3 },
+    { ray: 'telekinetic-ray',  eye: 'orange',     minLevel: 10, weight: 3 },
+    { ray: 'paralyze-ray',     eye: 'yellow',     minLevel: 14, weight: 2 },
+    { ray: 'sleep-ray',        eye: 'cyan',       minLevel: 14, weight: 2 },
+    { ray: 'charm-ray',        eye: 'pink',       minLevel: 18, weight: 2 },
+    { ray: 'petrify-ray',      eye: 'lime-green', minLevel: 22, weight: 1 },
+    { ray: 'disintegrate-ray', eye: 'red',        minLevel: 26, weight: 1 },
+    { ray: 'death-ray',        eye: 'white',      minLevel: 29, weight: 1 },
+  ],
+  BEHOLDER_BITE_CHANCE: 0.2,
+
+  // Basilisk gaze / Gelatinous Cube engulf / Lich touch
+  PARALYSIS_CHANCE: 0.4,
+  PARALYSIS_ROUNDS: 2,          // combat rounds the character loses        // chance a round is a plain bite instead of a ray
+  BEHOLDER_RAY_DC_BASE: 10,
+  BEHOLDER_ANTIMAGIC_CHANCE: 0.25,  // central eye: chance a spell or gem used against it fizzles
+  BEHOLDER_SLOW_DEX_REDUCTION: 4,
+  BEHOLDER_PETRIFY_DEX_REDUCTION: 6,
+
   // Run
   RUN_BASE_CHANCE: 0.55,
   RUN_DEX_BONUS: 0.015,

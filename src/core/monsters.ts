@@ -172,7 +172,10 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     fireballResistance: 0.9,
     lightningResistance: 2.0,  // weak to lightning
     encounterIntro: ['A great floating sphere covered in eyes rotates slowly toward you.', '', 'You have encountered a Level {LVL} Beholder!'],
-    specialAbilities: ['magic-blast', 'paralyze-ray', 'fear-ray', 'life-drain-ray', 'weaken-ray', 'spell-interrupt'],
+    // Rays are chosen by level in combat.ts (see COMBAT.BEHOLDER_RAYS); the
+    // central eye's antimagic is handled where spells and gems are used.
+    specialAbilities: ['fear-ray', 'slow-ray', 'enervation-ray', 'telekinetic-ray', 'paralyze-ray',
+      'sleep-ray', 'charm-ray', 'petrify-ray', 'disintegrate-ray', 'death-ray'],
   },
   'Mind Flayer': {
     type: 'Mind Flayer', isUndead: false, isUnique: false,

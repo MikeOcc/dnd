@@ -8,7 +8,7 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
@@ -196,6 +196,9 @@ export class GameEngine {
         { key: 'c', text: 'Continue Playing' },
         { key: 'x', text: 'Exit to Main Menu' },
       ];
+    }
+    if (this.phase === 'combat' && this.combat && (this.char?.heldRounds ?? 0) > 0) {
+      return [{ key: 'a', text: `Struggle (${this.char!.heldBy ?? 'held'})` }];
     }
     if (this.phase === 'combat' && this.combat) {
       return [
@@ -981,6 +984,7 @@ export class GameEngine {
 
   combatAction(action: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
+    if (this.isHeld()) return this.combatHeld();
 
     switch (action) {
       case 'a': return this.combatAttack();
@@ -1003,6 +1007,7 @@ export class GameEngine {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
     const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal' };
     const type = types[key];
+    if (type && this.isHeld()) return this.combatHeld();
     if (!type) {
       this.phase = 'combat';
       this.messages = ['You reconsider.'];
@@ -1038,6 +1043,11 @@ export class GameEngine {
         `You lack the arcane aptitude to attune to it. (Requires INT ${GEMS.MAGIC_INT_THRESHOLD}+)`,
       ];
       return this.getState();
+    }
+
+    if (this.combat) {
+      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'gem');
+      if (negated) return this.processCombatResult(negated);
     }
 
     switch (type) {
@@ -1109,6 +1119,11 @@ export class GameEngine {
 
   spellAction(spell: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
+    if (['a', 'b', 'c', 'd', 'e', 'f'].includes(spell)) {
+      if (this.isHeld()) return this.combatHeld();
+      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
+      if (negated) return this.processCombatResult(negated);
+    }
     if (spell === 'a') return this.combatFireball();
     if (spell === 'b') return this.combatHeal();
     if (spell === 'c') return this.combatAcid();
@@ -1135,6 +1150,16 @@ export class GameEngine {
     ];
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
     return spellState;
+  }
+
+  private isHeld(): boolean {
+    return (this.char?.heldRounds ?? 0) > 0;
+  }
+
+  /** Whatever was chosen, a held character loses the round. */
+  private combatHeld(): GameState {
+    const result = playerHeld(this.char!, this.combat!.monster, this.rng);
+    return this.processCombatResult(result);
   }
 
   private combatAttack(): GameState {
@@ -1350,9 +1375,11 @@ export class GameEngine {
   }
 
   private endCombat(won: boolean): void {
-    // Remove naked status after combat ends
+    // Remove naked status and any lost-turn hold after combat ends
     if (this.char) {
       this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'naked');
+      this.char.heldRounds = 0;
+      this.char.heldBy = undefined;
     }
     resetPaceAfterCombat(this.pace, this.rng);
     this.combat = null;

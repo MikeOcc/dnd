@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
-import { GEMS } from '../src/core/config.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward } from '../src/core/combat.js';
+import { GEMS, COMBAT } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -1127,5 +1127,138 @@ describe('Invulnerability (from a magic book)', () => {
       if (result.monsterDamage > 0) anyDamage = true;
     }
     expect(anyDamage).toBe(true);
+  });
+});
+
+describe('Beholder eye rays', () => {
+  const RAY_NAMES: Record<string, string> = {
+    'fear-ray': 'FEAR RAY', 'slow-ray': 'SLOWING RAY', 'enervation-ray': 'ENERVATION RAY',
+    'telekinetic-ray': 'TELEKINETIC RAY', 'paralyze-ray': 'PARALYZING RAY', 'sleep-ray': 'SLEEP RAY',
+    'charm-ray': 'CHARM RAY', 'petrify-ray': 'PETRIFICATION RAY', 'disintegrate-ray': 'DISINTEGRATION RAY',
+    'death-ray': 'DEATH RAY',
+  };
+
+  /** Fights many rounds with an unkillable hero and returns every ray name seen. */
+  function raysSeen(beholderLevel: number, rounds = 600): Set<string> {
+    const rng = new RNG(4242);
+    const seen = new Set<string>();
+    for (let i = 0; i < rounds; i++) {
+      const char = makeChar({ level: 20, hp: 100000, maxHp: 100000 });
+      const m = createMonster('Beholder', beholderLevel, 'b1');
+      m.hp = 100000; m.maxHp = 100000;
+      const text = playerAttack(char, m, rng).messages.join('\n');
+      for (const name of Object.values(RAY_NAMES)) if (text.includes(name)) seen.add(name);
+    }
+    return seen;
+  }
+
+  it('unlocks more eyestalks as the Beholder levels up', () => {
+    expect(beholderRaysFor(10)).toEqual(['fear-ray', 'slow-ray', 'enervation-ray', 'telekinetic-ray']);
+    expect(beholderRaysFor(14)).toHaveLength(6);
+    expect(beholderRaysFor(22)).toContain('petrify-ray');
+    expect(beholderRaysFor(25)).not.toContain('disintegrate-ray');
+    expect(beholderRaysFor(30)).toHaveLength(10);
+  });
+
+  it('a young Beholder never uses the extreme rays', () => {
+    const seen = raysSeen(10);
+    expect(seen).toEqual(new Set(['FEAR RAY', 'SLOWING RAY', 'ENERVATION RAY', 'TELEKINETIC RAY']));
+  });
+
+  it('an elder Beholder uses every one of its ten eyestalks', () => {
+    const seen = raysSeen(30);
+    expect(seen).toEqual(new Set(Object.values(RAY_NAMES)));
+  });
+
+  it('a paralyzed character loses turns, and the Beholder still acts', () => {
+    const rng = new RNG(7);
+    const char = makeChar({ level: 20, hp: 100000, maxHp: 100000, heldRounds: 2, heldBy: 'paralyzed' });
+    const m = createMonster('Beholder', 10, 'b1');
+
+    const first = playerHeld(char, m, rng);
+    expect(first.messages[0]).toContain('paralyzed');
+    expect(first.messages.length).toBeGreaterThan(1);
+    expect(char.heldRounds).toBe(1);
+
+    playerHeld(char, m, rng);
+    expect(char.heldRounds).toBe(0);
+    expect(char.heldBy).toBeUndefined();
+  });
+
+  it('a second failed petrification save in the same fight turns you to stone', () => {
+    const char = makeChar({ level: 1, hp: 100000, maxHp: 100000, constitution: 3, resistance: 3 });
+    const m = createMonster('Beholder', 30, 'b1');
+    m.hp = 100000; m.maxHp = 100000;
+    m.petrifyStage = 1;
+    const rng = new RNG(1);
+    let stoned = false;
+    for (let i = 0; i < 400 && !stoned; i++) {
+      const text = playerAttack(char, m, rng).messages.join(' ');
+      if (text.includes('TURNED TO STONE')) {
+        stoned = true;
+        expect(char.hp).toBe(0);
+      }
+      char.hp = 100000;
+      char.heldRounds = 0;
+    }
+    expect(stoned).toBe(true);
+  });
+
+  it('the central eye only negates magic against a Beholder, and about as often as configured', () => {
+    const rng = new RNG(99);
+    const char = makeChar({ level: 20, hp: 100000, maxHp: 100000 });
+    expect(beholderAntimagic(char, createMonster('Goblin', 5, 'g1'), rng, 'spell')).toBeNull();
+
+    let negated = 0;
+    const trials = 2000;
+    for (let i = 0; i < trials; i++) {
+      const m = createMonster('Beholder', 10, 'b1');
+      const res = beholderAntimagic(char, m, rng, 'spell');
+      if (res) {
+        negated++;
+        expect(res.messages.join(' ')).toContain('antimagic');
+      }
+      char.hp = 100000;
+      char.heldRounds = 0;
+    }
+    expect(negated / trials).toBeGreaterThan(COMBAT.BEHOLDER_ANTIMAGIC_CHANCE - 0.05);
+    expect(negated / trials).toBeLessThan(COMBAT.BEHOLDER_ANTIMAGIC_CHANCE + 0.05);
+  });
+});
+
+describe('Paralysis from the Basilisk, Gelatinous Cube and Lich', () => {
+  /** Fights until the monster's paralysis lands; returns the held character. */
+  function paralyzedBy(type: 'Basilisk' | 'Gelatinous Cube' | 'Lich') {
+    const rng = new RNG(321);
+    for (let i = 0; i < 2000; i++) {
+      const char = makeChar({ level: 20, hp: 100000, maxHp: 100000 });
+      const m = createMonster(type, getDefinition(type).minLevel, 'p1');
+      m.hp = 100000; m.maxHp = 100000;
+      const res = playerAttack(char, m, rng);
+      if ((char.heldRounds ?? 0) > 0) return { char, m, rng, text: res.messages.join(' ') };
+    }
+    throw new Error(`${type} never paralyzed`);
+  }
+
+  it('the Basilisk gaze costs the character their next two turns', () => {
+    const { char, m, rng, text } = paralyzedBy('Basilisk');
+    expect(text).toContain('paralyzes you');
+    expect(char.heldRounds).toBe(COMBAT.PARALYSIS_ROUNDS);
+    expect(char.heldBy).toBe('paralyzed');
+    playerHeld(char, m, rng);
+    playerHeld(char, m, rng);
+    expect(char.heldRounds).toBe(0);
+  });
+
+  it('the Gelatinous Cube engulfs the character, holding them', () => {
+    const { char, m, rng, text } = paralyzedBy('Gelatinous Cube');
+    expect(text).toContain('engulfs you');
+    expect(char.heldBy).toBe('engulfed');
+    expect(playerHeld(char, m, rng).messages[0]).toContain('jelly');
+  });
+
+  it("the Lich's touch paralyzes the same way", () => {
+    const { char } = paralyzedBy('Lich');
+    expect(char.heldBy).toBe('paralyzed');
   });
 });

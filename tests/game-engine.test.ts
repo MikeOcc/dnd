@@ -977,3 +977,50 @@ describe('GameEngine — full-floor map toggle', () => {
     expect(engine.toggleMapView().phase).toBe('playing');
   });
 });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — held by a Beholder ray', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('offers only Struggle while held, and any action spends the turn', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.hp = 100000; e.char.maxHp = 100000;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Beholder', 10, 'b1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat.monster.hp = 100000; e.combat.monster.maxHp = 100000;
+    e.char.heldRounds = 1;
+    e.char.heldBy = 'asleep';
+    // Ward off the Beholder's reply, so a new ray can't hold us again this round.
+    e.char.invulnerableTurns = 5;
+
+    expect(engine.getState().choices).toEqual([{ key: 'a', text: 'Struggle (asleep)' }]);
+
+    const monsterHp = e.combat.monster.hp;
+    const state = engine.spellAction('a');
+    expect(state.messages[0]).toContain('asleep');
+    expect(e.combat.monster.hp).toBe(monsterHp);
+    expect(e.char.heldRounds).toBe(0);
+  });
+
+  it('clears the hold when combat ends', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Beholder', 10, 'b1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.char.heldRounds = 2;
+    e.char.heldBy = 'paralyzed';
+
+    e.endCombat(false);
+    expect(e.char.heldRounds).toBe(0);
+    expect(e.char.heldBy).toBeUndefined();
+  });
+});
