@@ -5,12 +5,12 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
-  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound } from './combat.js';
+  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -216,7 +216,7 @@ export class GameEngine {
     }
     if (this.phase === 'death') {
       return [
-        { key: 'c', text: 'Continue' },
+        { key: 'c', text: 'Return to Last Save' },
         { key: 'q', text: 'Quit to Main Menu' },
       ];
     }
@@ -236,6 +236,7 @@ export class GameEngine {
         { key: 'c', text: 'Pray' },
         { key: 'd', text: 'Run' },
         { key: 'e', text: 'Use Gem' },
+        { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
       ];
     }
     if (this.interaction) {
@@ -500,10 +501,7 @@ export class GameEngine {
       return this.getState();
     }
     this.char.inventory.potions--;
-    const heal = this.rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
-      + Math.floor(this.char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR)
-      + Math.floor(this.char.maxHp * GAMEPLAY.POTION_HEAL_MAX_HP_PCT);
-    const actual = Math.min(heal, this.char.maxHp - this.char.hp);
+    const actual = Math.min(potionHealAmount(this.char, this.rng), this.char.maxHp - this.char.hp);
     this.char.hp += actual;
     this.messages = [
       `You drink the healing potion and recover ${actual} HP.`,
@@ -1048,6 +1046,7 @@ export class GameEngine {
       case 'c': return this.combatPray();
       case 'd': return this.combatRun();
       case 'e': return this.showGemMenu();
+      case 'p': return this.combatPotion();
       default:  return this.getState();
     }
   }
@@ -1334,6 +1333,20 @@ export class GameEngine {
     return this.processCombatResult(result);
   }
 
+  /** Drinks a potion mid-fight (costs the turn). No potion, or already at
+   * full health: says so and costs nothing. */
+  private combatPotion(): GameState {
+    if (this.char!.inventory.potions <= 0) {
+      this.messages = ['You have no healing potions.'];
+      return this.getState();
+    }
+    if (this.char!.hp >= this.char!.maxHp) {
+      this.messages = ['You are already at full health.'];
+      return this.getState();
+    }
+    return this.processCombatResult(playerPotion(this.char!, this.combat!.monster, this.rng));
+  }
+
   private combatHeal(): GameState {
     const result = playerHeal(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
@@ -1352,7 +1365,8 @@ export class GameEngine {
     this.messages = result.messages;
 
     if (result.playerDied) {
-      return this.handleDeath(`Killed by a Level ${monster.level} ${monster.type} as you tried to flee.`);
+      const cause = result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`;
+      return this.handleDeath(cause.replace(/\.$/, ' as you tried to flee.'), result.killingBlow);
     }
 
     if (result.ran) {
@@ -1382,7 +1396,7 @@ export class GameEngine {
 
     if (result.playerDied) {
       const monster = this.combat!.monster;
-      return this.handleDeath(`Killed by a Level ${monster.level} ${monster.type}.`);
+      return this.handleDeath(result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`, result.killingBlow);
     }
 
     if (result.banished) {
@@ -1444,16 +1458,19 @@ export class GameEngine {
     return this.getState();
   }
 
-  private handleDeath(cause: string): GameState {
+  /** Death screen: the cause, then (in combat) the blow that did it, then the respawn. */
+  private handleDeath(cause: string, killingBlow: string[] = []): GameState {
     if (!this.char) return this.getState();
 
-    const lvl = this.getLevel(this.char.dungeonLevel);
-    const entrance = lvl?.entrance ?? { x: 0, y: 0 };
-
-    const result = applyDeath(this.char, entrance.x, entrance.y);
-    // result.messages leads with 'YOU HAVE DIED.' — renderers already show
-    // that as a banner, so skip it (and the blank line after it) here.
-    this.messages = [cause, '', ...result.messages.slice(2)];
+    // Renderers show 'YOU HAVE DIED.' as a banner. Nothing is written to the
+    // save: continuing reloads it, putting the character back where, and as,
+    // they last saved.
+    this.messages = [
+      cause,
+      '',
+      ...(killingBlow.length ? [...killingBlow, ''] : []),
+      'Return to your last save: the same place, health and pack you had then.',
+    ];
 
     this.endCombat(false);
     this.phase = 'death';
@@ -1463,9 +1480,21 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** After death: reload the last save. If there somehow isn't one, fall
+   * back to waking at this level's entrance. */
   dismissDeath(): GameState {
+    if (!this.char) return this.getState();
+    const id = this.char.id;
+    if (this.repo.loadCharacter(id)) {
+      this.loadCharacter(id);
+      this.messages = ['You wake with a gasp, back where you last saved, whole again.'];
+      return this.getState();
+    }
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    const entrance = lvl?.entrance ?? { x: 0, y: 0 };
+    const result = applyDeath(this.char, entrance.x, entrance.y);
     this.phase = 'playing';
-    this.messages = [];
+    this.messages = result.messages.slice(2);
     return this.getState();
   }
 

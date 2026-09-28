@@ -68,7 +68,7 @@ describe('GameEngine — death screen', () => {
     const state = engine.combatAction('a'); // Attack — player's hit doesn't matter, monster's counter always kills
 
     expect(state.phase).toBe('death');
-    expect(state.messages[0]).toContain('Killed by a Level 5 Kobold');
+    expect(state.messages[0]).toMatch(/^Killed by .*a Level 5 Kobold/);
   });
 
   it('offers Continue and Quit choices instead of a single "any key" prompt', () => {
@@ -77,19 +77,48 @@ describe('GameEngine — death screen', () => {
     const state = engine.combatAction('a');
 
     expect(state.choices).toEqual([
-      { key: 'c', text: 'Continue' },
+      { key: 'c', text: 'Return to Last Save' },
       { key: 'q', text: 'Quit to Main Menu' },
     ]);
   });
 
-  it('Continue resumes play with full HP at the level entrance', () => {
+  it('continuing after death restores the last save: place, health and pack', () => {
     const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.potions = 3;
+    e.char.gold = 250;
+    engine.saveAndPrompt();
+    const saved = { x: e.char.x, y: e.char.y, hp: e.char.hp, gold: 250, potions: 3 };
+
+    // wander off, spend things, then die
+    e.char.x += 1; e.char.gold = 10; e.char.inventory.potions = 0;
     forceLethalCombat(engine, 'Kobold');
     engine.combatAction('a');
 
     const state = engine.dismissDeath();
     expect(state.phase).toBe('playing');
-    expect(state.character!.hp).toBe(state.character!.maxHp);
+    expect(state.messages[0]).toContain('back where you last saved');
+    expect([e.char.x, e.char.y, e.char.hp, e.char.gold, e.char.inventory.potions])
+      .toEqual([saved.x, saved.y, saved.hp, saved.gold, saved.potions]);
+  });
+
+  it('names the attack that did the character in, and shows the blow', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    let named = false;
+    for (let i = 0; i < 60 && !named; i++) {
+      forceLethalCombat(engine, 'Red Dragon');
+      const state = engine.combatAction('a');
+      if (state.phase !== 'death') continue;
+      if (state.messages[0].startsWith('Killed by the ')) {
+        named = true;
+        expect(state.messages[0]).toMatch(/^Killed by the .+ of a Level \d+ Red Dragon\.$/);
+        expect(state.messages[2]).toContain('Red Dragon');
+      }
+      engine.dismissDeath();
+      e.phase = 'playing';
+    }
+    expect(named).toBe(true);
   });
 
   it('Quit to Main Menu goes straight to the main menu', () => {
@@ -1454,5 +1483,50 @@ describe('GameEngine — ruby teleport', () => {
       expect(floodFill(lvl.grid, from.x, from.y).has(`${e.char.x},${e.char.y}`)).toBe(true);
       expect(e.dungeonState.visitedCells.has(`${e.char.dungeonLevel}:${e.char.x},${e.char.y}`)).toBe(true);
     }
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — potions in combat', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function hurtInCombat() {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.maxHp = 1000; e.char.hp = 100;
+    e.char.inventory.potions = 2;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Goblin', 1, 'g'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat.monster.hp = e.combat.monster.maxHp = 100000;
+    return { engine, e };
+  }
+
+  it('is offered in the combat menu with the count', () => {
+    const { engine } = hurtInCombat();
+    expect(engine.getState().choices).toContainEqual({ key: 'p', text: 'Drink Potion (2)' });
+  });
+
+  it('heals, uses up a potion, and costs the turn', () => {
+    const { engine, e } = hurtInCombat();
+    const state = engine.combatAction('p');
+    expect(e.char.inventory.potions).toBe(1);
+    expect(state.messages[0]).toContain('gulp down a healing potion');
+    expect(e.char.hp).toBeGreaterThan(100 - 50);     // healed well past a goblin's poke
+    expect(state.fx?.monsterAttacked ?? state.messages.join(' ').includes('Goblin')).toBeTruthy();
+  });
+
+  it('with no potions, or at full health, costs nothing', () => {
+    const { engine, e } = hurtInCombat();
+    e.char.inventory.potions = 0;
+    const hp = e.char.hp;
+    expect(engine.combatAction('p').messages).toEqual(['You have no healing potions.']);
+    expect(e.char.hp).toBe(hp);
+
+    e.char.inventory.potions = 1;
+    e.char.hp = e.char.maxHp;
+    expect(engine.combatAction('p').messages).toEqual(['You are already at full health.']);
+    expect(e.char.inventory.potions).toBe(1);
   });
 });

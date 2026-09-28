@@ -523,7 +523,7 @@ function updateHelpLine(phase) {
     case 'inventory':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
-      hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run  E: Gem'; break;
+      hint.textContent = 'A: Attack  B: Spell/Skill  C: Pray  D: Run  E: Gem  P: Potion'; break;
     case 'interaction':
       hint.textContent = 'Choose an option above'; break;
     case 'name-entry':
@@ -531,7 +531,7 @@ function updateHelpLine(phase) {
     case 'char-roll':
       hint.textContent = 'A: Wizard  B: Warrior  C: Reroll'; break;
     case 'death':
-      hint.textContent = 'C: Continue  Q: Quit to Main Menu'; break;
+      hint.textContent = 'C: Return to Last Save  Q: Quit to Main Menu'; break;
     case 'save-prompt':
       hint.textContent = 'C: Continue Playing  X: Exit to Main Menu'; break;
     case 'victory':
@@ -771,7 +771,7 @@ document.addEventListener('keydown', (e) => {
       if (gemBtn) gemBtn.click();
       return;
     }
-    if (['a','c','d'].includes(key)) apiAction('combat', { choice: key });
+    if (['a','c','d','p'].includes(key)) apiAction('combat', { choice: key });
     return;
   }
 

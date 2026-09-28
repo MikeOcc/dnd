@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { LEVELING, CHARACTER, WARRIOR } from './config.js';
+import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY } from './config.js';
 import type { Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
@@ -100,6 +100,14 @@ export function calculateLevel(xp: number): number {
     else break;
   }
   return Math.min(level, LEVELING.MAX_LEVEL);
+}
+
+/** HP a healing potion restores (before capping at max HP): a base roll, a
+ * Constitution bonus, and a share of max HP so potions keep pace with level. */
+export function potionHealAmount(char: Character, rng: RNG): number {
+  return rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
+    + Math.floor(char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR)
+    + Math.floor(char.maxHp * GAMEPLAY.POTION_HEAL_MAX_HP_PCT);
 }
 
 /** Drains one character level (minimum level 1). Returns the HP lost, or 0 if already at level 1. */

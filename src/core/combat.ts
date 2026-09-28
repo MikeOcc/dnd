@@ -1,7 +1,7 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR } from './config.js';
 import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -15,6 +15,8 @@ export interface CombatRoundResult {
   ran?: boolean;
   banished?: boolean;   // Banish worked: the monster is gone (no XP, like the sapphire)
   monsterElement?: FxElement;  // what the monster hit the character with this round, if it acted
+  deathCause?: string;         // when the monster killed the character: names the attack that did it
+  killingBlow?: string[];      // ...and the monster's lines from that final turn
   runFailed?: boolean;
   ballOfDooFired?: boolean;
   ballOfDooResisted?: boolean;
@@ -92,6 +94,22 @@ function finishWarriorRound(char: Character, monster: Monster, rng: RNG, message
 
 export function playerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   return swingRound(char, monster, rng, [], attacksPerRound(char));
+}
+
+// ─── Potion ──────────────────────────────────────────────────────────────────
+
+/** Drinking a healing potion mid-fight: heals like one drunk while exploring,
+ * but it takes the character's turn, so the monster acts. */
+export function playerPotion(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  char.inventory.potions--;
+  const healed = Math.min(potionHealAmount(char, rng), char.maxHp - char.hp);
+  char.hp += healed;
+  const messages = [
+    `You gulp down a healing potion and recover ${healed} HP.`,
+    `(${char.inventory.potions} potion${char.inventory.potions === 1 ? '' : 's'} left)`,
+  ];
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
 }
 
 // ─── Warrior skills ──────────────────────────────────────────────────────────
@@ -608,15 +626,57 @@ export function abilityElement(ability: string | undefined): FxElement {
   return 'physical';
 }
 
-type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number; monsterElement?: FxElement };
+type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[] };
 
 /** The monster's turn. Also reports the element of whatever it did
- * (monsterElement), or nothing if it didn't get to act. */
+ * (monsterElement), or nothing if it didn't get to act; and if it killed
+ * the character, which attack did it and the lines describing it. */
 function monsterAction(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
+  const start = messages.length;
   const out: { acted?: boolean; ability?: string } = {};
-  const res = monsterActionInner(char, monster, rng, messages, out);
-  if (!out.acted) return res;
-  return vampireHypnosis(char, monster, rng, messages, { ...res, monsterElement: abilityElement(out.ability) });
+  const inner = monsterActionInner(char, monster, rng, messages, out);
+  if (!out.acted) return inner;
+  const res = vampireHypnosis(char, monster, rng, messages, { ...inner, monsterElement: abilityElement(out.ability) });
+  if (!res.playerDied) return res;
+
+  const blow = messages.slice(start);
+  const hypnotized = blow.some(l => l.includes('drinks you dry'));
+  while (blow.length && blow[0] === '') blow.shift();
+  return { ...res, deathCause: killedBy(monster, hypnotized ? 'hypnosis' : out.ability), killingBlow: blow };
+}
+
+const ATTACK_NAMES: Record<string, string> = {
+  'great-strength': 'crushing blow',
+  'infernal-healing': 'infernal drain',
+  'life-drain': 'life-draining touch',
+  'engulf-paralyze': 'engulfing mass',
+  'gaze-paralyze': 'paralyzing gaze',
+  'paralysis-touch': 'paralyzing touch',
+  'spore-poison': 'poison spores',
+  'slime-disease': 'diseased slime',
+  'fear-ray': 'fear ray',
+  'slow-ray': 'slowing ray',
+  'enervation-ray': 'enervation ray',
+  'telekinetic-ray': 'telekinetic ray',
+  'charm-ray': 'charm ray',
+  'sleep-ray': 'sleep ray',
+};
+
+/** The death screen's cause line, naming the attack that did the character in. */
+export function killedBy(monster: Monster, ability: string | undefined): string {
+  const who = `a Level ${monster.level} ${monster.type}`;
+  switch (ability) {
+    case undefined:
+    case '':                 return `Killed by ${who}.`;
+    case 'radiation':        return `Killed by the radioactive flesh of ${who}.`;
+    case 'hypnosis':         return `Hypnotized and drained dry by ${who}.`;
+    case 'ball-of-doo':      return 'Turned into a Ball of Doo by Asmodeus.';
+    case 'petrify-ray':      return `Turned to stone by ${who}.`;
+    case 'death-ray':        return `Slain by the death ray of ${who}.`;
+    case 'disintegrate-ray': return `Disintegrated by ${who}.`;
+    case 'paralyze-ray':     return `Killed by ${who} while paralyzed.`;
+    default:                 return `Killed by the ${ATTACK_NAMES[ability] ?? ability.replace(/-/g, ' ')} of ${who}.`;
+  }
 }
 
 /** An elder vampire's damaging hit may hypnotize: usually fatal, otherwise

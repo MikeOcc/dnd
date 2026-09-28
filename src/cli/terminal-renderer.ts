@@ -188,7 +188,7 @@ function renderGame(state: GameState): string[] {
     lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
   }
   if (state.phase === 'combat') {
-    lines.push(dim('  A: Attack  |  B: Cast Spell  |  C: Pray  |  D: Run  |  E: Use Gem'));
+    lines.push(dim('  A: Attack  |  B: Spell/Skill  |  C: Pray  |  D: Run  |  E: Use Gem  |  P: Potion'));
   }
   if (state.phase === 'save-prompt') {
     lines.push(dim('  C: Continue Playing  |  X: Exit to Main Menu'));
