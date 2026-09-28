@@ -60,8 +60,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
   //   turn-right
   //   climb-up
   //   climb-down
-  //   combat                 — payload: { choice: 'a'|'b'|'c'|'d' }
+  //   combat                 — payload: { choice: 'a'|'b'|'c'|'d'|'e' }
   //   spell                  — payload: { choice: 'a'|'b'|'c' }
+  //   gem                    — payload: { choice: 'a'|'b'|'c'|'d'|'e' }
   //   interact               — payload: { choice }
   //   dismiss-intro
   //   dismiss-death
@@ -115,6 +116,12 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'main-menu':
           state = engine.showMainMenu();
           break;
+        case 'save':
+          state = engine.saveAndPrompt();
+          break;
+        case 'dismiss-save-prompt':
+          state = engine.dismissSavePrompt();
+          break;
         case 'move-forward':
           state = engine.moveForward();
           break;
@@ -138,6 +145,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           break;
         case 'spell':
           state = engine.spellAction(payload?.choice ?? '');
+          break;
+        case 'gem':
+          state = engine.gemAction(payload?.choice ?? '');
           break;
         case 'interact':
           state = engine.interactionChoice(payload?.choice ?? '');
@@ -165,6 +175,12 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           break;
         case 'use-potion':
           state = engine.usePot();
+          break;
+        case 'use-book':
+          state = engine.useBook();
+          break;
+        case 'use-diamond':
+          state = engine.useDiamondExploring();
           break;
         case 'wait':
           state = engine.wait();

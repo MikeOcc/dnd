@@ -19,9 +19,11 @@ let currentState: GameState = { phase: 'title', messages: [] };
 let nameBuffer = '';
 let awaitingNameInput = false;
 let spellMenuOpen = false;
+let gemMenuOpen = false;
 let saveListMode = false;
 let deleteMode = false;
 let saveSlots: CharacterSummary[] = [];
+let deleteConfirmTarget: CharacterSummary | null = null;
 
 function render(state: GameState): void {
   currentState = state;
@@ -54,6 +56,11 @@ function handleKey(key: KeyEvent): void {
 
   // Main menu
   if (phase === 'main-menu') {
+    if (deleteConfirmTarget) {
+      handleDeleteConfirmKey(key);
+      return;
+    }
+
     if (saveListMode) {
       handleSaveListKey(key);
       return;
@@ -144,6 +151,15 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
+  // Save prompt — Continue Playing or Exit to Main Menu
+  if (phase === 'save-prompt') {
+    if (key.type === 'char') {
+      if (key.char === 'c') render(engine.dismissSavePrompt());
+      if (key.char === 'x') render(engine.showMainMenu());
+    }
+    return;
+  }
+
   // Victory
   if (phase === 'victory') {
     render(engine.showMainMenu());
@@ -186,6 +202,14 @@ function handleKey(key: KeyEvent): void {
       return;
     }
 
+    if (gemMenuOpen) {
+      if (key.type === 'char') {
+        gemMenuOpen = false;
+        render(engine.gemAction(key.char));
+      }
+      return;
+    }
+
     if (key.type === 'char') {
       if (key.char === 'b') {
         // Show spell submenu
@@ -201,6 +225,21 @@ function handleKey(key: KeyEvent): void {
           { key: 'g', text: 'Cancel' },
         ];
         state.messages = ['Choose a spell:'];
+        render(state);
+        return;
+      }
+      if (key.char === 'e') {
+        // Show gem submenu
+        gemMenuOpen = true;
+        const state = engine.getState();
+        state.choices = [
+          { key: 'a', text: 'Ruby — Teleport Away' },
+          { key: 'b', text: 'Sapphire — Banish Monster' },
+          { key: 'c', text: 'Diamond — Reveal Map' },
+          { key: 'd', text: 'Opal — Chiaroscuro Blast' },
+          { key: 'e', text: 'Cancel' },
+        ];
+        state.messages = ['Choose a gem:'];
         render(state);
         return;
       }
@@ -223,12 +262,14 @@ function handleKey(key: KeyEvent): void {
       if (key.char === 'u') render(engine.climbUp());
       if (key.char === 'd') render(engine.climbDown());
       if (key.char === 'p') render(engine.usePot());
+      if (key.char === 'b') render(engine.useBook());
+      if (key.char === 'g') render(engine.useDiamondExploring());
       if (key.char === 'w') render(engine.wait());
       if (key.char === 'm') render(engine.showMap());
       if (key.char === 't') render(engine.showStatus());
       if (key.char === 'i') render(engine.showInventory());
       if (key.char === 'r') render(engine.restoreFromSave());
-      if (key.char === 's') render(engine.showMainMenu());
+      if (key.char === 's') render(engine.saveAndPrompt());
       if (key.char === 'q') exit();
       return;
     }
@@ -242,11 +283,8 @@ function handleSaveListKey(key: KeyEvent): void {
     if (idx >= 0 && idx < saveSlots.length) {
       const chosen = saveSlots[idx];
       if (deleteMode) {
-        engine.deleteCharacter(chosen.id);
-        deleteMode = false;
-        saveListMode = false;
-        saveSlots = [];
-        render(engine.showMainMenu());
+        deleteConfirmTarget = chosen;
+        renderDeleteConfirm(chosen);
         return;
       }
       saveListMode = false;
@@ -258,6 +296,23 @@ function handleSaveListKey(key: KeyEvent): void {
       deleteMode = false;
       render(engine.showMainMenu());
     }
+  }
+}
+
+function handleDeleteConfirmKey(key: KeyEvent): void {
+  if (key.type !== 'char') return;
+  if (key.char === 'y') {
+    engine.deleteCharacter(deleteConfirmTarget!.id);
+    deleteConfirmTarget = null;
+    deleteMode = false;
+    saveListMode = false;
+    saveSlots = [];
+    render(engine.showMainMenu());
+    return;
+  }
+  if (key.char === 'n' || key.char === 'q' || key.char === '\x1b') {
+    deleteConfirmTarget = null;
+    renderSaveList('delete');
   }
 }
 
@@ -280,6 +335,20 @@ function renderSaveList(action: 'continue' | 'delete'): void {
   lines.push('');
   lines.push('\x1b[2m  [Q] Cancel\x1b[0m');
 
+  process.stdout.write(lines.join('\n') + '\n');
+}
+
+function renderDeleteConfirm(target: CharacterSummary): void {
+  const lines = [
+    `\x1b[2J\x1b[H`,
+    `\x1b[31m  DELETE CHARACTER\x1b[0m`,
+    '',
+    `\x1b[32m  Permanently delete "${target.name}" (Level ${target.level}, Dungeon Lv ${target.dungeonLevel})?\x1b[0m`,
+    `\x1b[2m  This cannot be undone.\x1b[0m`,
+    '',
+    '\x1b[31m  [Y]  Yes, delete forever\x1b[0m',
+    '\x1b[32m  [N]  No, cancel\x1b[0m',
+  ];
   process.stdout.write(lines.join('\n') + '\n');
 }
 

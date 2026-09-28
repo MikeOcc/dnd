@@ -117,6 +117,17 @@ describe('Repository — characters', () => {
     const loaded = repo.loadCharacter('c9');
     expect(loaded!.elementalWarnings).toEqual(['White Dragon:fireball', 'Sanguinid:acid']);
   });
+
+  it('backfills gems to zero when loading a save from before gems existed', () => {
+    const char = makeChar('c10');
+    repo.saveCharacter(char);
+    // Simulate a pre-gems save: overwrite the stored inventory blob directly.
+    db.prepare('UPDATE characters SET inventory = ? WHERE id = ?').run('{"potions":5}', 'c10');
+
+    const loaded = repo.loadCharacter('c10');
+    expect(loaded!.inventory.potions).toBe(5);
+    expect(loaded!.inventory.gems).toEqual({ ruby: 0, sapphire: 0, diamond: 0, opal: 0 });
+  });
 });
 
 describe('Repository — dungeon levels', () => {

@@ -10,6 +10,7 @@ const RED = '\x1b[31m';
 const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
 const BG_BLACK = '\x1b[40m';
+const BRIGHT_WHITE = '\x1b[97m';
 
 function g(s: string): string { return GREEN + s + RESET; }
 function bg(s: string): string { return BRIGHT_GREEN + s + RESET; }
@@ -18,8 +19,9 @@ function bold(s: string): string { return BOLD + s + RESET; }
 function red(s: string): string { return RED + s + RESET; }
 function yellow(s: string): string { return YELLOW + s + RESET; }
 function cyan(s: string): string { return CYAN + s + RESET; }
-// Bright green on black background — looks the same on light or dark terminals
-function dg(s: string): string { return BG_BLACK + BRIGHT_GREEN + s + RESET; }
+// Dungeon corridor geometry — white on black background, distinct from the
+// green UI chrome around it — looks the same on light or dark terminals.
+function dg(s: string): string { return BG_BLACK + BRIGHT_WHITE + s + RESET; }
 
 export function renderState(state: GameState): string {
   const lines: string[] = [];
@@ -177,7 +179,13 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save & Menu  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Book  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
+  }
+  if (state.phase === 'combat') {
+    lines.push(dim('  A: Attack  |  B: Cast Spell  |  C: Pray  |  D: Run  |  E: Use Gem'));
+  }
+  if (state.phase === 'save-prompt') {
+    lines.push(dim('  C: Continue Playing  |  X: Exit to Main Menu'));
   }
 
   return lines;

@@ -1,6 +1,6 @@
-import type { Character, Monster, StatusEffect } from './types.js';
+import type { Character, Monster, StatusEffect, GemType } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, BOOK, DEATH, TREASURE } from './config.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS } from './config.js';
 import { addStatusEffect } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
@@ -86,7 +86,13 @@ export interface ChestResult {
   xpGained?: number;
   statChanged?: { stat: string; delta: number };
   triggerMonster?: boolean;
+  gemGained?: GemType;
 }
+
+const GEM_TYPES: GemType[] = ['ruby', 'sapphire', 'diamond', 'opal'];
+const GEM_NAMES: Record<GemType, string> = {
+  ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal',
+};
 
 export function resolveChest(char: Character, rng: RNG): ChestResult {
   const roll = rng.float();
@@ -105,7 +111,7 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     return { messages: [`A pouch of glittering gemstones! Worth ${value} gold.`], goldGained: value };
   }
 
-  if (roll < 0.60) {
+  if (roll < 0.58) {
     const count = rng.int(1, 4);
     char.inventory.potions += count;
     return { messages: [
@@ -114,13 +120,25 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     ]};
   }
 
-  if (roll < 0.70) {
+  if (roll < 0.66) {
+    const type = rng.pick(GEM_TYPES);
+    char.inventory.gems[type]++;
+    return {
+      messages: [
+        `A single flawless ${GEM_NAMES[type]} glints among the debris! Worth ${GEMS.VALUES[type]} gold.`,
+        `(${char.inventory.gems[type]} total)`,
+      ],
+      gemGained: type,
+    };
+  }
+
+  if (roll < 0.76) {
     const xp = rng.int(20, 60) * char.level;
     char.xp += xp;
     return { messages: [`A glowing crystal. You gain ${xp} experience.`], xpGained: xp };
   }
 
-  if (roll < 0.75) {
+  if (roll < 0.80) {
     const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma', 'resistance'] as const;
     const stat = rng.pick([...stats]);
     (char[stat] as number) += 1;
@@ -130,18 +148,18 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     };
   }
 
-  if (roll < 0.80) {
+  if (roll < 0.84) {
     return { messages: ['The chest is empty. Disappointing.'] };
   }
 
-  if (roll < 0.88) {
+  if (roll < 0.90) {
     // Trap inside
     const dmg = rng.int(8, 20);
     char.hp = Math.max(1, char.hp - dmg);
     return { messages: [`TRAP! A blade springs from the chest! You take ${dmg} damage.`] };
   }
 
-  if (roll < 0.92) {
+  if (roll < 0.93) {
     const stat = 'constitution';
     (char[stat] as number) = Math.max(3, (char[stat] as number) - 1);
     return {
@@ -157,117 +175,109 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
   };
 }
 
-// ─── Book ────────────────────────────────────────────────────────────────────
+// ─── Magic Book ──────────────────────────────────────────────────────────────
+//
+// Books are picked up when found (see the 'book' dungeon content / the
+// 'take-book' interaction in game-engine.ts) and read later, on demand, via
+// useBook() — a deliberate inventory action like potions or gems, not a
+// gamble resolved on the spot. Every effect here is beneficial; there's no
+// "harmful" roll the way the old discover-and-resolve version had, since
+// the player is choosing when to read rather than stumbling into it.
 
-export interface BookResult {
+export type BookEffect = 'attribute' | 'healing' | 'invulnerability' | 'map-reveal' | 'experience' | 'cleanse';
+
+const BOOK_EFFECTS: BookEffect[] = ['attribute', 'healing', 'invulnerability', 'map-reveal', 'experience', 'cleanse'];
+
+// Negative afflictions a cleanse removes. 'resistance-improved' is a buff,
+// not an affliction, and is left alone.
+const NEGATIVE_STATUS_TYPES: StatusEffect['type'][] = [
+  'poison', 'bleeding', 'naked', 'mummified', 'paralyzed', 'feared',
+  'intelligence-reduced', 'dexterity-reduced', 'strength-reduced',
+];
+
+export interface ReadBookResult {
   messages: string[];
+  effect: BookEffect;
   statChanged?: { stat: string; delta: number };
+  hpGained?: number;
   xpGained?: number;
-  triggerEvent?: boolean;
+  invulnerableRounds?: number;
+  mapRevealed?: boolean;
+  statusesCleansed?: number;
 }
 
-export function resolveBook(char: Character, rng: RNG): BookResult {
-  const roll = rng.float();
+export function readBook(char: Character, rng: RNG): ReadBookResult {
+  const effect = rng.pick(BOOK_EFFECTS);
 
-  if (roll < BOOK.BENEFICIAL_CHANCE) {
-    const inner = rng.float();
-
-    if (inner < 0.35) {
+  switch (effect) {
+    case 'attribute': {
       const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma', 'resistance'] as const;
       const stat = rng.pick([...stats]);
       (char[stat] as number) += 1;
       return {
-        messages: [
-          'The words burn themselves into your mind.',
-          '',
-          `Your ${stat} increases!`,
-        ],
+        effect,
+        messages: ['The words burn themselves into your mind.', '', `Your ${stat} increases!`],
         statChanged: { stat, delta: 1 },
       };
     }
 
-    if (inner < 0.65) {
-      const xp = rng.int(50, 150) * char.level;
+    case 'healing': {
+      const heal = Math.round(char.maxHp * MAGIC_BOOK.HEAL_FRACTION);
+      const actual = Math.min(heal, char.maxHp - char.hp);
+      char.hp = Math.min(char.hp + heal, char.maxHp);
+      return {
+        effect,
+        messages: ['A warm light radiates from the pages.', '', `You feel restored. (+${actual} HP)`],
+        hpGained: actual,
+      };
+    }
+
+    case 'invulnerability': {
+      char.invulnerableTurns = (char.invulnerableTurns ?? 0) + MAGIC_BOOK.INVULNERABLE_ROUNDS;
+      return {
+        effect,
+        messages: [
+          'A shimmering ward wraps around you as you read the final line.',
+          '',
+          `You are invulnerable to harm for ${MAGIC_BOOK.INVULNERABLE_ROUNDS} rounds of combat.`,
+        ],
+        invulnerableRounds: MAGIC_BOOK.INVULNERABLE_ROUNDS,
+      };
+    }
+
+    case 'map-reveal':
+      // The actual reveal (marking every cell visited) needs the dungeon
+      // grid, which this function doesn't have access to — the caller
+      // (game-engine.ts's useBook) does that when it sees this flag.
+      return {
+        effect,
+        messages: ['The book contains detailed maps of this level.', '', 'The full map unfolds in your mind.'],
+        mapRevealed: true,
+      };
+
+    case 'experience': {
+      const xp = rng.int(MAGIC_BOOK.XP_MIN_PER_LEVEL, MAGIC_BOOK.XP_MAX_PER_LEVEL) * char.level;
       char.xp += xp;
       return {
-        messages: [
-          'The book vibrates and then crumbles to dust.',
-          '',
-          `You gain ${xp} experience from the ancient knowledge.`,
-        ],
+        effect,
+        messages: ['The book vibrates and then crumbles to dust.', '', `You gain ${xp} experience from the ancient knowledge.`],
         xpGained: xp,
       };
     }
 
-    if (inner < 0.80) {
-      const heal = Math.round(char.maxHp * 0.3);
-      char.hp = Math.min(char.hp + heal, char.maxHp);
+    case 'cleanse': {
+      const before = char.statusEffects.length;
+      char.statusEffects = char.statusEffects.filter(e => !NEGATIVE_STATUS_TYPES.includes(e.type));
+      const removed = before - char.statusEffects.length;
       return {
-        messages: [
-          'A warm light radiates from the pages.',
-          '',
-          `You feel restored. (+${heal} HP)`,
-        ],
+        effect,
+        messages: removed > 0
+          ? ['A cleansing light washes over you.', '', 'Your afflictions are lifted.']
+          : ['A cleansing light washes over you.', '', 'You feel no different — you had nothing to cleanse.'],
+        statusesCleansed: removed,
       };
     }
-
-    return {
-      messages: [
-        'The book contains maps of this level.',
-        '',
-        'You study them carefully.',
-      ],
-    };
   }
-
-  if (roll < BOOK.BENEFICIAL_CHANCE + BOOK.NEUTRAL_CHANCE) {
-    return {
-      messages: [
-        'The text shifts and dissolves as you try to read it.',
-        '',
-        'The book crumbles to dust.',
-      ],
-    };
-  }
-
-  // Harmful (remaining ~20%)
-  const inner = rng.float();
-
-  if (inner < 0.40) {
-    const stat = 'intelligence';
-    (char[stat] as number) = Math.max(3, (char[stat] as number) - 1);
-    return {
-      messages: [
-        'The words writhe like worms.',
-        '',
-        'A terrible headache seizes you. Your Intelligence decreases.',
-      ],
-      statChanged: { stat, delta: -1 },
-    };
-  }
-
-  if (inner < 0.70) {
-    const xp = Math.round(char.xp * 0.05);
-    char.xp = Math.max(0, char.xp - xp);
-    return {
-      messages: [
-        'Reading this book was a mistake.',
-        '',
-        `You lose ${xp} experience.`,
-      ],
-      xpGained: -xp,
-    };
-  }
-
-  // Monster event
-  return {
-    messages: [
-      'The final page depicts a terrible creature.',
-      '',
-      'Something steps out of the book.',
-    ],
-    triggerEvent: true,
-  };
 }
 
 // ─── Altar ───────────────────────────────────────────────────────────────────

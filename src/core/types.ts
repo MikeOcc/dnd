@@ -81,8 +81,12 @@ export interface StatusEffect {
   turns: number;
 }
 
+export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal';
+
 export interface Inventory {
   potions: number;
+  books: number;
+  gems: Record<GemType, number>;
 }
 
 export interface Character {
@@ -110,6 +114,7 @@ export interface Character {
   uniqueMonstersDefeated: number;
   asmodeusDefeated: boolean;
   statusEffects: StatusEffect[];
+  invulnerableTurns?: number; // from reading a magic book — blocks the monster's next N combat rounds entirely
   introsSeen: number[];
   rerollsRemaining: number;
   elementalWarnings: string[]; // "{MonsterType}:{fireball|acid|lightning}" already called out this playthrough
@@ -185,6 +190,7 @@ export interface Monster {
   maxHp: number;
   definition: MonsterDefinition;
   prayerPenalty: number;
+  confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
 }
 
 export type GamePhase =
@@ -201,7 +207,8 @@ export type GamePhase =
   | 'victory'
   | 'status'
   | 'map'
-  | 'inventory';
+  | 'inventory'
+  | 'save-prompt';
 
 export interface Choice {
   key: string;

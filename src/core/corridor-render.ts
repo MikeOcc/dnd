@@ -1,5 +1,5 @@
 import type { Frame } from './corridor-geometry.js';
-import type { CorridorStep } from './corridor-scan.js';
+import type { CorridorStep, EdgeType } from './corridor-scan.js';
 
 // ─── ASCII painting ─────────────────────────────────────────────────────────
 //
@@ -116,8 +116,110 @@ export function drawSideEdge(
   }
 }
 
+// ─── Solid wall-surface texture ─────────────────────────────────────────────
+//
+// The diagonals drawn between consecutive frames are perspective edges, not
+// surfaces — on their own they read as a wireframe. Where a side edge is
+// actually solid (wall/secret, never a passage or a door — doors stay
+// exactly as drawSideEdge already renders them, so they remain visually
+// distinct), the quadrilateral between the two frames' matching corners is
+// the real wall surface, and gets filled with a sparse masonry texture
+// instead of staying empty. Density and character weight both fall off with
+// depth, so near walls read coarse and solid while far ones fade to a few
+// light marks — open corridors and passages are never touched, since this
+// is only called when the edge is blocking.
+
+function wallTextureChar(depth: number, hash: number): string {
+  const roll = hash % 10;
+  if (depth <= 1) return roll < 3 ? '#' : roll < 6 ? '=' : roll < 8 ? ':' : '.';
+  if (depth <= 3) return roll < 3 ? '=' : roll < 6 ? '-' : roll < 8 ? ':' : '.';
+  return roll < 5 ? '.' : ':';
+}
+
+function wallPanelDensity(depth: number): number {
+  return Math.max(0.1, 0.55 - depth * 0.09);
+}
+
+/** Fills the wall surface between two consecutive frames on one side, only
+ * where that edge is actually solid. Leaves the frames' own border columns
+ * (already drawn by drawSideEdge) untouched, and never overwrites a
+ * non-blank cell — so the diagonal perspective lines still show through the
+ * texture around them. */
+function fillWallPanel(
+  chars: string[][],
+  near: Frame,
+  far: Frame,
+  side: 'left' | 'right',
+  depth: number,
+  x: number,
+  y: number,
+): void {
+  const nearCol = side === 'left' ? near.left : near.right;
+  const farCol = side === 'left' ? far.left : far.right;
+  const colLo = Math.min(nearCol, farCol) + 1;
+  const colHi = Math.max(nearCol, farCol) - 1;
+  if (colLo > colHi) return;
+
+  const density = wallPanelDensity(depth);
+  const salt = side === 'left' ? 41 : 43;
+
+  for (let c = colLo; c <= colHi; c++) {
+    const t = (c - nearCol) / (farCol - nearCol);
+    const top = Math.round(near.top + (far.top - near.top) * t);
+    const bottom = Math.round(near.bottom + (far.bottom - near.bottom) * t);
+
+    for (let r = top + 1; r < bottom; r++) {
+      if (chars[r]?.[c] !== ' ') continue;
+      const hash = spatialHash(x, y, salt + r * 977 + c * 31);
+      if ((hash % 1000) / 1000 < density) {
+        chars[r][c] = wallTextureChar(depth, hash);
+      }
+    }
+  }
+}
+
+/** Very sparse texture across the floor or ceiling strip between two
+ * consecutive frames, bounded left/right by that row's interpolated wall
+ * position so it never spills into an open side passage. Ceiling is kept
+ * lighter than floor per the "don't clutter the view" requirement. */
+function fillHorizontalPanel(
+  chars: string[][],
+  near: Frame,
+  far: Frame,
+  surface: 'floor' | 'ceiling',
+  x: number,
+  y: number,
+): void {
+  const nearRow = surface === 'floor' ? near.bottom : near.top;
+  const farRow = surface === 'floor' ? far.bottom : far.top;
+  const rowLo = Math.min(nearRow, farRow) + 1;
+  const rowHi = Math.max(nearRow, farRow) - 1;
+  if (rowLo > rowHi) return;
+
+  const density = surface === 'floor' ? 0.1 : 0.05;
+  const salt = surface === 'floor' ? 47 : 53;
+  const ch = surface === 'floor' ? '-' : '.';
+
+  for (let r = rowLo; r <= rowHi; r++) {
+    const t = (r - nearRow) / (farRow - nearRow);
+    const left = Math.round(near.left + (far.left - near.left) * t);
+    const right = Math.round(near.right + (far.right - near.right) * t);
+
+    for (let c = left + 1; c < right; c++) {
+      if (chars[r]?.[c] !== ' ') continue;
+      const hash = spatialHash(x, y, salt + r * 977 + c * 31);
+      if ((hash % 1000) / 1000 < density) {
+        chars[r][c] = ch;
+      }
+    }
+  }
+}
+
 /** Draws a single perspective depth-level: ceiling/floor, both side edges,
- * corners, and the diagonal joins back to the previous (nearer) frame. */
+ * corners, and the diagonal joins back to the previous (nearer) frame. Solid
+ * side walls additionally get a filled masonry texture (see fillWallPanel),
+ * and the floor/ceiling strip gets a light scattering of texture — open
+ * passages and doors are left exactly as drawSideEdge renders them. */
 export function drawFrame(
   chars: string[][],
   frames: Frame[],
@@ -145,13 +247,29 @@ export function drawFrame(
     drawDiagonal(chars, prev.top, prev.right, f.top, f.right, '/');
     drawDiagonal(chars, prev.bottom, prev.left, f.bottom, f.left, '/');
     drawDiagonal(chars, prev.bottom, prev.right, f.bottom, f.right, '\\');
+
+    const x = step?.x ?? 0;
+    const y = step?.y ?? 0;
+    const leftEdge: EdgeType = step?.left ?? 'wall';
+    const rightEdge: EdgeType = step?.right ?? 'wall';
+    if (leftEdge === 'wall' || leftEdge === 'secret') fillWallPanel(chars, prev, f, 'left', i, x, y);
+    if (rightEdge === 'wall' || rightEdge === 'secret') fillWallPanel(chars, prev, f, 'right', i, x, y);
+    fillHorizontalPanel(chars, prev, f, 'floor', x, y);
+    fillHorizontalPanel(chars, prev, f, 'ceiling', x, y);
   }
 }
 
+/** A dead-end wall gets the densest texture in the view — a running-bond
+ * brick course (each row's joints offset from the one above, like real
+ * masonry) so it unmistakably reads as solid rather than just another
+ * distant panel. */
 export function fillWallTexture(chars: string[][], f: Frame): void {
+  const BRICK_WIDTH = 4;
   for (let r = f.top + 1; r < f.bottom; r++) {
+    const rowOffset = ((r - f.top) % 2) * (BRICK_WIDTH / 2);
     for (let c = f.left + 1; c < f.right; c++) {
-      chars[r][c] = (r + c) % 2 === 0 ? '=' : '-';
+      const withinBrick = ((c - f.left + rowOffset) % BRICK_WIDTH + BRICK_WIDTH) % BRICK_WIDTH;
+      chars[r][c] = withinBrick === 0 ? '|' : '=';
     }
   }
 }

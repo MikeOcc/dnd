@@ -7,7 +7,8 @@
      critical danger). */
   --terminal-green: #33ff33;         /* normal text — standard phosphor */
   --terminal-green-bright: #99ff99;  /* player indicator, active controls */
-  --terminal-green-dim: #00aa00;     /* dungeon walls / structural geometry, secondary labels */
+  --terminal-green-dim: #00aa00;     /* secondary labels, panel borders */
+  --terminal-white: #e8e8e8;         /* dungeon walls / corridor geometry */
   --terminal-amber: #ffb000;         /* HP warning, gold/treasure, important temp messages */
   --terminal-red: #ff3333;           /* critical danger */
   --terminal-bg: #000000;
@@ -85,6 +86,8 @@ html, body {
 #gold-display     { color: var(--terminal-amber); }
 #potions-display  { color: var(--terminal-green-dim); }
 #potions-display.has-potions { color: var(--terminal-amber); }
+#gems-display     { color: var(--terminal-green-dim); }
+#gems-display.has-potions { color: var(--terminal-amber); }
 #compass-display  { color: var(--terminal-green-bright); font-weight: bold; margin-left: auto; }
 
 /* Dungeon view, monster portrait, and messages are all the same "panel"
@@ -102,8 +105,8 @@ html, body {
   border: 1px solid var(--terminal-green-dim);
   padding: 8px 12px;
   /* The corridor render is almost entirely walls/ceiling/floor geometry —
-     dim green, per the "structural geometry" rule. */
-  color: var(--terminal-green-dim);
+     rendered in white, distinct from the green UI chrome around it. */
+  color: var(--terminal-white);
   font-size: 13px;
   line-height: 1.15;
   letter-spacing: 0;

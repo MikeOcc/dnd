@@ -9,9 +9,10 @@ export const GAMEPLAY = {
   REGEN_HP_EVERY_N_WAITS: 3,     // +1 HP per N wait actions (resting in place)
   WAIT_ENCOUNTER_GRACE: 3,       // rest ticks before wandering monster risk begins
   WAIT_ENCOUNTER_CHANCE: 0.04,   // chance per tick after grace period
-  POTION_HEAL_MIN: 15,
-  POTION_HEAL_MAX: 25,
+  POTION_HEAL_MIN: 20,
+  POTION_HEAL_MAX: 35,
   POTION_HEAL_CON_DIVISOR: 4,    // +floor(CON / 4) bonus HP per potion
+  POTION_HEAL_MAX_HP_PCT: 0.30,  // +30% of max HP, so potions keep pace with high-level characters
 } as const;
 
 export const DUNGEON = {
@@ -128,9 +129,23 @@ export const COMBAT = {
   PRAYER_LOW_HP_CHANCE_BONUS: 0.25,  // added at 0 HP, scaled by missing-HP fraction
 
   // Heaven won't smite something far beneath you — and may rebuke the attempt.
+  // Wights, Spectres, and Vampires are exempt from this "beneath you" check
+  // (see combat.ts) — like Asmodeus and the undead in general, they're
+  // always worth a prayer, and their own level range caps out well below a
+  // high-level character's, so without the exemption a leveled-up
+  // character could never reach "worthy" against even the strongest Wight
+  // they'd ever meet.
   PRAYER_WEAK_MONSTER_LEVEL_RATIO: 0.5,  // monster.level < char.level * this => unworthy
   PRAYER_BACKFIRE_CHANCE: 0.15,
   PRAYER_BACKFIRE_DAMAGE_MULT: 0.4,
+
+  // Level drain: a small chance on a life-drain hit from a Wight, Spectre,
+  // or Vampire that's rolled high enough (relative to its own natural
+  // range) to be a real threat — mirrors Sanguinid's blood-drain, but
+  // rarer, since these three hinge their whole identity on the "classic
+  // level-draining undead" trope.
+  LEVEL_DRAIN_CHANCE: 0.08,
+  LEVEL_DRAIN_MIN_LEVEL_FRACTION: 0.7,  // monster.level must be >= maxLevel * this
 
   // Run
   RUN_BASE_CHANCE: 0.55,
@@ -190,12 +205,16 @@ export const LEVELING = {
   // XP reward: monsterLevel * XP_PER_MONSTER_LEVEL * levelDiffBonus * tierBonus
   XP_PER_MONSTER_LEVEL: 12,
   // Bonus for a monster above the player's level ramps up rather than
-  // scaling flat with the gap: +20% per level plus +1% per level *squared*,
+  // scaling flat with the gap: +20% per level plus +2% per level *squared*,
   // so a 20-level gap pays out far more than 20x a 1-level gap does, and a
   // 40+ level gap (taking on something built for a much higher character)
-  // is a genuine jackpot rather than a marginal bump.
+  // is a genuine jackpot rather than a marginal bump. The quadratic term
+  // was doubled (from 0.01) after 0.01 still felt thin against high-level
+  // monsters specifically — it's the term that matters most at big gaps,
+  // so this leaves ordinary same-level kills untouched while roughly
+  // doubling payout for a 30+ level gap.
   XP_LEVEL_DIFF_BONUS_LINEAR: 0.2,
-  XP_LEVEL_DIFF_BONUS_QUADRATIC: 0.01,
+  XP_LEVEL_DIFF_BONUS_QUADRATIC: 0.02,
   XP_LEVEL_DIFF_PENALTY: 0.1, // -10% per level monster is below player
   XP_MIN_FRACTION: 0.05,      // always at least 5% of base XP
 
@@ -204,10 +223,12 @@ export const LEVELING = {
   // threat than a kobold of the "same" level. Each tier above 1 adds this
   // fraction to the XP multiplier, so tier-1 trash (Kobold, Goblin, Mold,
   // Skeleton) is unaffected while tier-7/8 threats (dragons, Lich, Beholder)
-  // and tier-9/10 uniques pay out proportionally more.
-  XP_TIER_BONUS_PER_TIER: 0.15,
+  // and tier-9/10 uniques pay out proportionally more. Raised from 0.15 for
+  // the same reason as the quadratic term above — the toughest monster
+  // types specifically needed a bigger payout.
+  XP_TIER_BONUS_PER_TIER: 0.25,
 
-  UNIQUE_MONSTER_XP_MULT: 4.0,
+  UNIQUE_MONSTER_XP_MULT: 6.0,
 } as const;
 
 export const MONSTER_SCALING = {
@@ -232,6 +253,15 @@ export const MONSTER_SCALING = {
   // own per-boss range instead, which starts where this cap ends (60) and
   // climbs to 100 for Asmodeus.
   HARD_LEVEL_CAP: 60,
+
+  // Random-encounter monster TYPE eligibility by dungeon depth (index 0 =
+  // dungeon level 1): a floor on naturalTier, on top of each monster's own
+  // minDungeonLevel. Leveling up a Kobold's stats (via LEVEL_RANGE_BY_
+  // DUNGEON_LEVEL above) still leaves it a Kobold — this keeps low-tier
+  // fodder types from randomly turning up on the deep floors once tougher
+  // types have unlocked, so "low level monster" means the type, not just
+  // the stat block.
+  MIN_NATURAL_TIER_BY_DUNGEON_LEVEL: [1, 1, 1, 3, 4, 4, 5],
 } as const;
 
 export const TREASURE = {
@@ -252,6 +282,33 @@ export const TREASURE = {
   MONSTER_DROP_CHANCE: 0.4,
   MONSTER_DROP_MIN: 1,
   MONSTER_DROP_MAX: 15,
+} as const;
+
+export const GEMS = {
+  // Flavor "worth" shown when a gem is found — there's no shop to sell them
+  // to, so this doesn't feed gold or score, just tells the player how rare
+  // what they're holding is.
+  VALUES: {
+    ruby: 150,
+    sapphire: 200,
+    diamond: 350,
+    opal: 250,
+  },
+
+  // The game has no character-class system yet, so "only magicians and
+  // wizards" is stood in with an INT threshold instead — about the top
+  // quarter of 3d6 rolls clear it. A single knob to retune, or swap for a
+  // real class check later.
+  MAGIC_INT_THRESHOLD: 13,
+
+  // Opal: (charLevel*2 + WIS/2) * randomFactor, same shape as the spells.
+  OPAL_LEVEL_MULT: 2,
+  OPAL_WIS_DIVISOR: 2,
+  OPAL_RAND_MIN: 0.9,
+  OPAL_RAND_MAX: 1.6,
+
+  OPAL_CONFUSE_TURNS: 2,
+  CONFUSION_FAIL_CHANCE: 0.5, // per confused turn, chance the monster's action is wasted
 } as const;
 
 export const DEATH = {
@@ -278,8 +335,13 @@ export const FOUNTAIN = {
   RARE_CHANCE: 0.05,
 } as const;
 
-export const BOOK = {
-  BENEFICIAL_CHANCE: 0.60,
-  NEUTRAL_CHANCE: 0.20,
-  // harmful = remaining 20%
+// Books are found (picked up into inventory, see 'book' dungeon content)
+// and read later, on demand — unlike the old find-and-resolve-immediately
+// design, so every read is a deliberate, always-beneficial choice rather
+// than a gamble.
+export const MAGIC_BOOK = {
+  HEAL_FRACTION: 0.4,           // heals this fraction of max HP
+  INVULNERABLE_ROUNDS: 3,       // blocks that many of the monster's combat rounds entirely
+  XP_MIN_PER_LEVEL: 40,
+  XP_MAX_PER_LEVEL: 100,
 } as const;

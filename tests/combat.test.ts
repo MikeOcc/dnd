@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, calculateXPReward } from '../src/core/combat.js';
+import { GEMS } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -262,6 +263,39 @@ describe('Prayer — tiered targets', () => {
     expect(sawHit).toBe(true);
     expect(sawBackfire).toBe(false);
   });
+
+  it('Wights and Spectres are also always susceptible to Prayer regardless of the level gap', () => {
+    for (const type of ['Wight', 'Spectre'] as const) {
+      const char = makeChar({ level: 40, wisdom: 15, hp: 1000, maxHp: 1000 });
+      const weak = createMonster(type, 1, `${type}-low`);
+
+      let sawHit = false;
+      let sawBackfire = false;
+      for (let trial = 0; trial < 300; trial++) {
+        const m = { ...weak, level: 1, hp: 100000, prayerPenalty: 0 };
+        const r = playerPray({ ...char, statusEffects: [] }, m, new RNG(trial));
+        if (r.playerDamage > 0) sawHit = true;
+        if (r.messages.some(msg => msg.includes('disembodied voice'))) sawBackfire = true;
+      }
+
+      expect(sawHit).toBe(true);
+      expect(sawBackfire).toBe(false);
+    }
+  });
+
+  it('a non-exempt undead (Skeleton) is still blocked when far below the character\'s level', () => {
+    const char = makeChar({ level: 40, wisdom: 15, hp: 1000, maxHp: 1000 });
+    const weakSkeleton = createMonster('Skeleton', 1, 'sk-low');
+
+    let sawHit = false;
+    for (let trial = 0; trial < 200; trial++) {
+      const m = { ...weakSkeleton, level: 1, hp: 100000, prayerPenalty: 0 };
+      const r = playerPray({ ...char, statusEffects: [] }, m, new RNG(trial));
+      if (r.playerDamage > 0) sawHit = true;
+    }
+
+    expect(sawHit).toBe(false);
+  });
 });
 
 describe('Sanguinid', () => {
@@ -436,6 +470,83 @@ describe('Sanguinid', () => {
   });
 });
 
+describe('Wight / Spectre / Vampire — life-drain level drain', () => {
+  it('a high-level Wight has a small chance to drain a level on a life-drain hit', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const def = getDefinition('Wight');
+    const monster = createMonster('Wight', def.maxLevel, 'w-drain1'); // at its own cap, well above the 0.7 fraction threshold
+
+    let lifeDrainHits = 0;
+    let drains = 0;
+    const trials = 6000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 90000));
+      if (result.messages.some(msg => msg.includes('drains your life'))) lifeDrainHits++;
+      if (result.messages.some(msg => msg.includes('DRAINED'))) drains++;
+    }
+
+    expect(lifeDrainHits).toBeGreaterThan(0);
+    expect(drains).toBeGreaterThan(0);
+    // ~8% of life-drain hits; generous bound to avoid a flaky test
+    expect(drains).toBeLessThan(lifeDrainHits * 0.3);
+  });
+
+  it('a low-level Wight (below the threshold fraction of its own max level) never drains a level', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const def = getDefinition('Wight');
+    const monster = createMonster('Wight', def.minLevel, 'w-drain2'); // well below 0.7 * maxLevel
+
+    let drains = 0;
+    const trials = 3000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 120000));
+      if (result.messages.some(msg => msg.includes('DRAINED'))) drains++;
+    }
+
+    expect(drains).toBe(0);
+  });
+
+  it('Spectres and Vampires at high level can also drain a level', () => {
+    for (const type of ['Spectre', 'Vampire'] as const) {
+      const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+      const def = getDefinition(type);
+      const monster = createMonster(type, def.maxLevel, `${type}-drain`);
+
+      let drains = 0;
+      const trials = 8000;
+      for (let i = 0; i < trials; i++) {
+        const c = { ...char, statusEffects: [] };
+        const m = { ...monster, hp: 100000 };
+        const result = playerAttack(c, m, new RNG(i + 150000));
+        if (result.messages.some(msg => msg.includes('DRAINED'))) drains++;
+      }
+
+      expect(drains).toBeGreaterThan(0);
+    }
+  });
+
+  it('a low-level Zombie (life-drain not in its ability set) never drains a level', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, constitution: 10, dexterity: 10, resistance: 10 });
+    const def = getDefinition('Zombie');
+    const monster = createMonster('Zombie', def.maxLevel, 'z-drain');
+
+    let drains = 0;
+    const trials = 1000;
+    for (let i = 0; i < trials; i++) {
+      const c = { ...char, statusEffects: [] };
+      const m = { ...monster, hp: 100000 };
+      const result = playerAttack(c, m, new RNG(i + 200000));
+      if (result.messages.some(msg => msg.includes('DRAINED'))) drains++;
+    }
+
+    expect(drains).toBe(0);
+  });
+});
+
 describe('Elder Oblex', () => {
   it('is a high-tier, non-unique monster restricted to dungeon levels 5-7', () => {
     const def = getDefinition('Elder Oblex');
@@ -467,6 +578,35 @@ describe('Elder Oblex', () => {
     const def = getDefinition('Elder Oblex');
     expect(createMonster('Elder Oblex', 1, 'eo1').level).toBe(def.minLevel);
     expect(createMonster('Elder Oblex', 500, 'eo2').level).toBe(def.maxLevel);
+  });
+});
+
+describe('pickRandomMonsterType — low-tier fodder phased out on deep levels', () => {
+  it('never returns a low-tier type (Kobold, Goblin, Mold, Skeleton, Orc, Slime Mold, Gelatinous Cube, Zombie) on dungeon levels 4-7', () => {
+    const lowTier = new Set(['Kobold', 'Goblin', 'Mold', 'Skeleton', 'Orc', 'Slime Mold', 'Gelatinous Cube', 'Zombie']);
+    const rng = new RNG(24601);
+    for (let depth = 4; depth <= 7; depth++) {
+      for (let i = 0; i < 500; i++) {
+        expect(lowTier.has(pickRandomMonsterType(depth, rng))).toBe(false);
+      }
+    }
+  });
+
+  it('can still return low-tier fodder on dungeon levels 1-3', () => {
+    const lowTier = new Set(['Kobold', 'Goblin', 'Mold', 'Skeleton']);
+    const rng = new RNG(112358);
+    let seen = false;
+    for (let i = 0; i < 500; i++) {
+      if (lowTier.has(pickRandomMonsterType(1, rng))) seen = true;
+    }
+    expect(seen).toBe(true);
+  });
+
+  it('the pool never goes empty at any dungeon depth', () => {
+    const rng = new RNG(99);
+    for (let depth = 1; depth <= 7; depth++) {
+      expect(() => pickRandomMonsterType(depth, rng)).not.toThrow();
+    }
   });
 });
 
@@ -892,5 +1032,100 @@ describe('Running from combat', () => {
       if (result.ran) escaped++;
     }
     expect(escaped).toBeLessThan(30); // Tarrasque is hard to escape
+  });
+});
+
+describe('Opal (gem)', () => {
+  it('damages the monster and applies confusedTurns', () => {
+    const char = makeChar({ level: 8, wisdom: 16 });
+    const monster = createMonster('Goblin', 3, 'op1');
+    monster.hp = 1000;
+    monster.maxHp = 1000;
+
+    const result = playerOpal({ ...char }, monster, new RNG(42));
+    expect(result.playerDamage).toBeGreaterThan(0);
+    expect(monster.hp).toBeLessThan(1000);
+    expect(monster.confusedTurns).toBeGreaterThan(0);
+  });
+
+  it('can defeat a weak monster outright', () => {
+    const char = makeChar({ level: 20, wisdom: 18 });
+    const monster = createMonster('Kobold', 1, 'op2');
+    monster.hp = 1;
+    monster.maxHp = 1;
+
+    const result = playerOpal({ ...char }, monster, new RNG(7));
+    expect(result.monsterDied).toBe(true);
+  });
+
+  it('a confused monster sometimes fails to act on its next turn', () => {
+    const char = makeChar({ level: 5, dexterity: 5, constitution: 5, resistance: 5 });
+    const monster = createMonster('Giant', 10, 'op3');
+    monster.hp = 1000;
+    monster.maxHp = 1000;
+    monster.confusedTurns = 10;
+
+    let noActions = 0;
+    let actions = 0;
+    for (let i = 0; i < 200; i++) {
+      const m = { ...monster, confusedTurns: 1 };
+      const result = playerAttack({ ...char, statusEffects: [] }, m, new RNG(i));
+      if (result.monsterDamage === 0) noActions++;
+      else actions++;
+    }
+    // With CONFUSION_FAIL_CHANCE ~ 0.5, expect a meaningful share of wasted turns,
+    // but not every one (confusion doesn't guarantee a miss).
+    expect(noActions).toBeGreaterThan(0);
+    expect(actions).toBeGreaterThan(0);
+  });
+
+  it('confusedTurns ticks down toward zero as the monster acts', () => {
+    const char = makeChar({ level: 5 });
+    const monster = createMonster('Goblin', 3, 'op4');
+    monster.confusedTurns = GEMS.OPAL_CONFUSE_TURNS;
+
+    playerAttack({ ...char, statusEffects: [] }, monster, new RNG(1));
+    expect(monster.confusedTurns).toBe(GEMS.OPAL_CONFUSE_TURNS - 1);
+  });
+});
+
+describe('Invulnerability (from a magic book)', () => {
+  it('blocks all monster damage while active, and ticks down each combat round', () => {
+    const char = makeChar({ level: 3, statusEffects: [] });
+    char.invulnerableTurns = 2;
+    const monster = createMonster('Tarrasque', 40, 'inv1'); // a monster that would otherwise hit hard
+
+    const r1 = playerAttack(char, { ...monster, hp: 100000 }, new RNG(1));
+    expect(r1.monsterDamage).toBe(0);
+    expect(r1.playerDied).toBe(false);
+    expect(r1.messages.some(m => m.includes('deflects'))).toBe(true);
+    expect(char.invulnerableTurns).toBe(1);
+
+    const r2 = playerAttack(char, { ...monster, hp: 100000 }, new RNG(2));
+    expect(r2.monsterDamage).toBe(0);
+    expect(char.invulnerableTurns).toBe(0);
+  });
+
+  it('a fresh application decrements by exactly one per monster turn', () => {
+    const char = makeChar({ level: 3, statusEffects: [] });
+    char.invulnerableTurns = 3;
+    const monster = createMonster('Goblin', 5, 'inv2');
+
+    playerAttack(char, { ...monster, hp: 100000 }, new RNG(1));
+    expect(char.invulnerableTurns).toBe(2);
+  });
+
+  it('once expired, the monster can damage the character again', () => {
+    const char = makeChar({ level: 3, hp: 100000, maxHp: 100000, statusEffects: [] });
+    char.invulnerableTurns = 0;
+    const monster = createMonster('Tarrasque', 40, 'inv3');
+
+    let anyDamage = false;
+    for (let i = 0; i < 30; i++) {
+      const c = { ...char, invulnerableTurns: 0 };
+      const result = playerAttack(c, { ...monster, hp: 100000 }, new RNG(i));
+      if (result.monsterDamage > 0) anyDamage = true;
+    }
+    expect(anyDamage).toBe(true);
   });
 });

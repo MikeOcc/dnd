@@ -2,26 +2,30 @@ import { RNG } from './random.js';
 import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
-  CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect,
+  CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, calculateXPReward } from './combat.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
-  applyDeath, resolveChest, resolveBook, resolveAltar, resolveFountain,
+  applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
 
 // ─── In-memory session state ─────────────────────────────────────────────────
+
+const GEM_PLURAL: Record<GemType, string> = {
+  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals',
+};
 
 interface LevelCache {
   grid: DungeonCell[][];
@@ -163,12 +167,19 @@ export class GameEngine {
         { key: 'q', text: 'Quit to Main Menu' },
       ];
     }
+    if (this.phase === 'save-prompt') {
+      return [
+        { key: 'c', text: 'Continue Playing' },
+        { key: 'x', text: 'Exit to Main Menu' },
+      ];
+    }
     if (this.phase === 'combat' && this.combat) {
       return [
         { key: 'a', text: 'Attack' },
         { key: 'b', text: 'Cast Spell' },
         { key: 'c', text: 'Pray' },
         { key: 'd', text: 'Run' },
+        { key: 'e', text: 'Use Gem' },
       ];
     }
     if (this.interaction) {
@@ -204,7 +215,8 @@ export class GameEngine {
       `══ CHARACTER STATUS ══════════════════════`,
       `${c.name.padEnd(20)} Level ${c.level}`,
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
-      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}`,
+      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Books: ${c.inventory.books}`,
+      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}`,
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
       `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
@@ -212,6 +224,7 @@ export class GameEngine {
       ``,
       `Deaths: ${c.deathCount}   Steps: ${c.stepsTaken}   Monsters: ${c.monstersDefeated}`,
       ...(c.asmodeusDefeated ? [`*** ASMODEUS DEFEATED ***`] : []),
+      ...(c.invulnerableTurns ? [`Warded: invulnerable for ${c.invulnerableTurns} more combat round${c.invulnerableTurns === 1 ? '' : 's'}`] : []),
       ...(c.statusEffects.length > 0
         ? [``, `Active effects:`, ...c.statusEffects.map(e => `  ${e.type} (${e.turns} turns)`)]
         : []),
@@ -227,16 +240,22 @@ export class GameEngine {
     const rows: { name: string; type: string; qty: string }[] = [
       { name: 'Healing Potion', type: 'Consumable', qty: `x${c.inventory.potions}` },
       { name: 'Gold', type: 'Currency', qty: `${c.gold}` },
+      { name: 'Magic Book', type: 'Consumable — Random Boon', qty: `x${c.inventory.books}` },
+      { name: 'Ruby', type: 'Gem — Teleport Away', qty: `x${c.inventory.gems.ruby}` },
+      { name: 'Sapphire', type: 'Gem — Banish Monster', qty: `x${c.inventory.gems.sapphire}` },
+      { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
+      { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
     ];
     const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
     const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
 
+    const noGems = Object.values(c.inventory.gems).every(n => n === 0);
     this.messages = [
       `══ INVENTORY ═════════════════════════════`,
       `${'ITEM'.padEnd(nameW)}${'TYPE'.padEnd(typeW)}QTY`,
       `${'-'.repeat(nameW - 1)} ${'-'.repeat(typeW - 1)} ---`,
       ...rows.map(r => `${r.name.padEnd(nameW)}${r.type.padEnd(typeW)}${r.qty}`),
-      ...(c.inventory.potions === 0
+      ...(c.inventory.potions === 0 && c.inventory.books === 0 && noGems
         ? [``, `Your pack holds nothing but your coin purse.`]
         : []),
     ];
@@ -341,6 +360,22 @@ export class GameEngine {
     return this.loadCharacter(this.char.id);
   }
 
+  saveAndPrompt(): GameState {
+    if (!this.char) return this.getState();
+    this.repo.saveCharacter(this.char);
+    if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
+    this.phase = 'save-prompt';
+    this.messages = ['Game saved.', '', 'Continue playing, or exit to the main menu?'];
+    return this.getState();
+  }
+
+  dismissSavePrompt(): GameState {
+    if (!this.char) return this.getState();
+    this.phase = 'playing';
+    this.messages = [];
+    return this.getState();
+  }
+
   usePot(): GameState {
     if (!this.char) return this.getState();
     if (this.char.inventory.potions <= 0) {
@@ -353,7 +388,8 @@ export class GameEngine {
     }
     this.char.inventory.potions--;
     const heal = this.rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
-      + Math.floor(this.char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR);
+      + Math.floor(this.char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR)
+      + Math.floor(this.char.maxHp * GAMEPLAY.POTION_HEAL_MAX_HP_PCT);
     const actual = Math.min(heal, this.char.maxHp - this.char.hp);
     this.char.hp += actual;
     this.messages = [
@@ -361,6 +397,25 @@ export class GameEngine {
       `(${this.char.inventory.potions} potions remaining)`,
     ];
     this.repo.saveCharacter(this.char);
+    return this.getState();
+  }
+
+  useBook(): GameState {
+    if (!this.char) return this.getState();
+    if (this.char.inventory.books <= 0) {
+      this.messages = ['You have no magic books to read.'];
+      return this.getState();
+    }
+
+    this.char.inventory.books--;
+    const result = readBook(this.char, this.rng);
+    this.messages = result.messages;
+
+    if (result.mapRevealed) this.revealFullMap();
+    if (result.xpGained) checkLevelUp(this.char, this.rng);
+
+    this.repo.saveCharacter(this.char);
+    if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
     return this.getState();
   }
 
@@ -636,7 +691,7 @@ export class GameEngine {
         this.interaction = {
           type: 'book',
           contentId: content.id,
-          choices: [{ key: 'a', text: 'Read the book' }, { key: 'b', text: 'Leave it alone' }],
+          choices: [{ key: 'a', text: 'Take the book' }, { key: 'b', text: 'Leave it alone' }],
         };
         this.phase = 'interaction';
         this.messages = [
@@ -869,8 +924,123 @@ export class GameEngine {
       case 'b': return this.showSpellMenu();
       case 'c': return this.combatPray();
       case 'd': return this.combatRun();
+      case 'e': return this.showGemMenu();
       default:  return this.getState();
     }
+  }
+
+  /** Diamonds are the one gem that makes sense outside a fight — reveal the
+   * level's map while exploring. */
+  useDiamondExploring(): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+    return this.useGem('diamond');
+  }
+
+  gemAction(key: string): GameState {
+    if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
+    const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal' };
+    const type = types[key];
+    if (!type) {
+      this.phase = 'combat';
+      this.messages = ['You reconsider.'];
+      return this.getState();
+    }
+    return this.useGem(type);
+  }
+
+  private showGemMenu(): GameState {
+    this.messages = ['Choose a gem:'];
+    const state = this.getState();
+    state.choices = [
+      { key: 'a', text: 'Ruby — Teleport Away' },
+      { key: 'b', text: 'Sapphire — Banish Monster' },
+      { key: 'c', text: 'Diamond — Reveal Map' },
+      { key: 'd', text: 'Opal — Chiaroscuro Blast' },
+      { key: 'e', text: 'Cancel' },
+    ];
+    state.phase = 'combat';
+    return state;
+  }
+
+  private useGem(type: GemType): GameState {
+    if (!this.char) return this.getState();
+
+    if (this.char.inventory.gems[type] <= 0) {
+      this.messages = [`You have no ${GEM_PLURAL[type]}.`];
+      return this.getState();
+    }
+    if (this.char.intelligence < GEMS.MAGIC_INT_THRESHOLD) {
+      this.messages = [
+        `The ${type} sits inert in your palm.`,
+        `You lack the arcane aptitude to attune to it. (Requires INT ${GEMS.MAGIC_INT_THRESHOLD}+)`,
+      ];
+      return this.getState();
+    }
+
+    switch (type) {
+      case 'ruby':     return this.useRuby();
+      case 'sapphire': return this.useSapphire();
+      case 'diamond':  return this.useDiamond();
+      case 'opal':     return this.useOpal();
+    }
+  }
+
+  private useRuby(): GameState {
+    this.char!.inventory.gems.ruby--;
+    this.messages = ['The ruby flares crimson — the corridor dissolves around you!'];
+    this.teleportPlayer();
+    this.endCombat(false);
+    this.messages.push('You find yourself somewhere else in the dungeon.');
+    this.repo.saveCharacter(this.char!);
+    this.repo.saveDungeonState(this.char!.id, this.dungeonState!);
+    return this.getState();
+  }
+
+  private useSapphire(): GameState {
+    this.char!.inventory.gems.sapphire--;
+    const monster = this.combat!.monster;
+    this.messages = [
+      `The sapphire pulses with cold blue light — the ${monster.type} vanishes without a trace!`,
+      'You are free to move on.',
+    ];
+    this.endCombat(false);
+    this.repo.saveCharacter(this.char!);
+    return this.getState();
+  }
+
+  /** Marks every cell of the current level visited. Returns false (and does
+   * nothing) if there's no character/level to reveal for. */
+  private revealFullMap(): boolean {
+    if (!this.char || !this.dungeonState) return false;
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return false;
+
+    for (const row of lvl.grid) {
+      for (const cell of row) {
+        this.dungeonState.visitedCells.add(`${cell.x},${cell.y}`);
+      }
+    }
+    return true;
+  }
+
+  private useDiamond(): GameState {
+    if (!this.char || !this.dungeonState) return this.getState();
+
+    this.char.inventory.gems.diamond--;
+    this.revealFullMap();
+    this.messages = [
+      'The diamond blazes with inner light — the entire level unfolds in your mind!',
+      'The full map has been revealed.',
+    ];
+    this.repo.saveCharacter(this.char);
+    this.repo.saveDungeonState(this.char.id, this.dungeonState);
+    return this.getState();
+  }
+
+  private useOpal(): GameState {
+    this.char!.inventory.gems.opal--;
+    const result = playerOpal(this.char!, this.combat!.monster, this.rng);
+    return this.processCombatResult(result);
   }
 
   spellAction(spell: string): GameState {
@@ -1184,20 +1354,11 @@ export class GameEngine {
     }
 
     this.dungeonState.readBooks.add(id);
-    const result = resolveBook(this.char, this.rng);
-    this.messages = result.messages;
-
-    if (result.triggerEvent) {
-      this.closeInteraction();
-      this.repo.saveCharacter(this.char);
-      this.repo.saveDungeonState(this.char.id, this.dungeonState);
-      return this.startRandomEncounter();
-    }
-
-    if (result.xpGained) {
-      checkLevelUp(this.char, this.rng);
-    }
-
+    this.char.inventory.books++;
+    this.messages = [
+      'You tuck the book into your pack.',
+      `(${this.char.inventory.books} total)`,
+    ];
     return this.closeInteractionWithSave();
   }
 

@@ -301,7 +301,7 @@ describe('renderCorridorView', () => {
     carve(grid, 5, 5, 10, 'E');
     grid[5][7].walls.N = false; // an open side, for a bit more variety
     const view = renderCorridorView(grid, 5, 5, 'E');
-    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=', '[', ']', '~']);
+    const allowed = new Set([' ', '+', '-', '|', '/', '\\', '^', '*', '=', '[', ']', '~', '#', ':', '.']);
     for (const row of view) {
       for (const ch of row) {
         expect(allowed.has(ch)).toBe(true);

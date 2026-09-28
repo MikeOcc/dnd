@@ -110,6 +110,11 @@ export class Repository {
   }
 
   private rowToCharacter(row: Record<string, unknown>): Character {
+    const inventory = JSON.parse(row['inventory'] as string || '{"potions":0}') as Character['inventory'];
+    // Older saves predate gems/books — backfill so existing characters don't crash.
+    if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0 };
+    if (!inventory.books) inventory.books = 0;
+
     return {
       id:                     row['id'] as string,
       name:                   row['name'] as string,
@@ -137,7 +142,7 @@ export class Repository {
       statusEffects:          JSON.parse(row['status_effects'] as string || '[]'),
       introsSeen:             JSON.parse(row['intros_seen'] as string || '[]'),
       rerollsRemaining:       Math.max(0, CHARACTER.MAX_REROLLS - (row['reroll_used'] as number ?? 0)),
-      inventory:              JSON.parse(row['inventory'] as string || '{"potions":0}'),
+      inventory,
       elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,

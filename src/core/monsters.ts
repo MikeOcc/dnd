@@ -379,8 +379,10 @@ export function randomMonsterLevel(
 }
 
 export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterType {
+  const tiers = MONSTER_SCALING.MIN_NATURAL_TIER_BY_DUNGEON_LEVEL;
+  const minTier = tiers[Math.max(0, Math.min(tiers.length - 1, dungeonDepth - 1))];
   const pool = (Object.values(DEFINITIONS) as MonsterDefinition[]).filter(
-    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth,
+    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth && d.naturalTier >= minTier,
   );
   return rng.pick(pool).type;
 }

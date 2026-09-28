@@ -7,7 +7,17 @@
 let currentState = { phase: 'title', messages: [] };
 let characterId = null;
 let spellMenuOpen = false;
+let gemMenuOpen = false;
 let awaitingAnyKey = false;   // for title / intro / death / victory
+
+// The continue/delete character list and the delete-confirm screen are both
+// rendered entirely client-side (no server round trip), so — unlike every
+// other screen — there's no `state.choices` from the server for the keydown
+// handler to match hotkeys against. These track what's currently showing so
+// A/B/C... and Y/N work from the keyboard, not just by clicking.
+let saveListChars = null;   // character summaries currently listed, or null
+let saveListAction = null;  // 'continue' | 'delete', or null
+let deletePendingChar = null; // character awaiting Y/N delete confirmation, or null
 
 // ─── Resume across page refresh ────────────────────────────────────────────
 // The server already persists character + dungeon state to disk on nearly
@@ -16,7 +26,7 @@ let awaitingAnyKey = false;   // for title / intro / death / victory
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +67,10 @@ function applyState(state) {
   if (!state) return;
   currentState = state;
   spellMenuOpen = false;
+  gemMenuOpen = false;
+  saveListChars = null;
+  saveListAction = null;
+  deletePendingChar = null;
 
   const phase = state.phase;
 
@@ -73,7 +87,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view);
@@ -142,6 +156,12 @@ function updateStatusBar(char) {
   const potEl = document.getElementById('potions-display');
   potEl.textContent = `Pot: ${potions}`;
   potEl.className = potions > 0 ? 'has-potions' : '';
+
+  const gems = char.inventory?.gems ?? { ruby: 0, sapphire: 0, diamond: 0, opal: 0 };
+  const gemEl = document.getElementById('gems-display');
+  gemEl.textContent = `Gems: R${gems.ruby} S${gems.sapphire} D${gems.diamond} O${gems.opal}`;
+  const hasGems = gems.ruby || gems.sapphire || gems.diamond || gems.opal;
+  gemEl.className = hasGems ? 'has-potions' : '';
 
   document.getElementById('compass-display').textContent = COMPASS[char.facing] ?? '';
 }
@@ -233,6 +253,10 @@ async function showSaveList(action) {
     return;
   }
 
+  deletePendingChar = null;
+  saveListChars = chars;
+  saveListAction = action;
+
   const area = document.getElementById('choices-area');
   area.innerHTML = '';
 
@@ -247,19 +271,59 @@ async function showSaveList(action) {
   chars.forEach((char, i) => {
     const letter = String.fromCharCode(65 + i);
     const btn = makeChoiceBtn(letter, char.name + (char.asmodeusDefeated ? ' ★' : ''));
-    btn.onclick = () => {
-      if (action === 'continue') {
-        apiAction('load', { characterId: char.id });
-      } else {
-        deleteCharacter(char.id).then(() => apiAction('main-menu'));
-      }
-    };
+    btn.onclick = () => selectSaveListChar(i);
     area.appendChild(btn);
   });
 
   const cancelBtn = makeChoiceBtn('Q', 'Cancel');
-  cancelBtn.onclick = () => apiAction('main-menu');
+  cancelBtn.onclick = () => cancelSaveList();
   area.appendChild(cancelBtn);
+}
+
+function selectSaveListChar(index) {
+  const char = saveListChars && saveListChars[index];
+  if (!char) return;
+  if (saveListAction === 'continue') {
+    apiAction('load', { characterId: char.id });
+  } else {
+    confirmDelete(char);
+  }
+}
+
+function cancelSaveList() {
+  saveListChars = null;
+  saveListAction = null;
+  apiAction('main-menu');
+}
+
+function confirmDelete(char) {
+  deletePendingChar = char;
+
+  const area = document.getElementById('choices-area');
+  area.innerHTML = '';
+
+  const msgEl = document.getElementById('messages');
+  msgEl.textContent = `DELETE CHARACTER\n\nPermanently delete "${char.name}" (Lv ${char.level}, Dungeon Lv ${char.dungeonLevel})?\nThis cannot be undone.`;
+
+  const yesBtn = makeChoiceBtn('Y', 'Yes, delete forever');
+  yesBtn.onclick = () => confirmDeleteYes();
+  area.appendChild(yesBtn);
+
+  const noBtn = makeChoiceBtn('N', 'No, cancel');
+  noBtn.onclick = () => confirmDeleteNo();
+  area.appendChild(noBtn);
+}
+
+function confirmDeleteYes() {
+  if (!deletePendingChar) return;
+  const char = deletePendingChar;
+  deletePendingChar = null;
+  deleteCharacter(char.id).then(() => apiAction('main-menu'));
+}
+
+function confirmDeleteNo() {
+  deletePendingChar = null;
+  showSaveList('delete');
 }
 
 function updateHelpLine(phase) {
@@ -269,7 +333,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save & Menu  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Book  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'M or Esc: Close Map'; break;
     case 'status':
@@ -277,7 +341,7 @@ function updateHelpLine(phase) {
     case 'inventory':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
-      hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run'; break;
+      hint.textContent = 'A: Attack  B: Spell  C: Pray  D: Run  E: Gem'; break;
     case 'interaction':
       hint.textContent = 'Choose an option above'; break;
     case 'name-entry':
@@ -286,6 +350,8 @@ function updateHelpLine(phase) {
       hint.textContent = 'A: Accept  B: Reroll'; break;
     case 'death':
       hint.textContent = 'C: Continue  Q: Quit to Main Menu'; break;
+    case 'save-prompt':
+      hint.textContent = 'C: Continue Playing  X: Exit to Main Menu'; break;
     case 'victory':
       hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
     default:
@@ -315,10 +381,21 @@ function handleChoiceKey(key, phase) {
     return;
   }
 
+  if (phase === 'save-prompt') {
+    if (key === 'c') apiAction('dismiss-save-prompt');
+    if (key === 'x') apiAction('main-menu');
+    return;
+  }
+
   if (phase === 'combat') {
     if (spellMenuOpen) {
       spellMenuOpen = false;
       apiAction('spell', { choice: key });
+      return;
+    }
+    if (gemMenuOpen) {
+      gemMenuOpen = false;
+      apiAction('gem', { choice: key });
       return;
     }
     if (key === 'b') {
@@ -344,6 +421,29 @@ function handleChoiceKey(key, phase) {
         area.appendChild(btn);
       }
       document.getElementById('messages').textContent = 'Choose a spell:';
+      return;
+    }
+    if (key === 'e') {
+      // Show gem submenu
+      gemMenuOpen = true;
+      const area = document.getElementById('choices-area');
+      area.innerHTML = '';
+      const gems = [
+        { key: 'a', text: 'Ruby — Teleport Away' },
+        { key: 'b', text: 'Sapphire — Banish Monster' },
+        { key: 'c', text: 'Diamond — Reveal Map' },
+        { key: 'd', text: 'Opal — Chiaroscuro Blast' },
+        { key: 'e', text: 'Cancel' },
+      ];
+      for (const gem of gems) {
+        const btn = makeChoiceBtn(gem.key.toUpperCase(), gem.text);
+        btn.onclick = () => {
+          gemMenuOpen = false;
+          apiAction('gem', { choice: gem.key });
+        };
+        area.appendChild(btn);
+      }
+      document.getElementById('messages').textContent = 'Choose a gem:';
       return;
     }
     apiAction('combat', { choice: key });
@@ -388,6 +488,17 @@ document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
 
   if (phase === 'main-menu') {
+    if (deletePendingChar) {
+      if (key === 'y') confirmDeleteYes();
+      if (key === 'n' || key === 'q' || e.key === 'Escape') confirmDeleteNo();
+      return;
+    }
+    if (saveListChars) {
+      if (key === 'q' || e.key === 'Escape') { cancelSaveList(); return; }
+      const idx = key.length === 1 ? key.charCodeAt(0) - 'a'.charCodeAt(0) : -1;
+      if (idx >= 0 && idx < saveListChars.length) selectSaveListChar(idx);
+      return;
+    }
     if (key === 'n') apiAction('new-character-start');
     if (key === 'c') showSaveList('continue');
     if (key === 'd') showSaveList('delete');
@@ -408,13 +519,21 @@ document.addEventListener('keydown', (e) => {
     if (key === 'u') apiAction('climb-up');
     if (key === 'd') apiAction('climb-down');
     if (key === 'p') apiAction('use-potion');
+    if (key === 'b') apiAction('use-book');
+    if (key === 'g') apiAction('use-diamond');
     if (key === 'w') apiAction('wait');
     if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
     if (key === 'i') apiAction('show-inventory');
     if (key === 'r') apiAction('restore');
-    if (key === 's') apiAction('main-menu');
+    if (key === 's') apiAction('save');
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
+    return;
+  }
+
+  if (phase === 'save-prompt') {
+    if (key === 'c') apiAction('dismiss-save-prompt');
+    if (key === 'x') apiAction('main-menu');
     return;
   }
 
@@ -447,11 +566,25 @@ document.addEventListener('keydown', (e) => {
       }
       return;
     }
+    if (gemMenuOpen) {
+      if (['a','b','c','d','e'].includes(key)) {
+        gemMenuOpen = false;
+        apiAction('gem', { choice: key });
+      }
+      return;
+    }
     if (key === 'b') {
       // Trigger spell submenu via button click
       const spellBtn = [...document.querySelectorAll('.choice-btn')]
         .find(b => b.querySelector('.key')?.textContent === '[B]');
       if (spellBtn) spellBtn.click();
+      return;
+    }
+    if (key === 'e') {
+      // Trigger gem submenu via button click
+      const gemBtn = [...document.querySelectorAll('.choice-btn')]
+        .find(b => b.querySelector('.key')?.textContent === '[E]');
+      if (gemBtn) gemBtn.click();
       return;
     }
     if (['a','c','d'].includes(key)) apiAction('combat', { choice: key });
@@ -477,10 +610,12 @@ document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAc
 document.getElementById('btn-wait')      ?.addEventListener('click', () => apiAction('wait'));
 document.getElementById('btn-map')       ?.addEventListener('click', () => apiAction('show-map'));
 document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAction('use-potion'));
+document.getElementById('btn-book')      ?.addEventListener('click', () => apiAction('use-book'));
+document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
-document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('main-menu'));
+document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('save'));
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 

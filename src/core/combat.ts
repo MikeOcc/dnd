@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING } from './config.js';
+import { COMBAT, LEVELING, GEMS } from './config.js';
 import type { Character, Monster, StatusEffect } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -249,6 +249,31 @@ export function playerFrost(char: Character, monster: Monster, rng: RNG): Combat
   };
 }
 
+// ─── Opal (gem) ──────────────────────────────────────────────────────────────
+
+export function playerOpal(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+
+  const base = char.level * GEMS.OPAL_LEVEL_MULT + Math.floor(eff.wisdom / GEMS.OPAL_WIS_DIVISOR);
+  const rand = GEMS.OPAL_RAND_MIN + rng.float() * (GEMS.OPAL_RAND_MAX - GEMS.OPAL_RAND_MIN);
+  const damage = Math.max(1, Math.round(base * rand));
+
+  const messages: string[] = ['The opal erupts in a blinding chiaroscuro of light and shadow!'];
+  monster.hp -= damage;
+  messages.push(`The ${monster.type} takes ${damage} damage and reels in confusion.`);
+  monster.confusedTurns = (monster.confusedTurns ?? 0) + GEMS.OPAL_CONFUSE_TURNS;
+
+  const monsterDied = monster.hp <= 0;
+  if (monsterDied) messages.push(`The ${monster.type} collapses!`);
+
+  const res = monsterAction(char, monster, rng, messages);
+  return {
+    ...res,
+    playerDamage: damage,
+    monsterDied,
+  };
+}
+
 // ─── Poison Spray ────────────────────────────────────────────────────────────
 
 export function playerPoison(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
@@ -336,9 +361,13 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   const hpMissingFrac = 1 - char.hp / char.maxHp;
   baseChance += hpMissingFrac * COMBAT.PRAYER_LOW_HP_CHANCE_BONUS;
 
-  // Heaven won't smite something far beneath you — except Vampires, which
-  // are always susceptible to Prayer regardless of the level gap.
-  const unworthy = monster.type !== 'Vampire'
+  // Heaven won't smite something far beneath you — except Wights, Spectres,
+  // and Vampires, which are always susceptible to Prayer regardless of the
+  // level gap (their own level range caps out well below a high-level
+  // character's, so without this a leveled-up character could never reach
+  // "worthy" against even the strongest one of these they'd ever meet).
+  const alwaysWorthy = monster.type === 'Wight' || monster.type === 'Spectre' || monster.type === 'Vampire';
+  const unworthy = !alwaysWorthy
     && monster.level < char.level * COMBAT.PRAYER_WEAK_MONSTER_LEVEL_RATIO;
 
   const chance = unworthy ? 0 : Math.max(0, baseChance - penalty);
@@ -469,6 +498,20 @@ function monsterAction(
 ): { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number } {
   if (monster.hp <= 0) {
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: true };
+  }
+
+  if ((monster.confusedTurns ?? 0) > 0) {
+    monster.confusedTurns!--;
+    if (rng.float() < GEMS.CONFUSION_FAIL_CHANCE) {
+      messages.push(`The ${monster.type} reels in confusion and fails to act!`);
+      return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
+    }
+  }
+
+  if ((char.invulnerableTurns ?? 0) > 0) {
+    char.invulnerableTurns!--;
+    messages.push(`Your protective ward deflects the ${monster.type}'s attack harmlessly.`);
+    return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
   }
 
   const naked = char.statusEffects.some(e => e.type === 'naked');
@@ -621,6 +664,34 @@ function monsterAction(
     messages.push(monsterAttackText(monster.type, dmg, ability));
     addStatusEffect(char, { type: 'bleeding', value: COMBAT.SANGUINID_BLEED_DAMAGE, turns: COMBAT.SANGUINID_BLEED_TURNS });
     messages.push('The wound is deep. You are bleeding!');
+    const playerDied = char.hp <= 0;
+    return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
+  }
+
+  // Handle life-drain from a Wight, Spectre, or Vampire that's rolled high
+  // enough (relative to its own natural range) to be a real threat — a
+  // small chance of an actual level drain, mirroring Sanguinid's
+  // blood-drain below. Lesser undead (Skeletons, Zombies) and other
+  // life-drain-flavored attacks just deal damage, via the fallback at the
+  // bottom of this function.
+  if (
+    ability === 'life-drain' &&
+    (monster.type === 'Wight' || monster.type === 'Spectre' || monster.type === 'Vampire') &&
+    monster.level >= monster.definition.maxLevel * COMBAT.LEVEL_DRAIN_MIN_LEVEL_FRACTION
+  ) {
+    const dmg = calculateMonsterDamage(monster, char, rng, naked, ability);
+    char.hp = Math.max(0, char.hp - dmg);
+    messages.push(monsterAttackText(monster.type, dmg, ability));
+
+    if (char.hp > 0 && rng.float() < COMBAT.LEVEL_DRAIN_CHANCE) {
+      if (char.level > 1) {
+        const { newLevel } = applyLevelDrain(char);
+        messages.push(`A deathly chill saps your vitality! YOU HAVE BEEN DRAINED. You are now Level ${newLevel}.`);
+      } else {
+        messages.push(`The ${monster.type} tries to drain your essence, but you have nothing left to give.`);
+      }
+    }
+
     const playerDied = char.hp <= 0;
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
   }

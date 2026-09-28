@@ -3,9 +3,9 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
-  resolveFountain, resolveChest, applyDeath,
+  resolveFountain, resolveChest, applyDeath, readBook,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK } from '../src/core/config.js';
 
 function makeChar() {
   const rng = new RNG(1);
@@ -172,6 +172,27 @@ describe('Chest loot', () => {
     expect(sawGems).toBe(true);
   });
 
+  it('can grant a gem item, distinct from the gold-value gemstone pouch', () => {
+    const rng = new RNG(31415);
+    let sawGemItem = false;
+    const seenTypes = new Set<string>();
+
+    for (let i = 0; i < 5000; i++) {
+      const char = makeChar();
+      const before = { ...char.inventory.gems };
+      const result = resolveChest(char, rng);
+      if (result.gemGained) {
+        sawGemItem = true;
+        seenTypes.add(result.gemGained);
+        expect(char.inventory.gems[result.gemGained]).toBe(before[result.gemGained] + 1);
+      }
+    }
+
+    expect(sawGemItem).toBe(true);
+    // All four gem types should show up over enough trials.
+    expect(seenTypes).toEqual(new Set(['ruby', 'sapphire', 'diamond', 'opal']));
+  });
+
   it('gold and gemstone value scale up with dungeon level', () => {
     const rng1 = new RNG(555);
     const rng2 = new RNG(555);
@@ -276,5 +297,118 @@ describe('Death mechanics', () => {
 
     const result = applyDeath(char, 0, 0);
     expect(result.messages.some(m => m.includes('DIED') || m.includes('died'))).toBe(true);
+  });
+});
+
+describe('Magic books', () => {
+  it('every effect shows up over enough reads', () => {
+    const rng = new RNG(2024);
+    const effects = new Set<string>();
+    for (let i = 0; i < 500; i++) {
+      const char = makeChar();
+      const result = readBook(char, rng);
+      effects.add(result.effect);
+    }
+    expect(effects).toEqual(new Set(['attribute', 'healing', 'invulnerability', 'map-reveal', 'experience', 'cleanse']));
+  });
+
+  it('attribute effect raises exactly one stat by 1', () => {
+    const rng = new RNG(1);
+    let found = false;
+    for (let i = 0; i < 100; i++) {
+      const char = makeChar();
+      const before = { ...char };
+      const result = readBook(char, rng);
+      if (result.effect === 'attribute') {
+        found = true;
+        expect(result.statChanged).toBeDefined();
+        const stat = result.statChanged!.stat as keyof typeof char;
+        expect(char[stat]).toBe((before[stat] as number) + 1);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('healing restores HP but never past max', () => {
+    const rng = new RNG(3);
+    let found = false;
+    for (let i = 0; i < 200; i++) {
+      const char = makeChar();
+      char.hp = Math.floor(char.maxHp * 0.3);
+      const result = readBook(char, rng);
+      if (result.effect === 'healing') {
+        found = true;
+        expect(char.hp).toBeGreaterThan(Math.floor(char.maxHp * 0.3));
+        expect(char.hp).toBeLessThanOrEqual(char.maxHp);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('invulnerability sets invulnerableTurns to the configured duration', () => {
+    const rng = new RNG(5);
+    let found = false;
+    for (let i = 0; i < 100; i++) {
+      const char = makeChar();
+      const result = readBook(char, rng);
+      if (result.effect === 'invulnerability') {
+        found = true;
+        expect(char.invulnerableTurns).toBe(MAGIC_BOOK.INVULNERABLE_ROUNDS);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('map-reveal sets the flag but does not touch dungeon state directly (caller handles the reveal)', () => {
+    const rng = new RNG(7);
+    let found = false;
+    for (let i = 0; i < 100; i++) {
+      const char = makeChar();
+      const result = readBook(char, rng);
+      if (result.effect === 'map-reveal') {
+        found = true;
+        expect(result.mapRevealed).toBe(true);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('experience effect grants XP scaled by character level', () => {
+    const rng = new RNG(11);
+    let found = false;
+    for (let i = 0; i < 100; i++) {
+      const char = makeChar();
+      char.level = 10;
+      const before = char.xp;
+      const result = readBook(char, rng);
+      if (result.effect === 'experience') {
+        found = true;
+        expect(char.xp).toBeGreaterThan(before);
+        expect(result.xpGained).toBeGreaterThan(0);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('cleanse removes negative status effects but keeps resistance-improved', () => {
+    const rng = new RNG(13);
+    let found = false;
+    for (let i = 0; i < 200; i++) {
+      const char = makeChar();
+      char.statusEffects = [
+        { type: 'poison', value: 3, turns: 5 },
+        { type: 'paralyzed', value: 0, turns: 2 },
+        { type: 'resistance-improved', value: 2, turns: 5 },
+      ];
+      const result = readBook(char, rng);
+      if (result.effect === 'cleanse') {
+        found = true;
+        expect(char.statusEffects.some(e => e.type === 'poison')).toBe(false);
+        expect(char.statusEffects.some(e => e.type === 'paralyzed')).toBe(false);
+        expect(char.statusEffects.some(e => e.type === 'resistance-improved')).toBe(true);
+        expect(result.statusesCleansed).toBe(2);
+      }
+    }
+    expect(found).toBe(true);
   });
 });

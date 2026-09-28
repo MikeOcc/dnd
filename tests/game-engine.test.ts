@@ -411,4 +411,353 @@ describe('GameEngine — inventory screen', () => {
     const afterDismiss = engine.dismissInventory();
     expect(afterDismiss.phase).toBe('playing');
   });
+
+  it('lists all four gem types with their quantities', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.gems = { ruby: 2, sapphire: 0, diamond: 1, opal: 0 };
+
+    const text = engine.showInventory().messages.join('\n');
+    expect(text).toContain('Ruby');
+    expect(text).toContain('x2');
+    expect(text).toContain('Sapphire');
+    expect(text).toContain('Diamond');
+    expect(text).toContain('x1');
+    expect(text).toContain('Opal');
+  });
+});
+
+describe('GameEngine — gems', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  /** Grants gems, sets INT high enough to use them, and (optionally) starts
+   * combat against the given monster type. */
+  function setupGemUser(engine: GameEngine, monsterType?: Parameters<typeof createMonster>[0]) {
+    const e = engine as any;
+    e.char.intelligence = 18;
+    e.char.inventory.gems = { ruby: 1, sapphire: 1, diamond: 1, opal: 1 };
+    if (monsterType) {
+      e.phase = 'combat';
+      e.combat = {
+        monster: createMonster(monsterType, 3, 'gem-test-monster'),
+        round: 1,
+        nakedActive: false,
+        preCombatX: e.char.x,
+        preCombatY: e.char.y,
+      };
+    }
+    return e;
+  }
+
+  it('combat menu offers a Use Gem option', () => {
+    const engine = makeReadyEngine(db);
+    setupGemUser(engine, 'Kobold');
+    const state = engine.getState();
+    expect(state.choices).toContainEqual({ key: 'e', text: 'Use Gem' });
+  });
+
+  it('refuses to use a gem the character does not have', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    e.char.inventory.gems.ruby = 0;
+
+    const state = engine.gemAction('a');
+    expect(state.messages.join(' ')).toContain('no rubies');
+    expect(e.char.inventory.gems.ruby).toBe(0);
+  });
+
+  it('refuses to use a gem below the arcane-aptitude INT threshold', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    e.char.intelligence = 3;
+
+    const before = e.char.inventory.gems.ruby;
+    const state = engine.gemAction('a');
+    expect(state.messages.join(' ')).toContain('arcane aptitude');
+    expect(e.char.inventory.gems.ruby).toBe(before);
+  });
+
+  it('cancelling the gem menu returns to combat without consuming anything', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+
+    const state = engine.gemAction('e');
+    expect(state.phase).toBe('combat');
+    expect(e.char.inventory.gems).toEqual({ ruby: 1, sapphire: 1, diamond: 1, opal: 1 });
+  });
+
+  it('Ruby consumes itself, teleports the character, and ends combat', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    // Mark several cells visited so teleportPlayer() has somewhere to send us.
+    for (let x = 0; x < 5; x++) {
+      for (let y = 0; y < 5; y++) e.dungeonState.visitedCells.add(`${x},${y}`);
+    }
+
+    const state = engine.gemAction('a');
+    expect(e.char.inventory.gems.ruby).toBe(0);
+    expect(state.phase).toBe('playing');
+    expect(state.combat).toBeUndefined();
+  });
+
+  it('Sapphire consumes itself and banishes the monster, ending combat without XP', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    const xpBefore = e.char.xp;
+
+    const state = engine.gemAction('b');
+    expect(e.char.inventory.gems.sapphire).toBe(0);
+    expect(state.phase).toBe('playing');
+    expect(state.combat).toBeUndefined();
+    expect(e.char.xp).toBe(xpBefore);
+  });
+
+  it('gemAction is a no-op outside combat', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine); // no monster — phase is not 'combat'
+    const phaseBefore = e.phase;
+
+    const before = { ...e.char.inventory.gems };
+    const state = engine.gemAction('b');
+    expect(e.char.inventory.gems).toEqual(before);
+    expect(state.phase).toBe(phaseBefore);
+  });
+
+  it('Diamond consumes itself and reveals every cell of the current level', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const totalCells = lvl.grid.length * lvl.grid[0].length;
+
+    const state = engine.gemAction('c');
+    expect(e.char.inventory.gems.diamond).toBe(0);
+    expect(e.dungeonState.visitedCells.size).toBe(totalCells);
+    expect(state.messages.join(' ')).toContain('full map');
+  });
+
+  it('Opal consumes itself, damages the monster, and applies confusedTurns', () => {
+    const engine = makeReadyEngine(db);
+    const e = setupGemUser(engine, 'Kobold');
+    const hpBefore = e.combat.monster.hp;
+
+    const state = engine.gemAction('d');
+    expect(e.char.inventory.gems.opal).toBe(0);
+    expect(state.messages.join(' ')).toContain('chiaroscuro');
+    // Monster either took damage and is still tracked in combat, or was defeated outright.
+    if (state.combat) {
+      expect(state.combat.monster.hp).toBeLessThan(hpBefore);
+    } else {
+      expect(state.phase).not.toBe('combat');
+    }
+  });
+});
+
+describe('GameEngine — magic books', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('refuses to read a book the character does not have', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.books = 0;
+
+    const state = engine.useBook();
+    expect(state.messages.join(' ')).toContain('no magic books');
+  });
+
+  it('reading a book consumes exactly one and applies an effect', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.books = 3;
+    e.char.hp = 1;
+    e.char.maxHp = 1000;
+
+    const state = engine.useBook();
+    expect(e.char.inventory.books).toBe(2);
+    expect(state.messages.length).toBeGreaterThan(0);
+  });
+
+  it('a map-reveal read marks every cell of the current level visited', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.books = 200; // enough tries to be confident we hit map-reveal at least once
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const totalCells = lvl.grid.length * lvl.grid[0].length;
+
+    let sawFullReveal = false;
+    for (let i = 0; i < 200 && e.char.inventory.books > 0; i++) {
+      e.dungeonState.visitedCells.clear();
+      engine.useBook();
+      if (e.dungeonState.visitedCells.size === totalCells) { sawFullReveal = true; break; }
+    }
+    expect(sawFullReveal).toBe(true);
+  });
+
+  it('taking a book fixture adds it to inventory instead of resolving an effect immediately', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'interaction';
+    e.interaction = { type: 'book', contentId: 'book-test-1', choices: [] };
+    const before = e.char.inventory.books;
+
+    const state = engine.interactionChoice('a');
+    expect(e.char.inventory.books).toBe(before + 1);
+    expect(e.dungeonState.readBooks.has('book-test-1')).toBe(true);
+    expect(state.phase).toBe('playing');
+  });
+
+  it('lists the Magic Book row with its quantity in the inventory screen', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.inventory.books = 4;
+
+    const text = engine.showInventory().messages.join('\n');
+    expect(text).toContain('Magic Book');
+    expect(text).toContain('x4');
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — save prompt', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('saving persists the character and dungeon, then asks whether to continue', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.gold = 1234;
+
+    const state = engine.saveAndPrompt();
+    expect(state.phase).toBe('save-prompt');
+    expect(state.messages.join('\n')).toContain('Game saved.');
+
+    const repo = new Repository(db);
+    expect(repo.loadCharacter(e.char.id)?.gold).toBe(1234);
+    expect(repo.loadDungeonState(e.char.id)).not.toBeNull();
+  });
+
+  it('continuing returns to play on the same square', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    const { x, y } = e.char;
+
+    engine.saveAndPrompt();
+    const state = engine.dismissSavePrompt();
+    expect(state.phase).toBe('playing');
+    expect(state.messages).toEqual([]);
+    expect(e.char.x).toBe(x);
+    expect(e.char.y).toBe(y);
+  });
+
+  it('exiting from the prompt goes to the main menu', () => {
+    const engine = makeReadyEngine(db);
+    (engine as any).phase = 'playing';
+
+    engine.saveAndPrompt();
+    expect(engine.showMainMenu().phase).toBe('main-menu');
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — healing potions', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('heals a share of max HP so potions stay useful at high level', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.maxHp = 400;
+    e.char.hp = 1;
+    e.char.constitution = 12;
+    e.char.inventory.potions = 1;
+
+    engine.usePot();
+    // min roll (20) + CON bonus (3) + 30% of 400 (120)
+    expect(e.char.hp - 1).toBeGreaterThanOrEqual(143);
+    expect(e.char.inventory.potions).toBe(0);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — diamond while exploring', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  function explorer(): { engine: GameEngine; e: any } {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.intelligence = 18;
+    e.char.inventory.gems = { ruby: 0, sapphire: 0, diamond: 2, opal: 0 };
+    return { engine, e };
+  }
+
+  it('reveals the whole level map and consumes one diamond', () => {
+    const { engine, e } = explorer();
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const totalCells = lvl.grid.length * lvl.grid[0].length;
+
+    const state = engine.useDiamondExploring();
+    expect(state.phase).toBe('playing');
+    expect(e.char.inventory.gems.diamond).toBe(1);
+    expect(e.dungeonState.visitedCells.size).toBe(totalCells);
+    expect(state.messages.join('\n')).toContain('map has been revealed');
+  });
+
+  it('does nothing when the character has no diamonds', () => {
+    const { engine, e } = explorer();
+    e.char.inventory.gems.diamond = 0;
+    const before = e.dungeonState.visitedCells.size;
+
+    const state = engine.useDiamondExploring();
+    expect(state.messages.join('\n')).toContain('no diamonds');
+    expect(e.dungeonState.visitedCells.size).toBe(before);
+  });
+
+  it('is ignored outside the exploring phase', () => {
+    const { engine, e } = explorer();
+    e.phase = 'status';
+
+    engine.useDiamondExploring();
+    expect(e.char.inventory.gems.diamond).toBe(2);
+  });
 });
