@@ -577,7 +577,7 @@ describe('GameEngine — magic books', () => {
     e.char.inventory.books = 0;
 
     const state = engine.useBook();
-    expect(state.messages.join(' ')).toContain('no magic books');
+    expect(state.messages.join(' ')).toContain('no magic tomes');
   });
 
   it('reading a book consumes exactly one and applies an effect', () => {
@@ -621,13 +621,13 @@ describe('GameEngine — magic books', () => {
     expect(state.phase).toBe('playing');
   });
 
-  it('lists the Magic Book row with its quantity in the inventory screen', () => {
+  it('lists the Magic Tome row with its quantity in the inventory screen', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.char.inventory.books = 4;
 
     const text = engine.showInventory().messages.join('\n');
-    expect(text).toContain('Magic Book');
+    expect(text).toContain('Magic Tome');
     expect(text).toContain('x4');
   });
 });

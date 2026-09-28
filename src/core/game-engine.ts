@@ -215,7 +215,7 @@ export class GameEngine {
       `══ CHARACTER STATUS ══════════════════════`,
       `${c.name.padEnd(20)} Level ${c.level}`,
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
-      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Books: ${c.inventory.books}`,
+      `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}`,
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
@@ -240,7 +240,7 @@ export class GameEngine {
     const rows: { name: string; type: string; qty: string }[] = [
       { name: 'Healing Potion', type: 'Consumable', qty: `x${c.inventory.potions}` },
       { name: 'Gold', type: 'Currency', qty: `${c.gold}` },
-      { name: 'Magic Book', type: 'Consumable — Random Boon', qty: `x${c.inventory.books}` },
+      { name: 'Magic Tome', type: 'Consumable — Arcane Tome', qty: `x${c.inventory.books}` },
       { name: 'Ruby', type: 'Gem — Teleport Away', qty: `x${c.inventory.gems.ruby}` },
       { name: 'Sapphire', type: 'Gem — Banish Monster', qty: `x${c.inventory.gems.sapphire}` },
       { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
@@ -403,7 +403,7 @@ export class GameEngine {
   useBook(): GameState {
     if (!this.char) return this.getState();
     if (this.char.inventory.books <= 0) {
-      this.messages = ['You have no magic books to read.'];
+      this.messages = ['You have no magic tomes to read.'];
       return this.getState();
     }
 
@@ -691,11 +691,11 @@ export class GameEngine {
         this.interaction = {
           type: 'book',
           contentId: content.id,
-          choices: [{ key: 'a', text: 'Take the book' }, { key: 'b', text: 'Leave it alone' }],
+          choices: [{ key: 'a', text: 'Take the tome' }, { key: 'b', text: 'Leave it alone' }],
         };
         this.phase = 'interaction';
         this.messages = [
-          'You find an ancient book resting on a stone pedestal.',
+          'You find an ancient magic tome resting on a stone pedestal.',
           'Its cover is marked with a silver eye.',
           ...this.messages,
         ];
@@ -1350,13 +1350,13 @@ export class GameEngine {
     if (!this.char || !this.dungeonState) return this.getState();
 
     if (key !== 'a') {
-      return this.closeInteraction('You leave the book on its pedestal.');
+      return this.closeInteraction('You leave the tome on its pedestal.');
     }
 
     this.dungeonState.readBooks.add(id);
     this.char.inventory.books++;
     this.messages = [
-      'You tuck the book into your pack.',
+      'You tuck the tome into your pack.',
       `(${this.char.inventory.books} total)`,
     ];
     return this.closeInteractionWithSave();

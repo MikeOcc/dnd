@@ -251,7 +251,7 @@ export function readBook(char: Character, rng: RNG): ReadBookResult {
       // (game-engine.ts's useBook) does that when it sees this flag.
       return {
         effect,
-        messages: ['The book contains detailed maps of this level.', '', 'The full map unfolds in your mind.'],
+        messages: ['The tome contains detailed maps of this level.', '', 'The full map unfolds in your mind.'],
         mapRevealed: true,
       };
 
@@ -260,7 +260,7 @@ export function readBook(char: Character, rng: RNG): ReadBookResult {
       char.xp += xp;
       return {
         effect,
-        messages: ['The book vibrates and then crumbles to dust.', '', `You gain ${xp} experience from the ancient knowledge.`],
+        messages: ['The tome vibrates and then crumbles to dust.', '', `You gain ${xp} experience from the ancient knowledge.`],
         xpGained: xp,
       };
     }

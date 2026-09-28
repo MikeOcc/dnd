@@ -179,7 +179,7 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Book  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
   }
   if (state.phase === 'combat') {
     lines.push(dim('  A: Attack  |  B: Cast Spell  |  C: Pray  |  D: Run  |  E: Use Gem'));
