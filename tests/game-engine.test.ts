@@ -4,6 +4,7 @@ import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
 import { createMonster } from '../src/core/monsters.js';
 import { chestTrapFor } from '../src/core/encounters.js';
+import { xpForLevel } from '../src/core/character.js';
 import { DUNGEON } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
@@ -1128,5 +1129,68 @@ describe('GameEngine — trapped chests', () => {
     const res = engine.interactionChoice('a');
     expect(res.phase).toBe('combat');
     expect(res.messages.join(' ')).toContain('alarm');
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — spells by level', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  function inCombat(level: number, monsterType: Parameters<typeof createMonster>[0] = 'Goblin', monsterLevel = 1) {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.level = level;
+    e.char.hp = e.char.maxHp = 100000;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster(monsterType, monsterLevel, 'm1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    return { engine, e };
+  }
+
+  it('offers a new character only Fireball', () => {
+    const { engine } = inCombat(1);
+    expect(engine.getState().spellChoices).toEqual([{ key: 'a', text: 'Fireball' }, { key: 'b', text: 'Cancel' }]);
+  });
+
+  it('an unlearned spell can’t be cast by its key', () => {
+    const { engine, e } = inCombat(1);
+    const hp = e.combat.monster.hp;
+    const state = engine.spellAction('d');
+    expect(state.messages).toEqual(['You reconsider.']);
+    expect(e.combat.monster.hp).toBe(hp);
+  });
+
+  it('announces a spell learned on level-up', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.level = 34;
+    e.char.xp = xpForLevel(35);
+    const lines: string[] = e.levelUp();
+    expect(lines).toContain('*** YOU HAVE REACHED LEVEL 35! ***');
+    expect(lines).toContain('You have learned Lightning!');
+  });
+
+  it('a successful Banish ends the fight without XP', () => {
+    let done = false;
+    for (let i = 0; i < 40 && !done; i++) {
+      const { engine, e } = inCombat(40, 'Goblin', 1);
+      const xp = e.char.xp;
+      const key = engine.getState().spellChoices!.find(c => c.text === 'Banish')!.key;
+      const state = engine.spellAction(key);
+      if (state.messages.join(' ').includes('dragged screaming')) {
+        done = true;
+        expect(state.phase).toBe('playing');
+        expect(e.combat).toBeNull();
+        expect(e.char.xp).toBe(xp);
+      }
+    }
+    expect(done).toBe(true);
   });
 });

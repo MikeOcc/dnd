@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS } from './config.js';
 import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -13,6 +13,7 @@ export interface CombatRoundResult {
   monsterDied: boolean;
   playerTeleported?: boolean;
   ran?: boolean;
+  banished?: boolean;   // Banish worked: the monster is gone (no XP, like the sapphire)
   runFailed?: boolean;
   ballOfDooFired?: boolean;
   ballOfDooResisted?: boolean;
@@ -452,6 +453,36 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
 
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: monsterDamage, monsterDied: monsterDied || res.monsterDied };
+}
+
+// ─── Banish ──────────────────────────────────────────────────────────────────
+
+/** Chance Banish removes this monster: tougher (higher tier, higher level
+ * than you, unique) means likelier to fail. Asmodeus is at home in the Hells. */
+export function banishChance(char: Character, monster: Monster): number {
+  if (monster.type === 'Asmodeus') return 0;
+  const above = Math.max(0, monster.level - char.level);
+  const below = Math.max(0, char.level - monster.level);
+  let chance = SPELLS.BANISH_BASE
+    - monster.definition.naturalTier * SPELLS.BANISH_PER_TIER
+    - above * SPELLS.BANISH_PER_LEVEL_ABOVE
+    + below * SPELLS.BANISH_PER_LEVEL_BELOW;
+  if (monster.definition.isUnique) chance *= SPELLS.BANISH_UNIQUE_MULT;
+  return Math.max(SPELLS.BANISH_MIN, Math.min(SPELLS.BANISH_MAX, chance));
+}
+
+export function playerBanish(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const messages = ['You cast Banish, and a rift to the outer dark tears open behind the ' + monster.type + '!'];
+  if (monster.type === 'Asmodeus') {
+    messages.push('Asmodeus laughs. "Banish me? From my own Hells?" The rift gutters out.');
+  } else if (rng.float() < banishChance(char, monster)) {
+    messages.push(`The ${monster.type} is dragged screaming into the rift, and it snaps shut.`, 'You are free to move on.');
+    return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false, banished: true };
+  } else {
+    messages.push(`The ${monster.type} braces against the pull and tears itself free. The rift collapses.`);
+  }
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
 }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

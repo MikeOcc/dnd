@@ -266,6 +266,7 @@ export interface GameState {
   finalScore?: ScoreResult;
   saveSlots?: CharacterSummary[];
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
+  spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
 }
 
 export interface CharacterSummary {

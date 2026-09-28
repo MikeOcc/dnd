@@ -216,15 +216,7 @@ function handleKey(key: KeyEvent): void {
         // Show spell submenu
         spellMenuOpen = true;
         const state = engine.getState();
-        state.choices = [
-          { key: 'a', text: 'Fireball' },
-          { key: 'b', text: 'Heal' },
-          { key: 'c', text: 'Acid Spray' },
-          { key: 'd', text: 'Lightning' },
-          { key: 'e', text: 'Frost Bolt' },
-          { key: 'f', text: 'Poison Spray' },
-          { key: 'g', text: 'Cancel' },
-        ];
+        state.choices = state.spellChoices ?? [];  // only spells this character has learned
         state.messages = ['Choose a spell:'];
         render(state);
         return;

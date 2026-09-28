@@ -408,15 +408,8 @@ function handleChoiceKey(key, phase) {
       spellMenuOpen = true;
       const area = document.getElementById('choices-area');
       area.innerHTML = '';
-      const spells = [
-        { key: 'a', text: 'Fireball' },
-        { key: 'b', text: 'Heal' },
-        { key: 'c', text: 'Acid Spray' },
-        { key: 'd', text: 'Lightning' },
-        { key: 'e', text: 'Frost Bolt' },
-        { key: 'f', text: 'Poison Spray' },
-        { key: 'g', text: 'Cancel' },
-      ];
+      // Only the spells this character has learned, as the engine letters them.
+      const spells = currentState.spellChoices || [];
       for (const spell of spells) {
         const btn = makeChoiceBtn(spell.key.toUpperCase(), spell.text);
         btn.onclick = () => {
@@ -566,7 +559,7 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'combat') {
     if (spellMenuOpen) {
-      if (['a','b','c','d','e','f','g'].includes(key)) {
+      if ((currentState.spellChoices || []).some(c => c.key === key)) {
         spellMenuOpen = false;
         apiAction('spell', { choice: key });
       }

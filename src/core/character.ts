@@ -67,10 +67,11 @@ export function xpForLevel(level: number): number {
   return LEVELING.XP_TABLE[level];
 }
 
-export function checkLevelUp(char: Character, rng: RNG): { didLevel: boolean; newLevel: number; hpGain: number; statGained?: string } {
+export function checkLevelUp(char: Character, rng: RNG): { didLevel: boolean; newLevel: number; previousLevel: number; hpGain: number; statGained?: string } {
   const newLevel = calculateLevel(char.xp);
+  const previousLevel = char.level;
   if (newLevel <= char.level) {
-    return { didLevel: false, newLevel: char.level, hpGain: 0 };
+    return { didLevel: false, newLevel: char.level, previousLevel, hpGain: 0 };
   }
 
   const hpGain = LEVELING.HP_PER_LEVEL_BASE + rng.die(LEVELING.HP_PER_LEVEL_RAND);
@@ -86,7 +87,7 @@ export function checkLevelUp(char: Character, rng: RNG): { didLevel: boolean; ne
     statGained = stat as string;
   }
 
-  return { didLevel: true, newLevel, hpGain, statGained };
+  return { didLevel: true, newLevel, previousLevel, hpGain, statGained };
 }
 
 export function calculateLevel(xp: number): number {

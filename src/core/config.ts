@@ -315,6 +315,31 @@ export const TREASURE = {
 // Trapped chests. Whether a chest is trapped (and with what) is fixed per
 // character and chest, so leaving and coming back doesn't reroll it. Checking
 // for traps leans on Wisdom; disarming leans on Dexterity.
+// Wizard spells: the character level each is learned at. Lightning comes
+// late because it doubles damage against every undead, the Beholder and
+// two dragon colours; Poison Spray comes early because nothing is weak to it.
+export const SPELLS = {
+  UNLOCK_LEVEL: {
+    fireball: 1,
+    heal: 5,
+    poison: 10,
+    acid: 16,
+    frost: 24,
+    lightning: 35,
+    banish: 40,
+  },
+  // Banish: success = BASE − tier × PER_TIER − levels the monster is above
+  // you × PER_LEVEL_ABOVE + levels you're above it × PER_LEVEL_BELOW, halved
+  // for unique bosses, clamped to [MIN, MAX]. Asmodeus can't be banished.
+  BANISH_BASE: 0.9,
+  BANISH_PER_TIER: 0.05,
+  BANISH_PER_LEVEL_ABOVE: 0.02,
+  BANISH_PER_LEVEL_BELOW: 0.005,
+  BANISH_UNIQUE_MULT: 0.5,
+  BANISH_MIN: 0.05,
+  BANISH_MAX: 0.9,
+} as const;
+
 export const CHEST_TRAPS = {
   CHANCE: 0.22,
   DETECT_BASE: 0.35,

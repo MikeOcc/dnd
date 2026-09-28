@@ -8,7 +8,8 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, calculateXPReward } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward } from './combat.js';
+import { spellMenu, spellForKey, spellsLearnedBetween } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
@@ -101,6 +102,7 @@ export class GameEngine {
     if (this.interaction) state.interaction = { ...this.interaction };
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
     if (this.phase === 'map') state.mapFull = this.mapFull;
+    if (this.phase === 'combat' && this.char) state.spellChoices = spellMenu(this.char.level);
 
     state.choices = this.buildChoices();
     return state;
@@ -462,7 +464,7 @@ export class GameEngine {
     const result = readBook(this.char, this.rng);
     this.messages = result.messages;
     if (result.mapRevealed) this.revealFullMap();
-    if (result.xpGained) checkLevelUp(this.char, this.rng);
+    this.messages.push(...this.levelUp());
   }
 
   useBook(): GameState {
@@ -1122,39 +1124,52 @@ export class GameEngine {
     return this.processCombatResult(result);
   }
 
-  spellAction(spell: string): GameState {
+  /** Keys come from spellMenu(): the character's known spells, lettered in
+   * unlock order. Anything else (Cancel, or an unlearned spell) backs out. */
+  spellAction(key: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
-    if (['a', 'b', 'c', 'd', 'e', 'f'].includes(spell)) {
-      if (this.isHeld()) return this.combatHeld();
-      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
-      if (negated) return this.processCombatResult(negated);
+    const spell = spellForKey(this.char.level, key);
+    if (!spell) {
+      this.phase = 'combat';
+      this.messages = ['You reconsider.'];
+      return this.getState();
     }
-    if (spell === 'a') return this.combatFireball();
-    if (spell === 'b') return this.combatHeal();
-    if (spell === 'c') return this.combatAcid();
-    if (spell === 'd') return this.combatLightning();
-    if (spell === 'e') return this.combatFrost();
-    if (spell === 'f') return this.combatPoison();
-    // Cancel — back to combat
-    this.phase = 'combat';
-    this.messages = ['You reconsider.'];
-    return this.getState();
+    if (this.isHeld()) return this.combatHeld();
+    const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
+    if (negated) return this.processCombatResult(negated);
+
+    switch (spell) {
+      case 'fireball':  return this.combatFireball();
+      case 'heal':      return this.combatHeal();
+      case 'poison':    return this.combatPoison();
+      case 'acid':      return this.combatAcid();
+      case 'frost':     return this.combatFrost();
+      case 'lightning': return this.combatLightning();
+      case 'banish':    return this.processCombatResult(playerBanish(this.char, this.combat.monster, this.rng));
+    }
   }
 
   private showSpellMenu(): GameState {
     this.messages = ['Choose a spell:'];
     const spellState = this.getState();
-    spellState.choices = [
-      { key: 'a', text: 'Fireball' },
-      { key: 'b', text: 'Heal' },
-      { key: 'c', text: 'Acid Spray' },
-      { key: 'd', text: 'Lightning' },
-      { key: 'e', text: 'Frost Bolt' },
-      { key: 'f', text: 'Poison Spray' },
-      { key: 'g', text: 'Cancel' },
-    ];
+    spellState.choices = spellMenu(this.char!.level);
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
     return spellState;
+  }
+
+  /** Applies any level-ups the character's XP has earned and returns the
+   * lines announcing them, including every spell learned along the way. */
+  private levelUp(): string[] {
+    if (!this.char) return [];
+    const r = checkLevelUp(this.char, this.rng);
+    if (!r.didLevel) return [];
+    return [
+      '',
+      `*** YOU HAVE REACHED LEVEL ${r.newLevel}! ***`,
+      `Maximum HP increased by ${r.hpGain}.`,
+      ...(r.statGained ? [`Your ${r.statGained} increases!`] : []),
+      ...spellsLearnedBetween(r.previousLevel, r.newLevel).map(sp => `You have learned ${sp.name}!`),
+    ];
   }
 
   private isHeld(): boolean {
@@ -1248,6 +1263,12 @@ export class GameEngine {
       return this.handleDeath(`Killed by a Level ${monster.level} ${monster.type}.`);
     }
 
+    if (result.banished) {
+      this.endCombat(false);
+      this.repo.saveCharacter(this.char);
+      return this.getState();
+    }
+
     if (result.monsterDied) {
       return this.handleMonsterDefeated();
     }
@@ -1288,15 +1309,7 @@ export class GameEngine {
 
     this.messages.push('', `You gain ${xpGained} experience.`);
 
-    // Level up
-    const levelResult = checkLevelUp(this.char, this.rng);
-    if (levelResult.didLevel) {
-      this.messages.push('', `*** YOU HAVE REACHED LEVEL ${levelResult.newLevel}! ***`);
-      this.messages.push(`Maximum HP increased by ${levelResult.hpGain}.`);
-      if (levelResult.statGained) {
-        this.messages.push(`Your ${levelResult.statGained} increases!`);
-      }
-    }
+    this.messages.push(...this.levelUp());
 
     // Clear naked status
     this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'naked');
@@ -1477,12 +1490,7 @@ export class GameEngine {
     const result = resolveChest(this.char, this.rng);
     messages.push(...result.messages);
 
-    if (result.xpGained || lead.some(m => m.includes('XP'))) {
-      const lvlResult = checkLevelUp(this.char, this.rng);
-      if (lvlResult.didLevel) {
-        messages.push(`*** LEVEL UP! You are now level ${lvlResult.newLevel}! ***`);
-      }
-    }
+    messages.push(...this.levelUp());
 
     if (alarm || result.triggerMonster) {
       this.closeInteraction();
@@ -1529,9 +1537,7 @@ export class GameEngine {
 
     this.dungeonState.usedAltars.add(id);
     const result = resolveAltar(this.char, this.rng);
-    this.messages = result.messages;
-
-    if (result.xpGained) checkLevelUp(this.char, this.rng);
+    this.messages = [...result.messages, ...this.levelUp()];
 
     return this.closeInteractionWithSave();
   }
@@ -1545,9 +1551,7 @@ export class GameEngine {
 
     this.dungeonState.usedFountains.add(id);
     const result = resolveFountain(this.char, this.rng);
-    this.messages = result.messages;
-
-    if (result.xpGained) checkLevelUp(this.char, this.rng);
+    this.messages = [...result.messages, ...this.levelUp()];
 
     return this.closeInteractionWithSave();
   }
