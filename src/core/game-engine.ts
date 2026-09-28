@@ -451,6 +451,16 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** Reads a tome's random boon and applies it — shared by reading one from
+   * the pack (useBook) and reading one on the spot where it's found. */
+  private applyTomeReading(): void {
+    if (!this.char) return;
+    const result = readBook(this.char, this.rng);
+    this.messages = result.messages;
+    if (result.mapRevealed) this.revealFullMap();
+    if (result.xpGained) checkLevelUp(this.char, this.rng);
+  }
+
   useBook(): GameState {
     if (!this.char) return this.getState();
     if (this.char.inventory.books <= 0) {
@@ -459,11 +469,7 @@ export class GameEngine {
     }
 
     this.char.inventory.books--;
-    const result = readBook(this.char, this.rng);
-    this.messages = result.messages;
-
-    if (result.mapRevealed) this.revealFullMap();
-    if (result.xpGained) checkLevelUp(this.char, this.rng);
+    this.applyTomeReading();
 
     this.repo.saveCharacter(this.char);
     if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
@@ -744,7 +750,11 @@ export class GameEngine {
         this.interaction = {
           type: 'book',
           contentId: content.id,
-          choices: [{ key: 'a', text: 'Take the tome' }, { key: 'b', text: 'Leave it alone' }],
+          choices: [
+            { key: 'a', text: 'Read it now' },
+            { key: 'b', text: 'Take it for later' },
+            { key: 'c', text: 'Leave it alone' },
+          ],
         };
         this.phase = 'interaction';
         this.messages = [
@@ -1403,11 +1413,17 @@ export class GameEngine {
   private resolveBookChoice(key: string, id: string): GameState {
     if (!this.char || !this.dungeonState) return this.getState();
 
-    if (key !== 'a') {
+    if (key !== 'a' && key !== 'b') {
       return this.closeInteraction('You leave the tome on its pedestal.');
     }
 
     this.dungeonState.readBooks.add(id);
+
+    if (key === 'a') {
+      this.applyTomeReading();
+      return this.closeInteractionWithSave();
+    }
+
     this.char.inventory.books++;
     this.messages = [
       'You tuck the tome into your pack.',

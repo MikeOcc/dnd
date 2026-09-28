@@ -616,17 +616,45 @@ describe('GameEngine — magic books', () => {
     expect(sawFullReveal).toBe(true);
   });
 
-  it('taking a book fixture adds it to inventory instead of resolving an effect immediately', () => {
+  it('taking a book fixture for later adds it to inventory instead of resolving an effect immediately', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.phase = 'interaction';
     e.interaction = { type: 'book', contentId: 'book-test-1', choices: [] };
     const before = e.char.inventory.books;
 
-    const state = engine.interactionChoice('a');
+    const state = engine.interactionChoice('b');
     expect(e.char.inventory.books).toBe(before + 1);
     expect(e.dungeonState.readBooks.has('book-test-1')).toBe(true);
     expect(state.phase).toBe('playing');
+  });
+
+  it('reading a found tome on the spot applies its effect without adding it to the pack', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'interaction';
+    e.interaction = { type: 'book', contentId: 'book-test-2', choices: [] };
+    const before = e.char.inventory.books;
+
+    const state = engine.interactionChoice('a');
+    expect(e.char.inventory.books).toBe(before);
+    expect(e.dungeonState.readBooks.has('book-test-2')).toBe(true);
+    expect(state.phase).toBe('playing');
+    expect(state.messages.length).toBeGreaterThan(0);
+    expect(state.messages.join(' ')).not.toContain('tuck the tome');
+  });
+
+  it('leaving a found tome keeps it on the pedestal', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'interaction';
+    e.interaction = { type: 'book', contentId: 'book-test-3', choices: [] };
+    const before = e.char.inventory.books;
+
+    const state = engine.interactionChoice('c');
+    expect(e.char.inventory.books).toBe(before);
+    expect(e.dungeonState.readBooks.has('book-test-3')).toBe(false);
+    expect(state.messages.join(' ')).toContain('pedestal');
   });
 
   it('lists the Magic Tome row with its quantity in the inventory screen', () => {
