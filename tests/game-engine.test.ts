@@ -3,6 +3,7 @@ import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
 import { createMonster } from '../src/core/monsters.js';
+import { chestTrapFor } from '../src/core/encounters.js';
 import { DUNGEON } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
@@ -1022,5 +1023,110 @@ describe('GameEngine — held by a Beholder ray', () => {
     e.endCombat(false);
     expect(e.char.heldRounds).toBe(0);
     expect(e.char.heldBy).toBeUndefined();
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — trapped chests', () => {
+  let db: any;
+
+  beforeEach(() => {
+    db = createMemoryDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  /** A chest id this character finds trapped with the given trap (or untrapped when null). */
+  function chestWith(char: any, want: string | null): string {
+    for (let i = 0; i < 5000; i++) {
+      const id = `chest-9-${i}`;
+      if (chestTrapFor(char, id) === want) return id;
+    }
+    throw new Error('no such chest');
+  }
+
+  function atChest(engine: GameEngine, id: string) {
+    const e = engine as any;
+    e.phase = 'interaction';
+    e.interaction = { type: 'chest', contentId: id, choices: [] };
+    e.char.hp = e.char.maxHp = 10000;
+    return e;
+  }
+
+  it('opening a trapped chest without checking springs the trap, then gives the loot', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const id = chestWith(e.char, 'blade');
+    atChest(engine, id);
+
+    const state = engine.interactionChoice('a');
+    const text = state.messages.join(' ');
+    expect(text).toContain('TRAP!');
+    expect(text).toContain('blade');
+    expect(e.char.hp).toBeLessThan(10000);
+    expect(e.dungeonState.openedChests.has(id)).toBe(true);
+  });
+
+  it('searching an untrapped chest finds nothing and it opens safely', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const id = chestWith(e.char, null);
+    atChest(engine, id);
+
+    const searched = engine.interactionChoice('b');
+    expect(searched.messages[0]).toContain('find no traps');
+    expect(searched.choices!.map(c => c.key)).toEqual(['a', 'c']);
+
+    const opened = engine.interactionChoice('a');
+    expect(opened.messages.join(' ')).not.toContain('TRAP!');
+  });
+
+  it('a spotted trap can be disarmed, opening the chest safely with a little XP', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.wisdom = 60;     // always spot it
+    e.char.dexterity = 60;  // disarm at the cap
+    const id = chestWith(e.char, 'fire-glyph');
+
+    let disarmed = false;
+    for (let i = 0; i < 40 && !disarmed; i++) {
+      atChest(engine, id);
+      e.dungeonState.openedChests.delete(id);
+      const searched = engine.interactionChoice('b');
+      expect(searched.messages[0]).toContain('fire glyph');
+      const xp = e.char.xp;
+      const res = engine.interactionChoice('a');
+      if (res.messages[0].includes('disarm')) {
+        disarmed = true;
+        expect(res.messages.join(' ')).not.toContain('TRAP!');
+        expect(e.char.xp).toBeGreaterThan(xp);
+        expect(e.char.hp).toBe(10000);
+      }
+    }
+    expect(disarmed).toBe(true);
+  });
+
+  it('opening a spotted trap anyway springs it', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.wisdom = 60;
+    const id = chestWith(e.char, 'needle');
+    atChest(engine, id);
+    engine.interactionChoice('b');
+    const res = engine.interactionChoice('b');
+    expect(res.messages.join(' ')).toContain('TRAP!');
+    expect(e.char.statusEffects.some((s: any) => s.type === 'poison')).toBe(true);
+  });
+
+  it('an alarm trap brings a monster, keeping the chest messages on screen', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const id = chestWith(e.char, 'alarm');
+    atChest(engine, id);
+    const res = engine.interactionChoice('a');
+    expect(res.phase).toBe('combat');
+    expect(res.messages.join(' ')).toContain('alarm');
   });
 });

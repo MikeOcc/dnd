@@ -245,7 +245,11 @@ export interface InteractionState {
   type: InteractionType;
   contentId: string;
   choices: Choice[];
+  chestSearched?: boolean;     // chest: already checked for traps (no second look)
+  chestTrapSpotted?: boolean;  // chest: the search found its trap, so disarming is on offer
 }
+
+export type ChestTrapType = 'needle' | 'blade' | 'gas' | 'fire-glyph' | 'alarm';
 
 export type DisplayGrid = string[];
 

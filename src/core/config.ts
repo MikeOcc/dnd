@@ -312,6 +312,20 @@ export const TREASURE = {
   MONSTER_DROP_MAX: 15,
 } as const;
 
+// Trapped chests. Whether a chest is trapped (and with what) is fixed per
+// character and chest, so leaving and coming back doesn't reroll it. Checking
+// for traps leans on Wisdom; disarming leans on Dexterity.
+export const CHEST_TRAPS = {
+  CHANCE: 0.22,
+  DETECT_BASE: 0.35,
+  DETECT_PER_WIS: 0.025,     // WIS 10 → 60%, WIS 18 → 80%
+  DISARM_BASE: 0.2,
+  DISARM_PER_DEX: 0.035,     // DEX 10 → 55%, DEX 18 → 83%
+  MAX_CHANCE: 0.95,
+  DISARM_XP_PER_LEVEL: 10,   // small reward for a clean disarm, times dungeon level
+  DEPTH_DAMAGE_SCALE: 0.35,  // trap damage grows by this fraction per dungeon level below the first
+} as const;
+
 export const GEMS = {
   // Flavor "worth" shown when a gem is found — there's no shop to sell them
   // to, so this doesn't feed gold or score, just tells the player how rare

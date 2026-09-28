@@ -12,11 +12,12 @@ import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost,
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
+  chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
@@ -741,7 +742,11 @@ export class GameEngine {
         this.interaction = {
           type: 'chest',
           contentId: content.id,
-          choices: [{ key: 'a', text: 'Open it' }, { key: 'b', text: 'Leave it' }],
+          choices: [
+            { key: 'a', text: 'Open it' },
+            { key: 'b', text: 'Check it for traps' },
+            { key: 'c', text: 'Leave it' },
+          ],
         };
         this.phase = 'interaction';
         this.messages = ['You discover an iron-bound chest.', ...this.messages];
@@ -1409,31 +1414,87 @@ export class GameEngine {
     }
   }
 
+  // Chest flow: open / check for traps / leave. A search (Wisdom) can spot
+  // the trap, and a spotted trap can be disarmed (Dexterity). Opening a
+  // trapped chest any other way springs the trap before the loot.
   private resolveChestChoice(key: string, id: string): GameState {
-    if (!this.char || !this.dungeonState) return this.getState();
+    if (!this.char || !this.dungeonState || !this.interaction) return this.getState();
+    const inter = this.interaction;
+    const trap = chestTrapFor(this.char, id);
 
-    if (key !== 'a') {
+    if (inter.chestTrapSpotted && trap) {
+      if (key === 'a') {
+        if (this.rng.float() < chestTrapDisarmChance(this.char)) {
+          const xp = CHEST_TRAPS.DISARM_XP_PER_LEVEL * this.char.dungeonLevel;
+          this.char.xp += xp;
+          return this.openChest(id, null, [`You carefully disarm the ${chestTrapName(trap)}. (+${xp} XP)`, '']);
+        }
+        return this.openChest(id, trap, ['Your hand slips!']);
+      }
+      if (key === 'b') return this.openChest(id, trap, []);
       return this.closeInteraction('You leave the chest alone.');
     }
 
-    this.dungeonState.openedChests.add(id);
-    const result = resolveChest(this.char, this.rng);
-    this.messages = result.messages;
-
-    if (result.triggerMonster) {
-      this.closeInteraction();
-      this.repo.saveCharacter(this.char);
-      this.repo.saveDungeonState(this.char.id, this.dungeonState);
-      return this.startRandomEncounter();
+    if (key === 'b') {
+      if (inter.chestSearched) return this.getState();
+      inter.chestSearched = true;
+      if (trap && this.rng.float() < chestTrapDetectChance(this.char)) {
+        inter.chestTrapSpotted = true;
+        inter.choices = [
+          { key: 'a', text: 'Try to disarm it' },
+          { key: 'b', text: 'Open it anyway' },
+          { key: 'c', text: 'Leave it' },
+        ];
+        this.messages = [`You spot a ${chestTrapName(trap)} rigged to the lock!`];
+      } else {
+        inter.choices = [
+          { key: 'a', text: 'Open it' },
+          { key: 'c', text: 'Leave it' },
+        ];
+        this.messages = ['You search the chest carefully and find no traps.'];
+      }
+      return this.getState();
     }
 
-    if (result.xpGained) {
+    if (key === 'a') return this.openChest(id, trap, []);
+    return this.closeInteraction('You leave the chest alone.');
+  }
+
+  /** Opens a chest: springs its trap first (if any), then hands out the loot. */
+  private openChest(id: string, trap: import('./types.js').ChestTrapType | null, lead: string[]): GameState {
+    if (!this.char || !this.dungeonState) return this.getState();
+    this.dungeonState.openedChests.add(id);
+
+    const messages = [...lead];
+    let alarm = false;
+    if (trap) {
+      messages.push('TRAP!');
+      const sprung = springChestTrap(this.char, trap, this.rng);
+      messages.push(...sprung.messages, '');
+      alarm = !!sprung.triggerMonster;
+    }
+
+    const result = resolveChest(this.char, this.rng);
+    messages.push(...result.messages);
+
+    if (result.xpGained || lead.some(m => m.includes('XP'))) {
       const lvlResult = checkLevelUp(this.char, this.rng);
       if (lvlResult.didLevel) {
-        this.messages.push(`*** LEVEL UP! You are now level ${lvlResult.newLevel}! ***`);
+        messages.push(`*** LEVEL UP! You are now level ${lvlResult.newLevel}! ***`);
       }
     }
 
+    if (alarm || result.triggerMonster) {
+      this.closeInteraction();
+      this.repo.saveCharacter(this.char);
+      this.repo.saveDungeonState(this.char.id, this.dungeonState);
+      this.startRandomEncounter();
+      // beginCombat replaces the messages; keep what just happened at the chest.
+      this.messages = [...messages, '', ...this.messages];
+      return this.getState();
+    }
+
+    this.messages = messages;
     return this.closeInteractionWithSave();
   }
 

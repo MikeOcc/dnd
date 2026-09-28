@@ -4,8 +4,9 @@ import { rollCharacter, createCharacter } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
   resolveFountain, resolveChest, applyDeath, readBook,
+  chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS } from '../src/core/config.js';
 
 function makeChar() {
   const rng = new RNG(1);
@@ -410,5 +411,75 @@ describe('Magic books', () => {
       }
     }
     expect(found).toBe(true);
+  });
+});
+
+describe('Chest traps', () => {
+  it('a chest is trapped (or not) the same way every time, and roughly as often as configured', () => {
+    const char = makeChar();
+    let trapped = 0;
+    for (let i = 0; i < 4000; i++) {
+      const trap = chestTrapFor(char, `chest-3-${i}`);
+      expect(chestTrapFor(char, `chest-3-${i}`)).toBe(trap);
+      if (trap) trapped++;
+    }
+    expect(trapped / 4000).toBeGreaterThan(CHEST_TRAPS.CHANCE - 0.03);
+    expect(trapped / 4000).toBeLessThan(CHEST_TRAPS.CHANCE + 0.03);
+  });
+
+  it('different characters get different traps on the same chest', () => {
+    const a = makeChar(); a.id = 'char-a';
+    const b = makeChar(); b.id = 'char-b';
+    let differ = 0;
+    for (let i = 0; i < 200; i++) if (chestTrapFor(a, `chest-1-${i}`) !== chestTrapFor(b, `chest-1-${i}`)) differ++;
+    expect(differ).toBeGreaterThan(0);
+  });
+
+  it('higher Dexterity disarms more reliably; Wisdom spots traps more often', () => {
+    const clumsy = makeChar(); clumsy.dexterity = 8;
+    const nimble = makeChar(); nimble.dexterity = 18;
+    expect(chestTrapDisarmChance(nimble)).toBeGreaterThan(chestTrapDisarmChance(clumsy));
+    nimble.dexterity = 40;
+    expect(chestTrapDisarmChance(nimble)).toBe(CHEST_TRAPS.MAX_CHANCE);
+
+    const dull = makeChar(); dull.wisdom = 6;
+    const wise = makeChar(); wise.wisdom = 18;
+    expect(chestTrapDetectChance(wise)).toBeGreaterThan(chestTrapDetectChance(dull));
+  });
+
+  it('chest traps hurt more deeper down but never kill outright', () => {
+    const rng1 = new RNG(5); const rng2 = new RNG(5);
+    const shallow = makeChar(); shallow.dungeonLevel = 1; shallow.hp = shallow.maxHp = 10000;
+    const deep = makeChar(); deep.dungeonLevel = 7; deep.hp = deep.maxHp = 10000;
+    springChestTrap(shallow, 'fire-glyph', rng1);
+    springChestTrap(deep, 'fire-glyph', rng2);
+    expect(10000 - deep.hp).toBeGreaterThan(10000 - shallow.hp);
+
+    const frail = makeChar(); frail.hp = 2; frail.dungeonLevel = 7;
+    springChestTrap(frail, 'blade', new RNG(9));
+    expect(frail.hp).toBe(1);
+  });
+
+  it('the alarm trap summons a monster instead of hurting', () => {
+    const char = makeChar();
+    const hp = char.hp;
+    const res = springChestTrap(char, 'alarm', new RNG(1));
+    expect(res.triggerMonster).toBe(true);
+    expect(char.hp).toBe(hp);
+  });
+
+  it('a failed corridor-trap disarm springs the trap once, not twice', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const char = makeChar();
+      char.intelligence = 3; char.dexterity = 3;
+      char.hp = char.maxHp = 1000;
+      const res = resolveTrapDisarm(char, 'falling-stone', new RNG(seed));
+      if (res.messages[0] === 'You fail to disarm it!') {
+        const dmg = Number(res.messages.join(' ').match(/You take (\d+) damage/)![1]);
+        expect(1000 - char.hp).toBe(dmg);
+        return;
+      }
+    }
+    throw new Error('never failed a disarm');
   });
 });

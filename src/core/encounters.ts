@@ -1,6 +1,6 @@
-import type { Character, Monster, StatusEffect, GemType } from './types.js';
+import type { Character, Monster, StatusEffect, GemType, ChestTrapType } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS } from './config.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS } from './config.js';
 import { addStatusEffect } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
@@ -97,21 +97,21 @@ const GEM_NAMES: Record<GemType, string> = {
 export function resolveChest(char: Character, rng: RNG): ChestResult {
   const roll = rng.float();
 
-  if (roll < 0.32) {
+  if (roll < 0.352) {
     const gold = rng.int(TREASURE.GOLD_MIN, TREASURE.GOLD_MAX) * char.dungeonLevel
       + rng.int(0, char.level) * TREASURE.GOLD_CHAR_LEVEL_MULT;
     char.gold += gold;
     return { messages: [`You find ${gold} gold coins!`], goldGained: gold };
   }
 
-  if (roll < 0.40) {
+  if (roll < 0.440) {
     const value = rng.int(TREASURE.GEM_MIN, TREASURE.GEM_MAX) * char.dungeonLevel
       + rng.int(0, char.level) * TREASURE.GEM_CHAR_LEVEL_MULT;
     char.gold += value;
     return { messages: [`A pouch of glittering gemstones! Worth ${value} gold.`], goldGained: value };
   }
 
-  if (roll < 0.58) {
+  if (roll < 0.637) {
     const count = rng.int(1, 4);
     char.inventory.potions += count;
     return { messages: [
@@ -120,7 +120,7 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     ]};
   }
 
-  if (roll < 0.66) {
+  if (roll < 0.725) {
     const type = rng.pick(GEM_TYPES);
     char.inventory.gems[type]++;
     return {
@@ -132,13 +132,13 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     };
   }
 
-  if (roll < 0.76) {
+  if (roll < 0.835) {
     const xp = rng.int(20, 60) * char.level;
     char.xp += xp;
     return { messages: [`A glowing crystal. You gain ${xp} experience.`], xpGained: xp };
   }
 
-  if (roll < 0.80) {
+  if (roll < 0.879) {
     const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma', 'resistance'] as const;
     const stat = rng.pick([...stats]);
     (char[stat] as number) += 1;
@@ -148,24 +148,8 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     };
   }
 
-  if (roll < 0.84) {
+  if (roll < 0.923) {
     return { messages: ['The chest is empty. Disappointing.'] };
-  }
-
-  if (roll < 0.90) {
-    // Trap inside
-    const dmg = rng.int(8, 20);
-    char.hp = Math.max(1, char.hp - dmg);
-    return { messages: [`TRAP! A blade springs from the chest! You take ${dmg} damage.`] };
-  }
-
-  if (roll < 0.93) {
-    const stat = 'constitution';
-    (char[stat] as number) = Math.max(3, (char[stat] as number) - 1);
-    return {
-      messages: ['A noxious gas billows out! Your Constitution decreases.'],
-      statChanged: { stat, delta: -1 },
-    };
   }
 
   // Monster
@@ -470,6 +454,79 @@ export function resolveFountain(char: Character, rng: RNG): FountainResult {
   return { messages: msgs };
 }
 
+// ─── Chest traps ─────────────────────────────────────────────────────────────
+
+const CHEST_TRAP_TYPES: ChestTrapType[] = ['needle', 'blade', 'gas', 'fire-glyph', 'alarm'];
+
+const CHEST_TRAP_NAMES: Record<ChestTrapType, string> = {
+  'needle':     'poisoned needle',
+  'blade':      'spring-loaded blade',
+  'gas':        'poison gas vial',
+  'fire-glyph': 'fire glyph',
+  'alarm':      'alarm mechanism',
+};
+
+export function chestTrapName(trap: ChestTrapType): string {
+  return CHEST_TRAP_NAMES[trap];
+}
+
+/** FNV-1a — a stable hash so a chest's trap never rerolls between visits. */
+function stableHash(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+/** The trap on this chest for this character, or null if it isn't trapped. */
+export function chestTrapFor(char: Character, chestId: string): ChestTrapType | null {
+  const h = stableHash(`${char.id}:${chestId}`);
+  if ((h % 10000) / 10000 >= CHEST_TRAPS.CHANCE) return null;
+  return CHEST_TRAP_TYPES[Math.floor(h / 10000) % CHEST_TRAP_TYPES.length];
+}
+
+export function chestTrapDetectChance(char: Character): number {
+  return Math.min(CHEST_TRAPS.MAX_CHANCE, CHEST_TRAPS.DETECT_BASE + char.wisdom * CHEST_TRAPS.DETECT_PER_WIS);
+}
+
+export function chestTrapDisarmChance(char: Character): number {
+  return Math.min(CHEST_TRAPS.MAX_CHANCE, CHEST_TRAPS.DISARM_BASE + char.dexterity * CHEST_TRAPS.DISARM_PER_DEX);
+}
+
+/** Springs a chest trap. Like other traps it can't kill outright (HP floors at 1). */
+export function springChestTrap(char: Character, trap: ChestTrapType, rng: RNG): { messages: string[]; triggerMonster?: boolean } {
+  const scale = 1 + (char.dungeonLevel - 1) * CHEST_TRAPS.DEPTH_DAMAGE_SCALE;
+  const hurt = (min: number, max: number) => {
+    const dmg = Math.round(rng.int(min, max) * scale);
+    char.hp = Math.max(1, char.hp - dmg);
+    return dmg;
+  };
+  switch (trap) {
+    case 'needle': {
+      const dmg = hurt(3, 8);
+      addStatusEffect(char, { type: 'poison', value: 3 + char.dungeonLevel, turns: 6 });
+      return { messages: [`A poisoned needle jabs your hand for ${dmg} damage!`, 'You have been poisoned.'] };
+    }
+    case 'blade': {
+      const dmg = hurt(8, 20);
+      return { messages: [`A spring-loaded blade slashes out of the lock for ${dmg} damage!`] };
+    }
+    case 'gas': {
+      const dmg = hurt(4, 10);
+      addStatusEffect(char, { type: 'poison', value: 2 + char.dungeonLevel, turns: 8 });
+      return { messages: [`A vial shatters and green gas billows out! You choke for ${dmg} damage.`, 'You have been poisoned.'] };
+    }
+    case 'fire-glyph': {
+      const dmg = hurt(12, 28);
+      return { messages: [`A glyph on the lid flares and fire engulfs you for ${dmg} damage!`] };
+    }
+    case 'alarm':
+      return { messages: ['A shrieking alarm goes off inside the chest!', 'Something comes running.'], triggerMonster: true };
+  }
+}
+
 // ─── Trap ────────────────────────────────────────────────────────────────────
 
 export interface TrapResult {
@@ -546,5 +603,6 @@ export function resolveTrapDisarm(char: Character, variant: string, rng: RNG): T
   if (rng.float() < chance) {
     return { messages: ['You carefully disarm the trap.'], resolved: true };
   }
-  return { ...resolveTrapTriggered(char, variant, rng), messages: ['You fail to disarm it!', ...resolveTrapTriggered(char, variant, rng).messages] };
+  const sprung = resolveTrapTriggered(char, variant, rng);
+  return { ...sprung, messages: ['You fail to disarm it!', ...sprung.messages] };
 }
