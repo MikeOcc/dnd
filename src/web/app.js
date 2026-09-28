@@ -108,6 +108,7 @@ function applyState(state) {
   if (monster) {
     const sprite = getMonsterSprite(monster.type);
     portraitEl.innerHTML = sprite || '';
+    portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
   } else {
     portraitEl.classList.add('hidden');
