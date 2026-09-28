@@ -4,9 +4,10 @@ import { rollCharacter, createCharacter } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
   resolveFountain, resolveChest, applyDeath, readBook,
-  chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm,
+  chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm, resolveAltar,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS, MONSTER_SCALING } from '../src/core/config.js';
+import { randomMonsterLevel } from '../src/core/monsters.js';
 
 function makeChar() {
   const rng = new RNG(1);
@@ -481,5 +482,64 @@ describe('Chest traps', () => {
       }
     }
     throw new Error('never failed a disarm');
+  });
+});
+
+describe('Altar blessing at full health', () => {
+  it('wards instead of healing when there is nothing to heal', () => {
+    let warded = 0;
+    const rng = new RNG(77);
+    for (let i = 0; i < 400; i++) {
+      const char = makeChar();
+      char.hp = char.maxHp;
+      const res = resolveAltar(char, rng);
+      expect(res.messages.join(' ')).not.toContain('The altar heals you');
+      if ((char.invulnerableTurns ?? 0) > 0) {
+        warded++;
+        expect(res.messages.join(' ')).toContain('holy ward');
+      }
+    }
+    expect(warded).toBeGreaterThan(0);
+  });
+
+  it('still heals a wounded character', () => {
+    const rng = new RNG(77);
+    let healed = false;
+    for (let i = 0; i < 400 && !healed; i++) {
+      const char = makeChar();
+      char.hp = 1;
+      if (resolveAltar(char, rng).messages.join(' ').includes('The altar heals you')) healed = true;
+    }
+    expect(healed).toBe(true);
+  });
+});
+
+describe('Monster level rolls for the deep dragons', () => {
+  const roll = (type: string | undefined, depth: number, charLevel: number, n = 3000) => {
+    const rng = new RNG(99);
+    const levels: number[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (let i = 0; i < n; i++) levels.push(randomMonsterLevel(charLevel, depth, rng, type as any));
+    return levels;
+  };
+
+  it('White and Blue Dragons break the level-60 cap only on dungeon levels 6 and 7', () => {
+    for (const type of ['White Dragon', 'Blue Dragon']) {
+      expect(Math.max(...roll(type, 5, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
+      expect(Math.max(...roll(type, 6, 60))).toBeGreaterThan(MONSTER_SCALING.HARD_LEVEL_CAP);
+      const deepest = roll(type, 7, 60);
+      expect(Math.max(...deepest)).toBeGreaterThan(90);
+      expect(Math.max(...deepest)).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('other monsters stay under the cap even on level 7', () => {
+    expect(Math.max(...roll('Red Dragon', 7, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
+    expect(Math.max(...roll(undefined, 7, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
+  });
+
+  it('rolls spread across the range rather than landing on round numbers', () => {
+    const deep = roll('White Dragon', 7, 60);
+    expect(new Set(deep).size).toBeGreaterThan(30);
   });
 });

@@ -48,6 +48,9 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN banish_cast_at INTEGER`);
   } catch { /* column already exists */ }
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN char_class TEXT NOT NULL DEFAULT 'wizard'`);
+  } catch { /* column already exists */ }
 }
 
 export function createMemoryDb(): DatabaseSync {

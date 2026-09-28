@@ -117,7 +117,7 @@ function handleKey(key: KeyEvent): void {
 
   // Name entry
   if (phase === 'name-entry' && awaitingNameInput) {
-    if (key.type === 'char' || (key.type === 'char' && key.char === ' ')) {
+    if (key.type === 'char') {
       nameBuffer += key.char;
       showNamePrompt();
       return;
@@ -142,10 +142,14 @@ function handleKey(key: KeyEvent): void {
   if (phase === 'char-roll') {
     if (key.type === 'char') {
       if (key.char === 'a') {
-        render(engine.acceptCharacter());
+        render(engine.acceptCharacter('wizard'));
         return;
       }
       if (key.char === 'b') {
+        render(engine.acceptCharacter('warrior'));
+        return;
+      }
+      if (key.char === 'c') {
         render(engine.rerollCharacter());
         return;
       }
@@ -197,7 +201,10 @@ function handleKey(key: KeyEvent): void {
 
   // Map screen
   if (phase === 'map') {
-    if (key.type === 'char' && key.char === 'f') render(engine.toggleMapView());
+    if (key.type === 'arrow') {
+      const moves = { up: 'forward', down: 'backward', left: 'left', right: 'right' } as const;
+      render(engine.mapMove(moves[key.dir as keyof typeof moves]));
+    } else if (key.type === 'char' && key.char === 'f') render(engine.toggleMapView());
     else render(engine.dismissMap());
     return;
   }
@@ -337,7 +344,7 @@ function renderSaveList(action: 'continue' | 'delete'): void {
     const letter = String.fromCharCode('a'.charCodeAt(0) + i);
     const vic = slot.asmodeusDefeated ? ' [VICTOR]' : '';
     lines.push(
-      `\x1b[32m  [${letter.toUpperCase()}]  ${slot.name.padEnd(20)} Lv ${String(slot.level).padEnd(3)} ` +
+      `\x1b[32m  [${letter.toUpperCase()}]  ${slot.name.padEnd(20)} ${slot.charClass === 'warrior' ? 'Warrior' : 'Wizard '} Lv ${String(slot.level).padEnd(3)} ` +
       `Dungeon Lv ${slot.dungeonLevel}  Monsters: ${slot.monstersDefeated}${vic}\x1b[0m`
     );
   });

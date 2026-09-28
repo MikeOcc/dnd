@@ -420,18 +420,33 @@ html, body {
 
 /* Minimap */
 #messages.map-view {
-  font-size: 11px;
+  font-size: calc(11px * var(--map-zoom, 1));
   letter-spacing: 0;
   line-height: 1.2;
   color: var(--terminal-green-dim);
-  overflow-x: auto;
+  /* The panel around it does the scrolling, in both directions at once, so
+     a two-finger touchpad drag pans the map naturally. */
+  white-space: pre;
+  word-wrap: normal;
+  width: max-content;
 }
+
+#message-area.map-mode {
+  overflow: auto;
+  min-height: 50vh;
+  max-height: 70vh;
+  cursor: grab;
+  user-select: none;
+}
+#message-area.map-mode.dragging { cursor: grabbing; }
+
+.choice-btn:disabled { opacity: 0.35; cursor: default; }
+#movement-controls.map-walk .command-bar { display: none; }
 
 /* Whole-floor map: up to 80×60 cells, so shrink to fit the panel. */
 #messages.map-view.map-full {
-  font-size: 7px;
+  font-size: calc(7px * var(--map-zoom, 1));
   line-height: 1.1;
-  overflow-y: auto;
 }
 
 /* Emphasis for important temporary messages (level-ups, big finds, etc.) */

@@ -1262,3 +1262,62 @@ describe('Paralysis from the Basilisk, Gelatinous Cube and Lich', () => {
     expect(char.heldBy).toBe('paralyzed');
   });
 });
+
+describe('Elder vampire hypnosis', () => {
+  function fight(level: number, rounds: number) {
+    const rng = new RNG(606);
+    let hits = 0, hypnotized = 0, killed = 0;
+    for (let i = 0; i < rounds; i++) {
+      const char = makeChar({ level: 40, hp: 100000, maxHp: 100000 });
+      char.heldRounds = 1; char.heldBy = 'dazed';
+      const m = createMonster('Vampire', level, 'v');
+      const res = playerHeld(char, m, rng);
+      const text = res.messages.join(' ');
+      if (res.monsterDamage > 0) hits++;
+      if (text.includes('HYPNOTIZED')) {
+        hypnotized++;
+        if (text.includes('drinks you dry')) { killed++; expect(char.hp).toBe(0); }
+        else expect(text).toContain('snap out of it');
+      }
+    }
+    return { hits, hypnotized, killed };
+  }
+
+  it('never happens below level 30', () => {
+    expect(fight(29, 1500).hypnotized).toBe(0);
+  });
+
+  it('hits hypnotize about 7% of the time, and most hypnotized victims die', () => {
+    const { hits, hypnotized, killed } = fight(35, 6000);
+    expect(hypnotized / hits).toBeGreaterThan(COMBAT.VAMPIRE_HYPNOSIS_CHANCE - 0.02);
+    expect(hypnotized / hits).toBeLessThan(COMBAT.VAMPIRE_HYPNOSIS_CHANCE + 0.02);
+    expect(killed / hypnotized).toBeGreaterThan(COMBAT.VAMPIRE_HYPNOSIS_KILL_CHANCE - 0.12);
+    expect(killed / hypnotized).toBeLessThan(COMBAT.VAMPIRE_HYPNOSIS_KILL_CHANCE + 0.12);
+  });
+});
+
+describe('Beholder paralysis', () => {
+  it('a victim who fails to break free takes two more attacks at once; one who breaks free takes none', () => {
+    const rng = new RNG(1234);
+    let helpless = 0, brokeFree = 0;
+    for (let i = 0; i < 4000 && (helpless === 0 || brokeFree === 0); i++) {
+      const char = makeChar({ level: 20, hp: 100000, maxHp: 100000, strength: 10, constitution: 10, resistance: 3 });
+      char.heldRounds = 1; char.heldBy = 'dazed';
+      const m = createMonster('Beholder', 30, 'b');
+      const text = playerHeld(char, m, rng).messages.join('\n');
+      if (!text.includes('YOU ARE PARALYZED')) continue;
+      expect(char.heldBy).not.toBe('paralyzed');        // paralysis itself costs no later turns
+      if (text.includes('wrench yourself free')) {
+        brokeFree++;
+        expect(text).not.toContain('turns every eye');
+      } else {
+        helpless++;
+        expect(text).toContain('turns every eye upon you');
+        expect(text).toContain('The paralysis breaks');
+        expect(text.split('PARALYZING RAY').length - 1).toBe(1);   // never chains
+      }
+    }
+    expect(helpless).toBeGreaterThan(0);
+    expect(brokeFree).toBeGreaterThan(0);
+  });
+});

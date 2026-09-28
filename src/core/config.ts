@@ -30,14 +30,14 @@ export const DUNGEON = {
 } as const;
 
 export const CONTENT_PER_LEVEL = {
-  CHESTS_MIN: 4,
-  CHESTS_MAX: 7,
-  BOOKS_MIN: 2,
-  BOOKS_MAX: 4,
-  ALTARS_MIN: 1,
-  ALTARS_MAX: 3,
-  FOUNTAINS_MIN: 2,
-  FOUNTAINS_MAX: 4,
+  CHESTS_MIN: 6,
+  CHESTS_MAX: 10,
+  BOOKS_MIN: 3,
+  BOOKS_MAX: 5,
+  ALTARS_MIN: 2,
+  ALTARS_MAX: 4,
+  FOUNTAINS_MIN: 3,
+  FOUNTAINS_MAX: 5,
   TRAPS_MIN: 5,
   TRAPS_MAX: 10,
   FIXED_MONSTERS_MIN: 2,
@@ -166,6 +166,13 @@ export const COMBAT = {
     { ray: 'death-ray',        eye: 'white',      minLevel: 29, weight: 1 },
   ],
   BEHOLDER_BITE_CHANCE: 0.2,
+  BEHOLDER_PARALYSIS_FREE_ATTACKS: 2,  // extra attacks on a paralyzed victim who fails to break free
+
+  // Elder vampires: any damaging hit may hypnotize; a hypnotized victim is
+  // usually drained dead while helpless, otherwise snaps out as it bites.
+  VAMPIRE_HYPNOSIS_MIN_LEVEL: 30,
+  VAMPIRE_HYPNOSIS_CHANCE: 0.07,
+  VAMPIRE_HYPNOSIS_KILL_CHANCE: 0.75,
 
   // Basilisk gaze / Gelatinous Cube engulf / Lich touch
   PARALYSIS_CHANCE: 0.4,
@@ -282,6 +289,12 @@ export const MONSTER_SCALING = {
   // climbs to 100 for Asmodeus.
   HARD_LEVEL_CAP: 60,
 
+  // A few ordinary monsters may break the hard cap, but only this deep:
+  // the White (frost) and Blue Dragons can climb as high as their own
+  // maxLevel on dungeon levels 6 and 7, rolled like any other level.
+  EXTENDED_CAP_TYPES: ['White Dragon', 'Blue Dragon'] as string[],
+  EXTENDED_CAP_MIN_DEPTH: 6,
+
   // Random-encounter monster TYPE eligibility by dungeon depth (index 0 =
   // dungeon level 1): a floor on naturalTier, on top of each monster's own
   // minDungeonLevel. Leveling up a Kobold's stats (via LEVEL_RANGE_BY_
@@ -328,6 +341,15 @@ export const SPELLS = {
     lightning: 35,
     banish: 40,
   },
+  WARRIOR_UNLOCK_LEVEL: {
+    'power-attack': 1,
+    'shield-bash': 8,
+    heal: 12,
+    cleave: 16,
+    fireball: 20,
+    'battle-cry': 24,
+    whirlwind: 35,
+  },
   // Banish always works on ordinary monsters. Against very powerful ones it
   // rolls a d12 and fails on a 1..N: N by tier for tier 8+, and N for any
   // dragon or undead in the top 30% of its own level range. Asmodeus is
@@ -336,6 +358,32 @@ export const SPELLS = {
   BANISH_HIGH_LEVEL_FAIL_FACES: 3,
   BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this
   BANISH_COOLDOWN_SECONDS: 3600,
+} as const;
+
+// Warriors trade most spells for more swings and combat skills, and are
+// tougher. Their skills unlock by level (SPELLS.WARRIOR_UNLOCK_LEVEL).
+export const WARRIOR = {
+  ATTACKS_EVERY_N_LEVELS: 10,      // 1 swing, 2 at level 10, 3 at 20...
+  MAX_ATTACKS: 5,
+  EXTRA_SWING_HIT_PENALTY: 2,      // each swing after the first is this much harder to land
+  STR_DAMAGE_DIVISOR: 1.5,         // wizards use COMBAT.DAMAGE_STR_DIVISOR (2)
+  HP_BONUS_START: 8,
+  HP_BONUS_PER_LEVEL: 3,
+  DAMAGE_TAKEN_MULT: 0.85,
+  GEM_LEVEL: 35,                   // gems need no INT, but only from this level
+  SPELL_POWER: 0.6,                // a warrior's Heal and Fireball, vs a wizard's
+
+  POWER_ATTACK_MULT: 2.2,
+  POWER_ATTACK_HIT_PENALTY: 4,
+  SHIELD_BASH_MULT: 0.8,
+  SHIELD_BASH_STUN_CHANCE: 0.4,
+  CLEAVE_MULT: 1.3,
+  CLEAVE_BIG_MULT: 2.0,            // against monsters of CLEAVE_BIG_TIER or higher
+  CLEAVE_BIG_TIER: 6,
+  BATTLE_CRY_ROUNDS: 3,
+  BATTLE_CRY_MULT: 1.5,
+  WHIRLWIND_EXTRA_SWINGS: 2,
+  WHIRLWIND_MULT: 0.8,
 } as const;
 
 export const CHEST_TRAPS = {

@@ -118,6 +118,8 @@ export interface Character {
   heldRounds?: number;        // combat rounds the character loses (paralyzed, asleep, cowering...) — in-memory, cleared when combat ends
   heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
   banishCastAt?: number;      // play-time second of the last Banish (one per hour of play)
+  charClass: CharacterClass;
+  battleCryRounds?: number;   // warrior: rounds of Battle Cry's damage boost left (in-memory, cleared after combat)
   introsSeen: number[];
   rerollsRemaining: number;
   elementalWarnings: string[]; // "{MonsterType}:{fireball|acid|lightning}" already called out this playthrough
@@ -195,7 +197,10 @@ export interface Monster {
   prayerPenalty: number;
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
+  stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
 }
+
+export type CharacterClass = 'wizard' | 'warrior';
 
 /** Kinds of harm, for the client's hit effects (flash colour, tint). */
 export type FxElement = 'physical' | 'fire' | 'cold' | 'lightning' | 'acid' | 'poison' | 'drain' | 'psychic' | 'holy' | 'arcane';
@@ -290,6 +295,7 @@ export interface CharacterSummary {
   monstersDefeated: number;
   asmodeusDefeated: boolean;
   xp: number;
+  charClass: CharacterClass;
 }
 
 export interface ScoreResult {

@@ -275,11 +275,25 @@ export interface AltarResult {
   resImproved?: boolean;
 }
 
+// Rounds of combat a full-health altar blessing wards you for.
+const ALTAR_WARD_ROUNDS = 2;
+
 export function resolveAltar(char: Character, rng: RNG): AltarResult {
   const wisdomBonus = Math.floor(char.wisdom / 5);
   const roll = rng.float() - wisdomBonus * 0.02;
 
   if (roll < 0.30) {
+    // Nothing to heal: the blessing becomes a ward against the next blows instead.
+    if (char.hp >= char.maxHp) {
+      char.invulnerableTurns = (char.invulnerableTurns ?? 0) + ALTAR_WARD_ROUNDS;
+      return {
+        messages: [
+          'A pale light descends, but finds no wounds to mend.',
+          '',
+          `It settles over you as a holy ward. The next ${ALTAR_WARD_ROUNDS} blows against you in combat will be turned aside.`,
+        ],
+      };
+    }
     const heal = Math.round(char.maxHp * 0.4) + rng.int(5, 20);
     const actual = Math.min(heal, char.maxHp - char.hp);
     char.hp = Math.min(char.hp + heal, char.maxHp);

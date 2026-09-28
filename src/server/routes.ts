@@ -78,6 +78,20 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
 
       let engine: GameEngine;
 
+      // A page reload picks the live game back up, unsaved progress and all
+      // (the game only writes to disk when the player saves). Falls back to
+      // the last save if the server no longer has that game in memory.
+      if (action === 'resume' && payload?.characterId) {
+        const live = sessions.get(payload.characterId);
+        if (live && live.getCharacter()?.id === payload.characterId) {
+          return res.json({ state: live.getState(), characterId: payload.characterId });
+        }
+        engine = freshEngine(repo);
+        sessions.set(payload.characterId, engine);
+        const state = engine.loadCharacter(payload.characterId);
+        return res.json({ state, characterId: payload.characterId });
+      }
+
       if (action === 'load' && payload?.characterId) {
         // Always create fresh engine for load
         engine = freshEngine(repo);
@@ -93,6 +107,23 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         return res.json({ state, characterId: '__pending__' });
       }
 
+      // The server lost this game (it restarted while the page stayed open):
+      // pick the character back up from their last save rather than handing
+      // the action to a blank engine, which would dump them at the title.
+      if (characterId && characterId !== '__pending__' && !sessions.has(characterId)) {
+        const revived = freshEngine(repo);
+        const state = revived.loadCharacter(characterId);
+        if (revived.getCharacter()) {
+          sessions.set(characterId, revived);
+          state.messages = [
+            'The dungeon shimmers and settles. (The game server restarted, so you are back at your last save.)',
+            '',
+            ...state.messages,
+          ];
+          return res.json({ state, characterId });
+        }
+      }
+
       engine = getOrCreateEngine(repo, characterId ?? '__pending__');
 
       let state;
@@ -104,7 +135,7 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           state = engine.rerollCharacter();
           break;
         case 'accept': {
-          state = engine.acceptCharacter();
+          state = engine.acceptCharacter(payload?.charClass === 'warrior' ? 'warrior' : 'wizard');
           const char = engine.getCharacter();
           if (char) {
             sessions.set(char.id, engine);
@@ -188,6 +219,13 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'show-map':
           state = engine.showMap();
           break;
+        case 'map-move': {
+          const dir = payload?.dir;
+          state = dir === 'forward' || dir === 'backward' || dir === 'left' || dir === 'right'
+            ? engine.mapMove(dir)
+            : engine.getState();
+          break;
+        }
         case 'toggle-map-view':
           state = engine.toggleMapView();
           break;

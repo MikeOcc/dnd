@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:web": "tsc -p tsconfig.web.json",
+    "typecheck": "tsc -p tsconfig.check.json",
     "db:init": "NODE_NO_WARNINGS=1 tsx scripts/init-db.ts",
     "cli": "NODE_NO_WARNINGS=1 tsx src/cli/cli.ts",
     "web": "NODE_NO_WARNINGS=1 tsx src/server/server.ts",

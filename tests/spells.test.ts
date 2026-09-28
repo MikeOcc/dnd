@@ -61,8 +61,8 @@ describe('Banish', () => {
   it('high-level dragons and undead resist too, low-level ones do not', () => {
     expect(banishFailFaces(createMonster('Black Dragon', 48, 'k'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
     expect(banishFailFaces(createMonster('Black Dragon', 10, 'k'))).toBe(0);
-    expect(banishFailFaces(createMonster('Vampire', 24, 'v'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
-    expect(banishFailFaces(createMonster('Vampire', 9, 'v'))).toBe(0);
+    expect(banishFailFaces(createMonster('Vampire', 40, 'v'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
+    expect(banishFailFaces(createMonster('Vampire', 24, 'v'))).toBe(0);
     expect(banishFailFaces(createMonster('Skeleton', 10, 's'))).toBe(SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES);
   });
 

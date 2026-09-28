@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { LEVELING, CHARACTER } from './config.js';
+import { LEVELING, CHARACTER, WARRIOR } from './config.js';
 import type { Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
@@ -27,6 +27,7 @@ export function createCharacter(id: string, name: string, roll: CharacterRoll): 
   return {
     id,
     name,
+    charClass: 'wizard',
     level: 1,
     xp: 0,
     dungeonLevel: 1,
@@ -74,7 +75,9 @@ export function checkLevelUp(char: Character, rng: RNG): { didLevel: boolean; ne
     return { didLevel: false, newLevel: char.level, previousLevel, hpGain: 0 };
   }
 
-  const hpGain = LEVELING.HP_PER_LEVEL_BASE + rng.die(LEVELING.HP_PER_LEVEL_RAND);
+  const levels = newLevel - char.level;
+  const hpGain = LEVELING.HP_PER_LEVEL_BASE + rng.die(LEVELING.HP_PER_LEVEL_RAND)
+    + (char.charClass === 'warrior' ? WARRIOR.HP_BONUS_PER_LEVEL * levels : 0);
   char.level = newLevel;
   char.maxHp += hpGain;
   char.hp = Math.min(char.hp + hpGain, char.maxHp);

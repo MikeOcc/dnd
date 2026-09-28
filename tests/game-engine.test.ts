@@ -7,6 +7,7 @@ import { chestTrapFor } from '../src/core/encounters.js';
 import { xpForLevel } from '../src/core/character.js';
 import { abilityElement } from '../src/core/combat.js';
 import { MENU_LORE } from '../src/content/menu-lore.js';
+import { canMove, floodFill } from '../src/core/dungeon.js';
 import { DUNGEON } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
@@ -1050,6 +1051,17 @@ describe('GameEngine — trapped chests', () => {
     throw new Error('no such chest');
   }
 
+  /** Spotting is capped below 100%, so search fresh until the trap is found. */
+  function searchUntilSpotted(engine: GameEngine, e: any, id: string) {
+    for (let i = 0; i < 100; i++) {
+      e.interaction = { type: 'chest', contentId: id, choices: [] };
+      e.phase = 'interaction';
+      const res = engine.interactionChoice('b');
+      if (e.interaction?.chestTrapSpotted) return res;
+    }
+    throw new Error('never spotted the trap');
+  }
+
   function atChest(engine: GameEngine, id: string) {
     const e = engine as any;
     e.phase = 'interaction';
@@ -1097,7 +1109,7 @@ describe('GameEngine — trapped chests', () => {
     for (let i = 0; i < 40 && !disarmed; i++) {
       atChest(engine, id);
       e.dungeonState.openedChests.delete(id);
-      const searched = engine.interactionChoice('b');
+      const searched = searchUntilSpotted(engine, e, id);
       expect(searched.messages[0]).toContain('fire glyph');
       const xp = e.char.xp;
       const res = engine.interactionChoice('a');
@@ -1117,7 +1129,7 @@ describe('GameEngine — trapped chests', () => {
     e.char.wisdom = 60;
     const id = chestWith(e.char, 'needle');
     atChest(engine, id);
-    engine.interactionChoice('b');
+    searchUntilSpotted(engine, e, id);
     const res = engine.interactionChoice('b');
     expect(res.messages.join(' ')).toContain('TRAP!');
     expect(e.char.statusEffects.some((s: any) => s.type === 'poison')).toBe(true);
@@ -1315,6 +1327,132 @@ describe('GameEngine — main menu', () => {
       const msgs = engine.showMainMenu().messages;
       const teaser = msgs.slice(4);
       expect(MENU_LORE.some(l => l.join('\n') === teaser.join('\n'))).toBe(true);
+    }
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — walking on the map', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  /** An engine on the map screen, plus an open direction from where the character stands. */
+  function onMap() {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.pace.movesSinceCombat = -1000;    // keep random encounters out of the way
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const dirs = ['N', 'E', 'S', 'W'] as const;
+    const open = dirs.find(d => canMove(lvl.grid, e.char.x, e.char.y, d))!;
+    const wall = dirs.find(d => !canMove(lvl.grid, e.char.x, e.char.y, d));
+    const step = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] }[open];
+    const target = `${e.char.x + step[0]},${e.char.y + step[1]}`;
+    engine.showMap();
+    return { engine, e, lvl, open, wall, target };
+  }
+
+  it('turning redraws the map with the new facing', () => {
+    const { engine, e } = onMap();
+    const state = engine.mapMove('left');
+    expect(state.phase).toBe('map');
+    expect(state.messages[0]).toContain(`Facing ${e.char.facing}`);
+  });
+
+  it('walking into a wall stays on the map without moving', () => {
+    const { engine, e, wall } = onMap();
+    if (!wall) return;  // start cell open on all sides — nothing to test
+    e.char.facing = wall;
+    const { x, y } = e.char;
+    expect(engine.mapMove('forward').phase).toBe('map');
+    expect([e.char.x, e.char.y]).toEqual([x, y]);
+  });
+
+  it('an ordinary step keeps the map up', () => {
+    const { engine, e, lvl, open, target } = onMap();
+    lvl.contents.delete(target);
+    if (lvl.exit && `${lvl.exit.x},${lvl.exit.y}` === target) lvl.exit = null;
+    e.char.facing = open;
+    const state = engine.mapMove('forward');
+    expect(state.phase).toBe('map');
+    expect(`${e.char.x},${e.char.y}`).toBe(target);
+  });
+
+  it('stepping onto a ladder or a trap returns to the normal view', () => {
+    for (const type of ['ladder-down', 'trap'] as const) {
+      const { engine, e, lvl, open, target } = onMap();
+      lvl.contents.set(target, { type, id: `t-${type}`, trapVariant: 'pit' });
+      e.char.facing = open;
+      const state = engine.mapMove('forward');
+      expect(state.phase).not.toBe('map');
+    }
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — manual saves only', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('walking does not write to the save; pressing S does', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const repo = new Repository(db);
+    const saved = repo.loadCharacter(e.char.id)!;
+    e.phase = 'playing';
+    e.pace.movesSinceCombat = -1000;
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    e.char.facing = (['N', 'E', 'S', 'W'] as const).find(d => canMove(lvl.grid, e.char.x, e.char.y, d));
+    engine.moveForward();
+    e.char.gold += 500;
+    engine.turnLeft();
+
+    const stillSaved = repo.loadCharacter(e.char.id)!;
+    expect([stillSaved.x, stillSaved.y, stillSaved.gold]).toEqual([saved.x, saved.y, saved.gold]);
+
+    engine.saveAndPrompt();
+    expect(repo.loadCharacter(e.char.id)!.gold).toBe(e.char.gold);
+  });
+
+  it('dying does not write to the save', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const repo = new Repository(db);
+    forceLethalCombat(engine);
+    const state = engine.combatAction('a');
+    expect(state.phase).toBe('death');
+    expect(repo.loadCharacter(e.char.id)!.deathCount).toBe(0);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — ruby teleport', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('sends a fresh character somewhere else on the level, even with nothing explored', () => {
+    for (let trial = 0; trial < 10; trial++) {
+      const engine = makeReadyEngine(db);
+      const e = engine as any;
+      e.char.intelligence = 18;
+      e.char.inventory.gems.ruby = 1;
+      e.phase = 'combat';
+      e.combat = { monster: createMonster('Orc', 5, 'o1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+      const from = { x: e.char.x, y: e.char.y };
+
+      const state = engine.gemAction('a');
+      const lvl = e.getLevel(e.char.dungeonLevel);
+      const content = lvl.contents.get(`${e.char.x},${e.char.y}`);
+
+      expect(state.phase).toBe('playing');
+      expect(e.char.inventory.gems.ruby).toBe(0);
+      expect(Math.abs(e.char.x - from.x) + Math.abs(e.char.y - from.y)).toBeGreaterThanOrEqual(10);
+      expect(content === undefined || content.type === 'description').toBe(true);
+      expect(floodFill(lvl.grid, from.x, from.y).has(`${e.char.x},${e.char.y}`)).toBe(true);
+      expect(e.dungeonState.visitedCells.has(`${e.char.dungeonLevel}:${e.char.x},${e.char.y}`)).toBe(true);
     }
   });
 });

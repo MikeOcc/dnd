@@ -128,7 +128,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Vampire': {
     type: 'Vampire', isUndead: true, isUnique: false,
-    minLevel: 8, maxLevel: 25, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
+    minLevel: 8, maxLevel: 50, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
     baseHpPerLevel: 10, baseAttackPerLevel: 5.0, baseDefensePerLevel: 3.0,
     fireballResistance: 1.0,
     encounterIntro: ['A pale figure steps from the shadow, its eyes red as garnets.', '', 'You have encountered a Level {LVL} Vampire!'],
@@ -225,7 +225,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Blue Dragon': {
     type: 'Blue Dragon', isUndead: false, isUnique: false,
-    minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
+    minLevel: 8, maxLevel: 100, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.5, baseDefensePerLevel: 4.0,
     fireballResistance: 3.0,  // highly susceptible — triple damage from Fireball
     lightningResistance: 0.3, // resistant to its own breath weapon
@@ -234,7 +234,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'White Dragon': {
     type: 'White Dragon', isUndead: false, isUnique: false,
-    minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 0.9,
+    minLevel: 8, maxLevel: 100, naturalTier: 7, minDungeonLevel: 3, speed: 0.9,
     baseHpPerLevel: 13, baseAttackPerLevel: 6.5, baseDefensePerLevel: 3.8,
     fireballResistance: 2.0,  // vulnerable to fireball
     coldResistance: 0.3,      // resistant to its own breath weapon
@@ -373,11 +373,15 @@ export function randomMonsterLevel(
   characterLevel: number,
   dungeonDepth: number,
   rng: RNG,
+  type?: MonsterType,
 ): number {
   const ranges = MONSTER_SCALING.LEVEL_RANGE_BY_DUNGEON_LEVEL;
   const range = ranges[Math.max(0, Math.min(ranges.length - 1, dungeonDepth - 1))];
   const uncappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
-  const cappedMax = Math.min(MONSTER_SCALING.HARD_LEVEL_CAP, uncappedMax);
+  const extended = !!type && MONSTER_SCALING.EXTENDED_CAP_TYPES.includes(type)
+    && dungeonDepth >= MONSTER_SCALING.EXTENDED_CAP_MIN_DEPTH;
+  const cap = extended ? getDefinition(type!).maxLevel : MONSTER_SCALING.HARD_LEVEL_CAP;
+  const cappedMax = Math.min(cap, uncappedMax);
   return rng.int(range.min, Math.max(range.min, cappedMax));
 }
 

@@ -25,14 +25,14 @@ export class Repository {
         strength, constitution, intelligence, wisdom, dexterity, charisma, resistance,
         death_count, steps_taken, monsters_defeated, unique_monsters_defeated,
         asmodeus_defeated, status_effects, intros_seen, reroll_used, inventory, elemental_warnings,
-        banish_cast_at, created_at, play_time, last_saved
+        banish_cast_at, char_class, created_at, play_time, last_saved
       ) VALUES (
         @id, @name, @level, @xp, @dungeon_level, @x, @y, @facing,
         @hp, @max_hp, @gold,
         @strength, @constitution, @intelligence, @wisdom, @dexterity, @charisma, @resistance,
         @death_count, @steps_taken, @monsters_defeated, @unique_monsters_defeated,
         @asmodeus_defeated, @status_effects, @intros_seen, @reroll_used, @inventory, @elemental_warnings,
-        @banish_cast_at, @created_at, @play_time, @last_saved
+        @banish_cast_at, @char_class, @created_at, @play_time, @last_saved
       )
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name, level = excluded.level, xp = excluded.xp,
@@ -47,7 +47,7 @@ export class Repository {
         asmodeus_defeated = excluded.asmodeus_defeated, status_effects = excluded.status_effects,
         intros_seen = excluded.intros_seen, reroll_used = excluded.reroll_used,
         inventory = excluded.inventory, elemental_warnings = excluded.elemental_warnings,
-        banish_cast_at = excluded.banish_cast_at,
+        banish_cast_at = excluded.banish_cast_at, char_class = excluded.char_class,
         play_time = excluded.play_time, last_saved = excluded.last_saved
     `).run({
       id: char.id,
@@ -79,6 +79,7 @@ export class Repository {
       inventory: JSON.stringify(char.inventory),
       elemental_warnings: JSON.stringify(char.elementalWarnings),
       banish_cast_at: char.banishCastAt ?? null,
+      char_class: char.charClass,
       created_at: char.createdAt,
       play_time: char.playTime,
       last_saved: char.lastSaved,
@@ -93,7 +94,7 @@ export class Repository {
 
   listCharacters(): CharacterSummary[] {
     const rows = this.db.prepare(
-      'SELECT id, name, level, dungeon_level, monsters_defeated, asmodeus_defeated, xp FROM characters ORDER BY last_saved DESC'
+      'SELECT id, name, level, dungeon_level, monsters_defeated, asmodeus_defeated, xp, char_class FROM characters ORDER BY last_saved DESC'
     ).all() as Record<string, unknown>[];
 
     return rows.map(row => ({
@@ -104,6 +105,7 @@ export class Repository {
       monstersDefeated:   row['monsters_defeated'] as number,
       asmodeusDefeated:   Boolean(row['asmodeus_defeated']),
       xp:                 row['xp'] as number,
+      charClass:          (row['char_class'] as CharacterSummary['charClass']) || 'wizard',
     }));
   }
 
@@ -147,6 +149,7 @@ export class Repository {
       inventory,
       elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
       banishCastAt:           (row['banish_cast_at'] as number | null) ?? undefined,
+      charClass:              (row['char_class'] as Character['charClass']) || 'wizard',
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,
       lastSaved:              row['last_saved'] as number,

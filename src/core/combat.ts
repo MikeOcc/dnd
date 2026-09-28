@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR } from './config.js';
 import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -34,46 +34,107 @@ function shouldWarnElemental(char: Character, key: string): boolean {
 
 // ─── Attack ──────────────────────────────────────────────────────────────────
 
-export function playerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+/** Swings a warrior gets each round: one more every 10 levels, up to 5. Wizards swing once. */
+export function attacksPerRound(char: Character): number {
+  if (char.charClass !== 'warrior') return 1;
+  return Math.min(WARRIOR.MAX_ATTACKS, 1 + Math.floor(char.level / WARRIOR.ATTACKS_EVERY_N_LEVELS));
+}
+
+/** One weapon swing: rolls to hit, then damage (warriors lean harder on
+ * Strength, and hit harder while Battle Cry lasts). Returns damage dealt. */
+function swing(char: Character, monster: Monster, rng: RNG, messages: string[], opts: { mult?: number; hitPenalty?: number; label?: string } = {}): number {
   const eff = getEffectiveStats(char);
   const naked = char.statusEffects.some(e => e.type === 'naked');
+  const warrior = char.charClass === 'warrior';
 
   const hitRoll = rng.die(20) + char.level
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
-    + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR);
+    + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
+    - (opts.hitPenalty ?? 0);
+  const monsterDef = COMBAT.MONSTER_BASE_DEFENSE + monster.level + Math.floor(monster.level / 4);
+  const label = opts.label ? ` (${opts.label})` : '';
 
-  const monsterDef = COMBAT.MONSTER_BASE_DEFENSE
-    + monster.level
-    + Math.floor(monster.level / 4);
-
-  const messages: string[] = [];
-  let monsterDamage = 0;
-
-  if (hitRoll >= monsterDef) {
-    const baseDamage =
-      (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT)
-      + Math.floor(eff.strength / COMBAT.DAMAGE_STR_DIVISOR);
-
-    const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
-    monsterDamage = Math.max(1, Math.round(baseDamage * rand * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
-    monster.hp -= monsterDamage;
-    messages.push(`You strike the ${monster.type} for ${monsterDamage} damage.`);
-  } else {
-    messages.push(`You swing at the ${monster.type} but miss!`);
+  if (hitRoll < monsterDef) {
+    messages.push(`You swing at the ${monster.type} but miss!${label}`);
+    return 0;
   }
+  const strDiv = warrior ? WARRIOR.STR_DAMAGE_DIVISOR : COMBAT.DAMAGE_STR_DIVISOR;
+  const baseDamage = (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT) + Math.floor(eff.strength / strDiv);
+  const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
+  const cry = (char.battleCryRounds ?? 0) > 0 ? WARRIOR.BATTLE_CRY_MULT : 1;
+  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
+  monster.hp -= damage;
+  messages.push(`You strike the ${monster.type} for ${damage} damage.${label}`);
+  return damage;
+}
 
+/** Several swings in a row (stopping if the monster falls), then the monster's reply. */
+function swingRound(char: Character, monster: Monster, rng: RNG, messages: string[], swings: number, opts: { mult?: number } = {}): CombatRoundResult {
+  let dealt = 0;
+  for (let i = 0; i < swings && monster.hp > 0; i++) {
+    dealt += swing(char, monster, rng, messages, {
+      mult: opts.mult,
+      hitPenalty: i * WARRIOR.EXTRA_SWING_HIT_PENALTY,
+      label: swings > 1 ? `swing ${i + 1}` : undefined,
+    });
+  }
+  return finishWarriorRound(char, monster, rng, messages, dealt);
+}
+
+/** Ends a round of the character's attacks: Battle Cry ticks down, then the monster acts. */
+function finishWarriorRound(char: Character, monster: Monster, rng: RNG, messages: string[], dealt: number): CombatRoundResult {
+  if ((char.battleCryRounds ?? 0) > 0) char.battleCryRounds!--;
   const monsterDied = monster.hp <= 0;
   if (monsterDied) messages.push(`The ${monster.type} collapses!`);
-
   const res = monsterAction(char, monster, rng, messages);
-  return {
-    ...res,
-    monsterDamage: res.monsterDamage,
-    messages: res.messages,
-    playerDied: res.playerDied,
-    monsterDied,
-    playerDamage: monsterDamage,
-  };
+  return { ...res, monsterDied, playerDamage: dealt };
+}
+
+export function playerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  return swingRound(char, monster, rng, [], attacksPerRound(char));
+}
+
+// ─── Warrior skills ──────────────────────────────────────────────────────────
+
+/** One heavy swing: much more damage, harder to land. */
+export function playerPowerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const messages = ['You wind up a Power Attack!'];
+  const dealt = swing(char, monster, rng, messages, { mult: WARRIOR.POWER_ATTACK_MULT, hitPenalty: WARRIOR.POWER_ATTACK_HIT_PENALTY });
+  return finishWarriorRound(char, monster, rng, messages, dealt);
+}
+
+/** A lighter blow that can stun the monster out of its next turn. */
+export function playerShieldBash(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const messages = ['You slam your shield into the ' + monster.type + '!'];
+  const dealt = swing(char, monster, rng, messages, { mult: WARRIOR.SHIELD_BASH_MULT });
+  if (dealt > 0 && monster.hp > 0 && rng.float() < WARRIOR.SHIELD_BASH_STUN_CHANCE) {
+    monster.stunnedTurns = 1;
+    messages.push(`The ${monster.type} reels, stunned!`);
+  }
+  return finishWarriorRound(char, monster, rng, messages, dealt);
+}
+
+/** A great sweeping blow that bites deepest into big monsters. */
+export function playerCleave(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const big = monster.definition.naturalTier >= WARRIOR.CLEAVE_BIG_TIER;
+  const messages = [big ? `You Cleave into the ${monster.type}'s huge bulk!` : 'You Cleave!'];
+  const dealt = swing(char, monster, rng, messages, { mult: big ? WARRIOR.CLEAVE_BIG_MULT : WARRIOR.CLEAVE_MULT });
+  return finishWarriorRound(char, monster, rng, messages, dealt);
+}
+
+/** A roar that boosts damage for the next few rounds (this round's swing included). */
+export function playerBattleCry(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  char.battleCryRounds = WARRIOR.BATTLE_CRY_ROUNDS + 1;  // this round's tick-down included
+  const messages = [`You let out a Battle Cry! Your blows strike ${Math.round((WARRIOR.BATTLE_CRY_MULT - 1) * 100)}% harder for ${WARRIOR.BATTLE_CRY_ROUNDS} rounds.`];
+  const dealt = swing(char, monster, rng, messages);
+  return finishWarriorRound(char, monster, rng, messages, dealt);
+}
+
+/** A whirling flurry: extra swings this round, each a little lighter. */
+export function playerWhirlwind(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const messages = ['You spin into a Whirlwind of steel!'];
+  const r = swingRound(char, monster, rng, messages, attacksPerRound(char) + WARRIOR.WHIRLWIND_EXTRA_SWINGS, { mult: WARRIOR.WHIRLWIND_MULT });
+  return r;
 }
 
 // ─── Fireball ────────────────────────────────────────────────────────────────
@@ -84,7 +145,8 @@ export function playerFireball(char: Character, monster: Monster, rng: RNG): Com
   const base = char.level * COMBAT.FIREBALL_LEVEL_MULT
     + Math.floor(eff.intelligence / COMBAT.FIREBALL_INT_DIVISOR);
   const rand = COMBAT.FIREBALL_RAND_MIN + rng.float() * (COMBAT.FIREBALL_RAND_MAX - COMBAT.FIREBALL_RAND_MIN);
-  let damage = Math.max(1, Math.round(base * rand * monster.definition.fireballResistance));
+  const power = char.charClass === 'warrior' ? WARRIOR.SPELL_POWER : 1;
+  let damage = Math.max(1, Math.round(base * rand * power * monster.definition.fireballResistance));
 
   const messages: string[] = [];
 
@@ -325,7 +387,8 @@ export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatR
   const eff = getEffectiveStats(char);
   const base = char.level * COMBAT.HEAL_LEVEL_WEIGHT + Math.floor(eff.wisdom / COMBAT.HEAL_WIS_DIVISOR);
   const rand = COMBAT.HEAL_RAND_MIN + rng.float() * (COMBAT.HEAL_RAND_MAX - COMBAT.HEAL_RAND_MIN);
-  const healAmount = Math.max(1, Math.round(base * rand));
+  const power = char.charClass === 'warrior' ? WARRIOR.SPELL_POWER : 1;
+  const healAmount = Math.max(1, Math.round(base * rand * power));
 
   const messages: string[] = ['You cast Heal.'];
   char.hp = Math.min(char.hp + healAmount, char.maxHp);
@@ -552,7 +615,29 @@ type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDi
 function monsterAction(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
   const out: { acted?: boolean; ability?: string } = {};
   const res = monsterActionInner(char, monster, rng, messages, out);
-  return out.acted ? { ...res, monsterElement: abilityElement(out.ability) } : res;
+  if (!out.acted) return res;
+  return vampireHypnosis(char, monster, rng, messages, { ...res, monsterElement: abilityElement(out.ability) });
+}
+
+/** An elder vampire's damaging hit may hypnotize: usually fatal, otherwise
+ * the victim snaps out of it as the fangs go in. */
+function vampireHypnosis(char: Character, monster: Monster, rng: RNG, messages: string[], res: MonsterActionResult): MonsterActionResult {
+  if (monster.type !== 'Vampire' || monster.level < COMBAT.VAMPIRE_HYPNOSIS_MIN_LEVEL) return res;
+  if (res.monsterDamage <= 0 || res.playerDied || char.hp <= 0) return res;
+  if (rng.float() >= COMBAT.VAMPIRE_HYPNOSIS_CHANCE) return res;
+
+  messages.push('', "The Vampire's eyes catch yours, and the world falls away. YOU ARE HYPNOTIZED.");
+  if (rng.float() < COMBAT.VAMPIRE_HYPNOSIS_KILL_CHANCE) {
+    const drained = char.hp;
+    char.hp = 0;
+    messages.push('You stand helpless, smiling, as it drinks you dry.');
+    return { ...res, monsterDamage: res.monsterDamage + drained, playerDied: true, monsterElement: 'drain' };
+  }
+  const naked = char.statusEffects.some(e => e.type === 'naked');
+  const bite = calculateMonsterDamage(monster, char, rng, naked);
+  char.hp = Math.max(0, char.hp - bite);
+  messages.push(`You snap out of it as its fangs sink into your throat! You suffer ${bite} damage.`);
+  return { ...res, monsterDamage: res.monsterDamage + bite, playerDied: char.hp <= 0, monsterElement: 'drain' };
 }
 
 function monsterActionInner(
@@ -572,6 +657,11 @@ function monsterActionInner(
       messages.push(`The ${monster.type} reels in confusion and fails to act!`);
       return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
     }
+  }
+  if ((monster.stunnedTurns ?? 0) > 0) {
+    monster.stunnedTurns!--;
+    messages.push(`The ${monster.type} is still stunned and can't act!`);
+    return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
   }
   out.acted = true;
 
@@ -850,7 +940,8 @@ function calculateMonsterDamage(
     + char.level;
 
   const defenseMultiplier = Math.max(0.2, 1 - defense / 80) * (naked ? (1 / COMBAT.NAKED_DEFENSE_MULT) : 1);
-  return Math.max(1, Math.round(base * rand * defenseMultiplier));
+  const toughness = char.charClass === 'warrior' ? WARRIOR.DAMAGE_TAKEN_MULT : 1;
+  return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness));
 }
 
 function pickAsmodeusAbility(monster: Monster, char: Character, rng: RNG): string {
@@ -991,12 +1082,23 @@ function resolveBeholderRay(
       messages.push('PARALYZING RAY.');
       if (beholderSave(char, monster, rng, ['constitution', 'resistance'])) {
         messages.push('Your muscles lock for an instant, then you tear free.');
-      } else {
-        addStatusEffect(char, { type: 'paralyzed', value: 0, turns: 2 });
-        holdCharacter(char, 2, 'paralyzed');
-        messages.push('Every muscle locks rigid. YOU ARE PARALYZED!');
+        return done(0);
       }
-      return done(0);
+      messages.push('Every muscle locks rigid. YOU ARE PARALYZED!');
+      // One desperate roll to break free before it presses the attack.
+      if (beholderSave(char, monster, rng, ['strength', 'constitution'])) {
+        messages.push('You strain against the grip and wrench yourself free before it can strike!');
+        return done(0);
+      }
+      // Helpless: the Beholder gets two more attacks before you can respond.
+      messages.push('You cannot break free. The Beholder turns every eye upon you...');
+      let total = 0;
+      for (let i = 0; i < COMBAT.BEHOLDER_PARALYSIS_FREE_ATTACKS && char.hp > 0; i++) {
+        messages.push('');
+        total += beholderFreeAttack(char, monster, rng, messages, naked);
+      }
+      if (char.hp > 0) messages.push('', 'The paralysis breaks. You can move again.');
+      return done(total);
     }
     case 'sleep-ray': {
       messages.push('SLEEP RAY.');
@@ -1062,6 +1164,21 @@ function resolveBeholderRay(
       return done(0);
     }
   }
+}
+
+/** One of the Beholder's attacks on a paralyzed victim: a bite or any ray
+ * but paralysis (so it can't chain). Returns the damage dealt. */
+function beholderFreeAttack(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean): number {
+  const ability = pickBeholderAbility(monster, rng);
+  if (ability && ability !== 'paralyze-ray') {
+    const before = char.hp;
+    resolveBeholderRay(ability as BeholderRay, char, monster, rng, messages, naked);
+    return before - char.hp;
+  }
+  const dmg = calculateMonsterDamage(monster, char, rng, naked);
+  char.hp = Math.max(0, char.hp - dmg);
+  messages.push(`The Beholder's jaws tear into you for ${dmg} damage.`);
+  return dmg;
 }
 
 const HELD_TEXT: Record<HeldCondition, string> = {

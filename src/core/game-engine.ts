@@ -3,14 +3,15 @@ import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
-  Fx, FxElement, ChestTrapType,
+  Fx, FxElement, ChestTrapType, CharacterClass,
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward } from './combat.js';
-import { spellMenu, spellForKey, spellsLearnedBetween } from './spells.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
+  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound } from './combat.js';
+import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
@@ -19,7 +20,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
@@ -48,6 +49,9 @@ function dropLegacyVisitedKeys(ds: DungeonState): void {
     if (!k.includes(':')) ds.visitedCells.delete(k);
   }
 }
+
+// A teleport lands at least this far (in squares walked) from where you stood, when the level allows.
+const TELEPORT_MIN_DISTANCE = 10;
 
 /** What each trap hits with, for the hit effects. */
 function trapElement(variant: string): FxElement {
@@ -199,8 +203,9 @@ export class GameEngine {
     if (this.phase === 'char-roll') {
       const rem = this.char?.rerollsRemaining ?? 0;
       return [
-        { key: 'a', text: 'Accept Character' },
-        ...(rem > 0 ? [{ key: 'b', text: `Reroll Character (${rem} reroll${rem === 1 ? '' : 's'} remaining)` }] : []),
+        { key: 'a', text: 'Accept as Wizard' },
+        { key: 'b', text: 'Accept as Warrior' },
+        ...(rem > 0 ? [{ key: 'c', text: `Reroll Character (${rem} reroll${rem === 1 ? '' : 's'} remaining)` }] : []),
       ];
     }
     if (this.phase === 'status') {
@@ -227,7 +232,7 @@ export class GameEngine {
     if (this.phase === 'combat' && this.combat) {
       return [
         { key: 'a', text: 'Attack' },
-        { key: 'b', text: 'Cast Spell' },
+        { key: 'b', text: this.char?.charClass === 'warrior' ? 'Combat Skill' : 'Cast Spell' },
         { key: 'c', text: 'Pray' },
         { key: 'd', text: 'Run' },
         { key: 'e', text: 'Use Gem' },
@@ -266,7 +271,8 @@ export class GameEngine {
     this.phase = 'status';
     this.messages = [
       `══ CHARACTER STATUS ══════════════════════`,
-      `${c.name.padEnd(20)} Level ${c.level}`,
+      `${c.name.padEnd(20)} Level ${c.level} ${c.charClass === 'warrior' ? 'Warrior' : 'Wizard'}`
+        + (c.charClass === 'warrior' ? `   (${attacksPerRound(c)} attack${attacksPerRound(c) === 1 ? '' : 's'} per round)` : ''),
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}`,
@@ -359,7 +365,7 @@ export class GameEngine {
 
     if (explored === 0) {
       this.phase = 'map';
-      this.messages = [`══ MAP — Level ${this.char.dungeonLevel} ══`, '', '  No area explored yet.'];
+      this.messages = [`══ MAP — Level ${this.char.dungeonLevel} — Facing ${this.char.facing} ══`, '', '  No area explored yet.'];
       return this.getState();
     }
 
@@ -411,7 +417,7 @@ export class GameEngine {
     const w = maxX - minX + 1;
     this.phase = 'map';
     this.messages = [
-      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${explored} cells explored)${this.mapFull ? ' — FULL FLOOR' : ''} ══`,
+      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${explored} cells explored)${this.mapFull ? ' — FULL FLOOR' : ''} — Facing ${this.char.facing} ══`,
       `  ${'─'.repeat(w)}`,
       ...rows.map(r => `  ${r}`),
       `  ${'─'.repeat(w)}`,
@@ -419,6 +425,33 @@ export class GameEngine {
       `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar`,
     ];
     return this.getState();
+  }
+
+  /** Walk or turn while the map is open. The map stays up and redraws, unless
+   * the step leads somewhere that needs the normal view: an encounter or
+   * any prompt, a ladder or grate, the level's entrance or exit, or a trap. */
+  mapMove(action: 'forward' | 'backward' | 'left' | 'right'): GameState {
+    if (!this.char || this.phase !== 'map') return this.getState();
+    this.phase = 'playing';
+    const before = { x: this.char.x, y: this.char.y };
+    const state =
+      action === 'forward'  ? this.moveForward() :
+      action === 'backward' ? this.moveBackward() :
+      action === 'left'     ? this.turnLeft() :
+                              this.turnRight();
+    if (this.phase !== 'playing') return state;
+
+    const moved = this.char.x !== before.x || this.char.y !== before.y;
+    if (moved) {
+      const lvl = this.getLevel(this.char.dungeonLevel);
+      const content = lvl?.contents.get(`${this.char.x},${this.char.y}`);
+      const at = (p: { x: number; y: number } | null | undefined) => !!p && p.x === this.char!.x && p.y === this.char!.y;
+      const leaveMap =
+        content?.type === 'ladder-up' || content?.type === 'ladder-down' || content?.type === 'trap' ||
+        at(lvl?.entrance) || at(lvl?.exit);
+      if (leaveMap) return state;
+    }
+    return this.renderMap();
   }
 
   dismissMap(): GameState {
@@ -476,7 +509,6 @@ export class GameEngine {
       `You drink the healing potion and recover ${actual} HP.`,
       `(${this.char.inventory.potions} potions remaining)`,
     ];
-    this.repo.saveCharacter(this.char);
     return this.getState();
   }
 
@@ -500,8 +532,6 @@ export class GameEngine {
     this.char.inventory.books--;
     this.applyTomeReading();
 
-    this.repo.saveCharacter(this.char);
-    if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
     return this.getState();
   }
 
@@ -532,11 +562,9 @@ export class GameEngine {
     // Wandering monster risk after grace period
     if (this.restTicks > GAMEPLAY.WAIT_ENCOUNTER_GRACE && this.rng.float() < GAMEPLAY.WAIT_ENCOUNTER_CHANCE) {
       this.messages = [...this.messages, 'Something stirs in the darkness...'];
-      this.repo.saveCharacter(this.char);
       return this.startRandomEncounter();
     }
 
-    this.repo.saveCharacter(this.char);
     return this.getState();
   }
 
@@ -575,12 +603,17 @@ export class GameEngine {
     return this.doRoll(used);
   }
 
-  acceptCharacter(): GameState {
+  acceptCharacter(charClass: CharacterClass = 'wizard'): GameState {
     if (!this.char || !this.pendingRoll || !this.pendingName) {
       return this.getState();
     }
     const id = `char-${Date.now()}-${this.rng.int(1000, 9999)}`;
     this.char.id = id;
+    this.char.charClass = charClass;
+    if (charClass === 'warrior') {
+      this.char.maxHp += WARRIOR.HP_BONUS_START;
+      this.char.hp = this.char.maxHp;
+    }
     this.sessionStart = Date.now();  // play time starts now, not while rolling stats
     this.char.playTime = 0;
 
@@ -658,7 +691,6 @@ export class GameEngine {
     const map: Record<Direction, Direction> = { N: 'W', W: 'S', S: 'E', E: 'N' };
     this.char.facing = map[this.char.facing];
     this.messages = [];
-    this.repo.saveCharacter(this.char);
     return this.getState();
   }
 
@@ -667,7 +699,6 @@ export class GameEngine {
     const map: Record<Direction, Direction> = { N: 'E', E: 'S', S: 'W', W: 'N' };
     this.char.facing = map[this.char.facing];
     this.messages = [];
-    this.repo.saveCharacter(this.char);
     return this.getState();
   }
 
@@ -715,19 +746,14 @@ export class GameEngine {
 
     const contentState = this.handleCellContent(content, cellKey);
     if (contentState) {
-      this.repo.saveCharacter(this.char);
-      this.repo.saveDungeonState(this.char.id, this.dungeonState!);
       return contentState;
     }
 
     // Check random encounter
     if (shouldTriggerRandomEncounter(this.pace, this.rng)) {
-      this.repo.saveCharacter(this.char);
       return this.startRandomEncounter();
     }
 
-    this.repo.saveCharacter(this.char);
-    this.repo.saveDungeonState(this.char.id, this.dungeonState!);
     return this.getState();
   }
 
@@ -844,13 +870,11 @@ export class GameEngine {
             this.teleportPlayer();
           }
           if (result.triggerMonster) {
-            this.repo.saveCharacter(this.char);
             return this.startRandomEncounter();
           }
           if (this.char.hp <= 0) {
             return this.handleDeath(this.trapDeathCause(variant));
           }
-          this.repo.saveCharacter(this.char);
           return null;
         }
 
@@ -943,12 +967,9 @@ export class GameEngine {
 
     this.dungeonState!.visitedCells.add(visitedKey(this.char.dungeonLevel, this.char.x, this.char.y));
 
-    this.repo.saveCharacter(this.char);
-    this.repo.saveDungeonState(this.char.id, this.dungeonState!);
 
     if (!this.char.introsSeen.includes(lvlNum)) {
       this.char.introsSeen.push(lvlNum);
-      this.repo.saveCharacter(this.char);
       this.phase = 'level-intro';
       this.messages = getLevelIntro(lvlNum);
       return this.getState();
@@ -978,7 +999,7 @@ export class GameEngine {
     // dungeon-depth/character-level scaled range as random encounters.
     const lvl = content.type === 'unique-monster'
       ? this.rng.int(def.minLevel, def.maxLevel)
-      : randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng);
+      : Math.min(def.maxLevel, randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, monsterType));
 
     const monster = createMonster(monsterType, lvl, content.id);
     return this.beginCombat(monster);
@@ -989,7 +1010,7 @@ export class GameEngine {
 
     const type = pickRandomMonsterType(this.char.dungeonLevel, this.rng);
     const def = getDefinition(type);
-    const lvl = randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng);
+    const lvl = randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, type);
     const clampedLvl = Math.max(def.minLevel, Math.min(def.maxLevel, Math.max(1, lvl)));
 
     const monsterId = `rand-${Date.now()}-${this.rng.int(100, 999)}`;
@@ -1072,7 +1093,14 @@ export class GameEngine {
       this.messages = [`You have no ${GEM_PLURAL[type]}.`];
       return this.getState();
     }
-    if (this.char.intelligence < GEMS.MAGIC_INT_THRESHOLD) {
+    if (this.char.charClass === 'warrior' && this.char.level < WARRIOR.GEM_LEVEL) {
+      this.messages = [
+        `The ${type} sits inert in your calloused palm.`,
+        `A warrior learns to wield gem magic at Level ${WARRIOR.GEM_LEVEL}.`,
+      ];
+      return this.getState();
+    }
+    if (this.char.charClass !== 'warrior' && this.char.intelligence < GEMS.MAGIC_INT_THRESHOLD) {
       this.messages = [
         `The ${type} sits inert in your palm.`,
         `You lack the arcane aptitude to attune to it. (Requires INT ${GEMS.MAGIC_INT_THRESHOLD}+)`,
@@ -1099,8 +1127,6 @@ export class GameEngine {
     this.teleportPlayer();
     this.endCombat(false);
     this.messages.push('You find yourself somewhere else in the dungeon.');
-    this.repo.saveCharacter(this.char!);
-    this.repo.saveDungeonState(this.char!.id, this.dungeonState!);
     return this.getState();
   }
 
@@ -1112,7 +1138,6 @@ export class GameEngine {
       'You are free to move on.',
     ];
     this.endCombat(false);
-    this.repo.saveCharacter(this.char!);
     return this.getState();
   }
 
@@ -1141,8 +1166,6 @@ export class GameEngine {
       'The diamond blazes with inner light — the entire level unfolds in your mind!',
       'The full map has been revealed.',
     ];
-    this.repo.saveCharacter(this.char);
-    this.repo.saveDungeonState(this.char.id, this.dungeonState);
     return this.getState();
   }
 
@@ -1157,7 +1180,7 @@ export class GameEngine {
    * unlock order. Anything else (Cancel, or an unlearned spell) backs out. */
   spellAction(key: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
-    const spell = spellForKey(this.char.level, key);
+    const spell = spellForKey(this.char.level, key, this.char.charClass);
     if (!spell) {
       this.phase = 'combat';
       this.messages = ['You reconsider.'];
@@ -1168,10 +1191,21 @@ export class GameEngine {
       return this.getState();
     }
     if (this.isHeld()) return this.combatHeld();
-    const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
-    if (negated) return this.processCombatResult(negated);
+    if (isMagic(spell)) {
+      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
+      if (negated) return this.processCombatResult(negated);
+    }
 
+    const warriorMove = (fn: typeof playerPowerAttack) => {
+      this.fx.monster = 'physical';
+      return this.processCombatResult(fn(this.char!, this.combat!.monster, this.rng));
+    };
     switch (spell) {
+      case 'power-attack': return warriorMove(playerPowerAttack);
+      case 'shield-bash':  return warriorMove(playerShieldBash);
+      case 'cleave':       return warriorMove(playerCleave);
+      case 'battle-cry':   return warriorMove(playerBattleCry);
+      case 'whirlwind':    return warriorMove(playerWhirlwind);
       case 'fireball':  return this.combatFireball();
       case 'heal':      return this.combatHeal();
       case 'poison':    return this.combatPoison();
@@ -1186,7 +1220,7 @@ export class GameEngine {
   }
 
   private showSpellMenu(): GameState {
-    this.messages = ['Choose a spell:'];
+    this.messages = [this.char?.charClass === 'warrior' ? 'Choose a skill:' : 'Choose a spell:'];
     const spellState = this.getState();
     spellState.choices = this.spellChoices();
     spellState.phase = 'combat'; // stay in combat phase but with spell choices
@@ -1204,7 +1238,12 @@ export class GameEngine {
       `*** YOU HAVE REACHED LEVEL ${r.newLevel}! ***`,
       `Maximum HP increased by ${r.hpGain}.`,
       ...(r.statGained ? [`Your ${r.statGained} increases!`] : []),
-      ...spellsLearnedBetween(r.previousLevel, r.newLevel).map(sp => `You have learned ${sp.name}!`),
+      ...spellsLearnedBetween(r.previousLevel, r.newLevel, this.char.charClass).map(sp => `You have learned ${sp.name}!`),
+      ...(this.char.charClass === 'warrior' && r.previousLevel < WARRIOR.GEM_LEVEL && r.newLevel >= WARRIOR.GEM_LEVEL
+        ? ['You have learned to wield the magic of gems!'] : []),
+      ...(this.char.charClass === 'warrior' && Math.floor(r.newLevel / WARRIOR.ATTACKS_EVERY_N_LEVELS) > Math.floor(r.previousLevel / WARRIOR.ATTACKS_EVERY_N_LEVELS)
+        && r.newLevel <= WARRIOR.ATTACKS_EVERY_N_LEVELS * (WARRIOR.MAX_ATTACKS - 1)
+        ? ['You can now strike an extra blow each round!'] : []),
     ];
   }
 
@@ -1241,7 +1280,7 @@ export class GameEngine {
 
   /** The spell menu, with Banish showing how long it has left to recharge. */
   private spellChoices(): Choice[] {
-    const choices = spellMenu(this.char!.level);
+    const choices = spellMenu(this.char!.level, this.char!.charClass);
     if (this.banishReadyIn() > 0) {
       const banish = choices.find(c => c.text === 'Banish');
       if (banish) banish.text = `Banish (recharging: ${this.banishReadyText()})`;
@@ -1321,11 +1360,9 @@ export class GameEngine {
       this.char!.x = this.combat!.preCombatX;
       this.char!.y = this.combat!.preCombatY;
       this.endCombat(false);
-      this.repo.saveCharacter(this.char!);
       return this.getState();
     }
 
-    this.repo.saveCharacter(this.char!);
     return this.getState();
   }
 
@@ -1339,8 +1376,7 @@ export class GameEngine {
     if (result.playerTeleported) {
       this.teleportPlayer();
       this.endCombat(false);
-      this.messages.push('', 'You recognize this corridor.');
-      this.repo.saveCharacter(this.char);
+      this.messages.push('', 'You find yourself in another part of the dungeon.');
       return this.getState();
     }
 
@@ -1351,7 +1387,6 @@ export class GameEngine {
 
     if (result.banished) {
       this.endCombat(false);
-      this.repo.saveCharacter(this.char);
       return this.getState();
     }
 
@@ -1359,7 +1394,6 @@ export class GameEngine {
       return this.handleMonsterDefeated();
     }
 
-    this.repo.saveCharacter(this.char);
     return this.getState();
   }
 
@@ -1407,8 +1441,6 @@ export class GameEngine {
     }
 
     this.endCombat(true);
-    this.repo.saveCharacter(this.char);
-    this.repo.saveDungeonState(this.char.id, this.dungeonState);
     return this.getState();
   }
 
@@ -1428,8 +1460,6 @@ export class GameEngine {
     this.pace.atDeathRespawn = true;
     this.pace.movesSinceCombat = 0;
 
-    this.repo.saveCharacter(this.char);
-    this.repo.saveDungeonState(this.char.id, this.dungeonState!);
     return this.getState();
   }
 
@@ -1484,6 +1514,7 @@ export class GameEngine {
       this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'naked');
       this.char.heldRounds = 0;
       this.char.heldBy = undefined;
+      this.char.battleCryRounds = 0;
     }
     resetPaceAfterCombat(this.pace, this.rng);
     this.combat = null;
@@ -1581,9 +1612,9 @@ export class GameEngine {
 
     if (alarm || result.triggerMonster) {
       this.closeInteraction();
-      this.repo.saveCharacter(this.char);
-      this.repo.saveDungeonState(this.char.id, this.dungeonState);
+      const fx = this.fx;       // the encounter's own state read would otherwise use up the trap's hit hint
       this.startRandomEncounter();
+      this.fx = { ...fx, ...this.fx };
       // beginCombat replaces the messages; keep what just happened at the chest.
       this.messages = [...messages, '', ...this.messages];
       return this.getState();
@@ -1691,45 +1722,43 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** Closes a finished interaction. (Nothing is written to disk here: the
+   * game only saves when the player chooses to, with S.) */
   private closeInteractionWithSave(): GameState {
     this.interaction = null;
     this.phase = 'playing';
-    this.repo.saveCharacter(this.char!);
-    this.repo.saveDungeonState(this.char!.id, this.dungeonState!);
     return this.getState();
   }
 
   // ─── Teleport ────────────────────────────────────────────────────────────
 
+  /** Sends the character to a random spot elsewhere on the current level
+   * (ruby, the Wizard's teleport, teleport traps): real floor they could have
+   * walked to, clear of any feature or monster lair, and well away from where
+   * they stood when there's room for that. Explored or not. */
   private teleportPlayer(): void {
     if (!this.char || !this.dungeonState) return;
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return;
 
-    const ds = this.dungeonState;
-    const level = this.char.dungeonLevel;
-    const visited = lvl.grid.flat()
-      .filter(cell => !isSolidRock(cell) && ds.visitedCells.has(visitedKey(level, cell.x, cell.y)))
-      .map(cell => ({ x: cell.x, y: cell.y }))
-      .filter(pos => {
-        if (pos.x === this.char!.x && pos.y === this.char!.y) return false;
-        const content = lvl.contents.get(`${pos.x},${pos.y}`);
-        if (!content) return true;
-        if (content.type === 'unique-monster' || content.type === 'fixed-monster') {
-          const id = content.id;
-          if (content.type === 'fixed-monster' && ds.defeatedFixedMonsters.has(id)) return true;
-          if (content.type === 'unique-monster' && ds.defeatedUniqueMonsters.has(id)) return true;
-          return false;
-        }
-        return true;
+    const here = { x: this.char.x, y: this.char.y };
+    const reachable = floodFill(lvl.grid, here.x, here.y);
+    const candidates = [...reachable]
+      .map(k => { const [x, y] = k.split(',').map(Number); return { x, y }; })
+      .filter(p => !(p.x === here.x && p.y === here.y))
+      .filter(p => !isSolidRock(lvl.grid[p.y][p.x]))
+      .filter(p => {
+        const content = lvl.contents.get(`${p.x},${p.y}`);
+        return !content || content.type === 'description';
       });
+    if (candidates.length === 0) return;
 
-    if (visited.length === 0) return;
-
-    const dest = this.rng.pick(visited);
+    const far = candidates.filter(p => Math.abs(p.x - here.x) + Math.abs(p.y - here.y) >= TELEPORT_MIN_DISTANCE);
+    const dest = this.rng.pick(far.length > 0 ? far : candidates);
     this.char.x = dest.x;
     this.char.y = dest.y;
     this.char.facing = this.rng.pick(['N', 'E', 'S', 'W'] as Direction[]);
+    this.dungeonState.visitedCells.add(visitedKey(this.char.dungeonLevel, dest.x, dest.y));
   }
 
   // ─── Level cache ─────────────────────────────────────────────────────────

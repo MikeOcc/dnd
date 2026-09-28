@@ -8,6 +8,11 @@ let currentState = { phase: 'title', messages: [] };
 let characterId = null;
 let spellMenuOpen = false;
 let gemMenuOpen = false;
+const MAP_ZOOM_STEPS = [1, 1.4, 1.8, 2.4, 3];
+let mapZoom = (() => {
+  try { return Math.min(MAP_ZOOM_STEPS.length - 1, Math.max(0, +localStorage.getItem('sevenLevelsMapZoom') || 0)); }
+  catch { return 0; }
+})();
 let awaitingAnyKey = false;   // for title / intro / death / victory
 
 // The continue/delete character list and the delete-confirm screen are both
@@ -91,8 +96,10 @@ function applyState(state) {
   const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
-  viewContainer.classList.toggle('hidden', !isPlaying || !state.view);
-  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase));
+  // The map screen gives the map the whole panel instead of the corridor view.
+  viewContainer.classList.toggle('hidden', !isPlaying || !state.view || phase === 'map');
+  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory', 'map'].includes(phase));
+  movementControls.classList.toggle('map-walk', phase === 'map');  // just the arrows on the map screen
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -124,7 +131,10 @@ function applyState(state) {
   msgEl.textContent = msgs;
   msgEl.classList.toggle('map-view', phase === 'map');
   msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
-  msgEl.scrollTop = msgEl.scrollHeight;
+  msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
+  document.getElementById('message-area').classList.toggle('map-mode', phase === 'map');
+  if (phase === 'map') centerMapOnPlayer();
+  else msgEl.scrollTop = msgEl.scrollHeight;
 
   // Choices
   renderChoices(state.choices || [], phase, state);
@@ -242,6 +252,61 @@ function playHitEffects(prev, state) {
   }
 }
 
+// ─── Map zoom ────────────────────────────────────────────────────────────────
+// The map screen scrolls in both directions (two-finger touchpad scrolling
+// works natively); Z enlarges it, and it re-centres on the @ after drawing.
+
+function zoomMap(step) {
+  const next = Math.min(MAP_ZOOM_STEPS.length - 1, Math.max(0, mapZoom + step));
+  if (next === mapZoom) return;
+  mapZoom = next;
+  try { localStorage.setItem('sevenLevelsMapZoom', String(mapZoom)); } catch { /* per-viewer nicety only */ }
+  applyState(currentState);
+}
+
+function centerMapOnPlayer() {
+  const area = document.getElementById('message-area');
+  const msgEl = document.getElementById('messages');
+  const lines = msgEl.textContent.split('\n');
+  const row = lines.findIndex(l => l.includes('@'));
+  if (row < 0) return;
+  const col = lines[row].indexOf('@');
+  // Measure one character cell in the map's current font.
+  const probe = document.createElement('span');
+  probe.textContent = 'M';
+  msgEl.appendChild(probe);
+  const cw = probe.getBoundingClientRect().width;
+  const lh = probe.getBoundingClientRect().height;
+  probe.remove();
+  area.scrollLeft = Math.max(0, col * cw - area.clientWidth / 2);
+  area.scrollTop = Math.max(0, row * lh - area.clientHeight / 2);
+}
+
+// Click (or press the touchpad) and drag to pan the map.
+(() => {
+  const area = document.getElementById('message-area');
+  let drag = null;
+  area.addEventListener('pointerdown', e => {
+    if (!area.classList.contains('map-mode') || e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, left: area.scrollLeft, top: area.scrollTop, id: e.pointerId };
+    area.setPointerCapture(e.pointerId);
+    area.classList.add('dragging');
+    e.preventDefault();
+  });
+  area.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    area.scrollLeft = drag.left - (e.clientX - drag.x);
+    area.scrollTop = drag.top - (e.clientY - drag.y);
+  });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    area.classList.remove('dragging');
+  };
+  area.addEventListener('pointerup', end);
+  area.addEventListener('pointercancel', end);
+})();
+
 const COMPASS = { N: '▲ N', E: '▶ E', S: '▼ S', W: '◀ W' };
 
 function updateStatusBar(char) {
@@ -312,6 +377,14 @@ function renderChoices(choices, phase, state) {
     const toggle = makeChoiceBtn('F', state.mapFull ? 'Centered View' : 'Full Floor');
     toggle.onclick = () => apiAction('toggle-map-view');
     area.appendChild(toggle);
+    const zin = makeChoiceBtn('+', `Zoom In (${mapZoom + 1}/${MAP_ZOOM_STEPS.length})`);
+    zin.onclick = () => zoomMap(1);
+    zin.disabled = mapZoom === MAP_ZOOM_STEPS.length - 1;
+    area.appendChild(zin);
+    const zout = makeChoiceBtn('−', 'Zoom Out');
+    zout.onclick = () => zoomMap(-1);
+    zout.disabled = mapZoom === 0;
+    area.appendChild(zout);
     const btn = makeChoiceBtn('M', 'Close Map');
     btn.onclick = () => apiAction('dismiss-map');
     area.appendChild(btn);
@@ -373,7 +446,8 @@ async function showSaveList(action) {
     chars.map((c, i) => {
       const letter = String.fromCharCode(65 + i);
       const vic = c.asmodeusDefeated ? ' [VICTOR]' : '';
-      return `[${letter}]  ${c.name.padEnd(20)} Lv ${c.level}  Dungeon Lv ${c.dungeonLevel}  Monsters: ${c.monstersDefeated}${vic}`;
+      const cls = c.charClass === 'warrior' ? 'Warrior' : 'Wizard ';
+      return `[${letter}]  ${c.name.padEnd(20)} ${cls} Lv ${c.level}  Dungeon Lv ${c.dungeonLevel}  Monsters: ${c.monstersDefeated}${vic}`;
     }).join('\n');
 
   chars.forEach((char, i) => {
@@ -443,7 +517,7 @@ function updateHelpLine(phase) {
     case 'playing':
       hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
     case 'map':
-      hint.textContent = 'F: Full Floor / Centered  |  M or Esc: Close Map'; break;
+      hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  M or Esc: Close Map'; break;
     case 'status':
       hint.textContent = 'X: Return to Game'; break;
     case 'inventory':
@@ -455,7 +529,7 @@ function updateHelpLine(phase) {
     case 'name-entry':
       hint.textContent = 'Type your name and press Enter'; break;
     case 'char-roll':
-      hint.textContent = 'A: Accept  B: Reroll'; break;
+      hint.textContent = 'A: Wizard  B: Warrior  C: Reroll'; break;
     case 'death':
       hint.textContent = 'C: Continue  Q: Quit to Main Menu'; break;
     case 'save-prompt':
@@ -478,8 +552,9 @@ function handleAnyKey() {
 
 function handleChoiceKey(key, phase) {
   if (phase === 'char-roll') {
-    if (key === 'a') apiAction('accept');
-    if (key === 'b') apiAction('reroll');
+    if (key === 'a') apiAction('accept', { charClass: 'wizard' });
+    if (key === 'b') apiAction('accept', { charClass: 'warrior' });
+    if (key === 'c') apiAction('reroll');
     return;
   }
 
@@ -607,8 +682,9 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'char-roll') {
-    if (key === 'a') apiAction('accept');
-    if (key === 'b') apiAction('reroll');
+    if (key === 'a') apiAction('accept', { charClass: 'wizard' });
+    if (key === 'b') apiAction('accept', { charClass: 'warrior' });
+    if (key === 'c') apiAction('reroll');
     return;
   }
 
@@ -649,7 +725,13 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'map') {
+    if (e.key === 'ArrowUp')    apiAction('map-move', { dir: 'forward' });
+    if (e.key === 'ArrowDown')  apiAction('map-move', { dir: 'backward' });
+    if (e.key === 'ArrowLeft')  apiAction('map-move', { dir: 'left' });
+    if (e.key === 'ArrowRight') apiAction('map-move', { dir: 'right' });
     if (key === 'f') apiAction('toggle-map-view');
+    if (key === '+' || key === '=') zoomMap(1);
+    if (key === '-' || key === '_') zoomMap(-1);
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
     return;
   }
@@ -703,10 +785,15 @@ document.addEventListener('keydown', (e) => {
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
 
-document.getElementById('btn-forward')   ?.addEventListener('click', () => apiAction('move-forward'));
-document.getElementById('btn-backward')  ?.addEventListener('click', () => apiAction('move-backward'));
-document.getElementById('btn-turn-left') ?.addEventListener('click', () => apiAction('turn-left'));
-document.getElementById('btn-turn-right')?.addEventListener('click', () => apiAction('turn-right'));
+// The d-pad walks on the map screen too.
+function move(action, mapDir) {
+  if (currentState.phase === 'map') apiAction('map-move', { dir: mapDir });
+  else apiAction(action);
+}
+document.getElementById('btn-forward')   ?.addEventListener('click', () => move('move-forward', 'forward'));
+document.getElementById('btn-backward')  ?.addEventListener('click', () => move('move-backward', 'backward'));
+document.getElementById('btn-turn-left') ?.addEventListener('click', () => move('turn-left', 'left'));
+document.getElementById('btn-turn-right')?.addEventListener('click', () => move('turn-right', 'right'));
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
 document.getElementById('btn-wait')      ?.addEventListener('click', () => apiAction('wait'));
@@ -727,7 +814,7 @@ document.getElementById('btn-save')      ?.addEventListener('click', () => apiAc
     // Resume where we left off. If the character no longer exists,
     // loadCharacter() leaves us on the title phase and applyState()
     // clears the stale id, so this degrades gracefully either way.
-    await apiAction('load', { characterId: savedCharacterId });
+    await apiAction('resume', { characterId: savedCharacterId });
     return;
   }
 
