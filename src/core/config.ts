@@ -6,7 +6,9 @@ export const CHARACTER = {
 
 export const GAMEPLAY = {
   REGEN_HP_EVERY_N_STEPS: 10,    // +1 HP per N steps walked (passive regen)
-  REGEN_HP_EVERY_N_WAITS: 3,     // +1 HP per N wait actions (resting in place)
+  // Resting (W) runs in real time, one tick a second, until a wandering
+  // monster turns up, the player stops, or they're fully healed.
+  REST_HEAL_PCT_PER_TICK: 0.015, // of max HP (at least 1) per tick
   WAIT_ENCOUNTER_GRACE: 3,       // rest ticks before wandering monster risk begins
   WAIT_ENCOUNTER_CHANCE: 0.04,   // chance per tick after grace period
   POTION_HEAL_MIN: 20,
@@ -79,6 +81,10 @@ export const COMBAT = {
   FIREBALL_INT_DIVISOR: 2,
   FIREBALL_RAND_MIN: 0.8,
   FIREBALL_RAND_MAX: 1.5,
+  // Fireball's level-based power never drops below this, so a new character
+  // casts like a level-9 one and the first dungeon levels are survivable.
+  // Higher levels outgrow it (it's a floor, so levelling up never weakens it).
+  FIREBALL_MIN_LEVEL_POWER: 18,
 
   // Acid Spray: (charLevel*2 + INT/2) * randomFactor
   ACID_LEVEL_MULT: 2,
@@ -384,6 +390,43 @@ export const WARRIOR = {
   BATTLE_CRY_MULT: 1.5,
   WHIRLWIND_EXTRA_SWINGS: 2,
   WHIRLWIND_MULT: 0.8,
+} as const;
+
+// Unique monsters felt before they're met (presence.ts). Chances are per step.
+export const PRESENCE = {
+  ASMODEUS_VOICE_CHANCE: 1 / 150,         // any level
+  ASMODEUS_ATTACK_MIN_LEVEL: 4,
+  ASMODEUS_ATTACK_CHANCE: 1 / 600,        // levels 4-6
+  ASMODEUS_ATTACK_CHANCE_DEEPEST: 1 / 300, // level 7
+  ASMODEUS_PROXIMITY_RANGE: 60,           // on level 7, fury peaks at his lair and fades over this many squares
+  ASMODEUS_DEBILITATE_FURY: 0.85,         // at or above this, hellfire and a curse land together
+  LAIR_FLAVOR_CHANCE: 0.03,               // on a level with a living unique
+  DRACOLICH_FEAR_CHANCE: 0.006,           // x2 within MID, x3 within NEAR of its lair
+  FEAR_RESIST_BASE: 0.1,
+  FEAR_RESIST_PER_WIS: 0.02,
+  FEAR_RESIST_MAX: 0.6,
+  FEAR_DEX_LOSS: 8,
+  FEAR_DEX_TURNS: 30,
+  NEAR: 12,                               // squares walked from a lair
+  MID: 30,
+} as const;
+
+// All traps (corridor and chest) get harder to disarm deeper down. A
+// teleport trap's jump is a gamble: an ambush, a rough landing, or clean.
+// The first dungeon level looks after new adventurers: chests there often
+// hold potions, and altars there mostly heal.
+export const FIRST_LEVEL = {
+  CHEST_EXTRA_POTION_CHANCE: 0.25,
+  ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
+} as const;
+
+export const TRAPS = {
+  DISARM_DEPTH_PENALTY: 0.04,   // per dungeon level below the first
+  DISARM_MIN: 0.05,
+  TELEPORT_AMBUSH_CHANCE: 0.25,
+  TELEPORT_ROUGH_CHANCE: 0.15,
+  TELEPORT_ROUGH_DAMAGE_MIN: 0.03,   // of max HP
+  TELEPORT_ROUGH_DAMAGE_MAX: 0.08,
 } as const;
 
 export const CHEST_TRAPS = {

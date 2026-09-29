@@ -160,7 +160,7 @@ export function playerWhirlwind(char: Character, monster: Monster, rng: RNG): Co
 export function playerFireball(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   const eff = getEffectiveStats(char);
 
-  const base = char.level * COMBAT.FIREBALL_LEVEL_MULT
+  const base = Math.max(char.level * COMBAT.FIREBALL_LEVEL_MULT, COMBAT.FIREBALL_MIN_LEVEL_POWER)
     + Math.floor(eff.intelligence / COMBAT.FIREBALL_INT_DIVISOR);
   const rand = COMBAT.FIREBALL_RAND_MIN + rng.float() * (COMBAT.FIREBALL_RAND_MAX - COMBAT.FIREBALL_RAND_MIN);
   const power = char.charClass === 'warrior' ? WARRIOR.SPELL_POWER : 1;

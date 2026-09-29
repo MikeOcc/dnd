@@ -1,6 +1,6 @@
 import type { Character, Monster, StatusEffect, GemType, ChestTrapType } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS } from './config.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL } from './config.js';
 import { addStatusEffect } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
@@ -95,6 +95,16 @@ const GEM_NAMES: Record<GemType, string> = {
 };
 
 export function resolveChest(char: Character, rng: RNG): ChestResult {
+  // The first level stocks extra potions for new adventurers.
+  if (char.dungeonLevel === 1 && rng.float() < FIRST_LEVEL.CHEST_EXTRA_POTION_CHANCE) {
+    const count = rng.int(1, 3);
+    char.inventory.potions += count;
+    return { messages: [
+      `You find ${count === 1 ? 'a healing potion' : `${count} healing potions`}!`,
+      `Added to your pack. (${char.inventory.potions} total)`,
+    ]};
+  }
+
   const roll = rng.float();
 
   if (roll < 0.352) {
@@ -281,8 +291,9 @@ const ALTAR_WARD_ROUNDS = 2;
 export function resolveAltar(char: Character, rng: RNG): AltarResult {
   const wisdomBonus = Math.floor(char.wisdom / 5);
   const roll = rng.float() - wisdomBonus * 0.02;
+  const healBand = char.dungeonLevel === 1 ? FIRST_LEVEL.ALTAR_HEAL_CHANCE : 0.30;
 
-  if (roll < 0.30) {
+  if (roll < healBand) {
     // Nothing to heal: the blessing becomes a ward against the next blows instead.
     if (char.hp >= char.maxHp) {
       char.invulnerableTurns = (char.invulnerableTurns ?? 0) + ALTAR_WARD_ROUNDS;
@@ -506,7 +517,19 @@ export function chestTrapDetectChance(char: Character): number {
 }
 
 export function chestTrapDisarmChance(char: Character): number {
-  return Math.min(CHEST_TRAPS.MAX_CHANCE, CHEST_TRAPS.DISARM_BASE + char.dexterity * CHEST_TRAPS.DISARM_PER_DEX);
+  const chance = CHEST_TRAPS.DISARM_BASE + char.dexterity * CHEST_TRAPS.DISARM_PER_DEX - disarmDepthPenalty(char);
+  return Math.max(TRAPS.DISARM_MIN, Math.min(CHEST_TRAPS.MAX_CHANCE, chance));
+}
+
+/** Traps are nastier deeper down: a few percent harder to disarm per level. */
+function disarmDepthPenalty(char: Character): number {
+  return Math.max(0, char.dungeonLevel - 1) * TRAPS.DISARM_DEPTH_PENALTY;
+}
+
+/** Chance to disarm a corridor trap: Intelligence and Dexterity, less with depth. */
+export function trapDisarmChance(char: Character): number {
+  const chance = 0.25 + char.intelligence * 0.02 + char.dexterity * 0.015 - disarmDepthPenalty(char);
+  return Math.max(TRAPS.DISARM_MIN, chance);
 }
 
 /** Springs a chest trap. Like other traps it can't kill outright (HP floors at 1). */
@@ -613,8 +636,7 @@ export function resolveTrapAvoid(char: Character, variant: string, rng: RNG): Tr
 }
 
 export function resolveTrapDisarm(char: Character, variant: string, rng: RNG): TrapResult {
-  const chance = 0.25 + char.intelligence * 0.02 + char.dexterity * 0.015;
-  if (rng.float() < chance) {
+  if (rng.float() < trapDisarmChance(char)) {
     return { messages: ['You carefully disarm the trap.'], resolved: true };
   }
   const sprung = resolveTrapTriggered(char, variant, rng);

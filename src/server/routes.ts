@@ -214,7 +214,13 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           state = engine.useDiamondExploring();
           break;
         case 'wait':
-          state = engine.wait();
+          state = engine.startResting();
+          break;
+        case 'rest-tick':
+          state = engine.restTick();
+          break;
+        case 'stop-resting':
+          state = engine.stopResting();
           break;
         case 'show-map':
           state = engine.showMap();

@@ -51,6 +51,7 @@ export function renderState(state: GameState, opts: { hurt?: boolean } = {}): st
       break;
 
     case 'playing':
+    case 'resting':
     case 'combat':
     case 'interaction':
       lines.push(...renderGame(state));
@@ -185,7 +186,7 @@ function renderGame(state: GameState): string[] {
 
   // Phase-specific hints
   if (state.phase === 'playing') {
-    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
+    lines.push(dim('  Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'));
   }
   if (state.phase === 'combat') {
     lines.push(dim('  A: Attack  |  B: Spell/Skill  |  C: Pray  |  D: Run  |  E: Use Gem  |  P: Potion'));

@@ -20,9 +20,10 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS } from './config.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
+import { rollPresence, type Lair } from './presence.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import type { Repository } from '../database/repositories.js';
 
@@ -88,6 +89,7 @@ export class GameEngine {
   private messages: string[] = [];
   private mapFull = false;
   private fx: Fx = {};   // hit-effect hints gathered during the current action
+  private presenceFelt = false;   // a unique monster made itself felt on this step
   private pendingRoll: CharacterRoll | null = null;
   private pendingName: string | null = null;
   private pace: EncounterPace;
@@ -219,6 +221,9 @@ export class GameEngine {
         { key: 'c', text: 'Return to Last Save' },
         { key: 'q', text: 'Quit to Main Menu' },
       ];
+    }
+    if (this.phase === 'resting') {
+      return [{ key: 'x', text: 'Stop Resting' }];
     }
     if (this.phase === 'save-prompt') {
       return [
@@ -434,6 +439,7 @@ export class GameEngine {
   mapMove(action: 'forward' | 'backward' | 'left' | 'right'): GameState {
     if (!this.char || this.phase !== 'map') return this.getState();
     this.phase = 'playing';
+    this.presenceFelt = false;
     const before = { x: this.char.x, y: this.char.y };
     const state =
       action === 'forward'  ? this.moveForward() :
@@ -442,6 +448,7 @@ export class GameEngine {
                               this.turnRight();
     if (this.phase !== 'playing') return state;
 
+    if (this.presenceFelt) return state;
     const moved = this.char.x !== before.x || this.char.y !== before.y;
     if (moved) {
       const lvl = this.getLevel(this.char.dungeonLevel);
@@ -533,36 +540,59 @@ export class GameEngine {
     return this.getState();
   }
 
-  wait(): GameState {
+  /** W: settle down to rest. The client then calls restTick() once a second
+   * until a wandering monster turns up, the character is fully healed, or
+   * the player stops (stopResting). */
+  startResting(): GameState {
     if (!this.char || this.phase !== 'playing') return this.getState();
-
-    this.restTicks++;
-    this.messages = [];
-
-    // Tick status effects
-    const { messages: statusMsgs } = tickStatusEffects(this.char);
-    this.messages = statusMsgs;
-
-    // Passive regen while resting (faster than walking)
-    if (this.restTicks % GAMEPLAY.REGEN_HP_EVERY_N_WAITS === 0 && this.char.hp < this.char.maxHp) {
-      this.char.hp++;
-      this.messages = [...this.messages, 'You rest. Your wounds slowly heal. (+1 HP)'];
-    } else if (this.char.hp >= this.char.maxHp) {
-      this.messages = [...this.messages, 'You rest. You are fully healed.'];
-    } else {
-      this.messages = [...this.messages, 'You wait in the darkness.'];
+    if (this.char.hp >= this.char.maxHp && !this.char.statusEffects.length) {
+      this.messages = ['You are already fully rested.'];
+      return this.getState();
     }
+    this.restTicks = 0;
+    this.phase = 'resting';
+    this.messages = ['You settle down against the wall to rest.', '(Press any key to stop.)'];
+    return this.getState();
+  }
+
+  /** One second of rest: effects tick, wounds heal, and something may come. */
+  restTick(): GameState {
+    if (!this.char || this.phase !== 'resting') return this.getState();
+    this.restTicks++;
+
+    const { messages: statusMsgs } = tickStatusEffects(this.char);
+    const heal = Math.min(
+      this.char.maxHp - this.char.hp,
+      Math.max(1, Math.round(this.char.maxHp * GAMEPLAY.REST_HEAL_PCT_PER_TICK)),
+    );
+    this.char.hp += heal;
 
     if (this.char.hp <= 0) {
       return this.handleDeath('Your wounds proved fatal as you rested.');
     }
 
-    // Wandering monster risk after grace period
     if (this.restTicks > GAMEPLAY.WAIT_ENCOUNTER_GRACE && this.rng.float() < GAMEPLAY.WAIT_ENCOUNTER_CHANCE) {
-      this.messages = [...this.messages, 'Something stirs in the darkness...'];
-      return this.startRandomEncounter();
+      this.phase = 'playing';
+      const lead = [...statusMsgs, 'Something stirs in the darkness...', ''];
+      this.startRandomEncounter();
+      this.messages = [...lead, ...this.messages];   // keep the warning above the monster's entrance
+      return this.getState();
     }
 
+    if (this.char.hp >= this.char.maxHp && !this.char.statusEffects.length) {
+      this.phase = 'playing';
+      this.messages = [...statusMsgs, 'You rise, fully rested.'];
+      return this.getState();
+    }
+
+    this.messages = [...statusMsgs, `Resting... HP ${this.char.hp}/${this.char.maxHp}`, '(Press any key to stop.)'];
+    return this.getState();
+  }
+
+  stopResting(): GameState {
+    if (!this.char || this.phase !== 'resting') return this.getState();
+    this.phase = 'playing';
+    this.messages = [`You stop resting. HP ${this.char.hp}/${this.char.maxHp}`];
     return this.getState();
   }
 
@@ -752,7 +782,52 @@ export class GameEngine {
       return this.startRandomEncounter();
     }
 
+    this.feelPresences();
     return this.getState();
+  }
+
+  /** A quiet step may bring word of the uniques: Asmodeus's voice or fury,
+   * the Dracolich's fear, or the others' sounds from their lairs. */
+  private feelPresences(): void {
+    this.presenceFelt = false;
+    if (!this.char || !this.dungeonState) return;
+    const ds = this.dungeonState;
+    const alive = (id: string) => !ds.defeatedUniqueMonsters.has(id);
+
+    const lairsOn = (levelNum: number): Lair[] => {
+      const lvl = this.getLevel(levelNum);
+      if (!lvl) return [];
+      const out: Lair[] = [];
+      for (const [k, c] of lvl.contents) {
+        if (c.type !== 'unique-monster' || !c.monsterId || !alive(c.id)) continue;
+        const [x, y] = k.split(',').map(Number);
+        out.push({ type: c.monsterId as Lair['type'], x, y });
+      }
+      return out;
+    };
+
+    const level = this.char.dungeonLevel;
+    const here = level >= 6 ? lairsOn(level).filter(l => l.type !== 'Asmodeus') : [];
+    // Tiamat is heard through the floor from the level above.
+    const tiamatBelow = level === 6 ? lairsOn(7).filter(l => l.type === 'Tiamat') : [];
+    const deepest = lairsOn(7);
+    const asmodeus = deepest.find(l => l.type === 'Asmodeus');
+    const asmodeusAlive = !this.char.asmodeusDefeated && !!asmodeus;
+
+    const ev = rollPresence({
+      char: this.char,
+      level,
+      lairs: [...here, ...tiamatBelow],
+      asmodeusAlive,
+      asmodeusLair: level === 7 && asmodeus ? { x: asmodeus.x, y: asmodeus.y } : null,
+    }, this.rng);
+    if (!ev) return;
+
+    this.presenceFelt = true;
+    this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...ev.messages];
+    if (ev.fx) this.fx.player = ev.fx;
+    if (ev.turnTo) this.char.facing = ev.turnTo;
+    if (ev.flee) this.teleportPlayer();
   }
 
   private handleCellContent(content: CellContent | undefined, cellKey: string): GameState | null {
@@ -884,6 +959,7 @@ export class GameEngine {
             { key: 'a', text: 'Attempt to avoid it' },
             { key: 'b', text: 'Attempt to disarm it' },
             { key: 'c', text: 'Turn back' },
+            ...(variant === 'teleport' ? [{ key: 'd', text: 'Step into it' }] : []),
           ],
         };
         this.phase = 'interaction';
@@ -1640,8 +1716,10 @@ export class GameEngine {
     messages.push(...this.levelUp());
 
     if (alarm || result.triggerMonster) {
+      // Closing the prompt and starting the fight both read the state, which
+      // would use up the trap's hit hint; keep it for the final state.
+      const fx = this.fx;
       this.closeInteraction();
-      const fx = this.fx;       // the encounter's own state read would otherwise use up the trap's hit hint
       this.startRandomEncounter();
       this.fx = { ...fx, ...this.fx };
       // beginCombat replaces the messages; keep what just happened at the chest.
@@ -1716,7 +1794,13 @@ export class GameEngine {
     }
 
     let result;
-    if (key === 'a') {
+    if (key === 'd' && variant === 'teleport') {
+      result = {
+        messages: ['You take a breath and step onto the glowing sigil.', '', 'YOU HAVE BEEN TELEPORTED.'],
+        resolved: true,
+        teleported: true,
+      };
+    } else if (key === 'a') {
       result = resolveTrapAvoid(this.char, variant, this.rng);
     } else {
       result = resolveTrapDisarm(this.char, variant, this.rng);
@@ -1731,7 +1815,14 @@ export class GameEngine {
     this.messages = result.messages;
 
     if (result.teleported) {
-      this.teleportPlayer();
+      const ambush = this.teleportGamble();
+      if (ambush) {
+        const lead = [...this.messages, ''];
+        this.closeInteraction();
+        this.startRandomEncounter();
+        this.messages = [...lead, ...this.messages];
+        return this.getState();
+      }
     }
     if (result.triggerMonster) {
       this.closeInteraction();
@@ -1760,6 +1851,28 @@ export class GameEngine {
   }
 
   // ─── Teleport ────────────────────────────────────────────────────────────
+
+  /** A teleport trap's jump: a random far spot, and then either an ambush
+   * (returns true: the caller starts the fight), a rough landing, or clean. */
+  private teleportGamble(): boolean {
+    if (!this.char) return false;
+    this.teleportPlayer();
+    const roll = this.rng.float();
+    if (roll < TRAPS.TELEPORT_AMBUSH_CHANCE) {
+      this.messages.push('', 'You land right in front of something hungry!');
+      return true;
+    }
+    if (roll < TRAPS.TELEPORT_AMBUSH_CHANCE + TRAPS.TELEPORT_ROUGH_CHANCE) {
+      const pct = TRAPS.TELEPORT_ROUGH_DAMAGE_MIN + this.rng.float() * (TRAPS.TELEPORT_ROUGH_DAMAGE_MAX - TRAPS.TELEPORT_ROUGH_DAMAGE_MIN);
+      const dealt = Math.min(Math.max(1, Math.round(this.char.maxHp * pct)), this.char.hp - 1);
+      this.char.hp -= dealt;
+      this.fx.player = 'arcane';
+      this.messages.push('', `The jump wrenches you inside out. You land hard, dizzy and turned around, for ${dealt} damage.`);
+      return false;
+    }
+    this.messages.push('', 'You land somewhere else on this level, unharmed.');
+    return false;
+  }
 
   /** Sends the character to a random spot elsewhere on the current level
    * (ruby, the Wizard's teleport, teleport traps): real floor they could have

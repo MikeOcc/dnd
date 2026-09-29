@@ -235,7 +235,8 @@ export type GamePhase =
   | 'status'
   | 'map'
   | 'inventory'
-  | 'save-prompt';
+  | 'save-prompt'
+  | 'resting';
 
 export interface Choice {
   key: string;

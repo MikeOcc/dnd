@@ -20,6 +20,7 @@ let nameBuffer = '';
 let awaitingNameInput = false;
 let spellMenuOpen = false;
 let gemMenuOpen = false;
+let restTimer: ReturnType<typeof setTimeout> | null = null;
 let saveListMode = false;
 let deleteMode = false;
 let saveSlots: CharacterSummary[] = [];
@@ -28,6 +29,15 @@ let deleteConfirmTarget: CharacterSummary | null = null;
 function render(state: GameState): void {
   const prev = currentState;
   currentState = state;
+
+  // Resting runs in real time: one tick a second until it ends.
+  if (restTimer) { clearTimeout(restTimer); restTimer = null; }
+  if (state.phase === 'resting') {
+    restTimer = setTimeout(() => {
+      restTimer = null;
+      if (currentState.phase === 'resting') render(engine.restTick());
+    }, 1000);
+  }
 
   // Hurt? Flash the status line inverse red for a moment, then redraw it
   // normally. Big hits (a quarter of max HP or more) ring the terminal bell
@@ -64,6 +74,12 @@ function handleKey(key: KeyEvent): void {
   }
 
   const phase = currentState.phase;
+
+  // Resting: any key stops
+  if (phase === 'resting') {
+    render(engine.stopResting());
+    return;
+  }
 
   // Title screen
   if (phase === 'title') {
@@ -281,7 +297,7 @@ function handleKey(key: KeyEvent): void {
       if (key.char === 'p') render(engine.usePot());
       if (key.char === 'b') render(engine.useBook());
       if (key.char === 'g') render(engine.useDiamondExploring());
-      if (key.char === 'w') render(engine.wait());
+      if (key.char === 'w') render(engine.startResting());
       if (key.char === 'm') render(engine.showMap());
       if (key.char === 't') render(engine.showStatus());
       if (key.char === 'i') render(engine.showInventory());

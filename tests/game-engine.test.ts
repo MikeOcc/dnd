@@ -1530,3 +1530,133 @@ describe('GameEngine — potions in combat', () => {
     expect(e.char.inventory.potions).toBe(1);
   });
 });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — resting in real time', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function wounded() {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.phase = 'playing';
+    e.char.maxHp = 1000; e.char.hp = 100;
+    return { engine, e };
+  }
+
+  it('W starts resting, and each tick heals 1.5% of max HP', () => {
+    const { engine, e } = wounded();
+    expect(engine.startResting().phase).toBe('resting');
+    e.rng.float = () => 0.99;                 // no wandering monster this time
+    const state = engine.restTick();
+    expect(state.phase).toBe('resting');
+    expect(e.char.hp).toBe(115);
+    expect(state.choices).toEqual([{ key: 'x', text: 'Stop Resting' }]);
+  });
+
+  it('keeps going until the character is fully rested', () => {
+    const { engine, e } = wounded();
+    e.rng.float = () => 0.99;
+    engine.startResting();
+    let state = engine.getState();
+    for (let i = 0; i < 200 && state.phase === 'resting'; i++) state = engine.restTick();
+    expect(state.phase).toBe('playing');
+    expect(e.char.hp).toBe(1000);
+    expect(state.messages.join(' ')).toContain('fully rested');
+  });
+
+  it('a wandering monster interrupts it, with the warning kept on screen', () => {
+    const { engine, e } = wounded();
+    engine.startResting();
+    e.rng.float = () => 0.99;
+    for (let i = 0; i < 3; i++) engine.restTick();   // the grace period
+    e.rng.float = () => 0.0;
+    const state = engine.restTick();
+    expect(state.phase).toBe('combat');
+    expect(state.messages).toContain('Something stirs in the darkness...');
+  });
+
+  it('the player can stop at any time', () => {
+    const { engine } = wounded();
+    engine.startResting();
+    const state = engine.stopResting();
+    expect(state.phase).toBe('playing');
+    expect(state.messages[0]).toContain('You stop resting');
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — the uniques make themselves felt', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  /** Walks the character around level 7 for a while; returns how many steps brought a presence. */
+  function wander(e: any, engine: GameEngine, steps: number): number {
+    e.char.dungeonLevel = 7;
+    const lvl = e.getLevel(7);
+    e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y;
+    e.char.hp = e.char.maxHp = 100000;
+    let felt = 0;
+    for (let i = 0; i < steps; i++) {
+      e.phase = 'playing'; e.combat = null; e.interaction = null;
+      e.pace.movesSinceCombat = -1000;
+      const open = (['N', 'E', 'S', 'W'] as const).filter(d => canMove(lvl.grid, e.char.x, e.char.y, d));
+      e.char.facing = open[i % open.length];
+      engine.moveForward();
+      if (e.presenceFelt) felt++;
+    }
+    return felt;
+  }
+
+  it('on level 7 the lairs and Asmodeus are felt now and then, and never once they are all defeated', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    expect(wander(e, engine, 600)).toBeGreaterThan(5);
+
+    for (const [, c] of e.getLevel(7).contents) if (c.type === 'unique-monster') e.dungeonState.defeatedUniqueMonsters.add(c.id);
+    e.char.asmodeusDefeated = true;
+    expect(wander(e, engine, 600)).toBe(0);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — teleport traps', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  /** Puts the character on a fresh teleport trap and returns its prompt. */
+  function atTeleportTrap(engine: GameEngine, e: any, n: number) {
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const k = `${e.char.x},${e.char.y}`;
+    lvl.contents.set(k, { type: 'trap', id: `tp-${n}`, trapVariant: 'teleport' });
+    e.phase = 'playing';
+    return e.handleCellContent(lvl.contents.get(k), k);
+  }
+
+  it('offers Step into it only for teleport traps', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const prompt = atTeleportTrap(engine, e, 0);
+    expect(prompt.choices).toContainEqual({ key: 'd', text: 'Step into it' });
+  });
+
+  it('stepping in is a gamble: clean landings, rough landings and ambushes all happen', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200 && seen.size < 3; i++) {
+      const engine = makeReadyEngine(db);
+      const e = engine as any;
+      e.char.hp = e.char.maxHp = 1000;
+      const from = `${e.char.x},${e.char.y}`;
+      atTeleportTrap(engine, e, i);
+      const state = engine.interactionChoice('d');
+      if (state.phase === 'combat') { seen.add('ambush'); expect(state.messages.join(' ')).toContain('something hungry'); }
+      else if (state.messages.join(' ').includes('wrenches you')) { seen.add('rough'); expect(e.char.hp).toBeLessThan(1000); }
+      else { seen.add('clean'); expect(state.messages.join(' ')).toContain('unharmed'); }
+      expect(`${e.char.x},${e.char.y}`).not.toBe(from);
+    }
+    expect(seen).toEqual(new Set(['clean', 'rough', 'ambush']));
+  });
+});

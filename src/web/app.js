@@ -31,7 +31,7 @@ let deletePendingChar = null; // character awaiting Y/N delete confirmation, or 
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt', 'resting'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt', 'resting'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
@@ -124,6 +124,7 @@ function applyState(state) {
   }
 
   playHitEffects(prev, state);
+  scheduleRestTick(phase);
 
   // Messages
   const msgs = (state.messages || []).join('\n');
@@ -209,7 +210,7 @@ function fxMonster(cls, element) {
 function playHitEffects(prev, state) {
   const view = document.getElementById('view-container');
   const nc = state.character;
-  const inDungeon = ['playing', 'combat', 'interaction'].includes(state.phase);
+  const inDungeon = ['playing', 'combat', 'interaction', 'resting'].includes(state.phase);
   view.classList.toggle('fx-lowhp', !!nc && inDungeon && nc.hp / nc.maxHp < 0.25);
   if (view.classList.contains('hidden') || !prev) return;
 
@@ -250,6 +251,22 @@ function playHitEffects(prev, state) {
   } else if (playerDelta > 0) {
     fxNumber(`+${playerDelta}`, 'heal', 'player', 'holy');
   }
+}
+
+// ─── Resting ─────────────────────────────────────────────────────────────────
+// W starts resting; while it lasts the page asks for one tick a second. It
+// ends on its own (fully healed, or a wandering monster) or on any key.
+
+let restTimer = null;
+
+function scheduleRestTick(phase) {
+  clearTimeout(restTimer);
+  restTimer = null;
+  if (phase !== 'resting') return;
+  restTimer = setTimeout(() => {
+    restTimer = null;
+    if (currentState.phase === 'resting') apiAction('rest-tick');
+  }, 1000);
 }
 
 // ─── Map zoom ────────────────────────────────────────────────────────────────
@@ -515,7 +532,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Wait  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  M or Esc: Close Map'; break;
     case 'status':
@@ -534,6 +551,8 @@ function updateHelpLine(phase) {
       hint.textContent = 'C: Return to Last Save  Q: Quit to Main Menu'; break;
     case 'save-prompt':
       hint.textContent = 'C: Continue Playing  X: Exit to Main Menu'; break;
+    case 'resting':
+      hint.textContent = 'Resting... press any key to stop'; break;
     case 'victory':
       hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
     default:
@@ -551,6 +570,11 @@ function handleAnyKey() {
 }
 
 function handleChoiceKey(key, phase) {
+  if (phase === 'resting') {
+    clearTimeout(restTimer);
+    apiAction('stop-resting');
+    return;
+  }
   if (phase === 'char-roll') {
     if (key === 'a') apiAction('accept', { charClass: 'wizard' });
     if (key === 'b') apiAction('accept', { charClass: 'warrior' });
@@ -644,6 +668,14 @@ function submitName() {
 
 document.addEventListener('keydown', (e) => {
   const phase = currentState.phase;
+
+  // Resting: any key stops
+  if (phase === 'resting') {
+    e.preventDefault();
+    clearTimeout(restTimer);
+    apiAction('stop-resting');
+    return;
+  }
 
   // Prevent arrow keys from scrolling
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {

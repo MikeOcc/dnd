@@ -4,9 +4,11 @@ import { rollCharacter, createCharacter } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
   resolveFountain, resolveChest, applyDeath, readBook,
-  chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm, resolveAltar,
+  chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm, resolveAltar, trapDisarmChance,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS, MONSTER_SCALING } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS, MONSTER_SCALING, TRAPS } from '../src/core/config.js';
+import { playerFireball } from '../src/core/combat.js';
+import { createMonster } from '../src/core/monsters.js';
 import { randomMonsterLevel } from '../src/core/monsters.js';
 
 function makeChar() {
@@ -127,13 +129,14 @@ describe('Fountain healing', () => {
 });
 
 describe('Chest loot', () => {
-  it('grants potions at approximately 20% rate (statistical)', () => {
+  it('grants potions at approximately 20% rate below the first level (statistical)', () => {
     const rng = new RNG(2468);
     let potionChests = 0;
     const trials = 10000;
 
     for (let i = 0; i < trials; i++) {
       const char = makeChar();
+      char.dungeonLevel = 2;   // level 1 adds extra potions of its own
       const before = char.inventory.potions;
       resolveChest(char, rng);
       if (char.inventory.potions > before) potionChests++;
@@ -225,9 +228,6 @@ describe('Level generation tuning', () => {
     expect(CONTENT_PER_LEVEL.FOUNTAINS_MAX).toBeGreaterThan(2);
   });
 
-  it('waiting regenerates HP faster than the old every-5 rate', () => {
-    expect(GAMEPLAY.REGEN_HP_EVERY_N_WAITS).toBeLessThan(5);
-  });
 });
 
 describe('Death mechanics', () => {
@@ -541,5 +541,65 @@ describe('Monster level rolls for the deep dragons', () => {
   it('rolls spread across the range rather than landing on round numbers', () => {
     const deep = roll('White Dragon', 7, 60);
     expect(new Set(deep).size).toBeGreaterThan(30);
+  });
+});
+
+describe('Traps get harder to disarm deeper down', () => {
+  it('corridor and chest traps both lose a few percent per level, never below the floor', () => {
+    const shallow = makeChar(); shallow.dungeonLevel = 1;
+    const deep = makeChar(); deep.dungeonLevel = 7;
+    expect(trapDisarmChance(deep)).toBeCloseTo(trapDisarmChance(shallow) - 6 * TRAPS.DISARM_DEPTH_PENALTY);
+    expect(chestTrapDisarmChance(deep)).toBeLessThan(chestTrapDisarmChance(shallow));
+    const clumsy = makeChar(); clumsy.dungeonLevel = 7; clumsy.intelligence = 1; clumsy.dexterity = 1;
+    expect(trapDisarmChance(clumsy)).toBe(TRAPS.DISARM_MIN);
+  });
+});
+
+describe('The first level looks after new adventurers', () => {
+  const potionRate = (dungeonLevel: number) => {
+    const rng = new RNG(31);
+    let hits = 0;
+    for (let i = 0; i < 4000; i++) {
+      const c = makeChar(); c.dungeonLevel = dungeonLevel;
+      const before = c.inventory.potions;
+      resolveChest(c, rng);
+      if (c.inventory.potions > before) hits++;
+    }
+    return hits / 4000;
+  };
+
+  it('chests on level 1 give potions far more often', () => {
+    expect(potionRate(1)).toBeGreaterThan(0.35);
+    expect(potionRate(2)).toBeLessThan(0.25);
+  });
+
+  it('altars on level 1 mostly heal', () => {
+    const healRate = (dungeonLevel: number) => {
+      const rng = new RNG(8);
+      let heals = 0;
+      for (let i = 0; i < 4000; i++) {
+        const c = makeChar(); c.dungeonLevel = dungeonLevel; c.wisdom = 3; c.hp = 1;
+        if (resolveAltar(c, rng).messages.join(' ').includes('The altar heals you')) heals++;
+      }
+      return heals / 4000;
+    };
+    expect(healRate(1)).toBeGreaterThan(0.5);
+    expect(healRate(3)).toBeLessThan(0.35);
+  });
+
+  it('a new character\u2019s Fireball hits like a level-9 one, and never weakens on levelling up', () => {
+    const avg = (level: number) => {
+      const rng = new RNG(4);
+      let total = 0;
+      for (let i = 0; i < 2000; i++) {
+        const c = makeChar(); c.level = level; c.intelligence = 12;
+        const m = createMonster('Orc', 5, 'o'); m.hp = m.maxHp = 100000;
+        total += playerFireball(c, m, rng).playerDamage;
+      }
+      return total / 2000;
+    };
+    const byLevel = [1, 2, 4, 9, 10, 20].map(avg);
+    for (let i = 1; i < byLevel.length; i++) expect(byLevel[i]).toBeGreaterThanOrEqual(byLevel[i - 1] - 0.5);
+    expect(byLevel[0]).toBeGreaterThan(20);
   });
 });
