@@ -270,7 +270,8 @@ function handleKey(key: KeyEvent): void {
           { key: 'b', text: 'Sapphire — Banish Monster' },
           { key: 'c', text: 'Diamond — Reveal Map' },
           { key: 'd', text: 'Opal — Chiaroscuro Blast' },
-          { key: 'e', text: 'Cancel' },
+          { key: 'e', text: 'Emerald — Warding' },
+          { key: 'f', text: 'Cancel' },
         ];
         state.messages = ['Choose a gem:'];
         render(state);
@@ -297,6 +298,7 @@ function handleKey(key: KeyEvent): void {
       if (key.char === 'p') render(engine.usePot());
       if (key.char === 'b') render(engine.useBook());
       if (key.char === 'g') render(engine.useDiamondExploring());
+      if (key.char === 'e') render(engine.useEmeraldExploring());
       if (key.char === 'w') render(engine.startResting());
       if (key.char === 'm') render(engine.showMap());
       if (key.char === 't') render(engine.showStatus());

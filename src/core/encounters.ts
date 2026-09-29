@@ -91,7 +91,7 @@ export interface ChestResult {
 
 const GEM_TYPES: GemType[] = ['ruby', 'sapphire', 'diamond', 'opal'];
 const GEM_NAMES: Record<GemType, string> = {
-  ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal',
+  ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal', emerald: 'emerald',
 };
 
 export function resolveChest(char: Character, rng: RNG): ChestResult {
@@ -131,7 +131,9 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
   }
 
   if (roll < 0.725) {
-    const type = rng.pick(GEM_TYPES);
+    // Emeralds are rarer, and turn up more the deeper you go.
+    const emeraldShare = Math.min(0.4, GEMS.EMERALD_FIND_BASE + GEMS.EMERALD_FIND_PER_LEVEL * char.dungeonLevel);
+    const type: GemType = rng.float() < emeraldShare ? 'emerald' : rng.pick(GEM_TYPES);
     char.inventory.gems[type]++;
     return {
       messages: [

@@ -201,9 +201,13 @@ export const COMBAT = {
   MUMMY_DAMAGE_PER_TURN: 3,
   MUMMY_DEX_REDUCTION: 3,
 
-  // Ball of Doo save: RES + WIS vs DC
-  BALL_OF_DOO_DC: 30,
-  BALL_OF_DOO_MIN_CHANCE: 0.10,  // Asmodeus always has at least 10% chance to use it
+  // Asmodeus's transformation (a Clarkson College DM original): on any of his
+  // turns, this chance he turns the character into a pile of lizard shit,
+  // climbing as he's wounded (desperate). Evil magic: no saving throw, and
+  // it kills however tough the character is. Only a ward already in place
+  // (tome or altar) turns it aside.
+  BALL_OF_DOO_CHANCE: 0.05,           // at full health
+  BALL_OF_DOO_DESPERATE_CHANCE: 0.20, // as he nears death
 
   // Infernal Healing
   INFERNAL_HEAL_DIVISOR: 3,  // Asmodeus heals this fraction of the damage he deals
@@ -373,6 +377,7 @@ export const WARRIOR = {
   MAX_ATTACKS: 5,
   EXTRA_SWING_HIT_PENALTY: 2,      // each swing after the first is this much harder to land
   STR_DAMAGE_DIVISOR: 1.5,         // wizards use COMBAT.DAMAGE_STR_DIVISOR (2)
+  HIT_BONUS: 5,                    // weapon mastery: added to every swing's to-hit roll
   HP_BONUS_START: 8,
   HP_BONUS_PER_LEVEL: 3,
   DAMAGE_TAKEN_MULT: 0.85,
@@ -449,7 +454,17 @@ export const GEMS = {
     sapphire: 200,
     diamond: 350,
     opal: 250,
+    emerald: 300,
   },
+
+  // Emerald: a ward that lasts a few fights and deflects most, not all,
+  // attacks, Asmodeus's transformation included. Rarer than other gems.
+  EMERALD_DEFLECT_CHANCE: 0.6,
+  EMERALD_FIGHTS_MIN: 3,
+  EMERALD_FIGHTS_MAX: 5,
+  EMERALD_MAX_FIGHTS: 10,             // wards stack up to this
+  EMERALD_FIND_BASE: 0.08,            // share of gem finds that are emeralds, plus...
+  EMERALD_FIND_PER_LEVEL: 0.04,       // ...this per dungeon level
 
   // The game has no character-class system yet, so "only magicians and
   // wizards" is stood in with an INT threshold instead — about the top

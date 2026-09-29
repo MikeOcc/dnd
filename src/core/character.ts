@@ -52,7 +52,7 @@ export function createCharacter(id: string, name: string, roll: CharacterRoll): 
     statusEffects: [],
     introsSeen: [],
     rerollsRemaining: CHARACTER.MAX_REROLLS,
-    inventory: { potions: 0, books: 0, gems: { ruby: 0, sapphire: 0, diamond: 0, opal: 0 } },
+    inventory: { potions: 0, books: 0, gems: { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0 } },
     elementalWarnings: [],
     createdAt: Date.now(),
     playTime: 0,
@@ -100,6 +100,19 @@ export function calculateLevel(xp: number): number {
     else break;
   }
   return Math.min(level, LEVELING.MAX_LEVEL);
+}
+
+/** Fights left on the character's emerald ward (0 = none). */
+export function wardFights(char: Character): number {
+  return char.statusEffects.find(e => e.type === 'warded')?.value ?? 0;
+}
+
+/** Called as a fight ends: the ward has one fewer fight left. */
+export function wearDownWard(char: Character): void {
+  const ward = char.statusEffects.find(e => e.type === 'warded');
+  if (!ward) return;
+  ward.value--;
+  if (ward.value <= 0) removeStatusEffect(char, 'warded');
 }
 
 /** HP a healing potion restores (before capping at max HP): a base roll, a
@@ -154,6 +167,8 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
 
   const remaining: StatusEffect[] = [];
   for (const eff of char.statusEffects) {
+    // An emerald ward counts down by fights, not steps.
+    if (eff.type === 'warded') { remaining.push(eff); continue; }
     if (eff.type === 'poison') {
       char.hp = Math.max(1, char.hp - eff.value);
       damageTaken += eff.value;

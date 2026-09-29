@@ -73,7 +73,9 @@ export type StatusEffectType =
   | 'intelligence-reduced'
   | 'dexterity-reduced'
   | 'strength-reduced'
-  | 'resistance-improved';
+  | 'resistance-improved'
+  | 'warded';   // emerald ward: value = fights left (doesn't tick with steps)
+;
 
 export interface StatusEffect {
   type: StatusEffectType;
@@ -81,7 +83,7 @@ export interface StatusEffect {
   turns: number;
 }
 
-export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal';
+export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald';
 
 export interface Inventory {
   potions: number;

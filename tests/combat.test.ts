@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
 import { GEMS, COMBAT } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1319,5 +1319,86 @@ describe('Beholder paralysis', () => {
     }
     expect(helpless).toBeGreaterThan(0);
     expect(brokeFree).toBeGreaterThan(0);
+  });
+});
+
+describe("Asmodeus's transformation", () => {
+  it('about 5% of his turns at full health, no save, and fatal however tough the character is', () => {
+    const rng = new RNG(666);
+    let turns = 0, transformed = 0;
+    for (let i = 0; i < 6000; i++) {
+      const char = makeChar({ level: 60, hp: 1000000, maxHp: 1000000, resistance: 99, wisdom: 99, constitution: 99 });
+      char.heldRounds = 1; char.heldBy = 'dazed';
+      const res = playerHeld(char, createMonster('Asmodeus', 100, 'a'), rng);
+      turns++;
+      if (res.messages.join(' ').includes('PILE OF LIZARD SHIT')) {
+        transformed++;
+        expect(res.playerDied).toBe(true);
+        expect(char.hp).toBe(0);
+        expect(res.deathCause).toBe('Turned into a pile of lizard shit by Asmodeus.');
+      }
+    }
+    expect(transformed / turns).toBeGreaterThan(COMBAT.BALL_OF_DOO_CHANCE - 0.015);
+    expect(transformed / turns).toBeLessThan(COMBAT.BALL_OF_DOO_CHANCE + 0.015);
+  });
+
+  it('a ward already in place turns it aside', () => {
+    const rng = new RNG(1);
+    for (let i = 0; i < 400; i++) {
+      const char = makeChar({ level: 60, hp: 1000, maxHp: 1000, invulnerableTurns: 1 });
+      char.heldRounds = 1; char.heldBy = 'dazed';
+      const res = playerHeld(char, createMonster('Asmodeus', 100, 'a'), rng);
+      expect(res.playerDied).toBe(false);
+    }
+  });
+});
+
+describe("Asmodeus grows desperate", () => {
+  it('the transformation grows likelier as he is wounded, up to 20%', () => {
+    const m = createMonster('Asmodeus', 100, 'a');
+    expect(transformationChance(m)).toBeCloseTo(COMBAT.BALL_OF_DOO_CHANCE);
+    m.hp = m.maxHp / 2;
+    expect(transformationChance(m)).toBeCloseTo((COMBAT.BALL_OF_DOO_CHANCE + COMBAT.BALL_OF_DOO_DESPERATE_CHANCE) / 2);
+    m.hp = 1;
+    expect(transformationChance(m)).toBeCloseTo(COMBAT.BALL_OF_DOO_DESPERATE_CHANCE, 2);
+  });
+});
+
+describe('Emerald ward in combat', () => {
+  it('deflects about 60% of attacks, the transformation included', () => {
+    const rng = new RNG(12);
+    let turns = 0, deflected = 0, transformed = 0;
+    for (let i = 0; i < 4000; i++) {
+      const char = makeChar({ level: 60, hp: 1000000, maxHp: 1000000 });
+      char.statusEffects = [{ type: 'warded', value: 3, turns: 9999 }];
+      char.heldRounds = 1; char.heldBy = 'dazed';
+      const res = playerHeld(char, createMonster('Asmodeus', 100, 'a'), rng);
+      turns++;
+      const text = res.messages.join(' ');
+      if (text.includes('emerald ward flares')) deflected++;
+      if (text.includes('LIZARD')) transformed++;
+    }
+    expect(deflected / turns).toBeGreaterThan(0.55);
+    expect(deflected / turns).toBeLessThan(0.65);
+    // 5% at full health, times the 40% that gets past the ward
+    expect(transformed / turns).toBeLessThan(0.035);
+  });
+});
+
+describe('Reaching high-level monsters', () => {
+  it('a level-60 warrior can now land blows on Asmodeus', () => {
+    const rng = new RNG(3);
+    let hits = 0;
+    for (let i = 0; i < 300; i++) {
+      const char = makeChar({ level: 60, strength: 16, dexterity: 14, hp: 1000000, maxHp: 1000000 });
+      char.charClass = 'warrior';
+      const m = createMonster('Asmodeus', 100, 'a'); m.hp = m.maxHp = 1000000;
+      hits += playerAttack(char, m, rng).messages.filter(l => l.startsWith('You strike')).length;
+    }
+    expect(hits / 300).toBeGreaterThan(1.5);   // of 5 swings a round
+  });
+
+  it("Asmodeus's HP is halved (15 per level)", () => {
+    expect(createMonster('Asmodeus', 100, 'a').maxHp).toBe(1500);
   });
 });

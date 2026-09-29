@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -68,7 +68,7 @@ const CHEST_TRAP_ELEMENT: Record<ChestTrapType, FxElement> = {
 };
 
 const GEM_PLURAL: Record<GemType, string> = {
-  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals',
+  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds',
 };
 
 interface LevelCache {
@@ -281,7 +281,8 @@ export class GameEngine {
         + (c.charClass === 'warrior' ? `   (${attacksPerRound(c)} attack${attacksPerRound(c) === 1 ? '' : 's'} per round)` : ''),
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
-      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}`,
+      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
+      ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
       `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
@@ -310,6 +311,7 @@ export class GameEngine {
       { name: 'Sapphire', type: 'Gem — Banish Monster', qty: `x${c.inventory.gems.sapphire}` },
       { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
+      { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
     ];
     const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
     const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
@@ -1136,7 +1138,7 @@ export class GameEngine {
 
   gemAction(key: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
-    const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal' };
+    const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal', e: 'emerald' };
     const type = types[key];
     if (type && this.isHeld()) return this.combatHeld();
     if (!type) {
@@ -1155,7 +1157,8 @@ export class GameEngine {
       { key: 'b', text: 'Sapphire — Banish Monster' },
       { key: 'c', text: 'Diamond — Reveal Map' },
       { key: 'd', text: 'Opal — Chiaroscuro Blast' },
-      { key: 'e', text: 'Cancel' },
+      { key: 'e', text: 'Emerald — Warding' },
+      { key: 'f', text: 'Cancel' },
     ];
     state.phase = 'combat';
     return state;
@@ -1193,7 +1196,30 @@ export class GameEngine {
       case 'sapphire': return this.useSapphire();
       case 'diamond':  return this.useDiamond();
       case 'opal':     return this.useOpal();
+      case 'emerald':  return this.useEmerald();
     }
+  }
+
+  /** An emerald's ward: lasts a few fights, deflects most attacks. Stacks
+   * up to a limit. Costs no turn in combat. */
+  private useEmerald(): GameState {
+    if (!this.char) return this.getState();
+    this.char.inventory.gems.emerald--;
+    const added = this.rng.int(GEMS.EMERALD_FIGHTS_MIN, GEMS.EMERALD_FIGHTS_MAX);
+    const fights = Math.min(GEMS.EMERALD_MAX_FIGHTS, wardFights(this.char) + added);
+    addStatusEffect(this.char, { type: 'warded', value: fights, turns: 9999 });
+    this.messages = [
+      'The emerald dissolves into a shimmering green light that wraps around you.',
+      `An emerald ward protects you for the next ${fights} fight${fights === 1 ? '' : 's'}.`,
+      '(It turns most blows aside, but not all.)',
+    ];
+    return this.getState();
+  }
+
+  /** E while exploring: raise an emerald ward before the next fight. */
+  useEmeraldExploring(): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+    return this.useGem('emerald');
   }
 
   private useRuby(): GameState {
@@ -1620,6 +1646,7 @@ export class GameEngine {
       this.char.heldRounds = 0;
       this.char.heldBy = undefined;
       this.char.battleCryRounds = 0;
+      wearDownWard(this.char);
     }
     resetPaceAfterCombat(this.pace, this.rng);
     this.combat = null;

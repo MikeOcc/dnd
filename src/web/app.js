@@ -344,10 +344,12 @@ function updateStatusBar(char) {
   potEl.textContent = `Pot: ${potions}`;
   potEl.className = potions > 0 ? 'has-potions' : '';
 
-  const gems = char.inventory?.gems ?? { ruby: 0, sapphire: 0, diamond: 0, opal: 0 };
+  const gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0, ...(char.inventory?.gems ?? {}) };
   const gemEl = document.getElementById('gems-display');
-  gemEl.textContent = `Gems: R${gems.ruby} S${gems.sapphire} D${gems.diamond} O${gems.opal}`;
-  const hasGems = gems.ruby || gems.sapphire || gems.diamond || gems.opal;
+  const ward = (char.statusEffects || []).find(e => e.type === 'warded');
+  gemEl.textContent = `Gems: R${gems.ruby} S${gems.sapphire} D${gems.diamond} O${gems.opal} E${gems.emerald}`
+    + (ward ? `  Ward:${ward.value}` : '');
+  const hasGems = gems.ruby || gems.sapphire || gems.diamond || gems.opal || gems.emerald;
   gemEl.className = hasGems ? 'has-potions' : '';
 
   document.getElementById('compass-display').textContent = COMPASS[char.facing] ?? '';
@@ -532,7 +534,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  M or Esc: Close Map'; break;
     case 'status':
@@ -633,7 +635,8 @@ function handleChoiceKey(key, phase) {
         { key: 'b', text: 'Sapphire — Banish Monster' },
         { key: 'c', text: 'Diamond — Reveal Map' },
         { key: 'd', text: 'Opal — Chiaroscuro Blast' },
-        { key: 'e', text: 'Cancel' },
+        { key: 'e', text: 'Emerald — Warding' },
+        { key: 'f', text: 'Cancel' },
       ];
       for (const gem of gems) {
         const btn = makeChoiceBtn(gem.key.toUpperCase(), gem.text);
@@ -730,6 +733,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'p') apiAction('use-potion');
     if (key === 'b') apiAction('use-book');
     if (key === 'g') apiAction('use-diamond');
+    if (key === 'e') apiAction('use-emerald');
     if (key === 'w') apiAction('wait');
     if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
@@ -783,7 +787,7 @@ document.addEventListener('keydown', (e) => {
       return;
     }
     if (gemMenuOpen) {
-      if (['a','b','c','d','e'].includes(key)) {
+      if (['a','b','c','d','e','f'].includes(key)) {
         gemMenuOpen = false;
         apiAction('gem', { choice: key });
       }
@@ -833,6 +837,7 @@ document.getElementById('btn-map')       ?.addEventListener('click', () => apiAc
 document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAction('use-potion'));
 document.getElementById('btn-book')      ?.addEventListener('click', () => apiAction('use-book'));
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
+document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));

@@ -195,7 +195,7 @@ describe('Chest loot', () => {
 
     expect(sawGemItem).toBe(true);
     // All four gem types should show up over enough trials.
-    expect(seenTypes).toEqual(new Set(['ruby', 'sapphire', 'diamond', 'opal']));
+    expect(seenTypes).toEqual(new Set(['ruby', 'sapphire', 'diamond', 'opal', 'emerald']));
   });
 
   it('gold and gemstone value scale up with dungeon level', () => {

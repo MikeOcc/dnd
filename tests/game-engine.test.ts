@@ -528,9 +528,10 @@ describe('GameEngine — gems', () => {
     const engine = makeReadyEngine(db);
     const e = setupGemUser(engine, 'Kobold');
 
-    const state = engine.gemAction('e');
+    const before = { ...e.char.inventory.gems };
+    const state = engine.gemAction('f');   // Cancel (E is the emerald)
     expect(state.phase).toBe('combat');
-    expect(e.char.inventory.gems).toEqual({ ruby: 1, sapphire: 1, diamond: 1, opal: 1 });
+    expect(e.char.inventory.gems).toEqual(before);
   });
 
   it('Ruby consumes itself, teleports the character, and ends combat', () => {
@@ -1658,5 +1659,50 @@ describe('GameEngine — teleport traps', () => {
       expect(`${e.char.x},${e.char.y}`).not.toBe(from);
     }
     expect(seen).toEqual(new Set(['clean', 'rough', 'ambush']));
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — the emerald ward', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function warded() {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.intelligence = 18;
+    e.char.inventory.gems.emerald = 1;
+    e.phase = 'playing';
+    return { engine, e };
+  }
+
+  it('raises a ward for 3 to 5 fights, usable while exploring', () => {
+    const { engine, e } = warded();
+    const state = engine.useEmeraldExploring();
+    expect(e.char.inventory.gems.emerald).toBe(0);
+    const ward = e.char.statusEffects.find((s: any) => s.type === 'warded');
+    expect(ward.value).toBeGreaterThanOrEqual(3);
+    expect(ward.value).toBeLessThanOrEqual(5);
+    expect(state.messages.join(' ')).toContain('emerald ward');
+  });
+
+  it('wears off after its fights, and walking does not wear it down', () => {
+    const { engine, e } = warded();
+    engine.useEmeraldExploring();
+    const fights = e.char.statusEffects.find((s: any) => s.type === 'warded').value;
+    engine.startResting(); for (let i = 0; i < 5; i++) engine.restTick();   // steps/ticks don't count
+    e.phase = 'playing';
+    expect(e.char.statusEffects.find((s: any) => s.type === 'warded').value).toBe(fights);
+    for (let i = 0; i < fights; i++) e.endCombat(true);
+    expect(e.char.statusEffects.some((s: any) => s.type === 'warded')).toBe(false);
+  });
+
+  it('survives a save and reload', () => {
+    const { engine, e } = warded();
+    engine.useEmeraldExploring();
+    engine.saveAndPrompt();
+    const loaded = new Repository(db).loadCharacter(e.char.id)!;
+    expect(loaded.statusEffects.some(s => s.type === 'warded')).toBe(true);
   });
 });

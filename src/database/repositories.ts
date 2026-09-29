@@ -116,7 +116,8 @@ export class Repository {
   private rowToCharacter(row: Record<string, unknown>): Character {
     const inventory = JSON.parse(row['inventory'] as string || '{"potions":0}') as Character['inventory'];
     // Older saves predate gems/books — backfill so existing characters don't crash.
-    if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0 };
+    if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0 };
+    if (inventory.gems.emerald === undefined) inventory.gems.emerald = 0;
     if (!inventory.books) inventory.books = 0;
 
     return {

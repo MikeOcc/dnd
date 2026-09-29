@@ -1,7 +1,7 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR } from './config.js';
 import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -19,7 +19,6 @@ export interface CombatRoundResult {
   killingBlow?: string[];      // ...and the monster's lines from that final turn
   runFailed?: boolean;
   ballOfDooFired?: boolean;
-  ballOfDooResisted?: boolean;
 }
 
 // Elemental resistance/vulnerability call-outs ("particularly vulnerable to
@@ -52,8 +51,12 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const hitRoll = rng.die(20) + char.level
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
     + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
+    + (warrior ? WARRIOR.HIT_BONUS : 0)
     - (opts.hitPenalty ?? 0);
-  const monsterDef = COMBAT.MONSTER_BASE_DEFENSE + monster.level + Math.floor(monster.level / 4);
+  // A monster above the character's level defends only as well as one of
+  // their own level, so no foe is out of reach of a blade.
+  const defLevel = Math.min(monster.level, char.level);
+  const monsterDef = COMBAT.MONSTER_BASE_DEFENSE + defLevel + Math.floor(defLevel / 4);
   const label = opts.label ? ` (${opts.label})` : '';
 
   if (hitRoll < monsterDef) {
@@ -626,7 +629,7 @@ export function abilityElement(ability: string | undefined): FxElement {
   return 'physical';
 }
 
-type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; ballOfDooResisted?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[] };
+type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[] };
 
 /** The monster's turn. Also reports the element of whatever it did
  * (monsterElement), or nothing if it didn't get to act; and if it killed
@@ -670,7 +673,7 @@ export function killedBy(monster: Monster, ability: string | undefined): string 
     case '':                 return `Killed by ${who}.`;
     case 'radiation':        return `Killed by the radioactive flesh of ${who}.`;
     case 'hypnosis':         return `Hypnotized and drained dry by ${who}.`;
-    case 'ball-of-doo':      return 'Turned into a Ball of Doo by Asmodeus.';
+    case 'ball-of-doo':      return 'Turned into a pile of lizard shit by Asmodeus.';
     case 'petrify-ray':      return `Turned to stone by ${who}.`;
     case 'death-ray':        return `Slain by the death ray of ${who}.`;
     case 'disintegrate-ray': return `Disintegrated by ${who}.`;
@@ -731,6 +734,12 @@ function monsterActionInner(
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
   }
 
+  // An emerald ward turns most attacks aside, but not all.
+  if (wardFights(char) > 0 && rng.float() < GEMS.EMERALD_DEFLECT_CHANCE) {
+    messages.push(`Your emerald ward flares green and turns the ${monster.type}'s attack aside!`);
+    return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
+  }
+
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const eff = getEffectiveStats(char);
 
@@ -739,7 +748,6 @@ function monsterActionInner(
   let ability: string | undefined;
   let playerTeleported = false;
   let ballOfDooFired = false;
-  let ballOfDooResisted = false;
   let monsterHealed = 0;
 
   if (abilities.length > 0 && rng.float() < 0.5) {
@@ -806,28 +814,19 @@ function monsterActionInner(
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: false, playerTeleported };
   }
 
-  // Handle Ball of Doo
+  // Handle the transformation: no saving throw, no matter how tough
   if (ability === 'ball-of-doo') {
     ballOfDooFired = true;
-    const saveRoll = rng.die(20) + Math.floor(eff.resistance / 2) + Math.floor(eff.wisdom / 3);
-    const dc = COMBAT.BALL_OF_DOO_DC;
-    if (saveRoll < dc) {
-      messages.push('Asmodeus raises one clawed hand.');
-      messages.push('');
-      messages.push('There is a loud POP and a puff of smoke.');
-      messages.push('');
-      messages.push('YOU HAVE BEEN TURNED INTO A BALL OF DOO.');
-      messages.push('');
-      messages.push('You are dead.');
-      char.hp = 0;
-      return { messages, monsterDamage: char.maxHp, playerDied: true, monsterDied: false, ballOfDooFired };
-    } else {
-      ballOfDooResisted = true;
-      messages.push('Asmodeus attempts to transform you.');
-      messages.push('');
-      messages.push('You resist the foul magic.');
-      return { messages, monsterDamage: 0, playerDied: false, monsterDied: false, ballOfDooFired, ballOfDooResisted };
-    }
+    const drained = char.hp;
+    messages.push('Asmodeus raises one clawed hand and smiles.');
+    messages.push('');
+    messages.push('There is a loud POP and a puff of sulphurous smoke.');
+    messages.push('');
+    messages.push('YOU HAVE BEEN TURNED INTO A PILE OF LIZARD SHIT.');
+    messages.push('');
+    messages.push('You are dead.');
+    char.hp = 0;
+    return { messages, monsterDamage: drained, playerDied: true, monsterDied: false, ballOfDooFired };
   }
 
   // Handle infernal healing
@@ -1004,12 +1003,15 @@ function calculateMonsterDamage(
   return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness));
 }
 
-function pickAsmodeusAbility(monster: Monster, char: Character, rng: RNG): string {
-  const hpRatio = monster.hp / monster.maxHp;
+/** Chance Asmodeus turns the character into a pile of lizard shit this turn:
+ * climbs as he's wounded. */
+export function transformationChance(monster: Monster): number {
+  const wounded = 1 - Math.max(0, monster.hp) / monster.maxHp;
+  return COMBAT.BALL_OF_DOO_CHANCE + (COMBAT.BALL_OF_DOO_DESPERATE_CHANCE - COMBAT.BALL_OF_DOO_CHANCE) * wounded;
+}
 
-  // Ball of Doo: more likely when injured
-  const bodChance = COMBAT.BALL_OF_DOO_MIN_CHANCE + (1 - hpRatio) * 0.2;
-  if (rng.float() < bodChance) return 'ball-of-doo';
+function pickAsmodeusAbility(monster: Monster, char: Character, rng: RNG): string {
+  if (rng.float() < transformationChance(monster)) return 'ball-of-doo';
 
   const roll = rng.float();
   if (roll < 0.15) return 'fireball';
