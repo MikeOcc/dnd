@@ -6,6 +6,7 @@ export const CHARACTER = {
 
 export const GAMEPLAY = {
   REGEN_HP_EVERY_N_STEPS: 10,    // +1 HP per N steps walked (passive regen)
+  LIGHT_RADIUS: 2,               // torchlight reveals squares this many steps away (through open passages) on the map
   // Resting (W) runs in real time, one tick a second, until a wandering
   // monster turns up, the player stops, or they're fully healed.
   REST_HEAL_PCT_PER_TICK: 0.015, // of max HP (at least 1) per tick

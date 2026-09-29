@@ -691,7 +691,7 @@ export class GameEngine {
     this.dungeonState = this.repo.loadDungeonState(id);
     if (!this.dungeonState) this.dungeonState = this.emptyDungeonState();
     dropLegacyVisitedKeys(this.dungeonState);
-    this.dungeonState.visitedCells.add(visitedKey(char.dungeonLevel, char.x, char.y));
+    this.lightAround();
 
     this.loadLevelIntoCache(char.dungeonLevel);
 
@@ -720,6 +720,7 @@ export class GameEngine {
     if (!this.char || this.phase !== 'playing') return this.getState();
     const map: Record<Direction, Direction> = { N: 'W', W: 'S', S: 'E', E: 'N' };
     this.char.facing = map[this.char.facing];
+    this.lightAround();
     this.messages = [];
     return this.getState();
   }
@@ -728,8 +729,38 @@ export class GameEngine {
     if (!this.char || this.phase !== 'playing') return this.getState();
     const map: Record<Direction, Direction> = { N: 'E', E: 'S', S: 'W', W: 'N' };
     this.char.facing = map[this.char.facing];
+    this.lightAround();
     this.messages = [];
     return this.getState();
+  }
+
+  /** Torchlight: marks explored every square within LIGHT_RADIUS steps of
+   * the character through open passages (down corridors and into rooms,
+   * never through walls), so the map fills in around them as they go. */
+  private lightAround(): void {
+    if (!this.char || !this.dungeonState) return;
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return;
+    const level = this.char.dungeonLevel;
+    const seen = new Set<string>([`${this.char.x},${this.char.y}`]);
+    let frontier = [{ x: this.char.x, y: this.char.y }];
+    this.dungeonState.visitedCells.add(visitedKey(level, this.char.x, this.char.y));
+    const steps: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+    for (let d = 0; d < GAMEPLAY.LIGHT_RADIUS; d++) {
+      const next: { x: number; y: number }[] = [];
+      for (const p of frontier) {
+        for (const [dir, dx, dy] of steps) {
+          if (!canMove(lvl.grid, p.x, p.y, dir)) continue;
+          const q = { x: p.x + dx, y: p.y + dy };
+          const k = `${q.x},${q.y}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          this.dungeonState.visitedCells.add(visitedKey(level, q.x, q.y));
+          next.push(q);
+        }
+      }
+      frontier = next;
+    }
   }
 
   private tryMove(dir: Direction, _label: string): GameState {
@@ -768,7 +799,7 @@ export class GameEngine {
     }
 
     incrementPace(this.pace);
-    this.dungeonState!.visitedCells.add(visitedKey(this.char.dungeonLevel, this.char.x, this.char.y));
+    this.lightAround();
 
     // Check cell content
     const cellKey = `${this.char.x},${this.char.y}`;
@@ -1041,7 +1072,7 @@ export class GameEngine {
     this.pace.atLevelEntry = true;
     this.pace.movesSinceCombat = 0;
 
-    this.dungeonState!.visitedCells.add(visitedKey(this.char.dungeonLevel, this.char.x, this.char.y));
+    this.lightAround();
 
 
     if (!this.char.introsSeen.includes(lvlNum)) {
@@ -1927,7 +1958,7 @@ export class GameEngine {
     this.char.x = dest.x;
     this.char.y = dest.y;
     this.char.facing = this.rng.pick(['N', 'E', 'S', 'W'] as Direction[]);
-    this.dungeonState.visitedCells.add(visitedKey(this.char.dungeonLevel, dest.x, dest.y));
+    this.lightAround();
   }
 
   // ─── Level cache ─────────────────────────────────────────────────────────

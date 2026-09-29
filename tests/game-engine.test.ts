@@ -938,7 +938,8 @@ describe('GameEngine — explored squares are tracked per level', () => {
 
     engine.loadCharacter(id);
     const keys = [...e.dungeonState.visitedCells];
-    expect(keys).toEqual([`${e.char.dungeonLevel}:${e.char.x},${e.char.y}`]);
+    expect(keys.some(k => !k.includes(':'))).toBe(false);          // the old bare keys are gone
+    expect(keys).toContain(`${e.char.dungeonLevel}:${e.char.x},${e.char.y}`);  // torchlight marks where we stand
   });
 
   it('a ruby never teleports into solid rock, even if rock is marked explored', () => {
@@ -1704,5 +1705,49 @@ describe('GameEngine — the emerald ward', () => {
     engine.saveAndPrompt();
     const loaded = new Repository(db).loadCharacter(e.char.id)!;
     expect(loaded.statusEffects.some(s => s.type === 'warded')).toBe(true);
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+describe('GameEngine — torchlight on the map', () => {
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('reveals squares within 2 steps through open passages, never through walls', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const L = e.char.dungeonLevel;
+    e.dungeonState.visitedCells = new Set();
+    e.phase = 'playing';
+    engine.turnLeft();                         // lights up around us without moving
+
+    // Everything reachable in <= 2 steps is lit...
+    const within2 = new Set<string>([`${e.char.x},${e.char.y}`]);
+    let frontier = [[e.char.x, e.char.y]];
+    for (let d = 0; d < 2; d++) {
+      const next: number[][] = [];
+      for (const [x, y] of frontier) for (const [dir, dx, dy] of [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]] as const) {
+        if (canMove(lvl.grid, x, y, dir) && !within2.has(`${x + dx},${y + dy}`)) { within2.add(`${x + dx},${y + dy}`); next.push([x + dx, y + dy]); }
+      }
+      frontier = next;
+    }
+    for (const k of within2) expect(e.dungeonState.visitedCells.has(`${L}:${k}`)).toBe(true);
+    // ...and nothing else.
+    expect(e.dungeonState.visitedCells.size).toBe(within2.size);
+  });
+
+  it('walking with the map open lights the way ahead', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    e.phase = 'playing';
+    e.pace.movesSinceCombat = -1000;
+    e.char.facing = (['N', 'E', 'S', 'W'] as const).find(d => canMove(lvl.grid, e.char.x, e.char.y, d));
+    const before = e.dungeonState.visitedCells.size;
+    engine.showMap();
+    engine.mapMove('forward');
+    expect(e.dungeonState.visitedCells.size).toBeGreaterThanOrEqual(before);
   });
 });

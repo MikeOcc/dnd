@@ -435,10 +435,25 @@ html, body {
   overflow: auto;
   min-height: 50vh;
   max-height: 70vh;
-  cursor: grab;
   user-select: none;
 }
+/* The hand only when there's somewhere to drag the map to */
+#message-area.map-mode.pannable { cursor: grab; }
 #message-area.map-mode.dragging { cursor: grabbing; }
+
+/* Fixed title and legend around the scrolling map */
+#map-header, #map-legend {
+  margin: 0;
+  padding: 4px 12px;
+  background: var(--panel);
+  color: var(--terminal-green);
+  font-size: 13px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#map-header { border: 1px solid var(--terminal-green-dim); border-bottom: none; }
+#map-legend { border: 1px solid var(--terminal-green-dim); border-top: none; color: var(--terminal-green-dim); }
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
 #movement-controls.map-walk .command-bar { display: none; }

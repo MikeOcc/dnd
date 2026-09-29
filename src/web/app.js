@@ -127,7 +127,19 @@ function applyState(state) {
   scheduleRestTick(phase);
 
   // Messages
-  const msgs = (state.messages || []).join('\n');
+  // The map screen keeps its title and legend fixed outside the scrolling area.
+  const lines = state.messages || [];
+  const isMap = phase === 'map';
+  const legendAt = isMap ? lines.findIndex(l => l.trimStart().startsWith('@ You')) : -1;
+  const mapHeader = document.getElementById('map-header');
+  const mapLegend = document.getElementById('map-legend');
+  mapHeader.classList.toggle('hidden', !isMap);
+  mapLegend.classList.toggle('hidden', !isMap || legendAt < 0);
+  mapHeader.textContent = isMap ? (lines[0] || '') : '';
+  mapLegend.textContent = legendAt >= 0 ? lines[legendAt].trim() : '';
+  const bodyLines = isMap ? lines.slice(1, legendAt >= 0 ? legendAt : undefined) : lines;
+  while (isMap && bodyLines.length && bodyLines[bodyLines.length - 1] === '') bodyLines.pop();
+  const msgs = bodyLines.join('\n');
   const msgEl = document.getElementById('messages');
   msgEl.textContent = msgs;
   msgEl.classList.toggle('map-view', phase === 'map');
@@ -136,6 +148,7 @@ function applyState(state) {
   document.getElementById('message-area').classList.toggle('map-mode', phase === 'map');
   if (phase === 'map') centerMapOnPlayer();
   else msgEl.scrollTop = msgEl.scrollHeight;
+  updatePannable();
 
   // Choices
   renderChoices(state.choices || [], phase, state);
@@ -299,18 +312,28 @@ function centerMapOnPlayer() {
   area.scrollTop = Math.max(0, row * lh - area.clientHeight / 2);
 }
 
-// Click (or press the touchpad) and drag to pan the map.
+/** Shows the grab hand only when the map is bigger than its panel. */
+function updatePannable() {
+  const area = document.getElementById('message-area');
+  const pannable = area.classList.contains('map-mode')
+    && (area.scrollWidth > area.clientWidth + 1 || area.scrollHeight > area.clientHeight + 1);
+  area.classList.toggle('pannable', pannable);
+}
+window.addEventListener('resize', updatePannable);
+
+// Click (or press the touchpad) and drag to pan the map. Movement is tracked
+// on the whole window, so the drag keeps going if the cursor leaves the panel.
 (() => {
   const area = document.getElementById('message-area');
   let drag = null;
   area.addEventListener('pointerdown', e => {
-    if (!area.classList.contains('map-mode') || e.button !== 0) return;
+    if (!area.classList.contains('pannable') || e.button !== 0) return;
     drag = { x: e.clientX, y: e.clientY, left: area.scrollLeft, top: area.scrollTop, id: e.pointerId };
-    area.setPointerCapture(e.pointerId);
+    try { area.setPointerCapture(e.pointerId); } catch { /* not all pointers can be captured */ }
     area.classList.add('dragging');
     e.preventDefault();
   });
-  area.addEventListener('pointermove', e => {
+  window.addEventListener('pointermove', e => {
     if (!drag || e.pointerId !== drag.id) return;
     area.scrollLeft = drag.left - (e.clientX - drag.x);
     area.scrollTop = drag.top - (e.clientY - drag.y);
@@ -320,8 +343,8 @@ function centerMapOnPlayer() {
     drag = null;
     area.classList.remove('dragging');
   };
-  area.addEventListener('pointerup', end);
-  area.addEventListener('pointercancel', end);
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
 })();
 
 const COMPASS = { N: '▲ N', E: '▶ E', S: '▼ S', W: '◀ W' };
