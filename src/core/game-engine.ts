@@ -25,6 +25,8 @@ import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
+import { describeArea } from '../content/area-text.js';
+import { mapAreas, areaAtCell, type AreaMap } from './regions.js';
 import type { Repository } from '../database/repositories.js';
 
 // ─── In-memory session state ─────────────────────────────────────────────────
@@ -76,6 +78,7 @@ interface LevelCache {
   entrance: { x: number; y: number };
   exit: { x: number; y: number } | null;
   contents: Map<string, CellContent>;
+  areas?: AreaMap;   // rooms and corridors, worked out on first use
 }
 
 export class GameEngine {
@@ -89,6 +92,8 @@ export class GameEngine {
   private messages: string[] = [];
   private mapFull = false;
   private fx: Fx = {};   // hit-effect hints gathered during the current action
+  private lastArea: string | null = null;
+  private mapAreaLines: string[] = [];     // map mode: the description of the area just walked into, shown under the legend  // "level:areaId" the character was last described in
   private presenceFelt = false;   // a unique monster made itself felt on this step
   private pendingRoll: CharacterRoll | null = null;
   private pendingName: string | null = null;
@@ -341,6 +346,7 @@ export class GameEngine {
    * whole explored floor and back. */
   showMap(): GameState {
     this.mapFull = false;
+    this.mapAreaLines = [];
     return this.renderMap();
   }
 
@@ -432,6 +438,7 @@ export class GameEngine {
       `  ${'─'.repeat(w)}`,
       '',
       `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar`,
+      ...(this.mapAreaLines.length ? ['', ...this.mapAreaLines] : []),
     ];
     return this.getState();
   }
@@ -443,6 +450,7 @@ export class GameEngine {
     if (!this.char || this.phase !== 'map') return this.getState();
     this.phase = 'playing';
     this.presenceFelt = false;
+    this.mapAreaLines = [];
     const before = { x: this.char.x, y: this.char.y };
     const state =
       action === 'forward'  ? this.moveForward() :
@@ -702,7 +710,8 @@ export class GameEngine {
 
     this.sessionStart = Date.now();
     this.phase = 'playing';
-    this.messages = [`Welcome back, ${char.name}.`, `You are on Dungeon Level ${char.dungeonLevel}.`];
+    this.lastArea = null;
+    this.messages = [`Welcome back, ${char.name}.`, `You are on Dungeon Level ${char.dungeonLevel}.`, '', ...this.enterArea()];
     return this.getState();
   }
 
@@ -801,6 +810,8 @@ export class GameEngine {
 
     incrementPace(this.pace);
     this.lightAround();
+    const areaLines = this.enterArea();
+    if (areaLines.length) this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...areaLines];
 
     // Check cell content
     const cellKey = `${this.char.x},${this.char.y}`;
@@ -1074,6 +1085,7 @@ export class GameEngine {
     this.pace.movesSinceCombat = 0;
 
     this.lightAround();
+    this.lastArea = null;
 
 
     if (!this.char.introsSeen.includes(lvlNum)) {
@@ -1084,15 +1096,35 @@ export class GameEngine {
     }
 
     this.phase = 'playing';
-    this.messages = [`Level ${lvlNum}.`];
+    this.messages = [`Level ${lvlNum}.`, '', ...this.enterArea()];
     return this.getState();
   }
 
   dismissLevelIntro(): GameState {
     if (!this.char) return this.getState();
     this.phase = 'playing';
-    this.messages = [];
+    this.messages = this.enterArea();
     return this.getState();
+  }
+
+  /** Lines describing the room or corridor the character has just stepped
+   * into, if it's a different one from before (see content/area-text.ts). */
+  private enterArea(): string[] {
+    if (!this.char || !this.dungeonState) return [];
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return [];
+    lvl.areas ??= mapAreas(lvl.grid);
+    const area = areaAtCell(lvl.areas, this.char.x, this.char.y);
+    if (!area) return [];
+    const key = `${this.char.dungeonLevel}:${area.id}`;
+    if (key === this.lastArea) return [];
+    this.lastArea = key;
+    const seenKey = `area:${key}`;
+    const first = !this.dungeonState.visitedDescriptions.has(seenKey);
+    this.dungeonState.visitedDescriptions.add(seenKey);
+    const lines = describeArea(this.char.dungeonLevel, area, first);
+    this.mapAreaLines = lines;
+    return lines;
   }
 
   // ─── Combat ──────────────────────────────────────────────────────────────
@@ -1625,7 +1657,8 @@ export class GameEngine {
     if (!this.char || this.phase !== 'death') return this.getState();
     this.phase = 'playing';
     this.lightAround();
-    this.messages = [`You drag yourself up at the entrance to Level ${this.char.dungeonLevel}, alive again.`];
+    this.lastArea = null;
+    this.messages = [`You drag yourself up at the entrance to Level ${this.char.dungeonLevel}, alive again.`, '', ...this.enterArea()];
     return this.getState();
   }
 
@@ -1970,6 +2003,7 @@ export class GameEngine {
     this.char.y = dest.y;
     this.char.facing = this.rng.pick(['N', 'E', 'S', 'W'] as Direction[]);
     this.lightAround();
+    this.lastArea = null;  // the next step describes wherever this is
   }
 
   // ─── Level cache ─────────────────────────────────────────────────────────

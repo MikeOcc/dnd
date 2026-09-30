@@ -453,7 +453,7 @@ html, body {
   text-overflow: ellipsis;
 }
 #map-header { border: 1px solid var(--terminal-green-dim); border-bottom: none; }
-#map-legend { border: 1px solid var(--terminal-green-dim); border-top: none; color: var(--terminal-green-dim); }
+#map-legend { border: 1px solid var(--terminal-green-dim); border-top: none; color: var(--terminal-green-dim); white-space: pre-wrap; }
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
 #movement-controls.map-walk .command-bar { display: none; }

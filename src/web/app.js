@@ -136,7 +136,7 @@ function applyState(state) {
   mapHeader.classList.toggle('hidden', !isMap);
   mapLegend.classList.toggle('hidden', !isMap || legendAt < 0);
   mapHeader.textContent = isMap ? (lines[0] || '') : '';
-  mapLegend.textContent = legendAt >= 0 ? lines[legendAt].trim() : '';
+  mapLegend.textContent = legendAt >= 0 ? lines.slice(legendAt).map(l => l.trim()).join('\n') : '';
   const bodyLines = isMap ? lines.slice(1, legendAt >= 0 ? legendAt : undefined) : lines;
   while (isMap && bodyLines.length && bodyLines[bodyLines.length - 1] === '') bodyLines.pop();
   const msgs = bodyLines.join('\n');

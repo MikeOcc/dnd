@@ -8,6 +8,7 @@ import { xpForLevel } from '../src/core/character.js';
 import { abilityElement } from '../src/core/combat.js';
 import { MENU_LORE } from '../src/content/menu-lore.js';
 import { canMove, floodFill } from '../src/core/dungeon.js';
+import { mapAreas, areaAtCell } from '../src/core/regions.js';
 import { DUNGEON } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
@@ -1771,5 +1772,48 @@ describe('GameEngine — torchlight on the map', () => {
     engine.showMap();
     engine.mapMove('forward');
     expect(e.dungeonState.visitedCells.size).toBeGreaterThanOrEqual(before);
+  });
+});
+
+describe('GameEngine — room and corridor descriptions', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('describes a room when the character walks into it, then reminds on return', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const map = mapAreas(lvl.grid);
+    const steps = [['N', 0, -1, 'S'], ['E', 1, 0, 'W'], ['S', 0, 1, 'N'], ['W', -1, 0, 'E']] as const;
+    // A corridor square with an empty room square next door.
+    let found: { x: number; y: number; dir: 'N' | 'E' | 'S' | 'W'; back: 'N' | 'E' | 'S' | 'W' } | null = null;
+    for (let y = 0; y < lvl.grid.length && !found; y++) for (let x = 0; x < lvl.grid[0].length && !found; x++) {
+      if (areaAtCell(map, x, y)?.kind !== 'corridor' || lvl.contents.has(`${x},${y}`)) continue;
+      for (const [dir, dx, dy, back] of steps) {
+        if (canMove(lvl.grid, x, y, dir) && areaAtCell(map, x + dx, y + dy)?.kind === 'room' && !lvl.contents.has(`${x + dx},${y + dy}`)) {
+          found = { x, y, dir, back }; break;
+        }
+      }
+    }
+    expect(found).not.toBeNull();
+    e.char.x = found!.x; e.char.y = found!.y;
+    e.lastArea = null;
+    e.enterArea();
+    e.dungeonState.visitedDescriptions.clear();
+    e.pace.movesSinceCombat = 0; e.pace.graceMoves = 1000;
+
+    const turnTo = (d: string) => { e.char.facing = d; };
+    turnTo(found!.dir);
+    const into = e.tryMove(found!.dir, '');
+    expect(into.messages.join(' ')).toMatch(/You are in (a|an) /);
+    expect(into.messages.join(' ')).toMatch(/way(s)? out/);
+
+    e.tryMove(found!.back, '');
+    const again = e.tryMove(found!.dir, '');
+    expect(again.messages.join(' ')).toMatch(/You are back in the /);
   });
 });
