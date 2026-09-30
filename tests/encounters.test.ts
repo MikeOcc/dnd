@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
-import { rollCharacter, createCharacter } from '../src/core/character.js';
+import { rollCharacter, createCharacter, xpForLevel } from '../src/core/character.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat,
   resolveFountain, resolveChest, applyDeath, readBook,
@@ -282,14 +282,19 @@ describe('Death mechanics', () => {
     expect(char.statusEffects).toHaveLength(0);
   });
 
-  it('keeps experience on death', () => {
+  it('costs a share of experience, but never a level', () => {
     const char = makeChar();
-    char.hp = 0;
+    char.level = 1;
     char.xp = 5000;
     char.gold = 0;
+    const result = applyDeath(char, 0, 0);
+    expect(result.xpLost).toBe(Math.floor(5000 * DEATH.XP_LOSS_FRACTION));
+    expect(char.xp).toBe(5000 - result.xpLost);
 
-    applyDeath(char, 0, 0);
-    expect(char.xp).toBe(5000);
+    char.level = 5;
+    char.xp = xpForLevel(5) + 3;
+    expect(applyDeath(char, 0, 0).xpLost).toBeLessThanOrEqual(3);
+    expect(char.xp).toBeGreaterThanOrEqual(xpForLevel(5));
   });
 
   it('includes death text in result', () => {

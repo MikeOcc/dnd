@@ -1,7 +1,7 @@
 import type { Character, Monster, StatusEffect, GemType, ChestTrapType } from './types.js';
 import type { RNG } from './random.js';
 import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL } from './config.js';
-import { addStatusEffect } from './character.js';
+import { addStatusEffect, xpForLevel } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
 
@@ -52,11 +52,17 @@ export function incrementPace(pace: EncounterPace): void {
 export interface DeathResult {
   messages: string[];
   goldLost: number;
+  xpLost: number;
 }
 
+/** The toll of dying: a share of gold and experience (never enough XP to lose
+ * a level), full health, a clean slate of effects, and waking at the entrance. */
 export function applyDeath(char: Character, entranceX: number, entranceY: number): DeathResult {
   const goldLost = Math.floor(char.gold * DEATH.GOLD_LOSS_FRACTION);
   char.gold = Math.max(0, char.gold - goldLost);
+  const xpFloor = Math.min(char.xp, xpForLevel(char.level));
+  const xpLost = Math.min(Math.floor(char.xp * DEATH.XP_LOSS_FRACTION), char.xp - xpFloor);
+  char.xp -= xpLost;
   char.hp = char.maxHp;
   char.x = entranceX;
   char.y = entranceY;
@@ -72,8 +78,12 @@ export function applyDeath(char: Character, entranceX: number, entranceY: number
       goldLost > 0
         ? `Some of your gold is missing. (Lost ${goldLost} gold)`
         : 'You clutch your remaining gold tightly.',
+      xpLost > 0
+        ? `Death has dulled your hard-won lessons. (Lost ${xpLost} experience)`
+        : 'Your hard-won lessons stay with you.',
     ],
     goldLost,
+    xpLost,
   };
 }
 

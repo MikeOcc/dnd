@@ -476,6 +476,19 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
       messages.push(`This foe is unworthy of divine wrath. No answer comes from above.`);
     }
   } else if (rng.float() < chance) {
+    const banishChance = prayerBanishChance(char, monster, eff.wisdom);
+    if (banishChance > 0 && rng.float() < banishChance) {
+      messages.push('Your prayer rises like a trumpet, and the air splits with holy fire!');
+      messages.push(`A gate of blinding light opens behind the ${monster.type}, dragging at it.`);
+      const failFaces = banishFailFaces(monster);
+      const roll = failFaces > 0 ? rng.die(12) : 12;
+      if (failFaces > 0) messages.push(`The ${monster.type} fights the pull. (d12: ${roll}, fails on 1–${failFaces})`);
+      if (roll > failFaces) {
+        messages.push(`The ${monster.type} is torn from this world, shrieking, and the gate seals.`, 'You are free to move on.');
+        return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false, banished: true };
+      }
+      messages.push(`The ${monster.type} claws free as the gate closes, scorched by its light.`);
+    }
     if (divine) {
       const base = (char.level + Math.floor(eff.wisdom / 2));
       const rand = COMBAT.PRAYER_UNDEAD_DAMAGE_MIN
@@ -538,6 +551,19 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
 
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: monsterDamage, monsterDied: monsterDied || res.monsterDied };
+}
+
+/** Chance a heard prayer banishes this monster outright: only high-level
+ * undead (never Asmodeus), and only for a character high enough in level and
+ * Wisdom. 0 when it isn't possible. */
+export function prayerBanishChance(char: Character, monster: Monster, wisdom: number): number {
+  if (!monster.definition.isUndead || monster.type === 'Asmodeus') return 0;
+  if (monster.level < COMBAT.PRAYER_BANISH_MIN_MONSTER_LEVEL) return 0;
+  if (char.level < COMBAT.PRAYER_BANISH_MIN_CHAR_LEVEL || wisdom < COMBAT.PRAYER_BANISH_MIN_WISDOM) return 0;
+  const chance = COMBAT.PRAYER_BANISH_BASE_CHANCE
+    + (wisdom - COMBAT.PRAYER_BANISH_MIN_WISDOM) * COMBAT.PRAYER_BANISH_PER_WISDOM
+    + (char.level - COMBAT.PRAYER_BANISH_MIN_CHAR_LEVEL) * COMBAT.PRAYER_BANISH_PER_LEVEL;
+  return Math.min(COMBAT.PRAYER_BANISH_MAX_CHANCE, chance);
 }
 
 // ─── Banish ──────────────────────────────────────────────────────────────────

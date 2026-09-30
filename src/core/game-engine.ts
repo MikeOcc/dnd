@@ -218,7 +218,8 @@ export class GameEngine {
     }
     if (this.phase === 'death') {
       return [
-        { key: 'c', text: 'Return to Last Save' },
+        { key: 'a', text: 'Revive at the Entrance' },
+        { key: 'c', text: 'Restore Last Save' },
         { key: 'q', text: 'Quit to Main Menu' },
       ];
     }
@@ -1591,21 +1592,27 @@ export class GameEngine {
     return this.getState();
   }
 
-  /** Death screen: the cause, then (in combat) the blow that did it, then the respawn. */
+  /** Death screen: the cause, then (in combat) the blow that did it, then the
+   * toll. Dying costs gold and experience and drops the character at this
+   * level's entrance; from there they can revive, restore the last save
+   * instead (undoing the toll), or quit. Nothing is written to the save. */
   private handleDeath(cause: string, killingBlow: string[] = []): GameState {
     if (!this.char) return this.getState();
 
-    // Renderers show 'YOU HAVE DIED.' as a banner. Nothing is written to the
-    // save: continuing reloads it, putting the character back where, and as,
-    // they last saved.
+    this.endCombat(false);
+    const entrance = this.getLevel(this.char.dungeonLevel)?.entrance ?? { x: 0, y: 0 };
+    const toll = applyDeath(this.char, entrance.x, entrance.y);
+
+    // Renderers show 'YOU HAVE DIED.' as a banner.
     this.messages = [
       cause,
       '',
       ...(killingBlow.length ? [...killingBlow, ''] : []),
-      'Return to your last save: the same place, health and pack you had then.',
+      ...toll.messages.slice(2),
+      '',
+      'Revive here, or restore your last save: the place, health and pack you had then.',
     ];
 
-    this.endCombat(false);
     this.phase = 'death';
     this.pace.atDeathRespawn = true;
     this.pace.movesSinceCombat = 0;
@@ -1613,8 +1620,17 @@ export class GameEngine {
     return this.getState();
   }
 
-  /** After death: reload the last save. If there somehow isn't one, fall
-   * back to waking at this level's entrance. */
+  /** After death: carry on from the entrance, poorer and wiser. */
+  reviveAfterDeath(): GameState {
+    if (!this.char || this.phase !== 'death') return this.getState();
+    this.phase = 'playing';
+    this.lightAround();
+    this.messages = [`You drag yourself up at the entrance to Level ${this.char.dungeonLevel}, alive again.`];
+    return this.getState();
+  }
+
+  /** After death: reload the last save, undoing the toll. If there somehow
+   * isn't one, revive at the entrance instead. */
   dismissDeath(): GameState {
     if (!this.char) return this.getState();
     const id = this.char.id;
@@ -1623,12 +1639,7 @@ export class GameEngine {
       this.messages = ['You wake with a gasp, back where you last saved, whole again.'];
       return this.getState();
     }
-    const lvl = this.getLevel(this.char.dungeonLevel);
-    const entrance = lvl?.entrance ?? { x: 0, y: 0 };
-    const result = applyDeath(this.char, entrance.x, entrance.y);
-    this.phase = 'playing';
-    this.messages = result.messages.slice(2);
-    return this.getState();
+    return this.reviveAfterDeath();
   }
 
   private trapDeathCause(variant: string): string {

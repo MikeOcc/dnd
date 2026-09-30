@@ -77,7 +77,8 @@ describe('GameEngine — death screen', () => {
     const state = engine.combatAction('a');
 
     expect(state.choices).toEqual([
-      { key: 'c', text: 'Return to Last Save' },
+      { key: 'a', text: 'Revive at the Entrance' },
+      { key: 'c', text: 'Restore Last Save' },
       { key: 'q', text: 'Quit to Main Menu' },
     ]);
   });
@@ -100,6 +101,27 @@ describe('GameEngine — death screen', () => {
     expect(state.messages[0]).toContain('back where you last saved');
     expect([e.char.x, e.char.y, e.char.hp, e.char.gold, e.char.inventory.potions])
       .toEqual([saved.x, saved.y, saved.hp, saved.gold, saved.potions]);
+  });
+
+  it('dying costs gold and experience; reviving carries on from the entrance', () => {
+    const engine = makeReadyEngine(db);
+    const e = engine as any;
+    e.char.gold = 1000; e.char.xp = xpForLevel(e.char.level) + 500;
+    const before = { gold: e.char.gold, xp: e.char.xp, deaths: e.char.deathCount };
+    const entrance = e.getLevel(e.char.dungeonLevel).entrance;
+    forceLethalCombat(engine, 'Kobold');
+    const dead = engine.combatAction('a');
+    expect(dead.phase).toBe('death');
+    expect(dead.messages.join(' ')).toMatch(/Lost \d+ gold/);
+    expect(dead.messages.join(' ')).toMatch(/Lost \d+ experience/);
+    expect(e.char.gold).toBeLessThan(before.gold);
+    expect(e.char.xp).toBeLessThan(before.xp);
+
+    const state = engine.reviveAfterDeath();
+    expect(state.phase).toBe('playing');
+    expect([e.char.x, e.char.y]).toEqual([entrance.x, entrance.y]);
+    expect(e.char.hp).toBe(e.char.maxHp);
+    expect(e.char.deathCount).toBe(before.deaths + 1);
   });
 
   it('names the attack that did the character in, and shows the blow', () => {

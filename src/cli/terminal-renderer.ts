@@ -246,7 +246,7 @@ function renderDeath(state: GameState): string[] {
     '',
     ...state.messages.map(m => g('  ' + m)),
     '',
-    bold(g('  [C] Continue')) + '   ' + dim('[Q] Quit to Main Menu'),
+    bold(g('  [A] Revive at the Entrance')) + '   ' + g('[C] Restore Last Save') + '   ' + dim('[Q] Quit to Main Menu'),
   ];
 }
 

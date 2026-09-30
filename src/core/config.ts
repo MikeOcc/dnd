@@ -142,6 +142,17 @@ export const COMBAT = {
   // high-level character's, so without the exemption a leveled-up
   // character could never reach "worthy" against even the strongest Wight
   // they'd ever meet.
+  // A heard prayer can banish high-level undead outright, if the character
+  // is high enough in level and Wisdom. The d12 of the Banish spell still
+  // decides it against the mighty (SPELLS.BANISH_FAIL_FACES_BY_TIER).
+  PRAYER_BANISH_MIN_CHAR_LEVEL: 30,
+  PRAYER_BANISH_MIN_WISDOM: 18,
+  PRAYER_BANISH_MIN_MONSTER_LEVEL: 20,
+  PRAYER_BANISH_BASE_CHANCE: 0.15,
+  PRAYER_BANISH_PER_WISDOM: 0.02,     // per point of Wisdom over the minimum
+  PRAYER_BANISH_PER_LEVEL: 0.005,     // per character level over the minimum
+  PRAYER_BANISH_MAX_CHANCE: 0.45,
+
   PRAYER_WEAK_MONSTER_LEVEL_RATIO: 0.5,  // monster.level < char.level * this => unworthy
   PRAYER_BACKFIRE_CHANCE: 0.15,
   PRAYER_BACKFIRE_DAMAGE_MULT: 0.4,
@@ -485,6 +496,7 @@ export const GEMS = {
 
 export const DEATH = {
   GOLD_LOSS_FRACTION: 0.15,
+  XP_LOSS_FRACTION: 0.10,   // of total XP, but never below the current level's threshold
 } as const;
 
 export const SCORING = {

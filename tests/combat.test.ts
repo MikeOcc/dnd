@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
 import { GEMS, COMBAT } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -629,6 +629,41 @@ describe('Wizard', () => {
     expect(lightning).toBeGreaterThan(0);
     expect(acid).toBeGreaterThan(0);
     expect(light).toBeGreaterThan(0);
+  });
+});
+
+describe('Prayer — banishing high-level undead', () => {
+  function priest(level: number, wisdom: number) {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = level; c.wisdom = wisdom;
+    c.hp = c.maxHp = 100000;
+    c.statusEffects = [];
+    return c;
+  }
+
+  it('needs a high enough character, Wisdom and undead foe', () => {
+    const lich = createMonster('Lich', 30, 'l');
+    expect(prayerBanishChance(priest(29, 25), lich, 25)).toBe(0);
+    expect(prayerBanishChance(priest(40, 17), lich, 17)).toBe(0);
+    expect(prayerBanishChance(priest(40, 25), createMonster('Lich', 15, 'l'), 25)).toBe(0);
+    expect(prayerBanishChance(priest(40, 25), createMonster('Red Dragon', 40, 'd'), 25)).toBe(0);
+    expect(prayerBanishChance(priest(40, 25), lich, 25)).toBeGreaterThan(0);
+    expect(prayerBanishChance(priest(40, 25), lich, 25)).toBeLessThan(prayerBanishChance(priest(60, 30), lich, 30));
+    expect(prayerBanishChance(priest(200, 99), lich, 99)).toBe(COMBAT.PRAYER_BANISH_MAX_CHANCE);
+  });
+
+  it('a heard prayer can banish a Lich', () => {
+    const rng = new RNG(5);
+    for (let i = 0; i < 400; i++) {
+      const m = createMonster('Lich', 30, 'l');
+      m.hp = m.maxHp = 100000;
+      const res = playerPray(priest(60, 30), m, rng);
+      if (res.banished) {
+        expect(res.messages.join(' ')).toContain('torn from this world');
+        return;
+      }
+    }
+    throw new Error('never banished');
   });
 });
 

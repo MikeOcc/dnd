@@ -573,7 +573,7 @@ function updateHelpLine(phase) {
     case 'char-roll':
       hint.textContent = 'A: Wizard  B: Warrior  C: Reroll'; break;
     case 'death':
-      hint.textContent = 'C: Return to Last Save  Q: Quit to Main Menu'; break;
+      hint.textContent = 'A: Revive  C: Restore Last Save  Q: Main Menu'; break;
     case 'save-prompt':
       hint.textContent = 'C: Continue Playing  X: Exit to Main Menu'; break;
     case 'resting':
@@ -608,6 +608,7 @@ function handleChoiceKey(key, phase) {
   }
 
   if (phase === 'death') {
+    if (key === 'a') apiAction('revive');
     if (key === 'c') apiAction('dismiss-death');
     if (key === 'q') apiAction('main-menu');
     return;
@@ -796,6 +797,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'death') {
+    if (key === 'a') apiAction('revive');
     if (key === 'c') apiAction('dismiss-death');
     if (key === 'q') apiAction('main-menu');
     return;

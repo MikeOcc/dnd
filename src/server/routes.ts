@@ -189,6 +189,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'dismiss-death':
           state = engine.dismissDeath();
           break;
+        case 'revive':
+          state = engine.reviveAfterDeath();
+          break;
         case 'show-status':
           state = engine.showStatus();
           break;

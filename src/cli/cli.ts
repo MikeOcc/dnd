@@ -179,9 +179,10 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
-  // Death screen — Continue or Quit
+  // Death screen — Revive, Restore or Quit
   if (phase === 'death') {
     if (key.type === 'char') {
+      if (key.char === 'a') render(engine.reviveAfterDeath());
       if (key.char === 'c') render(engine.dismissDeath());
       if (key.char === 'q') render(engine.showMainMenu());
     }
