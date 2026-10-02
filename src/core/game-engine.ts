@@ -137,7 +137,7 @@ export class GameEngine {
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
-    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked) state.fx = this.fx;
+    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied) state.fx = this.fx;
     this.fx = {};
 
     state.choices = this.buildChoices();
@@ -1514,6 +1514,7 @@ export class GameEngine {
     if (isMagic(spell)) {
       const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
       if (negated) return this.processCombatResult(negated);
+      this.fx.cast = spell === 'heal' ? 'heal' : 'attack';
     }
 
     const warriorMove = (fn: typeof playerPowerAttack) => {
@@ -1829,6 +1830,7 @@ export class GameEngine {
 
   private handleMonsterDefeated(): GameState {
     if (!this.char || !this.combat || !this.dungeonState) return this.getState();
+    this.fx.monsterDied = true;
 
     const monster = this.combat.monster;
     const def = monster.definition;

@@ -63,6 +63,59 @@ const SFX = (() => {
     osc.stop(t + dur + 0.02);
   }
 
+  /** A pitched tone with an optional glide: the voice of spells and growls. */
+  function tone(t, { type = 'sine', freq, freqTo, dur, gain = 0.3, attack = 0.01, filter }) {
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (freqTo) osc.frequency.exponentialRampToValueAtTime(freqTo, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let node = osc;
+    if (filter) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = filter;
+      osc.connect(f);
+      node = f;
+    }
+    node.connect(g).connect(master);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
+
+  // What each kind of offensive spell sounds like once it's loosed.
+  const SPELL_TAILS = {
+    fire(t) {
+      noise(t, { dur: 0.6, freq: 700, q: 0.6, type: 'lowpass', gain: 0.55, attack: 0.05, sweepTo: 250 });
+      thump(t, { freq: 70, dur: 0.3, gain: 0.35 });
+    },
+    lightning(t) {
+      for (let i = 0; i < 7; i++) {
+        noise(t + i * 0.035 + Math.random() * 0.02, { dur: 0.04, freq: 3000 + Math.random() * 3000, q: 0.8, type: 'highpass', gain: 0.45 });
+      }
+      thump(t + 0.05, { freq: 50, dur: 0.4, gain: 0.4 });
+    },
+    cold(t) {
+      [1760, 2217, 2637].forEach((f, i) => tone(t + i * 0.05, { type: 'triangle', freq: f, freqTo: f * 1.02, dur: 0.5, gain: 0.08 }));
+      noise(t, { dur: 0.45, freq: 6000, q: 0.5, type: 'highpass', gain: 0.12, attack: 0.03 });
+    },
+    acid(t) {
+      noise(t, { dur: 0.55, freq: 4500, q: 0.7, type: 'highpass', gain: 0.3, attack: 0.02, sweepTo: 2500 });
+    },
+    poison(t) {
+      for (let i = 0; i < 6; i++) {
+        const f = 250 + Math.random() * 350;
+        tone(t + i * 0.06 + Math.random() * 0.02, { freq: f, freqTo: f * 1.8, dur: 0.07, gain: 0.15 });
+      }
+    },
+    arcane(t) {
+      [220, 277, 330, 415].forEach(f => tone(t, { type: 'sawtooth', freq: f, freqTo: f * 0.5, dur: 0.9, gain: 0.05, attack: 0.08, filter: 1500 }));
+    },
+  };
+
   const SURFACES = {
     stone(t, v) {
       thump(t, { freq: 85 * v, dur: 0.07, gain: 0.45 });
@@ -113,6 +166,45 @@ const SFX = (() => {
       if (!audio()) return;
       const v = (stepCount++ % 2 ? 0.92 : 1.0) * (0.97 + Math.random() * 0.06);
       (SURFACES[LEVEL_SURFACE[level]] || SURFACES.stone)(ctx.currentTime + 0.01, v);
+    },
+
+    /** A monster's crushing blow: a heavy impact with a crack in it. */
+    crit() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      thump(t, { freq: 55, dur: 0.35, gain: 0.8 });
+      noise(t, { dur: 0.12, freq: 900, q: 0.8, gain: 0.6 });
+      noise(t + 0.02, { dur: 0.06, freq: 3500, q: 1.5, type: 'highpass', gain: 0.35 });
+      thump(t + 0.09, { freq: 40, dur: 0.3, gain: 0.5 });
+    },
+
+    /** A monster's last breath: a falling growl and a body hitting stone. */
+    monsterDeath() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      tone(t, { type: 'sawtooth', freq: 180, freqTo: 38, dur: 1.0, gain: 0.22, attack: 0.04, filter: 700 });
+      tone(t, { type: 'sawtooth', freq: 187, freqTo: 41, dur: 1.0, gain: 0.15, attack: 0.04, filter: 600 });
+      noise(t, { dur: 0.8, freq: 400, q: 0.7, type: 'lowpass', gain: 0.2, attack: 0.1, sweepTo: 120 });
+      thump(t + 0.85, { freq: 60, dur: 0.25, gain: 0.55 });
+    },
+
+    /** An offensive spell: a rising swoosh as it's cast, then its element. */
+    spell(element) {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      noise(t, { dur: 0.3, freq: 400, q: 1.2, gain: 0.3, attack: 0.08, sweepTo: 3200 });
+      (SPELL_TAILS[element] || SPELL_TAILS.arcane)(t + 0.22);
+    },
+
+    /** A healing spell: a soft, rising chime. */
+    heal() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      [523, 659, 784, 1047].forEach((f, i) => {
+        tone(t + i * 0.09, { type: 'triangle', freq: f, dur: 0.7, gain: 0.12, attack: 0.03 });
+        tone(t + i * 0.09, { freq: f * 2, dur: 0.5, gain: 0.03, attack: 0.03 });
+      });
+      noise(t + 0.2, { dur: 0.6, freq: 7000, q: 0.5, type: 'highpass', gain: 0.04, attack: 0.2 });
     },
 
     /** Walking into a wall. */

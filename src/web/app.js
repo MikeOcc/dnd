@@ -234,11 +234,24 @@ function fxMonster(cls, element) {
 
 let lastActionWalked = false;  // the action just sent was a step forward or back
 
-/** Footsteps for a one-square move; a thud for walking into a wall. */
+/** Footsteps for a one-square move; a thud for walking into a wall; in a
+ * fight, spells as they're cast, a monster's crushing blow (a quarter of
+ * your health or more, or the killing blow), and a monster's death. */
 function playSounds(prev, state) {
   const walked = lastActionWalked;
   lastActionWalked = false;
   const pc = prev?.character, nc = state.character;
+  const fx = state.fx || {};
+
+  if (fx.cast === 'heal') SFX.heal();
+  else if (fx.cast === 'attack') SFX.spell(fx.monster);
+  const after = fx.cast ? 450 : 150;
+  if (fx.monsterDied) setTimeout(() => SFX.monsterDeath(), after);
+  const sameChar = pc && nc && pc.id === nc.id;
+  const killed = state.phase === 'death' && prev?.phase !== 'death';
+  const crushing = sameChar && fx.monsterAttacked && state.phase !== 'death' && (pc.hp - nc.hp) >= nc.maxHp * 0.25;
+  if (killed || crushing) setTimeout(() => SFX.crit(), after + 150);
+
   if (!walked || !pc || !nc || pc.id !== nc.id || pc.dungeonLevel !== nc.dungeonLevel) return;
   const dist = Math.abs(nc.x - pc.x) + Math.abs(nc.y - pc.y);
   if (dist === 1) SFX.step(nc.dungeonLevel);

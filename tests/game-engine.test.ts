@@ -2007,3 +2007,37 @@ describe('GameEngine — fleeing', () => {
     expect(trapId).not.toBe('');
   });
 });
+
+describe('GameEngine — sound hints', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function inFight(level = 40) {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.level = level; e.char.hp = e.char.maxHp = 1_000_000;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster('Orc', 5, 'o'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    return { engine, e };
+  }
+
+  it('casting Fireball says an offensive spell was cast; Heal says a healing one', () => {
+    const { engine, e } = inFight();
+    e.combat.monster.hp = e.combat.monster.maxHp = 1e9;
+    expect(engine.spellAction('a').fx).toMatchObject({ cast: 'attack', monster: 'fire' });
+    e.char.hp = 1;
+    const healKey = engine.getState().spellChoices!.find(c => c.text === 'Heal')!.key;
+    expect(engine.spellAction(healKey).fx?.cast).toBe('heal');
+  });
+
+  it('slaying the monster says so', () => {
+    const { engine, e } = inFight();
+    e.combat.monster.hp = 1;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 20 && state.phase === 'combat'; i++) state = engine.combatAction('a');
+    expect(state.fx?.monsterDied).toBe(true);
+  });
+});

@@ -215,6 +215,8 @@ export interface Fx {
   player?: FxElement;        // what hurt the character this action
   monster?: FxElement;       // what the character hit the monster with
   monsterAttacked?: boolean; // the monster took a swing (portrait lunges)
+  cast?: 'attack' | 'heal';  // the character cast an offensive or a healing spell (for sounds)
+  monsterDied?: boolean;     // the monster was slain this action
 }
 
 export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed';
