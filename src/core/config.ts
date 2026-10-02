@@ -334,7 +334,10 @@ export const MONSTER_SCALING = {
   MIN_NATURAL_TIER_BY_DUNGEON_LEVEL: [1, 1, 1, 3, 4, 4, 5],
   // ...except these, which turn up at any depth (orc war-bands roam
   // everywhere; deep down they're veterans, as high as the type's maxLevel).
-  ANY_DEPTH_TYPES: ['Orc'] as string[],
+  ANY_DEPTH_TYPES: ['Orc', 'Ghoul'] as string[],
+  // ...and of those, these are rare from this depth down: picked, then kept
+  // only this often (otherwise something else is picked instead).
+  DEEP_RARE: { Ghoul: { fromDepth: 6, keep: 0.35 } } as Record<string, { fromDepth: number; keep: number }>,
 } as const;
 
 export const TREASURE = {
@@ -445,6 +448,19 @@ export const PRESENCE = {
 export const FIRST_LEVEL = {
   CHEST_EXTRA_POTION_CHANCE: 0.25,
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
+} as const;
+
+// Ghouls: common on levels 2-5, rare deeper, where the ancient ones can be
+// very powerful. Their hits can bring flesh rot, a disease that eats a few
+// HP every step and halves all healing until it burns itself out.
+export const GHOUL = {
+  ROT_CHANCE_CLAW: 0.15,
+  ROT_CHANCE_BITE: 0.25,
+  ROT_LEVELS_PER_DAMAGE: 8,     // damage per step = ghoul level / this (at least 2)
+  ROT_STEPS: 40,
+  ANCIENT_LEVEL: 40,            // at or above, an ancient ghoul: its own intro, and a longer rot
+  ANCIENT_ROT_STEPS: 70,
+  ROT_HEAL_FACTOR: 0.5,
 } as const;
 
 // The Titanoboa (level 7): a snake longer than a corridor. It bites, slams

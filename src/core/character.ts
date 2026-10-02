@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY } from './config.js';
+import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL } from './config.js';
 import type { Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
@@ -118,9 +118,15 @@ export function wearDownWard(char: Character): void {
 /** HP a healing potion restores (before capping at max HP): a base roll, a
  * Constitution bonus, and a share of max HP so potions keep pace with level. */
 export function potionHealAmount(char: Character, rng: RNG): number {
-  return rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
+  const amount = rng.int(GAMEPLAY.POTION_HEAL_MIN, GAMEPLAY.POTION_HEAL_MAX)
     + Math.floor(char.constitution / GAMEPLAY.POTION_HEAL_CON_DIVISOR)
     + Math.floor(char.maxHp * GAMEPLAY.POTION_HEAL_MAX_HP_PCT);
+  return Math.max(1, Math.round(amount * healingFactor(char)));
+}
+
+/** How well healing takes: halved while a ghoul's flesh rot lasts. */
+export function healingFactor(char: Character): number {
+  return char.statusEffects.some(e => e.type === 'flesh-rot') ? GHOUL.ROT_HEAL_FACTOR : 1;
 }
 
 /** Drains one character level (minimum level 1). Returns the HP lost, or 0 if already at level 1. */
@@ -184,6 +190,11 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       damageTaken += eff.value;
       messages.push(`You are bleeding! You suffer ${eff.value} damage.`);
     }
+    if (eff.type === 'flesh-rot') {
+      char.hp = Math.max(1, char.hp - eff.value);
+      damageTaken += eff.value;
+      messages.push(`Your rotting flesh blackens and sloughs away. You suffer ${eff.value} damage.`);
+    }
     const newTurns = eff.turns - 1;
     if (newTurns > 0) remaining.push({ ...eff, turns: newTurns });
     else {
@@ -192,6 +203,7 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       if (eff.type === 'paralyzed') messages.push('You can move again.');
       if (eff.type === 'mummified') messages.push('The mummification crumbles away.');
       if (eff.type === 'bleeding')  messages.push('The bleeding finally stops.');
+      if (eff.type === 'flesh-rot') messages.push('The rot burns itself out at last. Your flesh begins to heal.');
       if (eff.type === 'intelligence-reduced') messages.push('Your mind clears.');
       if (eff.type === 'dexterity-reduced')    messages.push('Your coordination returns.');
       if (eff.type === 'strength-reduced')     messages.push('Your strength returns.');

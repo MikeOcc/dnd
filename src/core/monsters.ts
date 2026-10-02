@@ -83,7 +83,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   // His fighting is in combat.ts (orcKingAction).
   'Orc King': {
     type: 'Orc King', isUndead: false, isUnique: true,
-    minLevel: 58, maxLevel: 58, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
+    minLevel: 80, maxLevel: 90, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 15, baseAttackPerLevel: 2.9, baseDefensePerLevel: 5.0,
     fireballResistance: 0.8, lightningResistance: 0.9,
     encounterIntro: [
@@ -191,7 +191,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   // a numbing paralysis, and its bite festers.
   'Ghoul': {
     type: 'Ghoul', isUndead: true, isUnique: false,
-    minLevel: 4, maxLevel: 30, naturalTier: 3, minDungeonLevel: 2, speed: 1.2,
+    minLevel: 4, maxLevel: 55, naturalTier: 3, minDungeonLevel: 2, speed: 1.2,
     baseHpPerLevel: 8, baseAttackPerLevel: 3.2, baseDefensePerLevel: 2.0,
     fireballResistance: 1.0,
     encounterIntro: [
@@ -476,7 +476,12 @@ export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterTy
     d => !d.isUnique && d.minDungeonLevel <= dungeonDepth
       && (d.naturalTier >= minTier || MONSTER_SCALING.ANY_DEPTH_TYPES.includes(d.type)),
   );
-  return rng.pick(pool).type;
+  const picked = rng.pick(pool).type;
+  const rare = MONSTER_SCALING.DEEP_RARE[picked];
+  if (rare && dungeonDepth >= rare.fromDepth && rng.float() >= rare.keep) {
+    return rng.pick(pool.filter(d => d.type !== picked)).type;
+  }
+  return picked;
 }
 
 export function monsterAttackText(type: MonsterType, damage: number, ability?: string): string {
@@ -513,6 +518,17 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
   };
   return actions[ability ?? ''] ?? `The ${type} strikes you for ${damage} damage.`;
 }
+
+/** An ancient ghoul's encounter text, used instead of the usual one from
+ * GHOUL.ANCIENT_LEVEL up. */
+export const ANCIENT_GHOUL_INTRO = [
+  'The smell reaches you first: old graves, opened.',
+  'Something crouches in the dark, grey skin gone hard as boot leather over a',
+  'frame of knotted bone. It has been eating the dead down here for centuries.',
+  'It turns its head, slowly, and smiles with far too many teeth.',
+  '',
+  'You have encountered an ancient Level {LVL} Ghoul!',
+];
 
 export const UNDEAD_TYPES: MonsterType[] = [
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',

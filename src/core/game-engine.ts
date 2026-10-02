@@ -18,9 +18,9 @@ import {
   chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
-import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
+import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair } from './lairs.js';
 import { getLevelIntro } from '../content/level-text.js';
@@ -819,10 +819,10 @@ export class GameEngine {
     this.restTicks = 0;
 
     // Tick status effects
-    const dot = this.char.statusEffects.find(e => e.type === 'poison' || e.type === 'mummified' || e.type === 'bleeding');
+    const dot = this.char.statusEffects.find(e => e.type === 'poison' || e.type === 'mummified' || e.type === 'bleeding' || e.type === 'flesh-rot');
     const { messages: statusMsgs, damageTaken } = tickStatusEffects(this.char);
     this.messages = statusMsgs;
-    if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' ? 'drain' : 'physical';
+    if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' || dot?.type === 'flesh-rot' ? 'drain' : 'physical';
 
     // Passive HP regeneration
     if (this.char.stepsTaken % GAMEPLAY.REGEN_HP_EVERY_N_STEPS === 0 && this.char.hp < this.char.maxHp) {
@@ -1303,10 +1303,10 @@ export class GameEngine {
     if (!this.char) return this.getState();
     const def = getDefinition(monsterType);
     // Unique bosses roll a level in their own [minLevel, maxLevel] range each
-    // encounter. For every boss except Asmodeus that range is a single fixed
-    // value (min === max), so this is a no-op for them — Asmodeus is the only
-    // one with real spread (40-100). Ordinary fixed monsters use the same
-    // dungeon-depth/character-level scaled range as random encounters.
+    // encounter. Most bosses have a single fixed level (min === max); Asmodeus
+    // (80-100) and the Orc King (80-90) have a real spread. Ordinary fixed
+    // monsters use the same dungeon-depth/character-level scaled range as
+    // random encounters.
     const lvl = content.type === 'unique-monster'
       ? this.rng.int(def.minLevel, def.maxLevel)
       : Math.min(def.maxLevel, randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, monsterType));
@@ -1340,8 +1340,9 @@ export class GameEngine {
     };
     this.phase = 'combat';
 
-    // Intro text
-    const intro = monster.definition.encounterIntro.map(line =>
+    // Intro text (an ancient ghoul has its own)
+    const introLines = monster.type === 'Ghoul' && monster.level >= GHOUL.ANCIENT_LEVEL ? ANCIENT_GHOUL_INTRO : monster.definition.encounterIntro;
+    const intro = introLines.map(line =>
       line.replace('{LVL}', String(monster.level))
     );
     this.messages = intro;

@@ -50,7 +50,7 @@ describe('Orcs, the Orc King and the Manticore', () => {
   it('the Orc King is unique and tough, the Manticore an ordinary deep monster', () => {
     const king = getDefinition('Orc King');
     expect(king.isUnique).toBe(true);
-    expect(king.minLevel).toBe(king.maxLevel);
+    expect([king.minLevel, king.maxLevel]).toEqual([80, 90]);
     expect(getDefinition('Manticore').isUnique).toBe(false);
     expect(getDefinition('Manticore').minDungeonLevel).toBe(6);  // roams 6-7; level 4 has only the Orc King's guard
   });

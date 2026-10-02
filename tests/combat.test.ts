@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
-import { rollCharacter, createCharacter } from '../src/core/character.js';
+import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
-import { GEMS, COMBAT, MANTICORE } from '../src/core/config.js';
+import { GEMS, COMBAT, MANTICORE, GHOUL } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -1634,5 +1634,59 @@ describe('Level 7: the Titanoboa and the Wendigo; and Ghouls', () => {
       if (text.includes('paralyzes you')) { expect(c.heldBy).toBe('paralyzed'); return; }
     }
     throw new Error('never paralyzed');
+  });
+});
+
+describe('Ghouls: flesh rot, and the ancient ones below', () => {
+  const hero = () => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 40; c.hp = c.maxHp = 1_000_000; c.statusEffects = [];
+    return c;
+  };
+
+  it('a ghoul hit can bring flesh rot, which eats HP each step and halves healing', () => {
+    const rng = new RNG(19);
+    for (let i = 0; i < 500; i++) {
+      const c = hero();
+      const text = monsterFirstStrike(c, createMonster('Ghoul', 24, 'g'), rng).messages.join(' ');
+      if (!text.includes('FLESH ROT')) continue;
+      const rot = c.statusEffects.find(e => e.type === 'flesh-rot')!;
+      expect(rot.value).toBe(3);   // level 24 / 8
+      expect(rot.turns).toBe(GHOUL.ROT_STEPS);
+      const hp = c.hp;
+      const tick = tickStatusEffects(c);
+      expect(c.hp).toBe(hp - 3);
+      expect(tick.messages.join(' ')).toContain('rotting flesh');
+      // Healing at half strength
+      const healthy = hero();
+      expect(potionHealAmount(c, new RNG(2))).toBe(Math.max(1, Math.round(potionHealAmount(healthy, new RNG(2)) * GHOUL.ROT_HEAL_FACTOR)));
+      return;
+    }
+    throw new Error('never caught flesh rot');
+  });
+
+  it('an ancient ghoul rots you for longer', () => {
+    const rng = new RNG(23);
+    for (let i = 0; i < 500; i++) {
+      const c = hero();
+      monsterFirstStrike(c, createMonster('Ghoul', 50, 'g'), rng);
+      const rot = c.statusEffects.find(e => e.type === 'flesh-rot');
+      if (rot) { expect(rot.turns).toBe(GHOUL.ANCIENT_ROT_STEPS); return; }
+    }
+    throw new Error('never caught flesh rot');
+  });
+
+  it('ghouls are common on levels 2-5 and rare, but present, on levels 6-7', () => {
+    const share = (depth: number) => {
+      const rng = new RNG(depth);
+      let n = 0;
+      for (let i = 0; i < 20000; i++) if (pickRandomMonsterType(depth, rng) === 'Ghoul') n++;
+      return n / 20000;
+    };
+    for (const d of [2, 3, 4, 5]) expect(share(d)).toBeGreaterThan(0.03);
+    for (const d of [6, 7]) {
+      expect(share(d)).toBeGreaterThan(0);
+      expect(share(d)).toBeLessThan(share(5));
+    }
   });
 });

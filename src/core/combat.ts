@@ -1,7 +1,7 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -415,9 +415,10 @@ export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatR
   const base = char.level * COMBAT.HEAL_LEVEL_WEIGHT + Math.floor(eff.wisdom / COMBAT.HEAL_WIS_DIVISOR);
   const rand = COMBAT.HEAL_RAND_MIN + rng.float() * (COMBAT.HEAL_RAND_MAX - COMBAT.HEAL_RAND_MIN);
   const power = char.charClass === 'warrior' ? WARRIOR.SPELL_POWER : 1;
-  const healAmount = Math.max(1, Math.round(base * rand * power));
+  const healAmount = Math.max(1, Math.round(base * rand * power * healingFactor(char)));
 
   const messages: string[] = ['You cast Heal.'];
+  if (healingFactor(char) < 1) messages.push('The rot in your flesh fights the magic.');
   char.hp = Math.min(char.hp + healAmount, char.maxHp);
   messages.push(`You recover ${healAmount} hit points.`);
 
@@ -715,6 +716,18 @@ function manticoreAction(
       return done(dmg);
     }
   }
+}
+
+// ─── Ghouls ──────────────────────────────────────────────────────────────────
+
+/** A ghoul's hit may bring flesh rot: damage every step, worse from older
+ * ghouls, and lasting longer from the ancient ones. Halves healing. */
+function maybeFleshRot(char: Character, monster: Monster, rng: RNG, messages: string[], chance: number): void {
+  if (rng.float() >= chance) return;
+  const ancient = monster.level >= GHOUL.ANCIENT_LEVEL;
+  const value = Math.max(2, Math.round(monster.level / GHOUL.ROT_LEVELS_PER_DAMAGE));
+  addStatusEffect(char, { type: 'flesh-rot', value, turns: ancient ? GHOUL.ANCIENT_ROT_STEPS : GHOUL.ROT_STEPS });
+  messages.push('The wound darkens and begins to stink. FLESH ROT! Healing will only half take until it passes.');
 }
 
 // ─── The Titanoboa ───────────────────────────────────────────────────────────
@@ -1247,7 +1260,10 @@ function monsterActionInner(
   if (ability === 'gaze-paralyze' || ability === 'engulf-paralyze' || ability === 'paralysis-touch' || ability === 'ghoul-claws') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked);
     char.hp = Math.max(0, char.hp - dmg);
-    if (ability === 'ghoul-claws') messages.push(`The ${monster.type}'s filthy claws rake you, and a creeping numbness spreads from the wound.`);
+    if (ability === 'ghoul-claws') {
+      messages.push(`The ${monster.type}'s filthy claws rake you, and a creeping numbness spreads from the wound.`);
+      if (char.hp > dmg) maybeFleshRot(char, monster, rng, messages, GHOUL.ROT_CHANCE_CLAW);
+    }
     if (rng.float() < COMBAT.PARALYSIS_CHANCE) {
       addStatusEffect(char, { type: 'paralyzed', value: 0, turns: 2 });
       const engulfed = ability === 'engulf-paralyze';
@@ -1351,6 +1367,7 @@ function monsterActionInner(
   messages.push(monsterAttackText(monster.type, dmg, ability));
 
   // Poison on poison-breath/spore etc
+  if (ability === 'filthy-bite' && char.hp > 0) maybeFleshRot(char, monster, rng, messages, GHOUL.ROT_CHANCE_BITE);
   if ((ability === 'poison-breath' || ability === 'spore-poison' || ability === 'slime-disease' || ability === 'filthy-bite') && rng.float() < 0.3) {
     addStatusEffect(char, { type: 'poison', value: 4, turns: 6 });
     messages.push('You have been poisoned!');

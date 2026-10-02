@@ -75,8 +75,8 @@ export type StatusEffectType =
   | 'strength-reduced'
   | 'resistance-improved'
   | 'warded'    // emerald ward: value = fights left (doesn't tick with steps)
-  | 'anaphylaxis';  // a Manticore's sting: value = the play-time second the character dies (doesn't tick with steps)
-;
+  | 'anaphylaxis'  // a Manticore's sting: value = the play-time second the character dies (doesn't tick with steps)
+  | 'flesh-rot';   // a ghoul's disease: value = damage per step; healing works at half strength while it lasts
 
 export interface StatusEffect {
   type: StatusEffectType;
