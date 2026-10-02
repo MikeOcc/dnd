@@ -101,8 +101,7 @@ function applyState(state) {
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view || phase === 'map');
-  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory', 'map'].includes(phase));
-  movementControls.classList.toggle('map-walk', phase === 'map');  // just the arrows on the map screen
+  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase));
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -967,15 +966,6 @@ document.addEventListener('keydown', (e) => {
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
 
-// The d-pad walks on the map screen too.
-function move(action, mapDir) {
-  if (currentState.phase === 'map') apiAction('map-move', { dir: mapDir });
-  else apiAction(action);
-}
-document.getElementById('btn-forward')   ?.addEventListener('click', () => move('move-forward', 'forward'));
-document.getElementById('btn-backward')  ?.addEventListener('click', () => move('move-backward', 'backward'));
-document.getElementById('btn-turn-left') ?.addEventListener('click', () => move('turn-left', 'left'));
-document.getElementById('btn-turn-right')?.addEventListener('click', () => move('turn-right', 'right'));
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
 document.getElementById('btn-wait')      ?.addEventListener('click', () => apiAction('wait'));

@@ -367,7 +367,7 @@ html, body {
 
 #name-input:focus { box-shadow: 0 0 8px var(--terminal-green-dim); }
 
-/* Movement controls — compact D-pad (bottom-left) + horizontal command bar */
+/* Command bar while playing (the arrow keys move and turn) */
 #movement-controls {
   display: flex;
   align-items: center;
@@ -376,18 +376,6 @@ html, body {
   flex-wrap: wrap;
   border: 1px solid var(--terminal-green-dim);
   padding: 8px 12px;
-}
-
-.dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 52px);
-  grid-template-rows: repeat(2, 44px);
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.arrow-btn {
-  font-size: 20px;
 }
 
 .command-bar {
@@ -421,12 +409,6 @@ html, body {
   background: var(--terminal-green-bright);
   color: var(--terminal-bg);
   border-color: var(--terminal-green-bright);
-}
-
-.ctrl-btn.empty {
-  border: none;
-  background: transparent;
-  cursor: default;
 }
 
 /* Help line */
@@ -492,7 +474,6 @@ html, body {
 #map-legend { border: 1px solid var(--terminal-green-dim); border-top: none; color: var(--terminal-green-dim); white-space: pre-wrap; }
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
-#movement-controls.map-walk .command-bar { display: none; }
 
 /* Whole-floor map: up to 80×60 cells, so shrink to fit the panel. */
 #messages.map-view.map-full {

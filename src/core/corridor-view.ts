@@ -48,7 +48,7 @@ export interface CorridorViewOptions {
 
 export const CORRIDOR_VIEW_DEFAULTS = {
   WIDTH: 79,
-  HEIGHT: 25,
+  HEIGHT: 31,   // taller than wide-screen proportion, so high ceilings have room to soar
   MAX_DEPTH: 6, // "approximately 4 to 6 visible depth levels"
   // Perspective decay: scale(i) = 1 / (1 + DECAY * i)
   DECAY: 0.45,
