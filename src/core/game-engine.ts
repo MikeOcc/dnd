@@ -150,7 +150,7 @@ export class GameEngine {
     if (!lvl) return [];
 
     const entities = this.findVisibleEntities(lvl);
-    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, {}, undefined, entities);
+    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, { level: this.char.dungeonLevel }, undefined, entities);
   }
 
   /** Scans the same visible depth the corridor renderer will draw and marks

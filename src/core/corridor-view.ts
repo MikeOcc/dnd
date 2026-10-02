@@ -41,6 +41,7 @@ export interface CorridorViewOptions {
   width?: number;
   height?: number;
   maxDepth?: number;
+  level?: number;   // dungeon level: picks the wall materials and carvings (plain stone when absent)
 }
 
 export const CORRIDOR_VIEW_DEFAULTS = {
@@ -70,8 +71,9 @@ export function renderCorridorView(
   const n = Math.max(scan.steps.length, 1);
   const frames = computeFrames(width, height, n, CORRIDOR_VIEW_DEFAULTS.DECAY);
 
+  const style = { level: options.level, facing };
   for (let i = 0; i < frames.length; i++) {
-    drawFrame(chars, frames, i, scan.steps[i]);
+    drawFrame(chars, frames, i, scan.steps[i], style);
   }
 
   const last = frames[frames.length - 1];
@@ -82,7 +84,7 @@ export function renderCorridorView(
       fillDoorAhead(chars, last);
     } else {
       // A plain wall, a secret wall (indistinguishable), or the map edge.
-      fillWallTexture(chars, last);
+      fillWallTexture(chars, last, style, lastStep?.x ?? playerX, lastStep?.y ?? playerY);
     }
   } else {
     // Corridor continues past the render distance — a hint of darkness ahead.

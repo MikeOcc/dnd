@@ -53,6 +53,8 @@ async function apiAction(action, payload) {
 
   const data = await res.json();
   if (data.characterId) characterId = data.characterId;
+  lastActionWalked = action === 'move-forward' || action === 'move-backward'
+    || (action === 'map-move' && (payload?.dir === 'forward' || payload?.dir === 'backward'));
   applyState(data.state);
 }
 
@@ -124,6 +126,7 @@ function applyState(state) {
   }
 
   playHitEffects(prev, state);
+  playSounds(prev, state);
   scheduleRestTick(phase);
 
   // Messages
@@ -218,6 +221,31 @@ function fxMonster(cls, element) {
   if (portrait.classList.contains('hidden')) return;
   portrait.style.setProperty('--fx', FX_COLOR[element] || '#ffffff');
   restartAnimation(portrait, cls);
+}
+
+// ─── Sound ───────────────────────────────────────────────────────────────────
+
+let lastActionWalked = false;  // the action just sent was a step forward or back
+
+/** Footsteps for a one-square move; a thud for walking into a wall. */
+function playSounds(prev, state) {
+  const walked = lastActionWalked;
+  lastActionWalked = false;
+  const pc = prev?.character, nc = state.character;
+  if (!walked || !pc || !nc || pc.id !== nc.id || pc.dungeonLevel !== nc.dungeonLevel) return;
+  const dist = Math.abs(nc.x - pc.x) + Math.abs(nc.y - pc.y);
+  if (dist === 1) SFX.step(nc.dungeonLevel);
+  else if (dist === 0 && ['playing', 'map'].includes(state.phase)) SFX.bump();
+}
+
+function toggleSound() {
+  SFX.setMuted(!SFX.muted);
+  updateSoundButton();
+}
+
+function updateSoundButton() {
+  const btn = document.getElementById('btn-sound');
+  if (btn) btn.textContent = SFX.muted ? 'Snd Off [N]' : 'Snd On [N]';
 }
 
 function playHitEffects(prev, state) {
@@ -557,9 +585,9 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  Q: Quit'; break;
     case 'map':
-      hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  M or Esc: Close Map'; break;
+      hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
       hint.textContent = 'X: Return to Game'; break;
     case 'inventory':
@@ -764,6 +792,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'i') apiAction('show-inventory');
     if (key === 'r') apiAction('restore');
     if (key === 's') apiAction('save');
+    if (key === 'n') toggleSound();
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
     return;
   }
@@ -790,6 +819,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft')  apiAction('map-move', { dir: 'left' });
     if (e.key === 'ArrowRight') apiAction('map-move', { dir: 'right' });
     if (key === 'f') apiAction('toggle-map-view');
+    if (key === 'n') toggleSound();
     if (key === '+' || key === '=') zoomMap(1);
     if (key === '-' || key === '_') zoomMap(-1);
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
@@ -867,6 +897,8 @@ document.getElementById('btn-status')    ?.addEventListener('click', () => apiAc
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
 document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('save'));
+document.getElementById('btn-sound')     ?.addEventListener('click', toggleSound);
+updateSoundButton();
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 

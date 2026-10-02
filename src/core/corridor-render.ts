@@ -1,5 +1,6 @@
 import type { Frame } from './corridor-geometry.js';
 import type { CorridorStep, EdgeType } from './corridor-scan.js';
+import type { Direction } from './types.js';
 
 // ─── ASCII painting ─────────────────────────────────────────────────────────
 //
@@ -116,6 +117,139 @@ export function drawSideEdge(
   }
 }
 
+// ─── Wall materials and carvings ───────────────────────────────────────────
+//
+// Each physical wall (the edge between two squares) is built of one material
+// (stone, brick, wooden planks or rough rock) in proportions that suit the
+// level, and now and then bears a carved symbol or a patterned band. The
+// choice hashes the edge itself, never which way the player is looking or
+// whether the wall is secret, so a wall looks the same from every angle and
+// secret walls stay indistinguishable. With no level given (tests, tools),
+// every wall is plain stone with no carvings, as before.
+
+export type WallMaterial = 'stone' | 'brick' | 'wood' | 'rough';
+
+/** What the renderer needs to style walls: the dungeon level, and which way
+ * the player faces (to turn left/right into compass sides). */
+export interface WallStyle {
+  level?: number;
+  facing?: Direction;
+}
+
+const MATERIAL_WEIGHTS: Record<number, [WallMaterial, number][]> = {
+  1: [['stone', 5], ['brick', 3], ['wood', 3]],
+  2: [['stone', 4], ['rough', 3], ['wood', 3]],
+  3: [['brick', 4], ['stone', 4], ['wood', 1]],
+  4: [['rough', 7], ['stone', 3]],
+  5: [['rough', 4], ['stone', 4], ['brick', 2]],
+  6: [['stone', 5], ['rough', 5]],
+  7: [['brick', 5], ['stone', 5]],
+};
+
+/** Small ASCII carvings, themed per level. Every line of a glyph has the same width. */
+const SYMBOLS: Record<number, string[][]> = {
+  1: [['\\ /', ' X ', '/ \\'], ['[+]'], ['\\|/', '-o-', '/|\\']],
+  2: [['\\o/'], ['||||'], ['<o>']],
+  3: [['.-.', '0 0', '\\=/'], [' o ', '-+-', ' | '], ['<o>']],
+  4: [['\\ \\ \\'], ['@'], ['/\\/\\']],
+  5: [['\\ \\ \\'], ['<(O)>'], ['/\\/\\']],
+  6: [['<o>'], ['~@~'], ['(@)']],
+  7: [[')  (', '\\__/'], ['/\\', '\\/'], ['^ ^', ')(']],
+};
+const BANDS: Record<number, string> = { 1: '=-', 2: '~', 3: '+-', 4: '~', 5: '^', 6: '~', 7: '<>' };
+
+const LEFT_OF: Record<Direction, Direction> = { N: 'W', E: 'N', S: 'E', W: 'S' };
+const RIGHT_OF: Record<Direction, Direction> = { N: 'E', E: 'S', S: 'W', W: 'N' };
+
+/** One hash per physical wall: the east side of (x,y) is the west side of (x+1,y). */
+function edgeHash(x: number, y: number, dir: Direction, salt: number): number {
+  if (dir === 'W') return spatialHash(x - 1, y, salt);
+  if (dir === 'N') return spatialHash(x, y - 1, salt + 500);
+  if (dir === 'S') return spatialHash(x, y, salt + 500);
+  return spatialHash(x, y, salt);
+}
+
+function wallDir(style: WallStyle, side: 'left' | 'right' | 'front'): Direction {
+  const f = style.facing ?? 'N';
+  return side === 'left' ? LEFT_OF[f] : side === 'right' ? RIGHT_OF[f] : f;
+}
+
+export function wallMaterial(style: WallStyle, x: number, y: number, side: 'left' | 'right' | 'front'): WallMaterial {
+  const weights = style.level ? MATERIAL_WEIGHTS[style.level] : undefined;
+  if (!weights) return 'stone';
+  const total = weights.reduce((a, [, w]) => a + w, 0);
+  let roll = edgeHash(x, y, wallDir(style, side), 101) % total;
+  for (const [m, w] of weights) { if (roll < w) return m; roll -= w; }
+  return 'stone';
+}
+
+type Carving = { kind: 'symbol'; glyph: string[] } | { kind: 'band'; pattern: string } | null;
+
+/** About one wall in nine bears a carving: mostly symbols, sometimes a band. */
+export function wallCarving(style: WallStyle, x: number, y: number, side: 'left' | 'right' | 'front'): Carving {
+  if (!style.level || !SYMBOLS[style.level]) return null;
+  const h = edgeHash(x, y, wallDir(style, side), 211);
+  if (h % 9 !== 0) return null;
+  const pick = (h >>> 8) % 4;
+  if (pick === 3) return { kind: 'band', pattern: BANDS[style.level] };
+  const set = SYMBOLS[style.level];
+  return { kind: 'symbol', glyph: set[pick % set.length] };
+}
+
+function materialChar(material: WallMaterial, depth: number, hash: number, r: number, c: number, anchorCol: number): string | null {
+  const roll = hash % 10;
+  switch (material) {
+    case 'brick': {
+      // Courses of brick, joints staggered row to row.
+      const joint = ((c - anchorCol + (r % 2) * 2) % 4 + 4) % 4 === 0;
+      if (depth >= 4) return roll < 4 ? (joint ? '|' : '=') : null;
+      return joint ? '|' : '=';
+    }
+    case 'wood': {
+      // Plank seams every few columns, with a little grain between.
+      const seamEvery = depth <= 2 ? 3 : 2;
+      if (((c - anchorCol) % seamEvery + seamEvery) % seamEvery === 0) return '|';
+      return roll < (depth <= 2 ? 2 : 1) ? (roll === 0 ? ':' : "'") : null;
+    }
+    case 'rough': {
+      if ((hash % 1000) / 1000 >= wallPanelDensity(depth) + 0.1) return null;
+      return [',', '.', '`', "'", '%', ':', '.', ','][roll % 8];
+    }
+    default:
+      if ((hash % 1000) / 1000 >= wallPanelDensity(depth)) return null;
+      return wallTextureChar(depth, hash);
+  }
+}
+
+/** Draws a carving centered in the given box, if it fits. */
+function drawCarving(chars: string[][], carving: Carving, top: number, bottom: number, left: number, right: number): void {
+  if (!carving) return;
+  if (carving.kind === 'band') {
+    const r = Math.round(top + (bottom - top) * 0.4);
+    if (r <= top || r >= bottom) return;
+    for (let c = left; c <= right; c++) {
+      if (chars[r]?.[c] === undefined) continue;
+      chars[r][c] = carving.pattern[(c - left) % carving.pattern.length];
+    }
+    return;
+  }
+  const g = carving.glyph;
+  const gw = g[0].length, gh = g.length;
+  if (right - left + 1 < gw + 2 || bottom - top - 1 < gh + 1) return;
+  const r0 = Math.round((top + bottom) / 2 - gh / 2);
+  const c0 = Math.round((left + right) / 2 - gw / 2);
+  // Clear a margin around it so it reads against the wall's texture.
+  for (let r = r0 - 1; r <= r0 + gh; r++) for (let c = c0 - 1; c <= c0 + gw; c++) {
+    if (r > top && r < bottom && c >= left && c <= right) chars[r][c] = ' ';
+  }
+  for (let i = 0; i < gh; i++) {
+    for (let j = 0; j < gw; j++) {
+      const r = r0 + i, c = c0 + j;
+      if (r > top && r < bottom && c >= left && c <= right) chars[r][c] = g[i][j];
+    }
+  }
+}
+
 // ─── Solid wall-surface texture ─────────────────────────────────────────────
 //
 // The diagonals drawn between consecutive frames are perspective edges, not
@@ -153,6 +287,7 @@ function fillWallPanel(
   depth: number,
   x: number,
   y: number,
+  style: WallStyle = {},
 ): void {
   const nearCol = side === 'left' ? near.left : near.right;
   const farCol = side === 'left' ? far.left : far.right;
@@ -160,8 +295,8 @@ function fillWallPanel(
   const colHi = Math.max(nearCol, farCol) - 1;
   if (colLo > colHi) return;
 
-  const density = wallPanelDensity(depth);
   const salt = side === 'left' ? 41 : 43;
+  const material = wallMaterial(style, x, y, side);
 
   for (let c = colLo; c <= colHi; c++) {
     const t = (c - nearCol) / (farCol - nearCol);
@@ -171,10 +306,15 @@ function fillWallPanel(
     for (let r = top + 1; r < bottom; r++) {
       if (chars[r]?.[c] !== ' ') continue;
       const hash = spatialHash(x, y, salt + r * 977 + c * 31);
-      if ((hash % 1000) / 1000 < density) {
-        chars[r][c] = wallTextureChar(depth, hash);
-      }
+      const ch = materialChar(material, depth, hash, r, c, nearCol);
+      if (ch) chars[r][c] = ch;
     }
+  }
+
+  // A carving sits within the far frame's height, which is inside the panel at every column.
+  if (depth <= 3) {
+    const inset = Math.max(1, Math.round((colHi - colLo) * 0.15));
+    drawCarving(chars, wallCarving(style, x, y, side), far.top, far.bottom, colLo + inset, colHi - inset);
   }
 }
 
@@ -225,6 +365,7 @@ export function drawFrame(
   frames: Frame[],
   i: number,
   step: CorridorStep | undefined,
+  style: WallStyle = {},
 ): void {
   const f = frames[i];
 
@@ -252,8 +393,8 @@ export function drawFrame(
     const y = step?.y ?? 0;
     const leftEdge: EdgeType = step?.left ?? 'wall';
     const rightEdge: EdgeType = step?.right ?? 'wall';
-    if (leftEdge === 'wall' || leftEdge === 'secret') fillWallPanel(chars, prev, f, 'left', i, x, y);
-    if (rightEdge === 'wall' || rightEdge === 'secret') fillWallPanel(chars, prev, f, 'right', i, x, y);
+    if (leftEdge === 'wall' || leftEdge === 'secret') fillWallPanel(chars, prev, f, 'left', i, x, y, style);
+    if (rightEdge === 'wall' || rightEdge === 'secret') fillWallPanel(chars, prev, f, 'right', i, x, y, style);
     fillHorizontalPanel(chars, prev, f, 'floor', x, y);
     fillHorizontalPanel(chars, prev, f, 'ceiling', x, y);
   }
@@ -263,21 +404,33 @@ export function drawFrame(
  * brick course (each row's joints offset from the one above, like real
  * masonry) so it unmistakably reads as solid rather than just another
  * distant panel. */
-export function fillWallTexture(chars: string[][], f: Frame): void {
+export function fillWallTexture(chars: string[][], f: Frame, style: WallStyle = {}, x = 0, y = 0): void {
+  const material = wallMaterial(style, x, y, 'front');
   const BRICK_WIDTH = 4;
   for (let r = f.top + 1; r < f.bottom; r++) {
     const rowOffset = ((r - f.top) % 2) * (BRICK_WIDTH / 2);
     for (let c = f.left + 1; c < f.right; c++) {
-      const withinBrick = ((c - f.left + rowOffset) % BRICK_WIDTH + BRICK_WIDTH) % BRICK_WIDTH;
-      chars[r][c] = withinBrick === 0 ? '|' : '=';
+      if (material === 'wood') {
+        // Upright planks, with the odd knot.
+        const hash = spatialHash(x, y, 61 + r * 977 + c * 31);
+        chars[r][c] = (c - f.left) % 4 === 0 ? '|' : hash % 23 === 0 ? 'o' : hash % 7 === 0 ? ':' : ' ';
+      } else if (material === 'rough') {
+        const hash = spatialHash(x, y, 67 + r * 977 + c * 31);
+        chars[r][c] = hash % 3 === 0 ? ' ' : ['%', ',', '.', '`', ':', "'"][hash % 6];
+      } else {
+        const withinBrick = ((c - f.left + rowOffset) % BRICK_WIDTH + BRICK_WIDTH) % BRICK_WIDTH;
+        chars[r][c] = withinBrick === 0 ? '|' : '=';
+      }
     }
   }
+  const carving = wallCarving(style, x, y, 'front');
+  drawCarving(chars, carving, f.top, f.bottom, f.left + 1, f.right - 1);
 }
 
 /** A door directly ahead: an inset rectangular panel set into the far wall,
  * surrounded by the ordinary wall texture. */
 export function fillDoorAhead(chars: string[][], f: Frame): void {
-  fillWallTexture(chars, f);
+  fillWallTexture(chars, f);  // the wall around a door is always plain masonry
 
   const w = f.right - f.left;
   const h = f.bottom - f.top;

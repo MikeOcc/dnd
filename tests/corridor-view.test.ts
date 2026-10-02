@@ -5,6 +5,7 @@ import {
   type EdgeInfoLookup, type EdgeType,
 } from '../src/core/corridor-view.js';
 import type { DungeonCell, Direction } from '../src/core/types.js';
+import { wallMaterial, wallCarving } from '../src/core/corridor-render.js';
 
 // Helper: fully walled-off grid (every cell closed on all four sides).
 function closedGrid(w: number, h: number): DungeonCell[][] {
@@ -676,5 +677,52 @@ describe('Required test cases', () => {
     const discoveredLookup = lookupFrom({ '8,5,E': 'door-closed' });
     const discoveredView = renderCorridorView(grid, 5, 5, 'E', {}, discoveredLookup).join('\n');
     expect(discoveredView).not.toBe(hiddenView);
+  });
+});
+
+describe('Wall materials and carvings', () => {
+  it('a wall is the same material and carving seen from either side', () => {
+    for (let level = 1; level <= 7; level++) {
+      for (let x = 1; x < 30; x++) for (let y = 1; y < 30; y++) {
+        // The north wall of (x,y), seen facing east (on the left) and facing west from (x,y-1) (on the left).
+        const a = { level, facing: 'E' as const }, b = { level, facing: 'W' as const };
+        expect(wallMaterial(a, x, y, 'left')).toBe(wallMaterial(b, x, y - 1, 'left'));
+        expect(wallCarving(a, x, y, 'left')).toEqual(wallCarving(b, x, y - 1, 'left'));
+      }
+    }
+  });
+
+  it('every level mixes materials, and some walls bear carvings', () => {
+    for (let level = 1; level <= 7; level++) {
+      const mats = new Set<string>();
+      let carved = 0;
+      for (let x = 0; x < 40; x++) for (let y = 0; y < 40; y++) {
+        mats.add(wallMaterial({ level, facing: 'N' }, x, y, 'left'));
+        if (wallCarving({ level, facing: 'N' }, x, y, 'left')) carved++;
+      }
+      expect(mats.size).toBeGreaterThan(1);
+      expect(carved / 1600).toBeGreaterThan(0.06);
+      expect(carved / 1600).toBeLessThan(0.18);
+    }
+  });
+
+  it('without a level, walls stay plain stone with no carvings', () => {
+    expect(wallMaterial({}, 3, 4, 'left')).toBe('stone');
+    expect(wallCarving({}, 3, 4, 'front')).toBeNull();
+  });
+
+  it('styled views keep their size and use plain printable characters', () => {
+    const grid = closedGrid(40, 40);
+    carve(grid, 5, 5, 20, 'E');
+    for (let level = 1; level <= 7; level++) {
+      for (let x = 5; x < 20; x++) {
+        const view = renderCorridorView(grid, x, 5, 'E', { level });
+        expect(view).toHaveLength(CORRIDOR_VIEW_DEFAULTS.HEIGHT);
+        for (const row of view) {
+          expect(row.length).toBe(CORRIDOR_VIEW_DEFAULTS.WIDTH);
+          expect(/^[\x20-\x7e]*$/.test(row)).toBe(true);
+        }
+      }
+    }
   });
 });
