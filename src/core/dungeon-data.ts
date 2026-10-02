@@ -46,6 +46,7 @@ export const LEVEL_FIXED_MONSTERS: Record<number, FixedMonsterDef[]> = {
 };
 
 export const LEVEL_UNIQUE_MONSTERS: Record<number, UniqueMonsterDef[]> = {
+  // Level 4's Orc King is built in with his lair as the level loads (lairs.ts).
   6: [
     { id: 'unique-aboleth',    type: 'Aboleth'    },
     { id: 'unique-dracolich',  type: 'Dracolich'  },

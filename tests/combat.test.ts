@@ -582,8 +582,8 @@ describe('Elder Oblex', () => {
 });
 
 describe('pickRandomMonsterType — low-tier fodder phased out on deep levels', () => {
-  it('never returns a low-tier type (Kobold, Goblin, Mold, Skeleton, Orc, Slime Mold, Gelatinous Cube, Zombie) on dungeon levels 4-7', () => {
-    const lowTier = new Set(['Kobold', 'Goblin', 'Mold', 'Skeleton', 'Orc', 'Slime Mold', 'Gelatinous Cube', 'Zombie']);
+  it('never returns a low-tier type (Kobold, Goblin, Mold, Skeleton, Slime Mold, Gelatinous Cube, Zombie) on dungeon levels 4-7; orcs roam every depth', () => {
+    const lowTier = new Set(['Kobold', 'Goblin', 'Mold', 'Skeleton', 'Slime Mold', 'Gelatinous Cube', 'Zombie']);
     const rng = new RNG(24601);
     for (let depth = 4; depth <= 7; depth++) {
       for (let i = 0; i < 500; i++) {
@@ -1496,5 +1496,31 @@ describe('Scare', () => {
       if (!scared && i === 0) expect(scareChance(c, orc)).toBeLessThan(before);
     }
     expect(typeof scared).toBe('boolean');
+  });
+});
+
+describe('The Orc King in combat', () => {
+  it('fights with axe flurries, shield slams and the gifts of Gruumsh, and his plate blunts weapons', () => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 45; c.hp = c.maxHp = 1_000_000;
+    const seen = new Set<string>();
+    const rng = new RNG(17);
+    for (let i = 0; i < 200; i++) {
+      const king = createMonster('Orc King', 42, 'k');
+      king.hp = Math.round(king.maxHp * 0.4);   // hurt, so the war-chant is on the table
+      c.heldRounds = 0;
+      const text = monsterFirstStrike(c, king, rng).messages.join(' ');
+      if (text.includes('whirl of iron')) seen.add('flurry');
+      if (text.includes('spiked shield')) seen.add('slam');
+      if (text.includes('war-chant')) seen.add('chant');
+      if (text.includes('curse')) seen.add('curse');
+      if (text.includes('great red eye')) seen.add('eye');
+    }
+    expect([...seen].sort()).toEqual(['chant', 'curse', 'eye', 'flurry', 'slam']);
+
+    const king = createMonster('Orc King', 42, 'k');
+    king.hp = king.maxHp = 1e9;
+    const text = playerAttack(c, king, new RNG(3)).messages.join(' ');
+    if (text.includes('You strike')) expect(text).toContain('plate turns part of it aside');
   });
 });

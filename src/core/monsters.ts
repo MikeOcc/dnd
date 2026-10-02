@@ -22,11 +22,47 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Orc': {
     type: 'Orc', isUndead: false, isUnique: false,
-    minLevel: 2, maxLevel: 12, naturalTier: 2, minDungeonLevel: 1, speed: 1.0,
+    minLevel: 2, maxLevel: 30, naturalTier: 2, minDungeonLevel: 1, speed: 1.0,
     baseHpPerLevel: 7, baseAttackPerLevel: 2.5, baseDefensePerLevel: 1.5,
     fireballResistance: 1.0,
     encounterIntro: ['A hulking orc bellows and raises its weapon.', '', 'You have encountered a Level {LVL} Orc!'],
     specialAbilities: [],
+  },
+  // A lion's body, a man's face full of shark's teeth, bat wings, and a tail
+  // that flings iron spikes. The Orc King keeps one at his door; others roam
+  // the deeper levels.
+  'Manticore': {
+    type: 'Manticore', isUndead: false, isUnique: false,
+    minLevel: 20, maxLevel: 45, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
+    baseHpPerLevel: 11, baseAttackPerLevel: 4.0, baseDefensePerLevel: 2.5,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'A lion the size of a horse pads out of the dark, bat wings folded on its back.',
+      'It has the face of a bearded man, and it smiles with three rows of teeth.',
+      'Its tail rises over its shoulder, bristling with iron spikes.',
+      '',
+      'You have encountered a Level {LVL} Manticore!',
+    ],
+    specialAbilities: ['tail-spikes', 'tail-spikes', 'rending-claws'],
+  },
+  // The one Orc King, on level 4: a towering warlord in black plate, a
+  // veteran of a hundred wars, who calls on Gruumsh for a few dark gifts.
+  // His fighting is in combat.ts (orcKingAction).
+  'Orc King': {
+    type: 'Orc King', isUndead: false, isUnique: true,
+    minLevel: 42, maxLevel: 42, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
+    baseHpPerLevel: 18, baseAttackPerLevel: 3.2, baseDefensePerLevel: 5.0,
+    fireballResistance: 0.8, lightningResistance: 0.9,
+    encounterIntro: [
+      'War drums thunder, and the passage fills with torchlight.',
+      'A towering orc in blackened plate rises from a throne of shields,',
+      'an iron crown on his brow and a rune-cut axe in his fist.',
+      '',
+      '"I HAVE KILLED A HUNDRED OF YOUR HEROES. YOU WILL BE A HUNDRED AND ONE."',
+      '',
+      'THE ORC KING, Level {LVL}, CHOSEN OF GRUUMSH!',
+    ],
+    specialAbilities: ['axe-flurry', 'shield-slam', 'war-chant', 'curse-of-gruumsh', 'eye-of-gruumsh'],
   },
   'Giant': {
     type: 'Giant', isUndead: false, isUnique: false,
@@ -389,7 +425,8 @@ export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterTy
   const tiers = MONSTER_SCALING.MIN_NATURAL_TIER_BY_DUNGEON_LEVEL;
   const minTier = tiers[Math.max(0, Math.min(tiers.length - 1, dungeonDepth - 1))];
   const pool = (Object.values(DEFINITIONS) as MonsterDefinition[]).filter(
-    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth && d.naturalTier >= minTier,
+    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth
+      && (d.naturalTier >= minTier || MONSTER_SCALING.ANY_DEPTH_TYPES.includes(d.type)),
   );
   return rng.pick(pool).type;
 }
@@ -397,6 +434,8 @@ export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterTy
 export function monsterAttackText(type: MonsterType, damage: number, ability?: string): string {
   const actions: Record<string, string> = {
     'acid-breath':      `The ${type} breathes acid! You suffer ${damage} damage.`,
+    'tail-spikes':      `The ${type} lashes its tail, and a volley of iron spikes slams into you! You suffer ${damage} damage.`,
+    'rending-claws':    `The ${type} leaps and rakes you with its claws! You suffer ${damage} damage.`,
     'poison-breath':    `The ${type} exhales venom! You suffer ${damage} damage.`,
     'lightning-breath': `The ${type} unleashes lightning! You suffer ${damage} damage.`,
     'frost-breath':     `The ${type} breathes frost! You suffer ${damage} damage.`,
@@ -437,7 +476,7 @@ export function isUndead(type: MonsterType): boolean {
 }
 
 export const RANDOM_MONSTER_POOL: MonsterType[] = [
-  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Displacer Beast', 'Basilisk',
+  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Displacer Beast', 'Basilisk',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',

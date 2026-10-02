@@ -332,6 +332,9 @@ export const MONSTER_SCALING = {
   // types have unlocked, so "low level monster" means the type, not just
   // the stat block.
   MIN_NATURAL_TIER_BY_DUNGEON_LEVEL: [1, 1, 1, 3, 4, 4, 5],
+  // ...except these, which turn up at any depth (orc war-bands roam
+  // everywhere; deep down they're veterans, as high as the type's maxLevel).
+  ANY_DEPTH_TYPES: ['Orc'] as string[],
 } as const;
 
 export const TREASURE = {
@@ -442,6 +445,18 @@ export const PRESENCE = {
 export const FIRST_LEVEL = {
   CHEST_EXTRA_POTION_CHANCE: 0.25,
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
+} as const;
+
+// The Orc King's fighting (combat.ts, orcKingAction). Each turn he picks
+// one of these by weight; the war-chant only when he's hurt.
+export const ORC_KING = {
+  FLURRY_WEIGHT: 35, FLURRY_SWINGS_MIN: 2, FLURRY_SWINGS_MAX: 3, FLURRY_SWING_MULT: 0.65,
+  SHIELD_SLAM_WEIGHT: 15, SHIELD_SLAM_MULT: 0.8, SHIELD_SLAM_DAZE_CHANCE: 0.5,
+  WAR_CHANT_WEIGHT: 12, WAR_CHANT_BELOW: 0.6, WAR_CHANT_HEAL_MIN: 0.10, WAR_CHANT_HEAL_MAX: 0.18,
+  CURSE_WEIGHT: 10, CURSE_STRENGTH: 4, CURSE_TURNS: 20,
+  EYE_WEIGHT: 10, EYE_MULT: 1.3,   // the Eye of Gruumsh: a bolt of searing red fire
+  BLOW_WEIGHT: 30,                 // a plain, heavy axe blow
+  ARMOR: 0.30,                     // his black plate turns aside this share of every hit's damage
 } as const;
 
 // Scare: frighten a monster off instead of fighting or fleeing. No XP, no

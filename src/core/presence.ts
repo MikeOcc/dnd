@@ -112,6 +112,19 @@ function asmodeusStrike(ctx: PresenceContext, rng: RNG): PresenceEvent {
 // ─── The other uniques ───────────────────────────────────────────────────────
 
 export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
+  'Orc King': {
+    far:  ['Far off, war drums beat, slow and steady, like a giant\'s heart.',
+           'A distant chant of many rough voices rises and falls: "GRUUMSH! GRUUMSH!"',
+           'The faint clang of hammers on iron drifts through the stone. Something is being forged.',
+           'A smell of smoke, sweat and old blood drifts down the passage.'],
+    mid:  ['War drums pound somewhere ahead. Dust shivers down from the ceiling with every beat.',
+           'Crude banners hang here, a single red eye daubed on each.',
+           'You pass a heap of broken shields and notched swords. Trophies.',
+           'A great roar of orcish laughter echoes along the corridor, then a single voice silences it.'],
+    near: ['The drums are deafening now. A deep voice bellows orders over them.',
+           'Torchlight flickers ahead, and the shadows of armored shapes move across the walls.',
+           'Heads on spikes line the passage here, some of them wearing crowns.'],
+  },
   Tiamat: {
     far:  ['A roar rolls through the rock from somewhere far off, shaking dust from the ceiling.',
            'Far away, something vast bellows, and the echo takes a long time to die.',

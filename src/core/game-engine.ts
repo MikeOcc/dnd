@@ -22,6 +22,7 @@ import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition
 import { calculateScore, formatScore } from './scoring.js';
 import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE } from './config.js';
 import { LAIR_WARNINGS } from '../content/lair-text.js';
+import { buildOrcKingLair } from './lairs.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
@@ -874,7 +875,7 @@ export class GameEngine {
     };
 
     const level = this.char.dungeonLevel;
-    const here = level >= 6 ? lairsOn(level).filter(l => l.type !== 'Asmodeus') : [];
+    const here = lairsOn(level).filter(l => l.type !== 'Asmodeus');
     // Tiamat is heard through the floor from the level above.
     const tiamatBelow = level === 6 ? lairsOn(7).filter(l => l.type === 'Tiamat') : [];
     const deepest = lairsOn(7);
@@ -2316,6 +2317,7 @@ export class GameEngine {
     if (!serialized) return;
 
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
+    if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
   }
 
@@ -2347,3 +2349,4 @@ export class GameEngine {
     return next;
   }
 }
+

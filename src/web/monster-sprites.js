@@ -895,6 +895,202 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Manticore': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Manticore">
+    <defs>
+    <radialGradient id="mtc-fur" cx="45%" cy="35%" r="75%">
+    <stop offset="0" stop-color="#d8a050"/>
+    <stop offset="0.55" stop-color="#9a6024"/>
+    <stop offset="1" stop-color="#3a200a"/>
+    </radialGradient>
+    <radialGradient id="mtc-mane" cx="50%" cy="45%" r="60%">
+    <stop offset="0" stop-color="#7a3a14"/>
+    <stop offset="1" stop-color="#2a1004"/>
+    </radialGradient>
+    <linearGradient id="mtc-wing" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5a3a3a"/>
+    <stop offset="1" stop-color="#1e1010"/>
+    </linearGradient>
+    <radialGradient id="mtc-face" cx="45%" cy="35%" r="70%">
+    <stop offset="0" stop-color="#e8b88a"/>
+    <stop offset="0.7" stop-color="#a87050"/>
+    <stop offset="1" stop-color="#5a3420"/>
+    </radialGradient>
+    <linearGradient id="mtc-spike" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0" stop-color="#3a3e46"/>
+    <stop offset="1" stop-color="#c8ccd4"/>
+    </linearGradient>
+    <filter id="mtc-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="mtc-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    </defs>
+
+    <ellipse cx="80" cy="152" rx="58" ry="5" fill="#000" opacity="0.55" filter="url(#mtc-soft)"/>
+
+    <!-- bat wings, spread behind -->
+    <path d="M 70 70 C 50 40 24 30 6 36 C 16 44 18 54 14 62 C 24 58 30 64 30 72 C 40 66 50 70 56 80 Z" fill="url(#mtc-wing)" stroke="#120808" stroke-width="1.1"/>
+    <path d="M 90 70 C 110 40 136 30 154 36 C 144 44 142 54 146 62 C 136 58 130 64 130 72 C 120 66 110 70 104 80 Z" fill="url(#mtc-wing)" stroke="#120808" stroke-width="1.1"/>
+    <path d="M 70 70 L 14 62 M 70 70 L 30 72 M 70 70 L 6 36" stroke="#3a2222" stroke-width="0.8"/>
+    <path d="M 90 70 L 146 62 M 90 70 L 130 72 M 90 70 L 154 36" stroke="#3a2222" stroke-width="0.8"/>
+
+    <!-- scorpion-like tail arching over, tipped with a cluster of spikes -->
+    <path d="M 112 112 C 140 104 150 76 138 54 C 130 40 116 36 108 44" fill="none" stroke="#3a200a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 112 112 C 140 104 150 76 138 54 C 130 40 116 36 108 44" fill="none" stroke="url(#mtc-fur)" stroke-width="6.5" stroke-linecap="round"/>
+    <g fill="url(#mtc-spike)" stroke="#121416" stroke-width="0.5">
+      <path d="M 108 44 L 96 30 L 104 46 Z"/><path d="M 108 44 L 104 26 L 110 42 Z"/><path d="M 108 44 L 114 28 L 112 44 Z"/>
+      <path d="M 108 44 L 94 40 L 106 48 Z"/><path d="M 108 44 L 120 34 L 112 46 Z"/>
+      <path d="M 140 70 L 152 64 L 142 74 Z"/><path d="M 136 88 L 148 88 L 136 92 Z"/><path d="M 128 100 L 138 106 L 126 104 Z"/>
+    </g>
+
+    <!-- lion body, crouched to spring -->
+    <path d="M 40 110 C 34 92 46 80 66 80 L 104 82 C 120 84 128 98 122 114 C 118 124 106 128 94 126 L 58 126 C 48 124 42 118 40 110 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.3"/>
+    <path d="M 60 96 Q 80 92 100 98" stroke="#6a3a12" stroke-width="0.9" fill="none" opacity="0.7"/>
+    <!-- legs and claws -->
+    <path d="M 52 118 C 48 130 46 140 44 148 L 58 148 C 60 140 62 130 64 122 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.1"/>
+    <path d="M 100 120 C 104 132 106 140 108 148 L 94 148 C 92 140 90 132 88 124 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.1"/>
+    <g stroke="#f0e8d0" stroke-width="1.4" stroke-linecap="round">
+      <path d="M 44 148 l -3 3 M 49 148 l -2 4 M 54 148 l -1 4"/>
+      <path d="M 96 148 l 1 4 M 101 148 l 2 4 M 106 148 l 3 3"/>
+    </g>
+
+    <!-- great dark mane -->
+    <path d="M 56 78 C 44 70 42 50 52 38 C 58 30 70 26 80 26 C 90 26 102 30 108 38 C 118 50 116 70 104 78 C 98 90 62 90 56 78 Z" fill="url(#mtc-mane)" stroke="#1a0802" stroke-width="1.2"/>
+    <g stroke="#4a1c06" stroke-width="1" fill="none" opacity="0.8">
+      <path d="M 52 44 Q 46 54 50 64"/><path d="M 108 44 Q 114 54 110 64"/><path d="M 60 32 Q 56 40 58 48"/><path d="M 100 32 Q 104 40 102 48"/>
+    </g>
+
+    <!-- a man's face: bearded, grinning with rows of shark teeth -->
+    <path d="M 64 52 C 62 40 70 34 80 34 C 90 34 98 40 96 52 C 96 62 90 70 80 70 C 70 70 64 62 64 52 Z" fill="url(#mtc-face)" stroke="#3a2010" stroke-width="1.1"/>
+    <path d="M 68 46 Q 73 43 77 46 M 83 46 Q 87 43 92 46" stroke="#2a1006" stroke-width="1.4" fill="none"/>
+    <ellipse cx="73" cy="49" rx="2.4" ry="1.6" fill="#ffd040" filter="url(#mtc-glow)" opacity="0.8"/>
+    <ellipse cx="87" cy="49" rx="2.4" ry="1.6" fill="#ffd040" filter="url(#mtc-glow)" opacity="0.8"/>
+    <ellipse cx="73" cy="49" rx="0.7" ry="1.5" fill="#1a0a02"/><ellipse cx="87" cy="49" rx="0.7" ry="1.5" fill="#1a0a02"/>
+    <path d="M 79 50 L 77 57 L 81 57" stroke="#6a3a20" stroke-width="0.9" fill="none"/>
+    <!-- the grin -->
+    <path d="M 68 60 Q 80 70 92 60 Q 80 66 68 60 Z" fill="#2a0404" stroke="#3a1006" stroke-width="0.7"/>
+    <path d="M 69 60.5 L 71 63 L 73 61.5 L 75 64 L 77 62 L 79 64.5 L 81 62 L 83 64.5 L 85 62 L 87 63.5 L 89 61.5 L 91 60.5" fill="none" stroke="#f4f0e4" stroke-width="0.9"/>
+    <!-- beard -->
+    <path d="M 66 62 C 66 74 74 84 80 86 C 86 84 94 74 94 62 C 90 68 86 70 80 70 C 74 70 70 68 66 62 Z" fill="#3a1a08" stroke="#1a0802" stroke-width="0.8"/>
+    <path d="M 74 72 L 74 82 M 80 72 L 80 85 M 86 72 L 86 82" stroke="#5a2a10" stroke-width="0.7"/>
+    </svg>
+  `,
+
+  'Orc King': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Orc King">
+    <defs>
+    <radialGradient id="okg-skin" cx="40%" cy="30%" r="80%">
+    <stop offset="0" stop-color="#8a9a5a"/>
+    <stop offset="0.5" stop-color="#4a5a2c"/>
+    <stop offset="1" stop-color="#18200c"/>
+    </radialGradient>
+    <linearGradient id="okg-plate" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#6a6e78"/>
+    <stop offset="0.45" stop-color="#2a2c32"/>
+    <stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+    <linearGradient id="okg-gold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff0a0"/>
+    <stop offset="0.5" stop-color="#d4a02a"/>
+    <stop offset="1" stop-color="#6a4a0a"/>
+    </linearGradient>
+    <linearGradient id="okg-cape" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#7a1010"/>
+    <stop offset="1" stop-color="#2a0404"/>
+    </linearGradient>
+    <linearGradient id="okg-tusk" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0" stop-color="#8a7a5a"/>
+    <stop offset="1" stop-color="#f4ecd4"/>
+    </linearGradient>
+    <linearGradient id="okg-iron" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#c8ccd4"/>
+    <stop offset="0.5" stop-color="#5a5e66"/>
+    <stop offset="1" stop-color="#1e2024"/>
+    </linearGradient>
+    <filter id="okg-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="okg-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+
+    <ellipse cx="80" cy="154" rx="54" ry="5" fill="#000" opacity="0.6" filter="url(#okg-soft)"/>
+
+    <!-- red cape behind -->
+    <path d="M 46 66 C 30 96 28 128 34 150 L 126 150 C 132 128 130 96 114 66 Z" fill="url(#okg-cape)" stroke="#1a0202" stroke-width="1.2"/>
+    <path d="M 44 120 L 40 150 M 60 110 L 58 150 M 100 110 L 102 150 M 116 120 L 120 150" stroke="#200202" stroke-width="1" opacity="0.6"/>
+
+    <!-- great axe, runes glowing red -->
+    <path d="M 98 146 L 134 14" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 98 146 L 134 14" stroke="#5a3a1a" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M 128 22 C 148 8 162 28 156 50 C 146 42 134 40 124 42 Z" fill="url(#okg-iron)" stroke="#0c0d10" stroke-width="1.1"/>
+    <path d="M 130 22 C 116 14 104 22 106 38 C 112 32 120 32 126 34 Z" fill="url(#okg-iron)" stroke="#0c0d10" stroke-width="1.1"/>
+    <g stroke="#ff3a14" stroke-width="1.1" fill="none" filter="url(#okg-glow)">
+      <path d="M 140 26 l 4 6 l -4 4 M 146 34 l 4 2"/><path d="M 114 26 l -3 5 l 4 2"/>
+    </g>
+    <g stroke="#ffb070" stroke-width="0.6" fill="none">
+      <path d="M 140 26 l 4 6 l -4 4 M 146 34 l 4 2"/><path d="M 114 26 l -3 5 l 4 2"/>
+    </g>
+
+    <!-- legs in plate -->
+    <path d="M 56 118 C 50 130 50 140 52 148 L 72 148 C 72 138 74 128 76 120 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+    <path d="M 104 118 C 110 130 110 140 108 148 L 88 148 C 88 138 86 128 84 120 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+    <path d="M 54 132 L 74 132 M 86 132 L 106 132" stroke="#8a8e98" stroke-width="0.7" opacity="0.6"/>
+
+    <!-- breastplate: black plate with gold trim and a red eye of Gruumsh -->
+    <path d="M 46 70 C 40 92 44 112 54 122 L 106 122 C 116 112 120 92 114 70 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.5"/>
+    <path d="M 80 72 L 80 120" stroke="#5a5e68" stroke-width="0.8" opacity="0.6"/>
+    <path d="M 48 76 Q 80 88 112 76" stroke="url(#okg-gold)" stroke-width="2" fill="none"/>
+    <path d="M 52 112 Q 80 120 108 112 L 108 118 Q 80 126 52 118 Z" fill="url(#okg-gold)" stroke="#3a2a04" stroke-width="0.6"/>
+    <ellipse cx="80" cy="98" rx="9" ry="5.5" fill="#1a0404" stroke="url(#okg-gold)" stroke-width="1.2"/>
+    <ellipse cx="80" cy="98" rx="4" ry="4" fill="#ff2a10" filter="url(#okg-glow)"/>
+    <ellipse cx="80" cy="98" rx="2.6" ry="2.6" fill="#ff7a3a"/>
+    <ellipse cx="80" cy="98" rx="0.9" ry="2.2" fill="#1a0202"/>
+    <path d="M 58 80 Q 66 76 74 82" stroke="#9a9ea8" stroke-width="0.8" fill="none" opacity="0.5"/>
+
+    <!-- arms: plated, one gripping the axe haft, one behind the shield -->
+    <path d="M 112 74 C 122 86 122 98 118 108 L 106 104 C 108 94 106 86 104 80 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+    <circle cx="112" cy="108" r="7.5" fill="#4a5a2c" stroke="#121808" stroke-width="1.1"/>
+    <path d="M 48 74 C 36 84 32 98 34 110 L 46 112 C 44 100 48 90 56 84 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+
+    <!-- spiked shield on the left arm -->
+    <path d="M 16 92 C 16 80 26 74 38 74 C 50 74 60 80 60 92 C 60 112 46 126 38 130 C 30 126 16 112 16 92 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.4"/>
+    <path d="M 20 92 C 20 82 28 78 38 78 C 48 78 56 82 56 92 C 56 110 44 122 38 125 C 32 122 20 110 20 92 Z" fill="none" stroke="url(#okg-gold)" stroke-width="1.4"/>
+    <circle cx="38" cy="96" r="6" fill="url(#okg-iron)" stroke="#0c0d10" stroke-width="0.8"/>
+    <path d="M 38 90 L 38 82 M 32 96 L 24 96 M 44 96 L 52 96 M 38 102 L 38 112" stroke="url(#okg-iron)" stroke-width="2" stroke-linecap="round"/>
+    <g fill="#ffffff" opacity="0.15"><ellipse cx="28" cy="86" rx="5" ry="2.5" transform="rotate(-30 28 86)"/></g>
+
+    <!-- great spiked pauldrons with gold edges -->
+    <path d="M 32 78 C 34 60 50 54 64 62 C 62 72 54 80 42 84 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+    <path d="M 128 78 C 126 60 110 54 96 62 C 98 72 106 80 118 84 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
+    <path d="M 34 76 C 38 64 50 58 62 64" stroke="url(#okg-gold)" stroke-width="1.3" fill="none"/>
+    <path d="M 126 76 C 122 64 110 58 98 64" stroke="url(#okg-gold)" stroke-width="1.3" fill="none"/>
+    <g fill="url(#okg-iron)" stroke="#0c0d10" stroke-width="0.6">
+      <path d="M 38 66 L 28 52 L 44 62 Z"/><path d="M 50 59 L 46 44 L 56 57 Z"/>
+      <path d="M 122 66 L 132 52 L 116 62 Z"/><path d="M 110 59 L 114 44 L 104 57 Z"/>
+    </g>
+
+    <!-- head: scarred, tusked, an iron crown with gold points -->
+    <path d="M 64 52 C 62 38 70 30 80 30 C 90 30 98 38 96 52 C 96 63 90 72 80 72 C 70 72 64 63 64 52 Z" fill="url(#okg-skin)" stroke="#121808" stroke-width="1.3"/>
+    <path d="M 63 48 L 55 41 L 62 53 Z" fill="url(#okg-skin)" stroke="#121808" stroke-width="0.8"/>
+    <path d="M 97 48 L 105 41 L 98 53 Z" fill="url(#okg-skin)" stroke="#121808" stroke-width="0.8"/>
+    <path d="M 65 45 Q 80 39 95 45 L 94 50 Q 80 45 66 50 Z" fill="#20280c"/>
+    <ellipse cx="73" cy="51" rx="3.2" ry="2" fill="#ff3020" filter="url(#okg-glow)" opacity="0.8"/>
+    <ellipse cx="87" cy="51" rx="3.2" ry="2" fill="#ff3020" filter="url(#okg-glow)" opacity="0.8"/>
+    <ellipse cx="73" cy="51" rx="2.1" ry="1.3" fill="#ff8040"/>
+    <ellipse cx="87" cy="51" rx="2.1" ry="1.3" fill="#ff8040"/>
+    <circle cx="73" cy="51" r="0.7" fill="#1a0202"/><circle cx="87" cy="51" r="0.7" fill="#1a0202"/>
+    <path d="M 84 41 L 90 58" stroke="#8a2a1a" stroke-width="1" opacity="0.8"/>
+    <path d="M 76 54 Q 80 59 84 54 L 83 59 Q 80 61 77 59 Z" fill="#3a4a1e" stroke="#121808" stroke-width="0.6"/>
+    <path d="M 70 64 Q 80 68 90 64 Q 80 70 70 64 Z" fill="#1a0806"/>
+    <path d="M 71 65 L 69 54 L 74 64 Z" fill="url(#okg-tusk)" stroke="#5a4a2a" stroke-width="0.4"/>
+    <path d="M 89 65 L 91 54 L 86 64 Z" fill="url(#okg-tusk)" stroke="#5a4a2a" stroke-width="0.4"/>
+    <!-- crown -->
+    <path d="M 64 38 L 66 22 L 71 32 L 75 18 L 80 30 L 85 18 L 89 32 L 94 22 L 96 38 Z" fill="url(#okg-iron)" stroke="#0c0d10" stroke-width="1"/>
+    <path d="M 64 38 L 96 38 L 96 42 L 64 42 Z" fill="url(#okg-gold)" stroke="#3a2a04" stroke-width="0.7"/>
+    <g fill="url(#okg-gold)" stroke="#3a2a04" stroke-width="0.5">
+      <circle cx="66" cy="22" r="1.8"/><circle cx="75" cy="18" r="1.8"/><circle cx="85" cy="18" r="1.8"/><circle cx="94" cy="22" r="1.8"/>
+    </g>
+    <circle cx="80" cy="40" r="1.8" fill="#ff2a10" filter="url(#okg-glow)"/>
+    <circle cx="80" cy="40" r="1.1" fill="#ff8a5a"/>
+    </svg>
+  `,
+
   'Owlbear': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Owlbear">
     <defs>
@@ -3926,6 +4122,8 @@ const MONSTER_SPRITES = {
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
   'Giant': 1.35,
+  'Orc King': 1.25,
+  'Manticore': 1.2,
 };
 
 function getMonsterSprite(type) {

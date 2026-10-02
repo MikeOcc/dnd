@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -67,9 +67,11 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const baseDamage = (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT) + Math.floor(eff.strength / strDiv);
   const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
   const cry = (char.battleCryRounds ?? 0) > 0 ? WARRIOR.BATTLE_CRY_MULT : 1;
-  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
+  // The Orc King's black plate turns aside part of every blow.
+  const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR : 1;
+  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
   monster.hp -= damage;
-  messages.push(`You strike the ${monster.type} for ${damage} damage.${label}`);
+  messages.push(`You strike the ${monster.type} for ${damage} damage.${label}${plate < 1 ? ' His plate turns part of it aside.' : ''}`);
   return damage;
 }
 
@@ -566,6 +568,89 @@ export function prayerBanishChance(char: Character, monster: Monster, wisdom: nu
   return Math.min(COMBAT.PRAYER_BANISH_MAX_CHANCE, chance);
 }
 
+// ─── The Orc King ────────────────────────────────────────────────────────────
+
+/** The Orc King's turn: a flurry of axe blows, a shield slam that can daze,
+ * a heavy single blow, or one of Gruumsh's gifts: a war-chant that closes
+ * his wounds (only when hurt), a curse that saps strength, or the Eye of
+ * Gruumsh, a bolt of red fire. */
+function orcKingAction(
+  char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
+  const K = ORC_KING;
+  const hurt = monster.hp < monster.maxHp * K.WAR_CHANT_BELOW;
+  const options: [string, number][] = [
+    ['axe-flurry', K.FLURRY_WEIGHT],
+    ['shield-slam', K.SHIELD_SLAM_WEIGHT],
+    ['heavy-blow', K.BLOW_WEIGHT],
+    ['curse-of-gruumsh', K.CURSE_WEIGHT],
+    ['eye-of-gruumsh', K.EYE_WEIGHT],
+    ...(hurt ? [['war-chant', K.WAR_CHANT_WEIGHT] as [string, number]] : []),
+  ];
+  let roll = rng.float() * options.reduce((a, [, w]) => a + w, 0);
+  const ability = (options.find(([, w]) => (roll -= w) < 0) ?? options[0])[0];
+  out.ability = ability;
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const done = (dmg: number, extra: Partial<MonsterActionResult> = {}): MonsterActionResult =>
+    ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false, ...extra });
+
+  switch (ability) {
+    case 'axe-flurry': {
+      const swings = rng.int(K.FLURRY_SWINGS_MIN, K.FLURRY_SWINGS_MAX);
+      messages.push(`The Orc King's axe becomes a whirl of iron! (${swings} blows)`);
+      let total = 0;
+      for (let i = 0; i < swings && char.hp > 0; i++) {
+        const dmg = hit(K.FLURRY_SWING_MULT);
+        char.hp = Math.max(0, char.hp - dmg);
+        total += dmg;
+        messages.push(`  The axe bites for ${dmg} damage.`);
+      }
+      return done(total);
+    }
+    case 'shield-slam': {
+      const dmg = hit(K.SHIELD_SLAM_MULT);
+      char.hp = Math.max(0, char.hp - dmg);
+      messages.push(`The Orc King smashes you with his spiked shield for ${dmg} damage!`);
+      if (char.hp > 0 && rng.float() < K.SHIELD_SLAM_DAZE_CHANCE) {
+        char.heldRounds = Math.max(char.heldRounds ?? 0, 1);
+        char.heldBy = 'dazed';
+        messages.push('Your ears ring and the world spins. You are dazed!');
+      }
+      return done(dmg);
+    }
+    case 'war-chant': {
+      const heal = Math.min(monster.maxHp - monster.hp,
+        Math.round(monster.maxHp * (K.WAR_CHANT_HEAL_MIN + rng.float() * (K.WAR_CHANT_HEAL_MAX - K.WAR_CHANT_HEAL_MIN))));
+      monster.hp += heal;
+      messages.push('The Orc King beats his axe on his shield and roars a war-chant to Gruumsh.',
+        `Red light pours into his wounds. (The Orc King heals ${heal} HP)`);
+      return done(0, { monsterHealed: heal });
+    }
+    case 'curse-of-gruumsh': {
+      const dmg = hit(0.5);
+      char.hp = Math.max(0, char.hp - dmg);
+      addStatusEffect(char, { type: 'strength-reduced', value: K.CURSE_STRENGTH, turns: K.CURSE_TURNS });
+      messages.push(`The Orc King spits a curse in the name of Gruumsh. Black fire crawls over you for ${dmg} damage,`,
+        `and your arms turn to lead. (-${K.CURSE_STRENGTH} Strength)`);
+      return done(dmg);
+    }
+    case 'eye-of-gruumsh': {
+      const dmg = hit(K.EYE_MULT);
+      char.hp = Math.max(0, char.hp - dmg);
+      messages.push(`The Orc King raises his axe, and a great red eye opens in the air above him.`,
+        `A bolt of searing fire lances out of it! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    default: {
+      const dmg = hit(1);
+      char.hp = Math.max(0, char.hp - dmg);
+      messages.push(`The Orc King brings his axe down with terrible force! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+  }
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -691,6 +776,8 @@ export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRo
 export function abilityElement(ability: string | undefined): FxElement {
   if (!ability) return 'physical';
   if (ability === 'telekinetic-ray') return 'physical';
+  if (ability === 'eye-of-gruumsh') return 'fire';
+  if (ability === 'curse-of-gruumsh') return 'drain';
   if (/disintegrate|petrify|paralyze-ray|slow-ray|magic|teleport|naked|light-bolt/.test(ability)) return 'arcane';
   if (/fire|flame|burn|infernal/.test(ability)) return 'fire';
   if (/frost|cold|ice/.test(ability)) return 'cold';
@@ -736,6 +823,13 @@ const ATTACK_NAMES: Record<string, string> = {
   'telekinetic-ray': 'telekinetic ray',
   'charm-ray': 'charm ray',
   'sleep-ray': 'sleep ray',
+  'tail-spikes': 'tail spikes',
+  'rending-claws': 'rending claws',
+  'axe-flurry': 'whirling axe',
+  'shield-slam': 'spiked shield',
+  'heavy-blow': 'axe',
+  'curse-of-gruumsh': 'curse of Gruumsh',
+  'eye-of-gruumsh': 'Eye of Gruumsh',
 };
 
 /** The death screen's cause line, naming the attack that did the character in. */
@@ -820,6 +914,8 @@ function monsterActionInner(
 
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const eff = getEffectiveStats(char);
+
+  if (monster.type === 'Orc King') return orcKingAction(char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -1042,6 +1138,18 @@ function monsterActionInner(
     messages.push('The wound is deep. You are bleeding!');
     const playerDied = char.hp <= 0;
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
+  }
+
+  // A Manticore's spike volley can leave barbs in the wound.
+  if (ability === 'tail-spikes') {
+    const dmg = Math.round(calculateMonsterDamage(monster, char, rng, naked, ability) * 1.2);
+    char.hp = Math.max(0, char.hp - dmg);
+    messages.push(monsterAttackText(monster.type, dmg, ability));
+    if (char.hp > 0 && rng.float() < 0.35) {
+      addStatusEffect(char, { type: 'bleeding', value: 3, turns: 5 });
+      messages.push('Barbed spikes stay lodged in your flesh. You are bleeding!');
+    }
+    return { messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false };
   }
 
   // Handle terror/fear
