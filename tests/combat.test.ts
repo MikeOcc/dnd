@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
 import { GEMS, COMBAT } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1435,5 +1435,30 @@ describe('Reaching high-level monsters', () => {
 
   it("Asmodeus's HP is halved (15 per level)", () => {
     expect(createMonster('Asmodeus', 100, 'a').maxHp).toBe(1500);
+  });
+});
+
+describe('Asmodeus — Infernal Regeneration', () => {
+  it('below 150 HP he regenerates 25–50% of his maximum, once a fight', () => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 90; c.hp = c.maxHp = 1_000_000;
+    const m = createMonster('Asmodeus', 60, 'a');
+    m.maxHp = 1000; m.hp = 100;
+    const first = monsterFirstStrike(c, m, new RNG(3));
+    expect(first.messages.join(' ')).toContain('regenerates');
+    expect(m.hp).toBeGreaterThanOrEqual(100 + 250);
+    expect(m.hp).toBeLessThanOrEqual(100 + 500);
+
+    m.hp = 100;
+    const second = monsterFirstStrike(c, m, new RNG(4));
+    expect(second.messages.join(' ')).not.toContain('regenerates');
+  });
+
+  it('does not regenerate while above 150 HP', () => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.hp = c.maxHp = 1_000_000;
+    const m = createMonster('Asmodeus', 60, 'a');
+    m.maxHp = 1000; m.hp = 400;
+    expect(monsterFirstStrike(c, m, new RNG(3)).messages.join(' ')).not.toContain('regenerates');
   });
 });

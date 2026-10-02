@@ -181,7 +181,7 @@ function handleKey(key: KeyEvent): void {
 
   // A great lair's warning — Turn Back, Step Forward or Charge
   if (phase === 'lair-warning') {
-    if (key.type === 'char' && ['a', 'b', 'c'].includes(key.char)) render(engine.lairChoice(key.char));
+    if (key.type === 'char' && ['a', 'b', 'c', 'd'].includes(key.char)) render(engine.lairChoice(key.char));
     return;
   }
 

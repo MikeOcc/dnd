@@ -224,6 +224,13 @@ export const COMBAT = {
   // Infernal Healing
   INFERNAL_HEAL_DIVISOR: 3,  // Asmodeus heals this fraction of the damage he deals
 
+  // Infernal Regeneration: once a fight, when wounds bring Asmodeus below
+  // this many HP (but not dead), he spends his turn restoring this fraction
+  // of his maximum HP.
+  ASMODEUS_REGEN_BELOW_HP: 150,
+  ASMODEUS_REGEN_MIN: 0.25,
+  ASMODEUS_REGEN_MAX: 0.50,
+
   // Monster speed effect on run chance
   SPEED_RUN_MODIFIER: 0.1,    // per speed point above 1.0
 
@@ -442,6 +449,8 @@ export const FIRST_LEVEL = {
 export const LAIR = {
   TURN_BACK_DC: 14,   // fail, and you're dragged in and struck first
   CHARGE_DC: 12,      // make it, and your first blow goes unanswered; fail, and you're struck first
+  SNEAK_DC: 16,       // make it, and your first blow lands from the shadows, unanswered and doubled; fail, and you're struck first
+  ASMODEUS_DISMISS_CHANCE: 0.15,  // on stepping into his lair: he can't be bothered, and flings you elsewhere on the level
   DEX_BONUS_MAX: 5,   // bonus = (Dexterity - 10) / 2, rounded down, capped here
 } as const;
 

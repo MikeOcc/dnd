@@ -246,6 +246,7 @@ export class GameEngine {
         { key: 'a', text: 'Turn Back' },
         { key: 'b', text: 'Step Forward' },
         { key: 'c', text: 'Charge and Attack' },
+        { key: 'd', text: 'Sneak In' },
       ];
     }
     if (this.phase === 'save-prompt') {
@@ -1043,6 +1044,7 @@ export class GameEngine {
       case 'unique-monster': {
         const monsterId = (content.monsterId ?? 'Asmodeus') as MonsterType;
         if (ds.defeatedUniqueMonsters.has(content.id)) return null;
+        if (monsterId === 'Asmodeus' && this.rng.float() < LAIR.ASMODEUS_DISMISS_CHANCE) return this.dismissedByAsmodeus();
         if (LAIR_WARNINGS[monsterId]) return this.startLairWarning(content, monsterId);
         return this.startFixedEncounter(content, monsterId);
       }
@@ -1165,6 +1167,22 @@ export class GameEngine {
       `[A] Turn back: d20${bonus}, need ${LAIR.TURN_BACK_DC}. Fail, and you're dragged in and struck first.`,
       '[B] Step forward: face what waits on even terms.',
       `[C] Charge: d20${bonus}, need ${LAIR.CHARGE_DC}. Your first blow goes unanswered, or it strikes first.`,
+      `[D] Sneak in: d20${bonus}, need ${LAIR.SNEAK_DC}. Strike from the shadows for double damage, unanswered, or it strikes first.`,
+    ];
+    return this.getState();
+  }
+
+  /** Asmodeus can't be bothered: he flings the intruder elsewhere on the level. */
+  private dismissedByAsmodeus(): GameState {
+    this.teleportPlayer();
+    this.presenceFelt = true;  // in map mode, show this rather than redrawing the map
+    this.fx.player = 'arcane';
+    this.messages = [
+      'The smoke parts. On the throne, something vast stirs, and sighs.',
+      'A bored voice like grinding stone: "NOT. NOW."',
+      '',
+      'The world folds around you, and you are somewhere else entirely.',
+      'You will have to find your way back to him.',
     ];
     return this.getState();
   }
@@ -1218,6 +1236,37 @@ export class GameEngine {
       const state = this.combatAttack();
       this.messages = [`You charge into the smoke! ${r.text}`, '', ...intro, '', ...this.messages];
       state.messages = [...this.messages];
+      return state;
+    }
+
+    if (key === 'd') {
+      const r = roll(LAIR.SNEAK_DC);
+      this.lair = null;
+      this.startFixedEncounter(content, monster);
+      if (!r.ok) return this.lairFirstStrike([`You creep through the smoke... but it was watching all along. ${r.text}`, '']);
+      const intro = this.messages;
+      const m = this.combat!.monster;
+      m.caughtOffGuard = true;
+      const hpBefore = m.hp;
+      let state = this.combatAttack();
+      const lead = [`You slip through the smoke, unseen, and strike from the shadows! ${r.text}`, '', ...intro, ''];
+      // The blow from the shadows lands twice as hard.
+      const dealt = hpBefore - m.hp;
+      if ((this.phase as GamePhase) === 'combat' && this.combat && dealt > 0 && m.hp > 0) {
+        m.hp -= dealt;
+        const extra = [`Your blow from the shadows strikes deep! (+${dealt} damage)`];
+        if (m.hp <= 0) {
+          const body = this.messages;
+          state = this.handleMonsterDefeated();
+          this.messages = [...lead, ...body, ...extra, '', ...this.messages];
+        } else {
+          this.messages = [...lead, ...this.messages, ...extra];
+        }
+      } else {
+        this.messages = [...lead, ...this.messages];
+      }
+      state.messages = [...this.messages];
+      if (this.combat) state.combat = { ...this.combat };
       return state;
     }
 

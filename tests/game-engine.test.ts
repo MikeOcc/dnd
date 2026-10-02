@@ -1848,18 +1848,61 @@ describe("GameEngine — Asmodeus's lair warning", () => {
     throw new Error('no approach to the lair');
   }
 
-  it('stops at the edge of the lair with three choices and the throne art', () => {
-    const { e, dir } = atLairEdge();
+  /** Step into the lair, with Asmodeus in the mood for visitors. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function approach(e: any, dir: string) {
+    const float = e.rng.float;
+    e.rng.float = () => 0.99;
     const state = e.tryMove(dir, '');
+    e.rng.float = float;
+    return state;
+  }
+
+  it('sometimes Asmodeus cannot be bothered, and flings you elsewhere on the level', () => {
+    const { e, start, dir } = atLairEdge();
+    const float = e.rng.float;
+    e.rng.float = () => 0;
+    const state = e.tryMove(dir, '');
+    e.rng.float = float;
+    expect(state.phase).toBe('playing');
+    expect(state.messages.join(' ')).toContain('NOT. NOW.');
+    expect(e.char.dungeonLevel).toBe(7);
+    expect(Math.abs(e.char.x - start.x) + Math.abs(e.char.y - start.y)).toBeGreaterThan(1);
+  });
+
+  it('sneaking in lands a doubled blow from the shadows, unanswered', () => {
+    const { engine, e, dir } = atLairEdge();
+    approach(e, dir);
+    const realDie = e.rng.die.bind(e.rng);
+    let first = true;
+    e.rng.die = (n: number) => { if (first && n === 20) { first = false; return 20; } return realDie(n); };
+    const state = engine.lairChoice('d');
+    const text = state.messages.join(' ');
+    expect(text).toContain('strike from the shadows');
+    expect(text).toContain('Caught off guard');
+    expect(e.char.hp).toBe(e.char.maxHp);
+  });
+
+  it('a failed sneak is met with the first strike', () => {
+    const { engine, e, dir } = atLairEdge();
+    approach(e, dir);
+    e.rng.die = () => 1;
+    const state = engine.lairChoice('d');
+    expect(state.messages.join(' ')).toContain('watching all along');
+  });
+
+  it('stops at the edge of the lair with four choices and the throne art', () => {
+    const { e, dir } = atLairEdge();
+    const state = approach(e, dir);
     expect(state.phase).toBe('lair-warning');
     expect(state.lair).toEqual({ monster: 'Asmodeus' });
-    expect(state.choices.map((c: { key: string }) => c.key)).toEqual(['a', 'b', 'c']);
+    expect(state.choices.map((c: { key: string }) => c.key)).toEqual(['a', 'b', 'c', 'd']);
     expect(state.messages.join(' ')).toContain('throne');
   });
 
   it('turning back on a good roll returns you to where you stepped from', () => {
     const { engine, e, start, dir } = atLairEdge();
-    e.tryMove(dir, '');
+    approach(e, dir);
     e.rng.die = () => 20;
     const state = engine.lairChoice('a');
     expect(state.phase).toBe('playing');
@@ -1868,7 +1911,7 @@ describe("GameEngine — Asmodeus's lair warning", () => {
 
   it('a failed turn-back drags you in, and Asmodeus strikes first', () => {
     const { engine, e, dir } = atLairEdge();
-    e.tryMove(dir, '');
+    approach(e, dir);
     e.rng.die = () => 1;
     const state = engine.lairChoice('a');
     expect(['combat', 'death']).toContain(state.phase);
@@ -1877,7 +1920,7 @@ describe("GameEngine — Asmodeus's lair warning", () => {
 
   it('stepping forward starts the fight normally', () => {
     const { engine, e, dir } = atLairEdge();
-    e.tryMove(dir, '');
+    approach(e, dir);
     const state = engine.lairChoice('b');
     expect(state.phase).toBe('combat');
     expect(state.combat!.monster.type).toBe('Asmodeus');
@@ -1886,7 +1929,7 @@ describe("GameEngine — Asmodeus's lair warning", () => {
 
   it('a successful charge lands a blow Asmodeus cannot answer', () => {
     const { engine, e, dir } = atLairEdge();
-    e.tryMove(dir, '');
+    approach(e, dir);
     const realDie = e.rng.die.bind(e.rng);
     let first = true;
     e.rng.die = (n: number) => { if (first && n === 20) { first = false; return 20; } return realDie(n); };

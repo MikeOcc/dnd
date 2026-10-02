@@ -608,7 +608,7 @@ function updateHelpLine(phase) {
     case 'char-roll':
       hint.textContent = 'A: Wizard  B: Warrior  C: Reroll'; break;
     case 'lair-warning':
-      hint.textContent = 'A: Turn Back  B: Step Forward  C: Charge and Attack'; break;
+      hint.textContent = 'A: Turn Back  B: Step Forward  C: Charge and Attack  D: Sneak In'; break;
     case 'death':
       hint.textContent = 'A: Revive  C: Restore Last Save  Q: Main Menu'; break;
     case 'save-prompt':
@@ -645,7 +645,7 @@ function handleChoiceKey(key, phase) {
   }
 
   if (phase === 'lair-warning') {
-    if (['a', 'b', 'c'].includes(key)) apiAction('lair', { choice: key });
+    if (['a', 'b', 'c', 'd'].includes(key)) apiAction('lair', { choice: key });
     return;
   }
 
@@ -841,7 +841,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'lair-warning') {
-    if (['a', 'b', 'c'].includes(key)) apiAction('lair', { choice: key });
+    if (['a', 'b', 'c', 'd'].includes(key)) apiAction('lair', { choice: key });
     return;
   }
 

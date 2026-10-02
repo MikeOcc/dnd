@@ -200,6 +200,7 @@ export interface Monster {
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  regenerated?: boolean;     // Asmodeus has used his Infernal Regeneration this fight
   caughtOffGuard?: boolean;  // a successful charge into its lair: it can't answer the first blow
 }
 

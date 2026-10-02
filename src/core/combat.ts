@@ -796,6 +796,18 @@ function monsterActionInner(
 
   // Special Asmodeus logic
   if (monster.type === 'Asmodeus') {
+    // Badly wounded, he spends his turn knitting himself back together, once a fight.
+    if (!monster.regenerated && monster.hp > 0 && monster.hp < COMBAT.ASMODEUS_REGEN_BELOW_HP) {
+      monster.regenerated = true;
+      const frac = COMBAT.ASMODEUS_REGEN_MIN + rng.float() * (COMBAT.ASMODEUS_REGEN_MAX - COMBAT.ASMODEUS_REGEN_MIN);
+      const heal = Math.min(monster.maxHp - monster.hp, Math.round(monster.maxHp * frac));
+      monster.hp += heal;
+      messages.push(
+        'Asmodeus snarls a word that was old before the world, and hellfire pours into his wounds.',
+        `His torn flesh knits closed before your eyes! (Asmodeus regenerates ${heal} HP)`,
+      );
+      return { messages, monsterDamage: 0, playerDied: false, monsterDied: false, monsterHealed: heal };
+    }
     ability = pickAsmodeusAbility(monster, char, rng);
   }
 
