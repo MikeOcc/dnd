@@ -566,6 +566,15 @@ export function prayerBanishChance(char: Character, monster: Monster, wisdom: nu
   return Math.min(COMBAT.PRAYER_BANISH_MAX_CHANCE, chance);
 }
 
+// ─── First strike ────────────────────────────────────────────────────────────
+
+/** The monster acts before the character can: a lair's master dragging an
+ * intruder in, or meeting a failed charge. */
+export function monsterFirstStrike(char: Character, monster: Monster, rng: RNG, messages: string[] = []): CombatRoundResult {
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0 };
+}
+
 // ─── Banish ──────────────────────────────────────────────────────────────────
 
 /** How many faces of a d12 make Banish fail against this monster (0 = it
@@ -746,6 +755,11 @@ function monsterActionInner(
       messages.push(`The ${monster.type} reels in confusion and fails to act!`);
       return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
     }
+  }
+  if (monster.caughtOffGuard) {
+    monster.caughtOffGuard = false;
+    messages.push(`Caught off guard, the ${monster.type} cannot answer your blow!`);
+    return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
   }
   if ((monster.stunnedTurns ?? 0) > 0) {
     monster.stunnedTurns!--;

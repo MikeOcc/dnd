@@ -437,6 +437,14 @@ export const FIRST_LEVEL = {
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
 } as const;
 
+// Stepping into a great lair (content/lair-text.ts) stops you at its edge.
+// Turning back or charging in is a d20 roll plus a Dexterity bonus.
+export const LAIR = {
+  TURN_BACK_DC: 14,   // fail, and you're dragged in and struck first
+  CHARGE_DC: 12,      // make it, and your first blow goes unanswered; fail, and you're struck first
+  DEX_BONUS_MAX: 5,   // bonus = (Dexterity - 10) / 2, rounded down, capped here
+} as const;
+
 export const TRAPS = {
   DISARM_DEPTH_PENALTY: 0.04,   // per dungeon level below the first
   DISARM_MIN: 0.05,

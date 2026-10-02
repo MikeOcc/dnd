@@ -200,6 +200,7 @@ export interface Monster {
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  caughtOffGuard?: boolean;  // a successful charge into its lair: it can't answer the first blow
 }
 
 export type CharacterClass = 'wizard' | 'warrior';
@@ -238,7 +239,8 @@ export type GamePhase =
   | 'map'
   | 'inventory'
   | 'save-prompt'
-  | 'resting';
+  | 'resting'
+  | 'lair-warning';
 
 export interface Choice {
   key: string;
@@ -288,6 +290,7 @@ export interface GameState {
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
+  lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
 }
 
 export interface CharacterSummary {

@@ -1817,3 +1817,81 @@ describe('GameEngine — room and corridor descriptions', () => {
     expect(again.messages.join(' ')).toMatch(/You are back in the /);
   });
 });
+
+describe("GameEngine — Asmodeus's lair warning", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  /** A strong character standing next to Asmodeus's lair on level 7, facing it. */
+  function atLairEdge() {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.dungeonLevel = 7;
+    e.loadLevelIntoCache(7);
+    e.char.level = 80;
+    e.char.hp = e.char.maxHp = 1_000_000;
+    e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    const lairKey = [...lvl.contents.entries()].find(([, c]: [string, { type: string; monsterId?: string }]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus')![0];
+    const [lx, ly] = lairKey.split(',').map(Number);
+    const steps = [['N', 0, 1], ['S', 0, -1], ['E', -1, 0], ['W', 1, 0]] as const; // dir to walk, and offset of the start square from the lair
+    for (const [dir, ox, oy] of steps) {
+      const sx = lx + ox, sy = ly + oy;
+      if (canMove(lvl.grid, sx, sy, dir) && !lvl.contents.has(`${sx},${sy}`)) {
+        e.char.x = sx; e.char.y = sy; e.char.facing = dir;
+        return { engine, e, start: { x: sx, y: sy }, dir };
+      }
+    }
+    throw new Error('no approach to the lair');
+  }
+
+  it('stops at the edge of the lair with three choices and the throne art', () => {
+    const { e, dir } = atLairEdge();
+    const state = e.tryMove(dir, '');
+    expect(state.phase).toBe('lair-warning');
+    expect(state.lair).toEqual({ monster: 'Asmodeus' });
+    expect(state.choices.map((c: { key: string }) => c.key)).toEqual(['a', 'b', 'c']);
+    expect(state.messages.join(' ')).toContain('throne');
+  });
+
+  it('turning back on a good roll returns you to where you stepped from', () => {
+    const { engine, e, start, dir } = atLairEdge();
+    e.tryMove(dir, '');
+    e.rng.die = () => 20;
+    const state = engine.lairChoice('a');
+    expect(state.phase).toBe('playing');
+    expect([e.char.x, e.char.y]).toEqual([start.x, start.y]);
+  });
+
+  it('a failed turn-back drags you in, and Asmodeus strikes first', () => {
+    const { engine, e, dir } = atLairEdge();
+    e.tryMove(dir, '');
+    e.rng.die = () => 1;
+    const state = engine.lairChoice('a');
+    expect(['combat', 'death']).toContain(state.phase);
+    expect(state.messages.join(' ')).toContain('drags you before the throne');
+  });
+
+  it('stepping forward starts the fight normally', () => {
+    const { engine, e, dir } = atLairEdge();
+    e.tryMove(dir, '');
+    const state = engine.lairChoice('b');
+    expect(state.phase).toBe('combat');
+    expect(state.combat!.monster.type).toBe('Asmodeus');
+    expect(e.char.hp).toBe(e.char.maxHp);
+  });
+
+  it('a successful charge lands a blow Asmodeus cannot answer', () => {
+    const { engine, e, dir } = atLairEdge();
+    e.tryMove(dir, '');
+    const realDie = e.rng.die.bind(e.rng);
+    let first = true;
+    e.rng.die = (n: number) => { if (first && n === 20) { first = false; return 20; } return realDie(n); };
+    const state = engine.lairChoice('c');
+    expect(state.messages.join(' ')).toContain('Caught off guard');
+    expect(e.char.hp).toBe(e.char.maxHp);
+  });
+});

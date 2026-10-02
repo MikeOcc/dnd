@@ -3,14 +3,14 @@ import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
-  Fx, FxElement, ChestTrapType, CharacterClass,
+  Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
-  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion } from './combat.js';
+  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -20,7 +20,8 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR } from './config.js';
+import { LAIR_WARNINGS } from '../content/lair-text.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
@@ -93,6 +94,8 @@ export class GameEngine {
   private mapFull = false;
   private fx: Fx = {};   // hit-effect hints gathered during the current action
   private lastArea: string | null = null;
+  private stepFrom: { x: number; y: number } | null = null;  // where the last step started
+  private lair: { content: CellContent; monster: MonsterType; from: { x: number; y: number } } | null = null;  // lair-warning: whose, and the way back
   private mapAreaLines: string[] = [];     // map mode: the description of the area just walked into, shown under the legend  // "level:areaId" the character was last described in
   private presenceFelt = false;   // a unique monster made itself felt on this step
   private pendingRoll: CharacterRoll | null = null;
@@ -131,6 +134,7 @@ export class GameEngine {
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
     if (this.phase === 'map') state.mapFull = this.mapFull;
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
+    if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
     if (this.fx.player || this.fx.monster || this.fx.monsterAttacked) state.fx = this.fx;
@@ -236,6 +240,13 @@ export class GameEngine {
     }
     if (this.phase === 'resting') {
       return [{ key: 'x', text: 'Stop Resting' }];
+    }
+    if (this.phase === 'lair-warning') {
+      return [
+        { key: 'a', text: 'Turn Back' },
+        { key: 'b', text: 'Step Forward' },
+        { key: 'c', text: 'Charge and Attack' },
+      ];
     }
     if (this.phase === 'save-prompt') {
       return [
@@ -706,6 +717,7 @@ export class GameEngine {
     this.dungeonState = this.repo.loadDungeonState(id);
     if (!this.dungeonState) this.dungeonState = this.emptyDungeonState();
     dropLegacyVisitedKeys(this.dungeonState);
+    this.lair = null;
     this.lightAround();
 
     this.loadLevelIntoCache(char.dungeonLevel);
@@ -791,6 +803,7 @@ export class GameEngine {
     }
 
     // Move
+    this.stepFrom = { x: this.char.x, y: this.char.y };
     const dx = dir === 'E' ? 1 : dir === 'W' ? -1 : 0;
     const dy = dir === 'S' ? 1 : dir === 'N' ? -1 : 0;
     this.char.x += dx;
@@ -1028,9 +1041,10 @@ export class GameEngine {
       }
 
       case 'unique-monster': {
-        const monsterId = content.monsterId ?? 'Asmodeus';
+        const monsterId = (content.monsterId ?? 'Asmodeus') as MonsterType;
         if (ds.defeatedUniqueMonsters.has(content.id)) return null;
-        return this.startFixedEncounter(content, monsterId as Parameters<typeof getDefinition>[0]);
+        if (LAIR_WARNINGS[monsterId]) return this.startLairWarning(content, monsterId);
+        return this.startFixedEncounter(content, monsterId);
       }
 
       default:
@@ -1131,6 +1145,92 @@ export class GameEngine {
     const lines = describeArea(this.char.dungeonLevel, area, first);
     this.mapAreaLines = lines;
     return lines;
+  }
+
+  // ─── Great lairs ──────────────────────────────────────────────────────────
+
+  /** Stepping into a great lair stops at its edge: turn back, step forward,
+   * or charge (see LAIR in config.ts and content/lair-text.ts). */
+  private startLairWarning(content: CellContent, monster: MonsterType): GameState {
+    if (!this.char) return this.getState();
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    const from = this.stepFrom ?? lvl?.entrance ?? { x: this.char.x, y: this.char.y };
+    this.lair = { content, monster, from };
+    this.phase = 'lair-warning';
+    const b = this.lairDexBonus();
+    const bonus = b === 0 ? '' : ` ${b > 0 ? '+' : '−'} ${Math.abs(b)}`;
+    this.messages = [
+      ...(LAIR_WARNINGS[monster] ?? []),
+      '',
+      `[A] Turn back: d20${bonus}, need ${LAIR.TURN_BACK_DC}. Fail, and you're dragged in and struck first.`,
+      '[B] Step forward: face what waits on even terms.',
+      `[C] Charge: d20${bonus}, need ${LAIR.CHARGE_DC}. Your first blow goes unanswered, or it strikes first.`,
+    ];
+    return this.getState();
+  }
+
+  private lairDexBonus(): number {
+    if (!this.char) return 0;
+    const dex = getEffectiveStats(this.char).dexterity;
+    return Math.min(LAIR.DEX_BONUS_MAX, Math.floor((dex - 10) / 2));
+  }
+
+  lairChoice(key: string): GameState {
+    if (!this.char || this.phase !== 'lair-warning' || !this.lair) return this.getState();
+    const { content, monster, from } = this.lair;
+    const bonus = this.lairDexBonus();
+    const roll = (dc: number) => {
+      const d = this.rng.die(20);
+      const sign = bonus === 0 ? '' : ` ${bonus > 0 ? '+' : '−'} ${Math.abs(bonus)}`;
+      return { ok: d + bonus >= dc, text: `(d20: ${d}${sign} = ${d + bonus}, needed ${dc})` };
+    };
+
+    if (key === 'a') {
+      const r = roll(LAIR.TURN_BACK_DC);
+      this.lair = null;
+      if (r.ok) {
+        this.char.x = from.x;
+        this.char.y = from.y;
+        this.phase = 'playing';
+        this.lightAround();
+        this.lastArea = null;
+        this.messages = [`You tear your eyes away and back out of the smoke. ${r.text}`, '', 'Laughter follows you down the passage.', '', ...this.enterArea()];
+        return this.getState();
+      }
+      this.startFixedEncounter(content, monster);
+      return this.lairFirstStrike([`You turn to flee... ${r.text}`, 'An unseen hand seizes you and drags you before the throne!', '']);
+    }
+
+    if (key === 'b') {
+      this.lair = null;
+      this.startFixedEncounter(content, monster);
+      this.messages = ['You steel yourself and step into the smoke.', '', ...this.messages];
+      return this.getState();
+    }
+
+    if (key === 'c') {
+      const r = roll(LAIR.CHARGE_DC);
+      this.lair = null;
+      this.startFixedEncounter(content, monster);
+      if (!r.ok) return this.lairFirstStrike([`You charge, but it is faster. ${r.text}`, '']);
+      const intro = this.messages;
+      this.combat!.monster.caughtOffGuard = true;
+      const state = this.combatAttack();
+      this.messages = [`You charge into the smoke! ${r.text}`, '', ...intro, '', ...this.messages];
+      state.messages = [...this.messages];
+      return state;
+    }
+
+    return this.getState();
+  }
+
+  /** Combat has begun (with its intro in messages) and the lair's master
+   * acts before the character can. */
+  private lairFirstStrike(lead: string[]): GameState {
+    const intro = this.messages;
+    const res = monsterFirstStrike(this.char!, this.combat!.monster, this.rng);
+    res.messages = [...lead, ...intro, '', ...res.messages];
+    return this.processCombatResult(res);
   }
 
   // ─── Combat ──────────────────────────────────────────────────────────────

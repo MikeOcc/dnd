@@ -133,6 +133,38 @@ html, body {
   height: calc(190px * var(--sprite-scale, 1));
 }
 
+/* ─── A great lair's warning screen ──────────────────────────────────────
+   The corridor fades to a red-dark backdrop and the lair's art fills the view. */
+#view-container.lair-mode #dungeon-view { opacity: 0.12; transition: opacity 600ms ease; }
+#view-container.lair-mode { background: radial-gradient(ellipse at 50% 60%, #3a0804 0%, #000 75%); }
+#monster-portrait.lair svg { width: 100%; height: 100%; max-height: 100%; }
+#monster-portrait.lair { animation: lair-in 900ms ease-out; }
+@keyframes lair-in { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+
+.lair-smoke { transform-box: fill-box; transform-origin: center; animation: lair-smoke 6s ease-in infinite; }
+.lair-smoke.s2 { animation-delay: -1.2s; animation-duration: 7s; }
+.lair-smoke.s3 { animation-delay: -2.6s; }
+.lair-smoke.s4 { animation-delay: -3.4s; animation-duration: 5.5s; }
+.lair-smoke.s5 { animation-delay: -4.5s; animation-duration: 6.5s; }
+.lair-smoke.s6 { animation-delay: -0.8s; animation-duration: 4.5s; }
+.lair-smoke.s7 { animation-delay: -2.9s; animation-duration: 5s; }
+.lair-smoke.s8 { animation-delay: -1.9s; animation-duration: 8s; }
+@keyframes lair-smoke {
+  0%   { transform: translateY(20px) scale(0.6); opacity: 0; }
+  20%  { opacity: 0.9; }
+  100% { transform: translateY(-80px) scale(1.8); opacity: 0; }
+}
+.lair-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: lair-flame 0.45s ease-in-out infinite alternate; }
+.lair-flame.f2 { animation-delay: -0.2s; animation-duration: 0.52s; }
+@keyframes lair-flame {
+  from { transform: scale(0.92, 1.0) skewX(-3deg); opacity: 0.9; }
+  to   { transform: scale(1.06, 1.12) skewX(3deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lair-smoke, .lair-flame, #monster-portrait.lair { animation: none; }
+  .lair-smoke { opacity: 0.5; }
+}
+
 /* ─── Hit effects ─────────────────────────────────────────────────────────
    --fx is the element colour (set from app.js), --shake the jolt size. */
 #fx-layer {

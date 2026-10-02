@@ -31,7 +31,7 @@ let deletePendingChar = null; // character awaiting Y/N delete confirmation, or 
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt', 'resting'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt', 'resting', 'lair-warning'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -95,7 +95,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt', 'resting'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt', 'resting', 'lair-warning'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
@@ -112,10 +112,17 @@ function applyState(state) {
     document.getElementById('dungeon-view').textContent = state.view.join('\n');
   }
 
-  // Monster portrait
+  // Monster portrait, or at a great lair's edge, the lair itself
   const portraitEl = document.getElementById('monster-portrait');
   const monster = phase === 'combat' ? state.combat?.monster : null;
-  if (monster) {
+  const lairArt = phase === 'lair-warning' && state.lair ? getLairArt(state.lair.monster) : null;
+  viewContainer.classList.toggle('lair-mode', !!lairArt);
+  portraitEl.classList.toggle('lair', !!lairArt);
+  if (lairArt) {
+    portraitEl.innerHTML = lairArt;
+    portraitEl.style.removeProperty('--sprite-scale');
+    portraitEl.classList.remove('hidden');
+  } else if (monster) {
     const sprite = getMonsterSprite(monster.type);
     portraitEl.innerHTML = sprite || '';
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
@@ -600,6 +607,8 @@ function updateHelpLine(phase) {
       hint.textContent = 'Type your name and press Enter'; break;
     case 'char-roll':
       hint.textContent = 'A: Wizard  B: Warrior  C: Reroll'; break;
+    case 'lair-warning':
+      hint.textContent = 'A: Turn Back  B: Step Forward  C: Charge and Attack'; break;
     case 'death':
       hint.textContent = 'A: Revive  C: Restore Last Save  Q: Main Menu'; break;
     case 'save-prompt':
@@ -632,6 +641,11 @@ function handleChoiceKey(key, phase) {
     if (key === 'a') apiAction('accept', { charClass: 'wizard' });
     if (key === 'b') apiAction('accept', { charClass: 'warrior' });
     if (key === 'c') apiAction('reroll');
+    return;
+  }
+
+  if (phase === 'lair-warning') {
+    if (['a', 'b', 'c'].includes(key)) apiAction('lair', { choice: key });
     return;
   }
 
@@ -823,6 +837,11 @@ document.addEventListener('keydown', (e) => {
     if (key === '+' || key === '=') zoomMap(1);
     if (key === '-' || key === '_') zoomMap(-1);
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
+    return;
+  }
+
+  if (phase === 'lair-warning') {
+    if (['a', 'b', 'c'].includes(key)) apiAction('lair', { choice: key });
     return;
   }
 

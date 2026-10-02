@@ -179,6 +179,12 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
+  // A great lair's warning — Turn Back, Step Forward or Charge
+  if (phase === 'lair-warning') {
+    if (key.type === 'char' && ['a', 'b', 'c'].includes(key.char)) render(engine.lairChoice(key.char));
+    return;
+  }
+
   // Death screen — Revive, Restore or Quit
   if (phase === 'death') {
     if (key.type === 'char') {

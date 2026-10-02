@@ -186,6 +186,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'dismiss-intro':
           state = engine.dismissLevelIntro();
           break;
+        case 'lair':
+          state = engine.lairChoice(payload?.choice ?? '');
+          break;
         case 'dismiss-death':
           state = engine.dismissDeath();
           break;
