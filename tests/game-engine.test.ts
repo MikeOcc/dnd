@@ -601,10 +601,14 @@ describe('GameEngine — gems', () => {
       (c: DungeonCell) => !(c.walls.N && c.walls.S && c.walls.E && c.walls.W),
     ).length;
 
+    const explored = e.dungeonState.visitedCells.size;
     const state = engine.gemAction('c');
     expect(e.char.inventory.gems.diamond).toBe(0);
-    expect(e.dungeonState.visitedCells.size).toBe(carvedCells);
+    // The level is revealed; the squares actually explored are left as they were.
+    expect(e.dungeonState.revealedLevels.has(e.char.dungeonLevel)).toBe(true);
+    expect(e.dungeonState.visitedCells.size).toBe(explored);
     expect(state.messages.join(' ')).toContain('full map');
+    expect(carvedCells).toBeGreaterThan(explored);
   });
 
   it('Opal consumes itself, damages the monster, and applies confusedTurns', () => {
@@ -656,7 +660,7 @@ describe('GameEngine — magic books', () => {
     expect(state.messages.length).toBeGreaterThan(0);
   });
 
-  it('a map-reveal read marks every room and corridor of the current level visited', () => {
+  it('a map-reveal read reveals the current level on the map', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.char.inventory.books = 200; // enough tries to be confident we hit map-reveal at least once
@@ -667,11 +671,11 @@ describe('GameEngine — magic books', () => {
 
     let sawFullReveal = false;
     for (let i = 0; i < 200 && e.char.inventory.books > 0; i++) {
-      e.dungeonState.visitedCells.clear();
       engine.useBook();
-      if (e.dungeonState.visitedCells.size === carvedCells) { sawFullReveal = true; break; }
+      if (e.dungeonState.revealedLevels.has(e.char.dungeonLevel)) { sawFullReveal = true; break; }
     }
     expect(sawFullReveal).toBe(true);
+    expect(e.dungeonState.visitedCells.size).toBeLessThan(carvedCells);
   });
 
   it('taking a book fixture for later adds it to inventory instead of resolving an effect immediately', () => {
@@ -814,8 +818,23 @@ describe('GameEngine — diamond while exploring', () => {
     const state = engine.useDiamondExploring();
     expect(state.phase).toBe('playing');
     expect(e.char.inventory.gems.diamond).toBe(1);
-    expect(e.dungeonState.visitedCells.size).toBe(carved.length);
+    expect(e.dungeonState.revealedLevels.has(e.char.dungeonLevel)).toBe(true);
+    expect(e.dungeonState.visitedCells.size).toBeLessThan(carved.length);
     expect(state.messages.join('\n')).toContain('map has been revealed');
+
+    // The map shows the whole level, and X switches to just what's been explored.
+    const count = (st: { messages: string[] }) => st.messages.join('').split('').filter(ch => ch === '.' || ch === '|' || ch === '-').length;
+    e.phase = 'playing';
+    const whole = engine.showMap();
+    expect(whole.mapRevealed).toBe(true);
+    expect(whole.mapShowWhole).toBe(true);
+    expect(whole.messages[0]).toContain('WHOLE LEVEL');
+    engine.toggleMapView();   // full floor, so the whole level is in frame
+    const wholeFull = engine.getState();
+    const onlyExplored = engine.toggleMapReveal();
+    expect(onlyExplored.mapShowWhole).toBe(false);
+    expect(onlyExplored.messages[0]).toContain('EXPLORED ONLY');
+    expect(count(onlyExplored)).toBeLessThan(count(wholeFull));
   });
 
   it('does nothing when the character has no diamonds', () => {

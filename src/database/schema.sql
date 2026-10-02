@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS dungeon_state (
   defeated_fixed        TEXT NOT NULL DEFAULT '[]',
   defeated_unique       TEXT NOT NULL DEFAULT '[]',
   visited_descriptions  TEXT NOT NULL DEFAULT '[]',
+  revealed_levels       TEXT NOT NULL DEFAULT '[]',
   FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
 );
 

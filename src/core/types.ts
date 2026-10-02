@@ -302,6 +302,8 @@ export interface GameState {
   finalScore?: ScoreResult;
   saveSlots?: CharacterSummary[];
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
+  mapRevealed?: boolean;       // map phase only: this level has been revealed, so the whole-level/explored toggle applies
+  mapShowWhole?: boolean;      // map phase only: showing the whole revealed level, not just the explored squares
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
@@ -342,4 +344,5 @@ export interface DungeonState {
   defeatedFixedMonsters: Set<string>;
   defeatedUniqueMonsters: Set<string>;
   visitedDescriptions: Set<string>;
+  revealedLevels: Set<number>;   // levels whose whole map a diamond or tome has shown (kept apart from explored squares)
 }

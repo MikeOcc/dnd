@@ -219,6 +219,7 @@ function handleKey(key: KeyEvent): void {
       const moves = { up: 'forward', down: 'backward', left: 'left', right: 'right' } as const;
       render(engine.mapMove(moves[key.dir as keyof typeof moves]));
     } else if (key.type === 'char' && key.char === 'f') render(engine.toggleMapView());
+    else if (key.type === 'char' && key.char === 'x') render(engine.toggleMapReveal());
     else render(engine.dismissMap());
     return;
   }

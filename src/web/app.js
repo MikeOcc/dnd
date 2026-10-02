@@ -570,6 +570,11 @@ function renderChoices(choices, phase, state) {
     const toggle = makeChoiceBtn('F', state.mapFull ? 'Centered View' : 'Full Floor');
     toggle.onclick = () => apiAction('toggle-map-view');
     area.appendChild(toggle);
+    if (state.mapRevealed) {
+      const reveal = makeChoiceBtn('X', state.mapShowWhole ? 'Explored Only' : 'Whole Level');
+      reveal.onclick = () => apiAction('toggle-map-reveal');
+      area.appendChild(reveal);
+    }
     const zin = makeChoiceBtn('+', `Zoom In (${mapZoom + 1}/${MAP_ZOOM_STEPS.length})`);
     zin.onclick = () => zoomMap(1);
     zin.disabled = mapZoom === MAP_ZOOM_STEPS.length - 1;
@@ -710,7 +715,7 @@ function updateHelpLine(phase) {
     case 'playing':
       hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  Q: Quit'; break;
     case 'map':
-      hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
+      hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
       hint.textContent = 'X: Return to Game'; break;
     case 'inventory':
@@ -936,6 +941,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft')  apiAction('map-move', { dir: 'left' });
     if (e.key === 'ArrowRight') apiAction('map-move', { dir: 'right' });
     if (key === 'f') apiAction('toggle-map-view');
+    if (key === 'x' && currentState.mapRevealed) apiAction('toggle-map-reveal');
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
     if (key === '+' || key === '=') zoomMap(1);

@@ -93,6 +93,7 @@ export class GameEngine {
   private phase: GamePhase = 'title';
   private messages: string[] = [];
   private mapFull = false;
+  private mapShowWhole = true;   // on a revealed level: the whole level, or only what's been explored
   private fx: Fx = {};   // hit-effect hints gathered during the current action
   private lastArea: string | null = null;
   private dyingOfShock = false;
@@ -136,7 +137,11 @@ export class GameEngine {
     if (this.combat) state.combat = { ...this.combat };
     if (this.interaction) state.interaction = { ...this.interaction };
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
-    if (this.phase === 'map') state.mapFull = this.mapFull;
+    if (this.phase === 'map') {
+      state.mapFull = this.mapFull;
+      state.mapRevealed = this.levelRevealed();
+      state.mapShowWhole = state.mapRevealed && this.mapShowWhole;
+    }
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     // Hit-effect hints belong to the action that just happened, so hand them
@@ -373,6 +378,18 @@ export class GameEngine {
     return this.renderMap();
   }
 
+  /** X on the map of a revealed level: the whole level, or only the squares
+   * actually explored. */
+  toggleMapReveal(): GameState {
+    if (this.phase !== 'map' || !this.levelRevealed()) return this.getState();
+    this.mapShowWhole = !this.mapShowWhole;
+    return this.renderMap();
+  }
+
+  private levelRevealed(): boolean {
+    return !!this.char && !!this.dungeonState?.revealedLevels.has(this.char.dungeonLevel);
+  }
+
   private renderMap(): GameState {
     if (!this.char || !this.dungeonState) return this.getState();
 
@@ -382,22 +399,25 @@ export class GameEngine {
     const level = this.char.dungeonLevel;
     const ds = this.dungeonState;
     const grid = lvl.grid;
-    const isVisited = (x: number, y: number) => ds.visitedCells.has(visitedKey(level, x, y));
+    const explored_ = (x: number, y: number) => ds.visitedCells.has(visitedKey(level, x, y));
+    const whole = this.levelRevealed() && this.mapShowWhole;
+    // What the map shows: the explored squares, or the whole revealed level.
+    const isVisited = (x: number, y: number) => whole || explored_(x, y);
 
     let explored = 0;
     let exMinX = this.char.x, exMaxX = this.char.x, exMinY = this.char.y, exMaxY = this.char.y;
     for (const row of grid) {
       for (const cell of row) {
         if (isSolidRock(cell) || !isVisited(cell.x, cell.y)) continue;
-        explored++;
+        if (explored_(cell.x, cell.y)) explored++;
         exMinX = Math.min(exMinX, cell.x); exMaxX = Math.max(exMaxX, cell.x);
         exMinY = Math.min(exMinY, cell.y); exMaxY = Math.max(exMaxY, cell.y);
       }
     }
 
-    if (explored === 0) {
+    if (explored === 0 && !whole) {
       this.phase = 'map';
-      this.messages = [`══ MAP — Level ${this.char.dungeonLevel} — Facing ${this.char.facing} ══`, '', '  No area explored yet.'];
+      this.messages = [`══ MAP — Level ${this.char.dungeonLevel}${this.levelRevealed() ? ' — EXPLORED ONLY' : ''} — Facing ${this.char.facing} ══`, '', '  No area explored yet.'];
       return this.getState();
     }
 
@@ -449,7 +469,7 @@ export class GameEngine {
     const w = maxX - minX + 1;
     this.phase = 'map';
     this.messages = [
-      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${explored} cells explored)${this.mapFull ? ' — FULL FLOOR' : ''} — Facing ${this.char.facing} ══`,
+      `══ MAP — Dungeon Level ${this.char.dungeonLevel} (${explored} cells explored)${this.mapFull ? ' — FULL FLOOR' : ''}${this.levelRevealed() ? (whole ? ' — WHOLE LEVEL' : ' — EXPLORED ONLY') : ''} — Facing ${this.char.facing} ══`,
       `  ${'─'.repeat(w)}`,
       ...rows.map(r => `  ${r}`),
       `  ${'─'.repeat(w)}`,
@@ -1471,19 +1491,14 @@ export class GameEngine {
     return this.getState();
   }
 
-  /** Marks every cell of the current level visited. Returns false (and does
+  /** Reveals the whole current level on the map, kept apart from the squares
+   * actually explored, so the map can show either. Returns false (and does
    * nothing) if there's no character/level to reveal for. */
   private revealFullMap(): boolean {
     if (!this.char || !this.dungeonState) return false;
-    const lvl = this.getLevel(this.char.dungeonLevel);
-    if (!lvl) return false;
-
-    for (const row of lvl.grid) {
-      for (const cell of row) {
-        if (isSolidRock(cell)) continue;
-        this.dungeonState.visitedCells.add(visitedKey(this.char.dungeonLevel, cell.x, cell.y));
-      }
-    }
+    if (!this.getLevel(this.char.dungeonLevel)) return false;
+    this.dungeonState.revealedLevels.add(this.char.dungeonLevel);
+    this.mapShowWhole = true;
     return true;
   }
 
@@ -2363,6 +2378,7 @@ export class GameEngine {
       defeatedFixedMonsters: new Set(),
       defeatedUniqueMonsters: new Set(),
       visitedDescriptions: new Set(),
+      revealedLevels: new Set(),
     };
   }
 

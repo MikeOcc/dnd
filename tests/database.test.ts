@@ -187,6 +187,7 @@ describe('Repository — dungeon state', () => {
       defeatedFixedMonsters:  new Set(['fm-1-1']),
       defeatedUniqueMonsters: new Set(['unique-aboleth']),
       visitedDescriptions:    new Set(['desc-1-5-5']),
+      revealedLevels:         new Set([3]),
     };
 
     repo.saveDungeonState('ds-char', state);
@@ -203,6 +204,7 @@ describe('Repository — dungeon state', () => {
     expect([...loaded!.defeatedFixedMonsters]).toContain('fm-1-1');
     expect([...loaded!.defeatedUniqueMonsters]).toContain('unique-aboleth');
     expect([...loaded!.visitedDescriptions]).toContain('desc-1-5-5');
+    expect([...loaded!.revealedLevels]).toEqual([3]);
   });
 
   it('unique monsters remain dead after reload', () => {
@@ -217,6 +219,7 @@ describe('Repository — dungeon state', () => {
       defeatedFixedMonsters: new Set(),
       defeatedUniqueMonsters: new Set(['unique-asmodeus']),
       visitedDescriptions: new Set(),
+      revealedLevels: new Set(),
     };
 
     repo.saveDungeonState('ds-char', state);
