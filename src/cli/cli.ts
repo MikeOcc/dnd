@@ -195,15 +195,6 @@ function handleKey(key: KeyEvent): void {
     return;
   }
 
-  // Save prompt — Continue Playing or Exit to Main Menu
-  if (phase === 'save-prompt') {
-    if (key.type === 'char') {
-      if (key.char === 'c') render(engine.dismissSavePrompt());
-      if (key.char === 'x') render(engine.showMainMenu());
-    }
-    return;
-  }
-
   // Victory
   if (phase === 'victory') {
     render(engine.showMainMenu());
@@ -311,7 +302,7 @@ function handleKey(key: KeyEvent): void {
       if (key.char === 't') render(engine.showStatus());
       if (key.char === 'i') render(engine.showInventory());
       if (key.char === 'r') render(engine.restoreFromSave());
-      if (key.char === 's') render(engine.saveAndPrompt());
+      if (key.char === 's') render(engine.saveGame());
       if (key.char === 'q') exit();
       return;
     }

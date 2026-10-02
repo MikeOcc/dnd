@@ -253,12 +253,6 @@ export class GameEngine {
         { key: 'd', text: 'Sneak In' },
       ];
     }
-    if (this.phase === 'save-prompt') {
-      return [
-        { key: 'c', text: 'Continue Playing' },
-        { key: 'x', text: 'Exit to Main Menu' },
-      ];
-    }
     if (this.phase === 'combat' && this.combat && (this.char?.heldRounds ?? 0) > 0) {
       return [{ key: 'a', text: `Struggle (${this.char!.heldBy ?? 'held'})` }];
     }
@@ -515,19 +509,13 @@ export class GameEngine {
     return this.loadCharacter(this.char.id);
   }
 
-  saveAndPrompt(): GameState {
+  /** S: write the character and dungeon to the save, say so, and carry on.
+   * (Leaving the game is Q.) */
+  saveGame(): GameState {
     if (!this.char) return this.getState();
     this.repo.saveCharacter(this.char);
     if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
-    this.phase = 'save-prompt';
-    this.messages = ['Game saved.', '', 'Continue playing, or exit to the main menu?'];
-    return this.getState();
-  }
-
-  dismissSavePrompt(): GameState {
-    if (!this.char) return this.getState();
-    this.phase = 'playing';
-    this.messages = [];
+    this.messages = ['Game saved.'];
     return this.getState();
   }
 

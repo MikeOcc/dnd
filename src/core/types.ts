@@ -253,7 +253,6 @@ export type GamePhase =
   | 'status'
   | 'map'
   | 'inventory'
-  | 'save-prompt'
   | 'resting'
   | 'lair-warning';
 

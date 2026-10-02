@@ -148,10 +148,7 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           state = engine.showMainMenu();
           break;
         case 'save':
-          state = engine.saveAndPrompt();
-          break;
-        case 'dismiss-save-prompt':
-          state = engine.dismissSavePrompt();
+          state = engine.saveGame();
           break;
         case 'move-forward':
           state = engine.moveForward();

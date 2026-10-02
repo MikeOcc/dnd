@@ -89,7 +89,7 @@ describe('GameEngine — death screen', () => {
     const e = engine as any;
     e.char.inventory.potions = 3;
     e.char.gold = 250;
-    engine.saveAndPrompt();
+    engine.saveGame();
     const saved = { x: e.char.x, y: e.char.y, hp: e.char.hp, gold: 250, potions: 3 };
 
     // wander off, spend things, then die
@@ -738,41 +738,21 @@ describe('GameEngine — save prompt', () => {
     db.close();
   });
 
-  it('saving persists the character and dungeon, then asks whether to continue', () => {
+  it('saving persists the character and dungeon, says so, and play carries on', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.phase = 'playing';
     e.char.gold = 1234;
+    const { x, y } = e.char;
 
-    const state = engine.saveAndPrompt();
-    expect(state.phase).toBe('save-prompt');
-    expect(state.messages.join('\n')).toContain('Game saved.');
+    const state = engine.saveGame();
+    expect(state.phase).toBe('playing');
+    expect(state.messages).toEqual(['Game saved.']);
+    expect([e.char.x, e.char.y]).toEqual([x, y]);
 
     const repo = new Repository(db);
     expect(repo.loadCharacter(e.char.id)?.gold).toBe(1234);
     expect(repo.loadDungeonState(e.char.id)).not.toBeNull();
-  });
-
-  it('continuing returns to play on the same square', () => {
-    const engine = makeReadyEngine(db);
-    const e = engine as any;
-    e.phase = 'playing';
-    const { x, y } = e.char;
-
-    engine.saveAndPrompt();
-    const state = engine.dismissSavePrompt();
-    expect(state.phase).toBe('playing');
-    expect(state.messages).toEqual([]);
-    expect(e.char.x).toBe(x);
-    expect(e.char.y).toBe(y);
-  });
-
-  it('exiting from the prompt goes to the main menu', () => {
-    const engine = makeReadyEngine(db);
-    (engine as any).phase = 'playing';
-
-    engine.saveAndPrompt();
-    expect(engine.showMainMenu().phase).toBe('main-menu');
   });
 });
 
@@ -1466,7 +1446,7 @@ describe('GameEngine — manual saves only', () => {
     const stillSaved = repo.loadCharacter(e.char.id)!;
     expect([stillSaved.x, stillSaved.y, stillSaved.gold]).toEqual([saved.x, saved.y, saved.gold]);
 
-    engine.saveAndPrompt();
+    engine.saveGame();
     expect(repo.loadCharacter(e.char.id)!.gold).toBe(e.char.gold);
   });
 
@@ -1725,7 +1705,7 @@ describe('GameEngine — the emerald ward', () => {
   it('survives a save and reload', () => {
     const { engine, e } = warded();
     engine.useEmeraldExploring();
-    engine.saveAndPrompt();
+    engine.saveGame();
     const loaded = new Repository(db).loadCharacter(e.char.id)!;
     expect(loaded.statusEffects.some(s => s.type === 'warded')).toBe(true);
   });

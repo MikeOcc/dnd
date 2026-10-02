@@ -191,9 +191,6 @@ function renderGame(state: GameState): string[] {
   if (state.phase === 'combat') {
     lines.push(dim('  A: Attack  |  B: Spell/Skill  |  C: Pray  |  D: Run  |  E: Use Gem  |  P: Potion'));
   }
-  if (state.phase === 'save-prompt') {
-    lines.push(dim('  C: Continue Playing  |  X: Exit to Main Menu'));
-  }
 
   return lines;
 }

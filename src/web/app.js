@@ -31,7 +31,7 @@ let deletePendingChar = null; // character awaiting Y/N delete confirmation, or 
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'save-prompt', 'resting', 'lair-warning'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'resting', 'lair-warning'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'save-prompt', 'resting', 'lair-warning'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'resting', 'lair-warning'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
@@ -727,8 +727,6 @@ function updateHelpLine(phase) {
       hint.textContent = 'A: Turn Back  B: Step Forward  C: Charge and Attack  D: Sneak In'; break;
     case 'death':
       hint.textContent = 'A: Revive  C: Restore Last Save  Q: Main Menu'; break;
-    case 'save-prompt':
-      hint.textContent = 'C: Continue Playing  X: Exit to Main Menu'; break;
     case 'resting':
       hint.textContent = 'Resting... press any key to stop'; break;
     case 'victory':
@@ -769,12 +767,6 @@ function handleChoiceKey(key, phase) {
     if (key === 'a') apiAction('revive');
     if (key === 'c') apiAction('dismiss-death');
     if (key === 'q') apiAction('main-menu');
-    return;
-  }
-
-  if (phase === 'save-prompt') {
-    if (key === 'c') apiAction('dismiss-save-prompt');
-    if (key === 'x') apiAction('main-menu');
     return;
   }
 
@@ -925,12 +917,6 @@ document.addEventListener('keydown', (e) => {
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
-    return;
-  }
-
-  if (phase === 'save-prompt') {
-    if (key === 'c') apiAction('dismiss-save-prompt');
-    if (key === 'x') apiAction('main-menu');
     return;
   }
 
