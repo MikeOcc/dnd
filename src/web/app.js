@@ -163,7 +163,7 @@ function applyState(state) {
   msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
   document.getElementById('message-area').classList.toggle('map-mode', phase === 'map');
   if (phase === 'map') centerMapOnPlayer();
-  else msgEl.scrollTop = msgEl.scrollHeight;
+  else scrollMessagesToEnd();
   updatePannable();
 
   // Choices
@@ -255,6 +255,14 @@ function updateShockDisplay() {
 }
 let shockPolledAt = 0;
 setInterval(updateShockDisplay, 1000);
+
+/** Keeps the newest messages in view: the message box (not the text inside
+ * it) is what scrolls. Done again after layout, so long rounds land at the end. */
+function scrollMessagesToEnd() {
+  const area = document.getElementById('message-area');
+  area.scrollTop = area.scrollHeight;
+  requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
+}
 
 // ─── Message log ─────────────────────────────────────────────────────────────
 
