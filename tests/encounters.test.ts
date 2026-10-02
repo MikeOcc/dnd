@@ -308,15 +308,30 @@ describe('Death mechanics', () => {
 });
 
 describe('Magic books', () => {
-  it('every effect shows up over enough reads', () => {
+  it('every effect shows up over enough reads by an afflicted character', () => {
     const rng = new RNG(2024);
     const effects = new Set<string>();
     for (let i = 0; i < 500; i++) {
       const char = makeChar();
-      const result = readBook(char, rng);
-      effects.add(result.effect);
+      char.statusEffects = [{ type: 'poison', value: 3, turns: 5 }];
+      effects.add(readBook(char, rng).effect);
     }
     expect(effects).toEqual(new Set(['attribute', 'healing', 'invulnerability', 'map-reveal', 'experience', 'cleanse']));
+  });
+
+  it('never wastes a tome on cleansing a healthy character, and boosts attributes most often', () => {
+    const rng = new RNG(77);
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < 2000; i++) {
+      const char = makeChar();
+      char.statusEffects = [{ type: 'resistance-improved', value: 2, turns: 5 }];
+      const e = readBook(char, rng).effect;
+      counts[e] = (counts[e] ?? 0) + 1;
+    }
+    expect(counts.cleanse).toBeUndefined();
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+    expect(top).toBe('attribute');
+    expect(counts.attribute / 2000).toBeGreaterThan(0.35);
   });
 
   it('attribute effect raises exactly one stat by 1', () => {

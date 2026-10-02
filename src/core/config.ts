@@ -647,6 +647,11 @@ export const FOUNTAIN = {
 // design, so every read is a deliberate, always-beneficial choice rather
 // than a gamble.
 export const MAGIC_BOOK = {
+  // How likely each effect is. Cleanse only comes up when the character has
+  // something to cleanse; otherwise its share goes to the rest.
+  EFFECT_WEIGHTS: {
+    attribute: 40, experience: 15, healing: 15, invulnerability: 15, 'map-reveal': 15, cleanse: 20,
+  } as Record<string, number>,
   HEAL_FRACTION: 0.4,           // heals this fraction of max HP
   INVULNERABLE_ROUNDS: 3,       // blocks that many of the monster's combat rounds entirely
   XP_MIN_PER_LEVEL: 40,

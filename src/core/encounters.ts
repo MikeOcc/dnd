@@ -195,11 +195,23 @@ export type BookEffect = 'attribute' | 'healing' | 'invulnerability' | 'map-reve
 const BOOK_EFFECTS: BookEffect[] = ['attribute', 'healing', 'invulnerability', 'map-reveal', 'experience', 'cleanse'];
 
 // Negative afflictions a cleanse removes. 'resistance-improved' is a buff,
-// not an affliction, and is left alone.
+// not an affliction, and is left alone; anaphylaxis has no cure; and flesh
+// rot can be cleansed only until it has gone too far.
 const NEGATIVE_STATUS_TYPES: StatusEffect['type'][] = [
   'poison', 'bleeding', 'naked', 'mummified', 'paralyzed', 'feared',
-  'intelligence-reduced', 'dexterity-reduced', 'strength-reduced',
+  'intelligence-reduced', 'dexterity-reduced', 'strength-reduced', 'flesh-rot',
 ];
+const cleansable = (e: StatusEffect) => NEGATIVE_STATUS_TYPES.includes(e.type) && e.doom === undefined;
+
+/** A tome's effect, by weight: attribute boosts most often, and cleansing
+ * only when there's something to cleanse. */
+function pickBookEffect(char: Character, rng: RNG): BookEffect {
+  const needsCleanse = char.statusEffects.some(cleansable);
+  const options = BOOK_EFFECTS.filter(e => e !== 'cleanse' || needsCleanse);
+  const weight = (e: BookEffect) => MAGIC_BOOK.EFFECT_WEIGHTS[e] ?? 1;
+  let roll = rng.float() * options.reduce((a, e) => a + weight(e), 0);
+  return options.find(e => (roll -= weight(e)) < 0) ?? options[0];
+}
 
 export interface ReadBookResult {
   messages: string[];
@@ -213,7 +225,7 @@ export interface ReadBookResult {
 }
 
 export function readBook(char: Character, rng: RNG): ReadBookResult {
-  const effect = rng.pick(BOOK_EFFECTS);
+  const effect = pickBookEffect(char, rng);
 
   switch (effect) {
     case 'attribute': {
@@ -273,13 +285,11 @@ export function readBook(char: Character, rng: RNG): ReadBookResult {
 
     case 'cleanse': {
       const before = char.statusEffects.length;
-      char.statusEffects = char.statusEffects.filter(e => !NEGATIVE_STATUS_TYPES.includes(e.type));
+      char.statusEffects = char.statusEffects.filter(e => !cleansable(e));
       const removed = before - char.statusEffects.length;
       return {
         effect,
-        messages: removed > 0
-          ? ['A cleansing light washes over you.', '', 'Your afflictions are lifted.']
-          : ['A cleansing light washes over you.', '', 'You feel no different — you had nothing to cleanse.'],
+        messages: ['A cleansing light washes over you.', '', 'Your afflictions are lifted.'],
         statusesCleansed: removed,
       };
     }
