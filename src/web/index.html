@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THE SEVEN LEVELS</title>
-  <link rel="stylesheet" href="styles.css?v=29">
+  <link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body>
   <div id="terminal">
@@ -53,8 +53,17 @@
       <input type="text" id="name-input" maxlength="24" autocomplete="off" spellcheck="false">
     </div>
 
-    <!-- Commands while playing (the arrow keys move and turn) -->
+    <!-- Commands while playing. The arrow keys move and turn; the on-screen
+         arrows are optional (V), on by default for touch screens. -->
     <div id="movement-controls" class="hidden">
+      <div class="dpad hidden" id="dpad">
+        <button class="ctrl-btn arrow-btn empty" tabindex="-1"></button>
+        <button class="ctrl-btn arrow-btn" id="btn-forward"  title="Move Forward (↑)">↑</button>
+        <button class="ctrl-btn arrow-btn empty" tabindex="-1"></button>
+        <button class="ctrl-btn arrow-btn" id="btn-turn-left"  title="Turn Left (←)">◁</button>
+        <button class="ctrl-btn arrow-btn" id="btn-backward"  title="Move Back (↓)">↓</button>
+        <button class="ctrl-btn arrow-btn" id="btn-turn-right" title="Turn Right (→)">▷</button>
+      </div>
       <div class="command-bar">
         <button class="ctrl-btn" id="btn-climb-up"   title="Climb Up (U)">Up [U]</button>
         <button class="ctrl-btn" id="btn-climb-down" title="Climb Down (D)">Dn [D]</button>
@@ -69,6 +78,7 @@
         <button class="ctrl-btn" id="btn-save"       title="Save Game (S)">Sv [S]</button>
         <button class="ctrl-btn" id="btn-restore"    title="Restore from Save (R)">Rt [R]</button>
         <button class="ctrl-btn" id="btn-sound"      title="Sound effects on/off (N)">Snd On [N]</button>
+        <button class="ctrl-btn" id="btn-arrows"     title="On-screen arrows on/off (V)">Arrows [V]</button>
       </div>
     </div>
 
@@ -82,6 +92,6 @@
   <script src="monster-sprites.js?v=5"></script>
   <script src="lair-art.js?v=1"></script>
   <script src="sfx.js?v=3"></script>
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=40"></script>
 </body>
 </html>

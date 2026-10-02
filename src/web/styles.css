@@ -367,7 +367,7 @@ html, body {
 
 #name-input:focus { box-shadow: 0 0 8px var(--terminal-green-dim); }
 
-/* Command bar while playing (the arrow keys move and turn) */
+/* Command bar while playing, with the optional on-screen arrows */
 #movement-controls {
   display: flex;
   align-items: center;
@@ -377,6 +377,19 @@ html, body {
   border: 1px solid var(--terminal-green-dim);
   padding: 8px 12px;
 }
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(2, 44px);
+  gap: 4px;
+  flex-shrink: 0;
+}
+.dpad.hidden { display: none; }
+.arrow-btn { font-size: 20px; }
+.ctrl-btn.empty { border: none; background: transparent; cursor: default; }
+/* On the map screen only the arrows show (when they're on). */
+#movement-controls.map-walk .command-bar { display: none; }
 
 .command-bar {
   display: flex;

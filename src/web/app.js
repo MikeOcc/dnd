@@ -101,7 +101,8 @@ function applyState(state) {
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view || phase === 'map');
-  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase));
+  movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase) && !(phase === 'map' && arrowsShown));
+  movementControls.classList.toggle('map-walk', phase === 'map');
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -663,7 +664,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -878,6 +879,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'r') apiAction('restore');
     if (key === 's') apiAction('save');
     if (key === 'n') toggleSound();
+    if (key === 'v') toggleArrows();
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
     return;
   }
@@ -905,6 +907,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') apiAction('map-move', { dir: 'right' });
     if (key === 'f') apiAction('toggle-map-view');
     if (key === 'n') toggleSound();
+    if (key === 'v') toggleArrows();
     if (key === '+' || key === '=') zoomMap(1);
     if (key === '-' || key === '_') zoomMap(-1);
     if (key === 'm' || key === 'escape') apiAction('dismiss-map');
@@ -965,6 +968,40 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
+
+// On-screen arrows: off by default with a keyboard, on for touch screens;
+// V or the Arrows button toggles them, and the browser remembers.
+const ARROWS_KEY = 'sevenLevels.arrows';
+let arrowsShown = (() => {
+  try {
+    const saved = localStorage.getItem(ARROWS_KEY);
+    if (saved !== null) return saved === '1';
+  } catch { /* storage blocked */ }
+  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+})();
+function applyArrows() {
+  document.getElementById('dpad')?.classList.toggle('hidden', !arrowsShown);
+  const btn = document.getElementById('btn-arrows');
+  if (btn) btn.textContent = arrowsShown ? 'Arrows On [V]' : 'Arrows Off [V]';
+}
+function toggleArrows() {
+  arrowsShown = !arrowsShown;
+  try { localStorage.setItem(ARROWS_KEY, arrowsShown ? '1' : '0'); } catch { /* storage blocked */ }
+  applyArrows();
+  // On the map screen the panel holds only the arrows, so show or hide it with them.
+  if (currentState.phase === 'map') document.getElementById('movement-controls').classList.toggle('hidden', !arrowsShown);
+}
+// The arrows walk on the map screen too.
+function move(action, mapDir) {
+  if (currentState.phase === 'map') apiAction('map-move', { dir: mapDir });
+  else apiAction(action);
+}
+document.getElementById('btn-forward')   ?.addEventListener('click', () => move('move-forward', 'forward'));
+document.getElementById('btn-backward')  ?.addEventListener('click', () => move('move-backward', 'backward'));
+document.getElementById('btn-turn-left') ?.addEventListener('click', () => move('turn-left', 'left'));
+document.getElementById('btn-turn-right')?.addEventListener('click', () => move('turn-right', 'right'));
+document.getElementById('btn-arrows')    ?.addEventListener('click', toggleArrows);
+applyArrows();
 
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));
 document.getElementById('btn-climb-down')?.addEventListener('click', () => apiAction('climb-down'));
