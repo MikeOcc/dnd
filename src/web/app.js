@@ -128,6 +128,8 @@ function applyState(state) {
     portraitEl.innerHTML = sprite || '';
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
+    // An invisible Banshee is all but gone from sight.
+    portraitEl.classList.toggle('vanished', (monster.invisibleTurns ?? 0) > 0);
   } else {
     portraitEl.classList.add('hidden');
     portraitEl.innerHTML = '';

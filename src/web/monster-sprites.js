@@ -1161,6 +1161,277 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Djinn': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Djinn">
+    <defs>
+    <radialGradient id="djn-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#7ab0ff"/><stop offset="0.55" stop-color="#2e5cc8"/><stop offset="1" stop-color="#0c1c52"/></radialGradient>
+    <linearGradient id="djn-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#d4a02a"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
+    <linearGradient id="djn-smoke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a64c8" stop-opacity="0.95"/><stop offset="0.6" stop-color="#6a8ad8" stop-opacity="0.6"/><stop offset="1" stop-color="#c8d4f0" stop-opacity="0"/></linearGradient>
+    <radialGradient id="djn-ruby" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#ffd0d0"/><stop offset="0.4" stop-color="#ff1a3a"/><stop offset="1" stop-color="#5a0010"/></radialGradient>
+    <filter id="djn-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="djn-mist" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    </defs>
+    <!-- swirling sand -->
+    <g fill="none" stroke="#d8b878" stroke-width="1" opacity="0.45" filter="url(#djn-mist)">
+      <path d="M 20 120 C 40 100 120 100 140 120"/><path d="M 30 136 C 60 118 110 118 136 138"/><path d="M 14 100 C 50 88 112 86 150 104"/>
+    </g>
+    <!-- the smoky tail where legs should be, spiraling down to a wisp -->
+    <path d="M 58 96 C 54 112 70 120 82 124 C 96 128 98 138 86 144 C 76 149 70 146 74 152 C 66 150 64 142 74 138 C 84 134 80 128 70 126 C 54 122 46 110 52 96 Z" fill="url(#djn-smoke)" filter="url(#djn-mist)"/>
+    <path d="M 102 96 C 106 110 96 118 84 122 C 72 126 70 134 80 140" fill="none" stroke="url(#djn-smoke)" stroke-width="10" filter="url(#djn-mist)"/>
+    <!-- golden sash at the waist -->
+    <path d="M 52 90 Q 80 98 108 90 L 106 100 Q 80 108 54 100 Z" fill="url(#djn-gold)" stroke="#4a3006" stroke-width="0.8"/>
+    <!-- massive torso -->
+    <path d="M 48 92 C 40 74 44 54 58 46 C 70 40 90 40 102 46 C 116 54 120 74 112 92 Z" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.3"/>
+    <path d="M 66 62 Q 80 70 94 62 M 80 66 L 80 88 M 68 78 q 6 3 12 0 M 80 78 q 6 3 12 0" stroke="#0c1c52" stroke-width="1.1" fill="none" opacity="0.7"/>
+    <!-- arms: one fist raised high, one reaching -->
+    <path d="M 102 50 C 116 44 126 32 128 18" fill="none" stroke="#06103a" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 102 50 C 116 44 126 32 128 18" fill="none" stroke="url(#djn-skin)" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="128" cy="15" r="9" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.2"/>
+    <path d="M 122 12 h 12 M 122 16 h 12" stroke="#0c1c52" stroke-width="0.9"/>
+    <rect x="118" y="22" width="14" height="6" rx="2" fill="url(#djn-gold)" transform="rotate(-25 125 25)"/>
+    <path d="M 58 50 C 42 56 30 70 24 86" fill="none" stroke="#06103a" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 58 50 C 42 56 30 70 24 86" fill="none" stroke="url(#djn-skin)" stroke-width="10" stroke-linecap="round"/>
+    <rect x="22" y="72" width="14" height="6" rx="2" fill="url(#djn-gold)" transform="rotate(60 29 75)"/>
+    <path d="M 24 86 l -6 6 M 24 86 l -2 8 M 24 86 l 3 8 M 24 86 l 6 5" stroke="#2e5cc8" stroke-width="3" stroke-linecap="round"/>
+    <!-- head: turban with the blazing ruby, fierce brows, forked beard -->
+    <path d="M 66 38 C 64 26 72 18 80 18 C 88 18 96 26 94 38 C 93 46 88 52 80 52 C 72 52 67 46 66 38 Z" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.2"/>
+    <path d="M 62 26 C 62 10 98 10 98 26 C 92 22 68 22 62 26 Z" fill="#e8e0d0" stroke="#5a4a30" stroke-width="1"/>
+    <path d="M 64 22 Q 80 14 96 22" stroke="#b8a888" stroke-width="1" fill="none"/>
+    <path d="M 80 8 q 6 -8 2 -14" stroke="#e8e0d0" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="80" cy="22" r="5" fill="#ff2a3a" filter="url(#djn-glow)"/>
+    <circle cx="80" cy="22" r="3.6" fill="url(#djn-ruby)" stroke="#d4a02a" stroke-width="1"/>
+    <path d="M 70 33 L 77 36 M 90 33 L 83 36" stroke="#06103a" stroke-width="1.8" stroke-linecap="round"/>
+    <ellipse cx="74" cy="38" rx="2.6" ry="1.6" fill="#fff6c0" filter="url(#djn-glow)"/><ellipse cx="86" cy="38" rx="2.6" ry="1.6" fill="#fff6c0" filter="url(#djn-glow)"/>
+    <ellipse cx="74" cy="38" rx="1.6" ry="1" fill="#fffbe0"/><ellipse cx="86" cy="38" rx="1.6" ry="1" fill="#fffbe0"/>
+    <path d="M 74 46 Q 80 49 86 46" stroke="#06103a" stroke-width="1.2" fill="none"/>
+    <path d="M 72 48 C 72 58 76 64 78 70 L 80 62 L 82 70 C 84 64 88 58 88 48 C 84 52 76 52 72 48 Z" fill="#0a0a1a"/>
+    <!-- gold earring and armbands -->
+    <circle cx="66" cy="42" r="2.4" fill="none" stroke="url(#djn-gold)" stroke-width="1.2"/>
+    </svg>
+  `,
+
+  'Phoenix': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Phoenix">
+    <defs>
+    <linearGradient id="phx-wing" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffe680"/><stop offset="0.4" stop-color="#ff8a1a"/><stop offset="0.8" stop-color="#d42a0a"/><stop offset="1" stop-color="#6a0a02" stop-opacity="0.6"/></linearGradient>
+    <radialGradient id="phx-body" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#fffbe0"/><stop offset="0.3" stop-color="#ffd040"/><stop offset="0.75" stop-color="#ff6a10"/><stop offset="1" stop-color="#a01a04"/></radialGradient>
+    <radialGradient id="phx-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffb040" stop-opacity="0.6"/><stop offset="1" stop-color="#ff4a10" stop-opacity="0"/></radialGradient>
+    <filter id="phx-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="phx-blur"><feGaussianBlur stdDeviation="6"/></filter>
+    </defs>
+    <circle cx="80" cy="70" r="70" fill="url(#phx-halo)" filter="url(#phx-blur)"/>
+    <g filter="url(#phx-glow)">
+      <!-- great wings of flame, swept up and out -->
+      <path d="M 72 70 C 56 50 30 30 2 24 C 14 32 16 40 8 46 C 22 46 26 52 18 60 C 32 58 38 64 30 72 C 44 70 52 76 48 86 Z" fill="url(#phx-wing)"/>
+      <path d="M 88 70 C 104 50 130 30 158 24 C 146 32 144 40 152 46 C 138 46 134 52 142 60 C 128 58 122 64 130 72 C 116 70 108 76 112 86 Z" fill="url(#phx-wing)"/>
+      <g fill="none" stroke="#fff0a0" stroke-width="0.8" opacity="0.7">
+        <path d="M 66 68 C 50 50 30 36 10 30"/><path d="M 64 74 C 46 62 30 54 16 54"/>
+        <path d="M 94 68 C 110 50 130 36 150 30"/><path d="M 96 74 C 114 62 130 54 144 54"/>
+      </g>
+      <!-- long tail plumes of fire -->
+      <path d="M 74 100 C 64 120 50 136 40 156 C 56 142 68 128 78 112 Z" fill="url(#phx-wing)"/>
+      <path d="M 80 102 C 80 124 78 140 80 160 C 86 140 86 124 84 104 Z" fill="url(#phx-wing)"/>
+      <path d="M 86 100 C 96 120 110 136 120 156 C 104 142 92 128 82 112 Z" fill="url(#phx-wing)"/>
+      <!-- body -->
+      <path d="M 66 74 C 64 60 72 50 80 50 C 88 50 96 60 94 74 C 94 90 88 104 80 106 C 72 104 66 90 66 74 Z" fill="url(#phx-body)"/>
+      <!-- head, crest and beak -->
+      <path d="M 70 46 C 70 36 76 30 82 30 C 90 30 94 38 92 46 C 90 52 86 56 80 56 C 74 56 70 52 70 46 Z" fill="url(#phx-body)"/>
+      <path d="M 78 32 C 72 20 74 10 80 2 C 80 12 84 18 86 22 C 88 14 94 10 98 8 C 94 16 92 24 86 32 Z" fill="url(#phx-wing)"/>
+      <path d="M 88 42 L 102 46 L 88 50 Z" fill="#ffd040" stroke="#a04a04" stroke-width="0.8"/>
+      <circle cx="84" cy="40" r="2.6" fill="#ffffff"/><circle cx="84" cy="40" r="1.3" fill="#ff2a00"/>
+      <!-- talons, outstretched -->
+      <g stroke="#ffd040" stroke-width="2" stroke-linecap="round" fill="none"><path d="M 74 104 l -6 10 M 74 104 l -1 12 M 74 104 l 4 11"/><path d="M 86 104 l 6 10 M 86 104 l 1 12 M 86 104 l -4 11"/></g>
+    </g>
+    <!-- drifting embers -->
+    <g fill="#ffe680"><circle cx="30" cy="96" r="1.2"/><circle cx="130" cy="92" r="1.4"/><circle cx="20" cy="70" r="1"/><circle cx="142" cy="72" r="1"/><circle cx="56" cy="20" r="1"/><circle cx="110" cy="16" r="1.2"/></g>
+    </svg>
+  `,
+
+  'Banshee': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Banshee">
+    <defs>
+    <radialGradient id="bsh-aura" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#b8f0ff" stop-opacity="0.55"/><stop offset="1" stop-color="#3a8ab8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bsh-gown" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8fbff" stop-opacity="0.95"/><stop offset="0.6" stop-color="#9adcf0" stop-opacity="0.6"/><stop offset="1" stop-color="#4a9ac8" stop-opacity="0"/></linearGradient>
+    <radialGradient id="bsh-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#c8ecf4"/><stop offset="1" stop-color="#7ab8cc"/></radialGradient>
+    <linearGradient id="bsh-hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8f4f8"/><stop offset="1" stop-color="#8ac8dc" stop-opacity="0.2"/></linearGradient>
+    <filter id="bsh-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="bsh-blur"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <ellipse cx="80" cy="76" rx="62" ry="74" fill="url(#bsh-aura)" filter="url(#bsh-blur)"/>
+    <g filter="url(#bsh-glow)">
+      <!-- hair streaming upward and out, as if underwater -->
+      <path d="M 64 40 C 46 30 34 12 38 -2 C 46 12 52 20 66 30 Z" fill="url(#bsh-hair)"/>
+      <path d="M 96 40 C 114 30 126 12 122 -2 C 114 12 108 20 94 30 Z" fill="url(#bsh-hair)"/>
+      <path d="M 62 50 C 40 52 26 40 16 26 C 30 34 44 38 62 40 Z" fill="url(#bsh-hair)"/>
+      <path d="M 98 50 C 120 52 134 40 144 26 C 130 34 116 38 98 40 Z" fill="url(#bsh-hair)"/>
+      <!-- tattered gown dissolving into wisps -->
+      <path d="M 62 60 C 52 84 46 110 38 150 L 52 140 L 58 156 L 68 138 L 80 158 L 92 138 L 102 156 L 108 140 L 122 150 C 114 110 108 84 98 60 Z" fill="url(#bsh-gown)"/>
+      <!-- arms outstretched, fingers long -->
+      <path d="M 66 62 C 50 70 34 80 18 84" fill="none" stroke="#c8ecf4" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+      <path d="M 94 62 C 110 70 126 80 142 84" fill="none" stroke="#c8ecf4" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+      <g stroke="#e8fbff" stroke-width="1.4" stroke-linecap="round"><path d="M 18 84 l -8 -2 M 18 84 l -8 3 M 18 84 l -6 7"/><path d="M 142 84 l 8 -2 M 142 84 l 8 3 M 142 84 l 6 7"/></g>
+      <!-- the face, wailing: hollow eyes, mouth stretched impossibly -->
+      <path d="M 66 40 C 64 26 72 20 80 20 C 88 20 96 26 94 40 C 94 54 88 66 80 68 C 72 66 66 54 66 40 Z" fill="url(#bsh-face)"/>
+      <path d="M 64 36 C 64 24 70 18 80 18 C 90 18 96 24 96 36 C 90 28 70 28 64 36 Z" fill="#e8f4f8"/>
+      <ellipse cx="73" cy="38" rx="3.4" ry="4.6" fill="#0a2a3a"/><ellipse cx="87" cy="38" rx="3.4" ry="4.6" fill="#0a2a3a"/>
+      <circle cx="73" cy="39" r="1.2" fill="#b8f0ff"/><circle cx="87" cy="39" r="1.2" fill="#b8f0ff"/>
+      <ellipse cx="80" cy="56" rx="5" ry="9" fill="#06141c"/>
+      <path d="M 70 32 L 76 35 M 90 32 L 84 35" stroke="#5a8a9c" stroke-width="1" stroke-linecap="round"/>
+    </g>
+    <!-- sound rings of the wail -->
+    <g fill="none" stroke="#b8f0ff" stroke-width="1" opacity="0.5"><path d="M 60 74 Q 80 86 100 74"/><path d="M 52 84 Q 80 102 108 84"/><path d="M 44 94 Q 80 118 116 94"/></g>
+    </svg>
+  `,
+
+  'Unicorn': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unicorn">
+    <defs>
+    <linearGradient id="uni-coat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#e4e8f4"/><stop offset="1" stop-color="#a8b0c8"/></linearGradient>
+    <linearGradient id="uni-mane" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f8ff"/><stop offset="0.5" stop-color="#c8d4f4"/><stop offset="1" stop-color="#e8d8ff"/></linearGradient>
+    <linearGradient id="uni-horn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#d8c890"/><stop offset="0.5" stop-color="#fff8e0"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+    <radialGradient id="uni-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="1" stop-color="#c8e0ff" stop-opacity="0"/></radialGradient>
+    <filter id="uni-blur" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="uni-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="154" rx="56" ry="4" fill="#000" opacity="0.5" filter="url(#uni-soft)"/>
+    <!-- a halo of silver light around the horn -->
+    <circle cx="40" cy="22" r="20" fill="url(#uni-glow)" filter="url(#uni-blur)"/>
+    <!-- tail -->
+    <path d="M 128 76 C 146 84 150 104 142 124 C 138 112 134 100 124 92 Z" fill="url(#uni-mane)" stroke="#9aa4c4" stroke-width="0.8"/>
+    <!-- far legs -->
+    <path d="M 108 102 L 112 146 L 120 146 L 118 102 Z" fill="#c8cee0" stroke="#7a84a4" stroke-width="0.8"/>
+    <path d="M 66 104 L 60 146 L 68 146 L 74 104 Z" fill="#c8cee0" stroke="#7a84a4" stroke-width="0.8"/>
+    <!-- body -->
+    <path d="M 52 84 C 50 70 66 62 88 62 C 112 62 132 68 132 86 C 132 100 120 108 104 108 L 70 108 C 58 106 52 96 52 84 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1.2"/>
+    <path d="M 70 96 Q 90 102 112 96" stroke="#c8cee0" stroke-width="1" fill="none"/>
+    <!-- near legs, one foreleg raised, pawing -->
+    <path d="M 118 104 L 124 148 L 132 148 L 128 104 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="0.8"/>
+    <path d="M 60 102 C 54 112 46 116 44 124 L 50 128 C 54 120 62 116 68 108 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="0.8"/>
+    <g fill="#d8c070" stroke="#6a5a20" stroke-width="0.6"><path d="M 124 146 h 9 v 4 h -9 z"/><path d="M 112 144 h 9 v 4 h -9 z"/><path d="M 60 144 h 9 v 4 h -9 z"/><path d="M 42 124 l 6 4 l -3 4 l -6 -4 z"/></g>
+    <!-- feathered fetlocks -->
+    <g fill="#f4f8ff" opacity="0.9"><path d="M 122 138 q 6 4 12 0 l -2 8 h -8 z"/></g>
+    <!-- neck, head, lowered for the charge -->
+    <path d="M 62 72 C 54 58 50 44 46 32 L 62 26 C 68 40 74 54 80 66 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1"/>
+    <path d="M 46 32 C 40 26 30 30 24 38 C 20 44 22 50 28 52 C 34 52 40 48 46 46 C 54 44 60 38 62 30 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1.1"/>
+    <circle cx="26" cy="46" r="1" fill="#7a84a4"/>
+    <path d="M 40 36 Q 43 33 46 36" stroke="#2a2e44" stroke-width="1.2" fill="none"/>
+    <ellipse cx="43" cy="37" rx="2.4" ry="1.6" fill="#6a8aff"/><circle cx="43" cy="37" r="0.8" fill="#0a0a1a"/>
+    <path d="M 52 28 L 58 20 L 58 30 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="0.8"/>
+    <!-- the spiral horn -->
+    <path d="M 46 28 L 30 4 L 50 26 Z" fill="url(#uni-horn)" stroke="#a89860" stroke-width="0.7"/>
+    <path d="M 44 24 l 4 0 M 41 19 l 4 0 M 38 14 l 4 0 M 35 9 l 3 0" stroke="#a89860" stroke-width="0.8"/>
+    <circle cx="30" cy="4" r="3" fill="#ffffff" filter="url(#uni-blur)"/>
+    <!-- flowing mane -->
+    <path d="M 60 24 C 66 36 70 50 80 62 C 76 52 78 46 74 40 C 80 46 84 50 88 52 C 80 40 74 30 66 22 Z" fill="url(#uni-mane)" stroke="#9aa4c4" stroke-width="0.7"/>
+    </svg>
+  `,
+
+  'Frost Giant': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Frost Giant">
+    <defs>
+    <radialGradient id="frg-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#e4f2ff"/><stop offset="0.55" stop-color="#8ab0d8"/><stop offset="1" stop-color="#2a4a74"/></radialGradient>
+    <linearGradient id="frg-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a6270"/><stop offset="0.5" stop-color="#22262e"/><stop offset="1" stop-color="#0a0c10"/></linearGradient>
+    <linearGradient id="frg-ice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.4" stop-color="#bfe8ff"/><stop offset="1" stop-color="#4a9ad8"/></linearGradient>
+    <radialGradient id="frg-cold" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#cfefff" stop-opacity="0.5"/><stop offset="1" stop-color="#cfefff" stop-opacity="0"/></radialGradient>
+    <filter id="frg-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    <filter id="frg-mist" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="frg-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="154" rx="64" ry="5" fill="#000" opacity="0.6" filter="url(#frg-soft)"/>
+    <ellipse cx="80" cy="146" rx="74" ry="12" fill="url(#frg-cold)" filter="url(#frg-mist)"/>
+    <!-- the great axe of ice, raised -->
+    <path d="M 120 150 L 138 26" stroke="#2a3a4a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 120 150 L 138 26" stroke="#8ab0d8" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 132 30 C 150 14 166 30 160 54 C 150 46 140 44 128 46 Z" fill="url(#frg-ice)" stroke="#3a6a9a" stroke-width="1" opacity="0.95"/>
+    <path d="M 136 30 C 124 18 112 24 112 40 C 118 36 126 36 132 38 Z" fill="url(#frg-ice)" stroke="#3a6a9a" stroke-width="1" opacity="0.95"/>
+    <path d="M 140 28 L 154 44 M 144 30 L 156 36" stroke="#ffffff" stroke-width="0.8" opacity="0.8"/>
+    <!-- legs in iron greaves -->
+    <path d="M 54 118 L 48 150 L 70 150 L 72 120 Z" fill="url(#frg-iron)" stroke="#000" stroke-width="1.1"/>
+    <path d="M 106 118 L 112 150 L 90 150 L 88 120 Z" fill="url(#frg-iron)" stroke="#000" stroke-width="1.1"/>
+    <path d="M 48 136 h 22 M 90 136 h 22" stroke="#cfefff" stroke-width="1" opacity="0.6"/>
+    <!-- vast torso: frost-rimed black iron over blue skin -->
+    <path d="M 40 72 C 34 96 40 114 52 124 L 108 124 C 120 114 126 96 120 72 C 106 62 54 62 40 72 Z" fill="url(#frg-skin)" stroke="#1a2a44" stroke-width="1.4"/>
+    <path d="M 48 80 C 46 98 50 112 56 122 L 104 122 C 110 112 114 98 112 80 C 100 76 60 76 48 80 Z" fill="url(#frg-iron)" stroke="#000" stroke-width="1"/>
+    <g stroke="#cfefff" stroke-width="0.9" fill="none" opacity="0.75"><path d="M 54 84 l 6 4 l -2 6"/><path d="M 100 86 l -5 5 l 3 5"/><path d="M 70 100 l 6 3"/><path d="M 88 108 l 6 -3"/></g>
+    <path d="M 46 116 Q 80 124 114 116 L 114 124 Q 80 132 46 124 Z" fill="#3a2a1a" stroke="#000" stroke-width="0.8"/>
+    <!-- arms: one gripping the axe, one reaching with frost-blackened fingers -->
+    <path d="M 116 74 C 128 84 130 98 124 112" fill="none" stroke="#1a2a44" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 116 74 C 128 84 130 98 124 112" fill="none" stroke="url(#frg-skin)" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="124" cy="114" r="8" fill="url(#frg-skin)" stroke="#1a2a44" stroke-width="1.1"/>
+    <path d="M 44 74 C 30 82 20 96 14 112" fill="none" stroke="#1a2a44" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 44 74 C 30 82 20 96 14 112" fill="none" stroke="url(#frg-skin)" stroke-width="12" stroke-linecap="round"/>
+    <g stroke="#3a5a84" stroke-width="3" stroke-linecap="round"><path d="M 14 112 l -6 8 M 14 112 l -2 10 M 14 112 l 3 10 M 14 112 l 8 6"/></g>
+    <!-- frost-spiked pauldrons -->
+    <path d="M 30 76 C 32 60 48 56 62 64 C 58 74 50 80 38 82 Z" fill="url(#frg-iron)" stroke="#000" stroke-width="1.1"/>
+    <path d="M 130 76 C 128 60 112 56 98 64 C 102 74 110 80 122 82 Z" fill="url(#frg-iron)" stroke="#000" stroke-width="1.1"/>
+    <g fill="url(#frg-ice)" stroke="#3a6a9a" stroke-width="0.5"><path d="M 36 66 L 26 50 L 42 62 Z"/><path d="M 48 60 L 44 44 L 54 58 Z"/><path d="M 124 66 L 134 50 L 118 62 Z"/><path d="M 112 60 L 116 44 L 106 58 Z"/></g>
+    <!-- head: huge, brutal, with an icicle beard and a crown of ice -->
+    <path d="M 62 46 C 60 30 68 22 80 22 C 92 22 100 30 98 46 C 98 56 92 64 80 64 C 68 64 62 56 62 46 Z" fill="url(#frg-skin)" stroke="#1a2a44" stroke-width="1.3"/>
+    <g fill="url(#frg-ice)" stroke="#3a6a9a" stroke-width="0.5"><path d="M 64 30 L 62 14 L 70 26 Z"/><path d="M 72 24 L 72 8 L 78 22 Z"/><path d="M 82 22 L 86 6 L 88 22 Z"/><path d="M 92 26 L 98 12 L 96 30 Z"/></g>
+    <path d="M 66 40 L 76 44 M 94 40 L 84 44" stroke="#0a1a2e" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="72" cy="46" rx="3.2" ry="2" fill="#bfe8ff" filter="url(#frg-glow)"/><ellipse cx="88" cy="46" rx="3.2" ry="2" fill="#bfe8ff" filter="url(#frg-glow)"/>
+    <ellipse cx="72" cy="46" rx="1.8" ry="1.1" fill="#ffffff"/><ellipse cx="88" cy="46" rx="1.8" ry="1.1" fill="#ffffff"/>
+    <path d="M 72 55 Q 80 52 88 55 L 86 58 Q 80 56 74 58 Z" fill="#0a1a2e"/>
+    <g fill="url(#frg-ice)" stroke="#3a6a9a" stroke-width="0.4"><path d="M 68 58 L 66 76 L 72 60 Z"/><path d="M 74 60 L 74 82 L 78 60 Z"/><path d="M 80 60 L 81 86 L 84 60 Z"/><path d="M 86 60 L 88 80 L 90 59 Z"/><path d="M 92 58 L 95 74 L 95 57 Z"/></g>
+    <!-- frozen breath -->
+    <ellipse cx="80" cy="66" rx="14" ry="5" fill="url(#frg-cold)" filter="url(#frg-mist)"/>
+    </svg>
+  `,
+
+  'Gold Dragon': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gold Dragon">
+    <defs>
+    <radialGradient id="gdr-scale" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#fff4b0"/><stop offset="0.45" stop-color="#e0a82a"/><stop offset="1" stop-color="#5a3a04"/></radialGradient>
+    <linearGradient id="gdr-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0c040"/><stop offset="0.6" stop-color="#a0700e"/><stop offset="1" stop-color="#4a2e02"/></linearGradient>
+    <linearGradient id="gdr-horn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#6a4a10"/><stop offset="1" stop-color="#fff0c0"/></linearGradient>
+    <linearGradient id="gdr-sack" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5a2a"/><stop offset="1" stop-color="#3a2410"/></linearGradient>
+    <radialGradient id="gdr-coin" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#fff8c0"/><stop offset="1" stop-color="#b07a10"/></radialGradient>
+    <filter id="gdr-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <filter id="gdr-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="154" rx="66" ry="5" fill="#000" opacity="0.55" filter="url(#gdr-soft)"/>
+    <!-- wings, spread -->
+    <path d="M 64 62 C 46 36 22 24 2 22 C 10 34 6 44 2 52 C 14 50 20 58 14 66 C 26 64 32 72 26 80 C 40 76 50 80 52 90 Z" fill="url(#gdr-wing)" stroke="#3a2402" stroke-width="1.1"/>
+    <path d="M 96 62 C 114 36 138 24 158 22 C 150 34 154 44 158 52 C 146 50 140 58 146 66 C 134 64 128 72 134 80 C 120 76 110 80 108 90 Z" fill="url(#gdr-wing)" stroke="#3a2402" stroke-width="1.1"/>
+    <g stroke="#5a3a04" stroke-width="1" fill="none"><path d="M 64 62 L 2 22 M 62 66 L 2 52 M 60 72 L 14 66 M 58 78 L 26 80"/><path d="M 96 62 L 158 22 M 98 66 L 158 52 M 100 72 L 146 66 M 102 78 L 134 80"/></g>
+    <!-- the hoard -->
+    <path d="M 10 156 C 30 134 60 130 80 134 C 104 130 132 136 152 156 Z" fill="url(#gdr-coin)" stroke="#6a4a08" stroke-width="0.8"/>
+    <g fill="url(#gdr-coin)" stroke="#6a4a08" stroke-width="0.5">
+      <ellipse cx="30" cy="146" rx="4" ry="1.6"/><ellipse cx="46" cy="140" rx="4" ry="1.6"/><ellipse cx="118" cy="142" rx="4" ry="1.6"/><ellipse cx="134" cy="148" rx="4" ry="1.6"/><ellipse cx="70" cy="140" rx="4" ry="1.6"/><ellipse cx="96" cy="138" rx="4" ry="1.6"/>
+    </g>
+    <path d="M 24 150 l 6 -6 l 4 4 l -6 6 z" fill="#c03030" stroke="#5a0a0a" stroke-width="0.6"/>
+    <path d="M 130 140 l 5 -2 l 3 5 l -5 2 z" fill="#3a8ad8" stroke="#0a2a5a" stroke-width="0.6"/>
+    <!-- body and haunches -->
+    <path d="M 52 110 C 46 88 58 70 80 68 C 102 70 114 88 108 110 C 104 126 94 134 80 134 C 66 134 56 126 52 110 Z" fill="url(#gdr-scale)" stroke="#3a2402" stroke-width="1.3"/>
+    <g stroke="#8a5a0a" stroke-width="0.9" fill="none"><path d="M 66 86 Q 80 92 94 86"/><path d="M 64 98 Q 80 104 96 98"/><path d="M 64 110 Q 80 116 96 110"/><path d="M 68 122 Q 80 126 92 122"/></g>
+    <!-- one claw clutching the great sack of gold, swung back to strike -->
+    <path d="M 104 92 C 118 96 128 104 132 112" fill="none" stroke="#3a2402" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 104 92 C 118 96 128 104 132 112" fill="none" stroke="url(#gdr-scale)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 126 100 C 120 92 124 82 134 80 C 148 78 156 90 152 104 C 148 116 132 118 126 108 Z" fill="url(#gdr-sack)" stroke="#1a0e04" stroke-width="1.1"/>
+    <path d="M 128 86 q 8 -6 16 -2" stroke="#d4a02a" stroke-width="1.6" fill="none"/>
+    <g fill="url(#gdr-coin)"><circle cx="136" cy="84" r="2.6"/><circle cx="142" cy="82" r="2.2"/><circle cx="148" cy="86" r="2"/></g>
+    <!-- other forelimb planted, claws in the coins -->
+    <path d="M 58 110 C 50 120 46 130 44 140" fill="none" stroke="#3a2402" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 58 110 C 50 120 46 130 44 140" fill="none" stroke="url(#gdr-scale)" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#fff4d0" stroke="#5a3a04" stroke-width="0.4"><path d="M 38 140 l -4 6 l 6 -3 z"/><path d="M 44 142 l -1 6 l 4 -5 z"/><path d="M 50 141 l 2 6 l 1 -6 z"/></g>
+    <!-- neck and head, reared up -->
+    <path d="M 70 72 C 66 58 68 46 74 38 L 88 38 C 94 46 96 58 90 72 Z" fill="url(#gdr-scale)" stroke="#3a2402" stroke-width="1.1"/>
+    <path d="M 64 34 C 62 20 70 12 80 12 C 90 12 98 20 96 34 C 95 42 90 48 80 48 C 70 48 65 42 64 34 Z" fill="url(#gdr-scale)" stroke="#3a2402" stroke-width="1.2"/>
+    <path d="M 70 40 C 72 48 76 54 80 54 C 84 54 88 48 90 40 C 86 44 74 44 70 40 Z" fill="url(#gdr-scale)" stroke="#3a2402" stroke-width="1"/>
+    <g fill="#fff8e8"><path d="M 73 44 l 1 4 l 1 -4 z"/><path d="M 85 44 l 1 4 l 1 -4 z"/></g>
+    <!-- swept horns and frills -->
+    <path d="M 68 18 C 58 10 52 0 54 -6 C 60 2 66 8 74 14 Z" fill="url(#gdr-horn)" stroke="#5a3a04" stroke-width="0.7"/>
+    <path d="M 92 18 C 102 10 108 0 106 -6 C 100 2 94 8 86 14 Z" fill="url(#gdr-horn)" stroke="#5a3a04" stroke-width="0.7"/>
+    <path d="M 64 30 L 54 26 L 62 36 Z M 96 30 L 106 26 L 98 36 Z" fill="#c08a1a" stroke="#5a3a04" stroke-width="0.6"/>
+    <!-- molten-coin eyes -->
+    <ellipse cx="73" cy="28" rx="3.6" ry="2.4" fill="#fff0a0" filter="url(#gdr-glow)"/><ellipse cx="87" cy="28" rx="3.6" ry="2.4" fill="#fff0a0" filter="url(#gdr-glow)"/>
+    <ellipse cx="73" cy="28" rx="2.6" ry="1.7" fill="#ffd040"/><ellipse cx="87" cy="28" rx="2.6" ry="1.7" fill="#ffd040"/>
+    <ellipse cx="73" cy="28" rx="0.7" ry="1.6" fill="#3a1a02"/><ellipse cx="87" cy="28" rx="0.7" ry="1.6" fill="#3a1a02"/>
+    <!-- glittering gold dust curling from the nostrils -->
+    <g fill="#ffe680" opacity="0.8"><circle cx="76" cy="52" r="0.9"/><circle cx="74" cy="56" r="0.7"/><circle cx="84" cy="52" r="0.9"/><circle cx="86" cy="57" r="0.7"/><circle cx="80" cy="60" r="0.8"/></g>
+    </svg>
+  `,
+
   'Manticore': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Manticore">
     <defs>
@@ -4465,6 +4736,12 @@ const MONSTER_SPRITE_SCALE = {
   'Manticore': 1.35,
   'Titanoboa': 1.4,
   'Wendigo': 1.35,
+  'Djinn': 1.4,
+  'Phoenix': 1.4,
+  'Banshee': 1.3,
+  'Unicorn': 1.3,
+  'Frost Giant': 1.5,
+  'Gold Dragon': 1.4,
 };
 
 function getMonsterSprite(type) {

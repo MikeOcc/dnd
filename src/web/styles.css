@@ -224,6 +224,7 @@ html, body {
 }
 
 /* The monster recoils when hit (flaring in the spell's colour) and lunges when it attacks */
+#monster-portrait.vanished svg { opacity: 0.08; transition: opacity 500ms ease; }
 #monster-portrait.fx-recoil { animation: fx-recoil 300ms ease-out; }
 #monster-portrait.fx-lunge  { animation: fx-lunge 320ms ease-in-out; }
 @keyframes fx-recoil {
