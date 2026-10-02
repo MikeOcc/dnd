@@ -20,7 +20,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair } from './lairs.js';
 import { getLevelIntro } from '../content/level-text.js';
@@ -422,6 +422,18 @@ export class GameEngine {
       return this.getState();
     }
 
+    // Testing: on level 7, mark Asmodeus's lair (and keep it in the full view).
+    let asmodeusAt: { x: number; y: number } | null = null;
+    if (DEBUG.SHOW_ASMODEUS_ON_MAP && level === 7) {
+      for (const [k, c] of lvl.contents) {
+        if (c.type !== 'unique-monster' || c.monsterId !== 'Asmodeus' || ds.defeatedUniqueMonsters.has(c.id)) continue;
+        const [ax, ay] = k.split(',').map(Number);
+        asmodeusAt = { x: ax, y: ay };
+        exMinX = Math.min(exMinX, ax); exMaxX = Math.max(exMaxX, ax);
+        exMinY = Math.min(exMinY, ay); exMaxY = Math.max(exMaxY, ay);
+      }
+    }
+
     // Centered: a fixed-size window around the player, so the map orients on
     // where you are. Full: cropped to everything explored on this floor.
     const radius = DUNGEON.MAP_VIEW_RADIUS;
@@ -437,6 +449,7 @@ export class GameEngine {
         const k = `${cx},${cy}`;
 
         if (cx === this.char!.x && cy === this.char!.y) { row += '@'; continue; }
+        if (asmodeusAt && cx === asmodeusAt.x && cy === asmodeusAt.y) { row += 'A'; continue; }
 
         if (!isVisited(cx, cy)) { row += ' '; continue; }
 
@@ -475,7 +488,7 @@ export class GameEngine {
       ...rows.map(r => `  ${r}`),
       `  ${'─'.repeat(w)}`,
       '',
-      `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar`,
+      `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar${asmodeusAt ? '  A Asmodeus' : ''}`,
       ...(this.mapAreaLines.length ? ['', ...this.mapAreaLines] : []),
     ];
     return this.getState();

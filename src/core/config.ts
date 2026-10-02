@@ -18,6 +18,11 @@ export const GAMEPLAY = {
   POTION_HEAL_MAX_HP_PCT: 0.30,  // +30% of max HP, so potions keep pace with high-level characters
 } as const;
 
+// Testing aids. Turn these off before the game goes out to players.
+export const DEBUG = {
+  SHOW_ASMODEUS_ON_MAP: true,   // level 7's map marks his lair with an A, explored or not
+} as const;
+
 export const DUNGEON = {
   WIDTH: 80,
   HEIGHT: 60,

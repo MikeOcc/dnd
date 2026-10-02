@@ -2233,3 +2233,25 @@ describe('GameEngine — death at the hands of Asmodeus', () => {
     expect(engine.reviveAfterDeath().phase).toBe('playing');
   });
 });
+
+describe('GameEngine — testing aid: Asmodeus on the level 7 map', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('marks his lair with an A on the full level 7 map, even unexplored', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7);
+    const lvl = e.getLevel(7);
+    e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y;
+    e.lightAround();
+    e.phase = 'playing';
+    engine.showMap();
+    const full = engine.toggleMapView();
+    expect(full.messages.join('\n')).toContain('A');
+    expect(full.messages.some((l: string) => l.includes('A Asmodeus'))).toBe(true);
+  });
+});
