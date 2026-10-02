@@ -895,6 +895,272 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Titanoboa': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Titanoboa">
+    <defs>
+    <linearGradient id="tbo-body" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#7a8a3a"/>
+    <stop offset="0.5" stop-color="#4a5a1e"/>
+    <stop offset="1" stop-color="#1a2208"/>
+    </linearGradient>
+    <linearGradient id="tbo-belly" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#d8c890"/>
+    <stop offset="1" stop-color="#8a7a40"/>
+    </linearGradient>
+    <radialGradient id="tbo-head" cx="45%" cy="35%" r="70%">
+    <stop offset="0" stop-color="#8a9a44"/>
+    <stop offset="0.6" stop-color="#4a5a1e"/>
+    <stop offset="1" stop-color="#1a2208"/>
+    </radialGradient>
+    <pattern id="tbo-scales" width="7" height="5" patternUnits="userSpaceOnUse">
+    <path d="M 0 5 Q 3.5 0 7 5" fill="none" stroke="#1a2208" stroke-width="0.7" opacity="0.55"/>
+    </pattern>
+    <pattern id="tbo-blotch" width="26" height="18" patternUnits="userSpaceOnUse">
+    <ellipse cx="8" cy="7" rx="5" ry="3.5" fill="#141a06" opacity="0.7"/>
+    <ellipse cx="20" cy="14" rx="4" ry="3" fill="#141a06" opacity="0.6"/>
+    </pattern>
+    <radialGradient id="tbo-mouth" cx="50%" cy="40%" r="60%">
+    <stop offset="0" stop-color="#e86a6a"/>
+    <stop offset="1" stop-color="#5a0a0a"/>
+    </radialGradient>
+    <filter id="tbo-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <filter id="tbo-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    </defs>
+
+    <ellipse cx="80" cy="152" rx="70" ry="6" fill="#000" opacity="0.7" filter="url(#tbo-soft)"/>
+
+    <!-- back coil, disappearing into the dark -->
+    <path d="M -6 96 C 20 70 60 66 92 76 C 124 86 148 78 168 60" fill="none" stroke="#0c1004" stroke-width="30" stroke-linecap="round"/>
+    <path d="M -6 96 C 20 70 60 66 92 76 C 124 86 148 78 168 60" fill="none" stroke="url(#tbo-body)" stroke-width="26" stroke-linecap="round"/>
+    <path d="M -6 96 C 20 70 60 66 92 76 C 124 86 148 78 168 60" fill="none" stroke="url(#tbo-blotch)" stroke-width="22"/>
+    <path d="M -6 96 C 20 70 60 66 92 76 C 124 86 148 78 168 60" fill="none" stroke="url(#tbo-scales)" stroke-width="26"/>
+
+    <!-- great front coils on the floor -->
+    <path d="M -10 140 C 20 112 60 116 80 128 C 100 140 140 142 172 118" fill="none" stroke="#0c1004" stroke-width="38" stroke-linecap="round"/>
+    <path d="M -10 140 C 20 112 60 116 80 128 C 100 140 140 142 172 118" fill="none" stroke="url(#tbo-body)" stroke-width="34" stroke-linecap="round"/>
+    <path d="M -10 140 C 20 112 60 116 80 128 C 100 140 140 142 172 118" fill="none" stroke="url(#tbo-blotch)" stroke-width="28"/>
+    <path d="M -10 140 C 20 112 60 116 80 128 C 100 140 140 142 172 118" fill="none" stroke="url(#tbo-scales)" stroke-width="34"/>
+    <!-- belly scutes showing on the lower edge -->
+    <path d="M -6 154 C 22 128 60 134 80 146 C 100 156 140 156 170 134" fill="none" stroke="url(#tbo-belly)" stroke-width="6" stroke-dasharray="5 2" opacity="0.8"/>
+
+    <!-- the neck rising out of the coils -->
+    <path d="M 78 128 C 70 104 70 82 82 64 C 90 52 96 44 92 34" fill="none" stroke="#0c1004" stroke-width="24" stroke-linecap="round"/>
+    <path d="M 78 128 C 70 104 70 82 82 64 C 90 52 96 44 92 34" fill="none" stroke="url(#tbo-body)" stroke-width="20" stroke-linecap="round"/>
+    <path d="M 78 128 C 70 104 70 82 82 64 C 90 52 96 44 92 34" fill="none" stroke="url(#tbo-scales)" stroke-width="20"/>
+    <path d="M 84 126 C 78 104 78 84 88 66" fill="none" stroke="url(#tbo-belly)" stroke-width="5" stroke-dasharray="4 2" opacity="0.8"/>
+
+    <!-- the head, jaws gaping, coming down at you -->
+    <path d="M 62 34 C 60 18 76 8 94 10 C 112 12 122 24 118 38 C 116 46 106 52 94 52 C 78 52 64 46 62 34 Z" fill="url(#tbo-head)" stroke="#0c1004" stroke-width="1.3"/>
+    <path d="M 62 34 C 60 18 76 8 94 10 C 112 12 122 24 118 38 C 116 46 106 52 94 52 C 78 52 64 46 62 34 Z" fill="url(#tbo-scales)"/>
+    <!-- lower jaw dropped wide -->
+    <path d="M 66 40 C 70 58 82 70 94 70 C 106 70 116 58 116 42 C 108 50 100 54 92 54 C 82 54 72 50 66 40 Z" fill="url(#tbo-head)" stroke="#0c1004" stroke-width="1.2"/>
+    <path d="M 70 42 C 74 54 84 64 94 64 C 104 64 112 54 112 44 C 106 50 98 52 92 52 C 84 52 76 48 70 42 Z" fill="url(#tbo-mouth)"/>
+    <!-- fangs -->
+    <g fill="#f8f4e4" stroke="#6a5a3a" stroke-width="0.4">
+      <path d="M 74 42 l 2 10 l 2 -9 z"/><path d="M 110 42 l -2 10 l -2 -9 z"/>
+      <path d="M 82 46 l 1 5 l 1.5 -5 z"/><path d="M 102 46 l -1 5 l -1.5 -5 z"/>
+      <path d="M 80 60 l 1.5 -5 l 1.5 5 z"/><path d="M 104 60 l -1.5 -5 l -1.5 5 z"/>
+    </g>
+    <!-- forked tongue -->
+    <path d="M 92 60 C 92 70 90 78 86 84 M 92 60 C 93 70 96 78 100 82" stroke="#8a0a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <!-- heavy brow and slit eyes -->
+    <path d="M 70 26 Q 78 20 86 24 M 118 26 Q 110 20 102 24" stroke="#0c1004" stroke-width="2" fill="none"/>
+    <ellipse cx="78" cy="28" rx="4.4" ry="3" fill="#ffd030" filter="url(#tbo-glow)" opacity="0.8"/>
+    <ellipse cx="110" cy="28" rx="4.4" ry="3" fill="#ffd030" filter="url(#tbo-glow)" opacity="0.8"/>
+    <ellipse cx="78" cy="28" rx="3.4" ry="2.4" fill="#ffd84a"/><ellipse cx="110" cy="28" rx="3.4" ry="2.4" fill="#ffd84a"/>
+    <ellipse cx="78" cy="28" rx="0.7" ry="2.3" fill="#0a0a02"/><ellipse cx="110" cy="28" rx="0.7" ry="2.3" fill="#0a0a02"/>
+    <!-- heat pits and nostrils -->
+    <g fill="#0c1004"><circle cx="88" cy="16" r="1.4"/><circle cx="100" cy="16" r="1.4"/><circle cx="72" cy="36" r="1"/><circle cx="116" cy="36" r="1"/></g>
+    <!-- a glint of wet scales -->
+    <path d="M 74 18 Q 84 12 96 13" stroke="#e8f0c0" stroke-width="0.8" fill="none" opacity="0.4"/>
+    <!-- bones of earlier prey among the coils -->
+    <g fill="#d8ccb0" stroke="#4a3a24" stroke-width="0.5">
+      <path d="M 118 150 a 6 6 0 0 1 12 0 v 3 l -2 2 h -8 l -2 -2 z"/>
+      <path d="M 30 150 l 18 -3 l 1 2 l -18 3 z"/>
+    </g>
+    <g fill="#1a0e04"><circle cx="122" cy="151" r="1.3"/><circle cx="126" cy="151" r="1.3"/></g>
+    </svg>
+  `,
+
+  'Wendigo': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wendigo">
+    <defs>
+    <linearGradient id="wdg-skin" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#b8b4ac"/>
+    <stop offset="0.5" stop-color="#7a766e"/>
+    <stop offset="1" stop-color="#2e2c28"/>
+    </linearGradient>
+    <linearGradient id="wdg-bone" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f0e8d4"/>
+    <stop offset="0.6" stop-color="#c8bc9c"/>
+    <stop offset="1" stop-color="#7a6e54"/>
+    </linearGradient>
+    <linearGradient id="wdg-antler" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0" stop-color="#5a4a34"/>
+    <stop offset="1" stop-color="#c8b898"/>
+    </linearGradient>
+    <radialGradient id="wdg-frost" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#cfe8ff" stop-opacity="0.5"/>
+    <stop offset="1" stop-color="#cfe8ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="wdg-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    <filter id="wdg-mist" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="wdg-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+
+    <ellipse cx="80" cy="154" rx="46" ry="4.5" fill="#000" opacity="0.6" filter="url(#wdg-soft)"/>
+    <!-- freezing mist pooling around it -->
+    <ellipse cx="80" cy="146" rx="70" ry="14" fill="url(#wdg-frost)" filter="url(#wdg-mist)"/>
+
+    <!-- antlers: huge, branching, cracked -->
+    <g fill="none" stroke="url(#wdg-antler)" stroke-linecap="round">
+      <path d="M 72 30 C 62 18 50 12 38 4" stroke-width="3.4"/>
+      <path d="M 58 18 C 52 10 52 2 54 -4" stroke-width="2.4"/>
+      <path d="M 46 9 C 38 6 30 8 24 12" stroke-width="2.2"/>
+      <path d="M 66 24 C 60 22 54 24 50 28" stroke-width="2"/>
+      <path d="M 88 30 C 98 18 110 12 122 4" stroke-width="3.4"/>
+      <path d="M 102 18 C 108 10 108 2 106 -4" stroke-width="2.4"/>
+      <path d="M 114 9 C 122 6 130 8 136 12" stroke-width="2.2"/>
+      <path d="M 94 24 C 100 22 106 24 110 28" stroke-width="2"/>
+    </g>
+    <g stroke="#2a2014" stroke-width="0.6" fill="none" opacity="0.7"><path d="M 48 12 l 3 2 M 112 12 l -3 2"/></g>
+
+    <!-- impossibly long, thin arms hanging past the knees -->
+    <path d="M 58 62 C 44 76 36 98 32 122 C 31 128 30 132 30 136" fill="none" stroke="#1e1c18" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 58 62 C 44 76 36 98 32 122 C 31 128 30 132 30 136" fill="none" stroke="url(#wdg-skin)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 102 62 C 116 76 124 98 128 122 C 129 128 130 132 130 136" fill="none" stroke="#1e1c18" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 102 62 C 116 76 124 98 128 122 C 129 128 130 132 130 136" fill="none" stroke="url(#wdg-skin)" stroke-width="5" stroke-linecap="round"/>
+    <!-- elbows like knots -->
+    <circle cx="40" cy="96" r="3.4" fill="url(#wdg-skin)" stroke="#1e1c18" stroke-width="0.8"/>
+    <circle cx="120" cy="96" r="3.4" fill="url(#wdg-skin)" stroke="#1e1c18" stroke-width="0.8"/>
+    <!-- hands: long fingers ending in black claws, frost on the tips -->
+    <g fill="none" stroke="url(#wdg-skin)" stroke-width="2" stroke-linecap="round">
+      <path d="M 30 136 l -8 12 M 30 136 l -3 14 M 30 136 l 2 14 M 30 136 l 7 12"/>
+      <path d="M 130 136 l 8 12 M 130 136 l 3 14 M 130 136 l -2 14 M 130 136 l -7 12"/>
+    </g>
+    <g fill="#0e0c0a">
+      <path d="M 22 148 l -2 5 l 3 -3 z"/><path d="M 27 150 l -1 5 l 2 -4 z"/><path d="M 32 150 l 1 5 l 1 -5 z"/><path d="M 37 148 l 3 4 l -2 -4 z"/>
+      <path d="M 138 148 l 2 5 l -3 -3 z"/><path d="M 133 150 l 1 5 l -2 -4 z"/><path d="M 128 150 l -1 5 l -1 -5 z"/><path d="M 123 148 l -3 4 l 2 -4 z"/>
+    </g>
+
+    <!-- legs: bone-thin, backward-kneed like a deer's -->
+    <path d="M 73 112 C 66 124 72 132 64 146 L 60 152" fill="none" stroke="url(#wdg-skin)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M 87 112 C 94 124 88 132 96 146 L 100 152" fill="none" stroke="url(#wdg-skin)" stroke-width="4.4" stroke-linecap="round"/>
+    <circle cx="69" cy="126" r="2.6" fill="url(#wdg-skin)" stroke="#1e1c18" stroke-width="0.6"/><circle cx="91" cy="126" r="2.6" fill="url(#wdg-skin)" stroke="#1e1c18" stroke-width="0.6"/>
+    <g fill="#1e1c18"><path d="M 56 152 l 8 0 l -2 4 l -8 0 z"/><path d="M 96 152 l 8 0 l 2 4 l -8 0 z"/></g>
+
+    <!-- emaciated torso: skin stretched over a ribcage, the belly sunken -->
+    <path d="M 58 58 C 60 70 64 80 68 90 C 72 98 72 104 71 114 L 89 114 C 88 104 88 98 92 90 C 96 80 100 70 102 58 C 92 54 68 54 58 58 Z" fill="url(#wdg-skin)" stroke="#1e1c18" stroke-width="1.2"/>
+    <g stroke="#1e1c18" stroke-width="1.3" fill="none" opacity="0.9">
+      <path d="M 61 64 Q 70 70 80 66 Q 90 70 99 64"/><path d="M 63 71 Q 71 77 80 73 Q 89 77 97 71"/>
+      <path d="M 65 78 Q 72 83 80 80 Q 88 83 95 78"/><path d="M 67 85 Q 73 89 80 86 Q 87 89 93 85"/>
+      <path d="M 80 60 L 80 92"/>
+    </g>
+    <!-- a hollow, starved belly under the ribs -->
+    <path d="M 71 94 Q 80 100 89 94 Q 87 106 80 108 Q 73 106 71 94 Z" fill="#2e2c28" opacity="0.6"/>
+    <path d="M 74 112 Q 80 116 86 112" stroke="#1e1c18" stroke-width="1" fill="none" opacity="0.7"/>
+    <!-- collarbones and hunched shoulders -->
+    <path d="M 58 58 C 64 52 72 54 80 56 C 88 54 96 52 102 58" stroke="#e0dcd4" stroke-width="0.8" fill="none" opacity="0.6"/>
+
+    <!-- the head: a bare deer skull, too long, with a mouth of human-like teeth -->
+    <path d="M 66 34 C 66 24 72 20 80 20 C 88 20 94 24 94 34 C 94 44 90 52 86 62 L 74 62 C 70 52 66 44 66 34 Z" fill="url(#wdg-bone)" stroke="#3a3020" stroke-width="1.2"/>
+    <path d="M 68 30 Q 74 26 80 28 Q 86 26 92 30" stroke="#5a4a34" stroke-width="0.7" fill="none"/>
+    <!-- eye sockets, with cold pale light deep inside -->
+    <path d="M 69 34 Q 73 30 77 34 Q 74 40 69 34 Z" fill="#0a0a10"/>
+    <path d="M 83 34 Q 87 30 91 34 Q 86 40 83 34 Z" fill="#0a0a10"/>
+    <circle cx="73" cy="35" r="2.4" fill="#9fd8ff" filter="url(#wdg-glow)"/>
+    <circle cx="87" cy="35" r="2.4" fill="#9fd8ff" filter="url(#wdg-glow)"/>
+    <circle cx="73" cy="35" r="1" fill="#f0faff"/><circle cx="87" cy="35" r="1" fill="#f0faff"/>
+    <!-- nasal cavity -->
+    <path d="M 78 42 L 80 48 L 82 42 Z" fill="#1a1610"/>
+    <!-- lipless jaws with blood on the teeth -->
+    <path d="M 73 52 L 87 52 L 85 61 L 75 61 Z" fill="#1a0806"/>
+    <g fill="#e8e0c8" stroke="#5a4a34" stroke-width="0.3">
+      <rect x="74" y="52" width="2" height="3"/><rect x="76.4" y="52" width="2" height="3.4"/><rect x="78.8" y="52" width="2" height="3.4"/><rect x="81.2" y="52" width="2" height="3.4"/><rect x="83.6" y="52" width="2" height="3"/>
+      <rect x="75" y="58" width="2" height="3"/><rect x="77.4" y="57.6" width="2" height="3.4"/><rect x="79.8" y="57.6" width="2" height="3.4"/><rect x="82.2" y="58" width="2" height="3"/>
+    </g>
+    <path d="M 75 61 q 0 6 -1 10 M 85 61 q 1 4 0 8" stroke="#7a0806" stroke-width="1.2" fill="none"/>
+    <path d="M 80 61 q 0 4 0 6" stroke="#7a0806" stroke-width="0.8" fill="none" opacity="0.8"/>
+    <!-- cracks in the skull -->
+    <path d="M 84 22 l -2 6 l 3 4 M 70 26 l 3 4" stroke="#5a4a34" stroke-width="0.6" fill="none"/>
+    <!-- frost breath -->
+    <ellipse cx="80" cy="70" rx="12" ry="5" fill="url(#wdg-frost)" filter="url(#wdg-mist)"/>
+    </svg>
+  `,
+
+  'Ghoul': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ghoul">
+    <defs>
+    <radialGradient id="gho-skin" cx="45%" cy="35%" r="75%">
+    <stop offset="0" stop-color="#a8b098"/>
+    <stop offset="0.55" stop-color="#6a7462"/>
+    <stop offset="1" stop-color="#262c22"/>
+    </radialGradient>
+    <linearGradient id="gho-rag" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#4a3e30"/>
+    <stop offset="1" stop-color="#1a140e"/>
+    </linearGradient>
+    <filter id="gho-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="gho-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+
+    <ellipse cx="80" cy="152" rx="52" ry="5" fill="#000" opacity="0.6" filter="url(#gho-soft)"/>
+
+    <!-- the corpse it was eating -->
+    <path d="M 26 150 C 40 140 60 142 74 148 L 70 154 L 28 154 Z" fill="#3a3028" stroke="#120e0a" stroke-width="1"/>
+    <path d="M 30 148 l 14 -6 M 46 144 l 6 -8" stroke="#d8ccb0" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="50" cy="150" rx="10" ry="2.4" fill="#5a0806" opacity="0.8"/>
+
+    <!-- hunched body, spine knuckled through the skin -->
+    <path d="M 58 92 C 56 74 66 60 84 58 C 102 58 112 70 108 88 C 106 100 98 106 92 114 C 90 120 88 124 84 126 L 72 126 C 68 120 68 112 66 106 C 60 102 58 98 58 92 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="1.3"/>
+    <g fill="#c8ccbc" stroke="#262c22" stroke-width="0.6">
+      <circle cx="74" cy="60" r="2.4"/><circle cx="82" cy="58" r="2.4"/><circle cx="90" cy="59" r="2.4"/><circle cx="98" cy="62" r="2.2"/><circle cx="105" cy="67" r="2"/>
+    </g>
+    <g stroke="#1a1e16" stroke-width="1.2" fill="none" opacity="0.9"><path d="M 64 76 q 10 5 20 3"/><path d="M 63 83 q 10 5 21 3"/><path d="M 64 90 q 10 5 20 3"/><path d="M 67 97 q 9 4 17 2"/></g>
+    <path d="M 70 104 Q 80 110 90 104 Q 86 116 80 118 Q 74 116 70 104 Z" fill="#262c22" opacity="0.55"/>
+    <!-- a rag of a burial shroud -->
+    <path d="M 66 114 L 94 114 L 98 132 L 90 128 L 84 134 L 78 128 L 72 134 L 66 128 Z" fill="url(#gho-rag)" stroke="#0e0a06" stroke-width="0.8"/>
+
+    <!-- crouched legs -->
+    <path d="M 70 124 C 60 128 54 138 58 150 L 68 150 C 66 142 70 136 76 130 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="1.1"/>
+    <path d="M 90 124 C 102 128 108 138 104 150 L 94 150 C 96 142 92 136 86 130 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="1.1"/>
+    <circle cx="62" cy="134" r="3" fill="url(#gho-skin)" stroke="#161a12" stroke-width="0.6"/><circle cx="100" cy="134" r="3" fill="url(#gho-skin)" stroke="#161a12" stroke-width="0.6"/>
+    <g fill="#1a1612"><path d="M 54 150 l -3 4 l 6 -2 z"/><path d="M 60 150 l -1 5 l 4 -4 z"/><path d="M 110 150 l 3 4 l -6 -2 z"/><path d="M 104 150 l 1 5 l -4 -4 z"/></g>
+
+    <!-- long arms, one reaching for you with hooked claws, one clutching a bone -->
+    <path d="M 58 76 C 40 84 30 96 22 108" fill="none" stroke="#161a12" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 58 76 C 40 84 30 96 22 108" fill="none" stroke="url(#gho-skin)" stroke-width="5" stroke-linecap="round"/>
+    <g fill="none" stroke="#c8ccbc" stroke-width="1.6" stroke-linecap="round">
+      <path d="M 22 108 l -10 2 M 22 108 l -9 7 M 22 108 l -5 10 M 22 108 l 1 10"/>
+    </g>
+    <g fill="#1a1612"><path d="M 12 110 l -4 -1 l 3 3 z"/><path d="M 13 115 l -3 2 l 4 0 z"/><path d="M 17 118 l -2 4 l 3 -2 z"/><path d="M 23 118 l 0 4 l 2 -3 z"/></g>
+    <path d="M 108 74 C 122 82 130 96 132 110" fill="none" stroke="#161a12" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 108 74 C 122 82 130 96 132 110" fill="none" stroke="url(#gho-skin)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 124 104 L 148 96" stroke="#d8ccb0" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="149" cy="95" r="3" fill="#d8ccb0"/><circle cx="123" cy="105" r="2.6" fill="#d8ccb0"/>
+    <circle cx="132" cy="110" r="4" fill="url(#gho-skin)" stroke="#161a12" stroke-width="0.8"/>
+
+    <!-- the head thrust forward: bald, pointed ears, a grin of needle teeth -->
+    <path d="M 62 48 C 60 32 72 24 84 24 C 96 24 106 32 104 48 C 103 60 96 72 84 74 C 72 72 64 60 62 48 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="1.3"/>
+    <path d="M 66 52 q 3 6 6 9 M 102 52 q -3 6 -6 9" stroke="#262c22" stroke-width="1.1" fill="none" opacity="0.8"/>
+    <path d="M 60 44 L 46 36 L 60 52 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="0.9"/>
+    <path d="M 106 44 L 120 36 L 106 52 Z" fill="url(#gho-skin)" stroke="#161a12" stroke-width="0.9"/>
+    <path d="M 66 40 Q 74 36 80 42 M 100 40 Q 92 36 86 42" stroke="#161a12" stroke-width="1.6" fill="none"/>
+    <!-- pale, hungry eyes -->
+    <ellipse cx="74" cy="45" rx="4" ry="2.6" fill="#e8f080" filter="url(#gho-glow)" opacity="0.8"/>
+    <ellipse cx="92" cy="45" rx="4" ry="2.6" fill="#e8f080" filter="url(#gho-glow)" opacity="0.8"/>
+    <ellipse cx="74" cy="45" rx="2.6" ry="1.7" fill="#f8ffc0"/><ellipse cx="92" cy="45" rx="2.6" ry="1.7" fill="#f8ffc0"/>
+    <circle cx="74" cy="45" r="0.8" fill="#121008"/><circle cx="92" cy="45" r="0.8" fill="#121008"/>
+    <path d="M 82 48 L 80 54 L 84 54 Z" fill="#262c22"/>
+    <!-- a wide, wet grin -->
+    <path d="M 66 58 Q 83 72 100 58 Q 83 66 66 58 Z" fill="#2a0806" stroke="#120402" stroke-width="0.7"/>
+    <path d="M 67 58.5 L 69 62 L 71 60 L 73 63.5 L 75 61 L 77 64.5 L 79 61.6 L 81 65 L 83 62 L 85 65 L 87 61.6 L 89 64.5 L 91 61 L 93 63.5 L 95 60 L 97 62 L 99 58.5" fill="none" stroke="#e8e4d0" stroke-width="0.9"/>
+    <!-- a long tongue, and gore -->
+    <path d="M 84 64 C 86 72 84 80 80 84" stroke="#8a3a3a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M 70 62 q -1 6 -3 9 M 96 62 q 1 5 2 8" stroke="#6a0806" stroke-width="1" fill="none"/>
+    </svg>
+  `,
+
   'Manticore': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Manticore">
     <defs>
@@ -4197,6 +4463,8 @@ const MONSTER_SPRITE_SCALE = {
   'Giant': 1.35,
   'Orc King': 1.25,
   'Manticore': 1.35,
+  'Titanoboa': 1.4,
+  'Wendigo': 1.35,
 };
 
 function getMonsterSprite(type) {

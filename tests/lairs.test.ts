@@ -52,6 +52,6 @@ describe('Orcs, the Orc King and the Manticore', () => {
     expect(king.isUnique).toBe(true);
     expect(king.minLevel).toBe(king.maxLevel);
     expect(getDefinition('Manticore').isUnique).toBe(false);
-    expect(getDefinition('Manticore').minDungeonLevel).toBe(4);
+    expect(getDefinition('Manticore').minDungeonLevel).toBe(6);  // roams 6-7; level 4 has only the Orc King's guard
   });
 });

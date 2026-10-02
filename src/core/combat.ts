@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -191,6 +191,10 @@ export function playerFireball(char: Character, monster: Monster, rng: RNG): Com
 
   monster.hp -= damage;
   messages.push(`The ${monster.type} takes ${damage} fire damage.`);
+  if (monster.type === 'Wendigo' && monster.hp > 0) {
+    monster.burnedTurns = WENDIGO.BURN_STOPS_REGEN_TURNS;
+    messages.push('The Wendigo shrieks as the flames catch. Its wounds stop knitting.');
+  }
 
   const monsterDied = monster.hp <= 0;
   if (monsterDied) messages.push(`The ${monster.type} is incinerated!`);
@@ -713,6 +717,118 @@ function manticoreAction(
   }
 }
 
+// ─── The Titanoboa ───────────────────────────────────────────────────────────
+
+/** The Titanoboa's turn. With the character in its coils, it crushes: heavy
+ * damage, and a small chance of crushing them to death outright (halved for
+ * the very strong). Otherwise it bites, slams with its tail, or coils. */
+function titanoboaAction(
+  char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
+  const T = TITANOBOA;
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const hurt = (dmg: number) => { char.hp = Math.max(0, char.hp - dmg); return dmg; };
+  const done = (dmg: number): MonsterActionResult => ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false });
+
+  if (char.heldBy === 'constricted' && (char.heldRounds ?? 0) > 0) {
+    out.ability = 'crushing-coils';
+    const deathChance = getEffectiveStats(char).strength >= T.STRONG_STRENGTH ? T.CRUSH_DEATH_STRONG : T.CRUSH_DEATH_CHANCE;
+    if (rng.float() < deathChance) {
+      out.ability = 'crushed';
+      char.hp = 0;
+      messages.push('The coils tighten all at once. There is a sound like green wood breaking.',
+        'YOU HAVE BEEN CRUSHED TO DEATH.');
+      return done(0);
+    }
+    const dmg = hurt(hit(T.CRUSH_MULT));
+    messages.push(`The coils tighten. Your ribs creak and grind! You suffer ${dmg} damage.`);
+    return done(dmg);
+  }
+
+  const options: [string, number][] = [['titan-bite', T.BITE_WEIGHT], ['tail-slam', T.SLAM_WEIGHT], ['crushing-coils', T.COIL_WEIGHT]];
+  let roll = rng.float() * options.reduce((a, [, w]) => a + w, 0);
+  const ability = (options.find(([, w]) => (roll -= w) < 0) ?? options[0])[0];
+  out.ability = ability;
+  switch (ability) {
+    case 'titan-bite': {
+      const dmg = hurt(hit(T.BITE_MULT));
+      messages.push(`The Titanoboa strikes like a falling tree, its jaws closing on you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'tail-slam': {
+      const dmg = hurt(hit(T.SLAM_MULT));
+      messages.push(`A coil as thick as a barrel sweeps out of the dark and slams you into the wall! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(T.COIL_MULT));
+      messages.push(`The Titanoboa loops around you in a heartbeat. You are caught in its coils! You suffer ${dmg} damage.`);
+      if (char.hp > 0) holdCharacter(char, rng.int(T.COIL_ROUNDS_MIN, T.COIL_ROUNDS_MAX), 'constricted');
+      return done(dmg);
+    }
+  }
+}
+
+// ─── The Wendigo ─────────────────────────────────────────────────────────────
+
+/** The Wendigo's turn: first its wounds knit (unless fire has touched it in
+ * the last couple of turns), then frostbitten claws that numb the hands, a
+ * devouring bite that feeds it, or a howl of endless hunger that can freeze
+ * the character in terror. */
+function wendigoAction(
+  char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
+  const W = WENDIGO;
+  let healed = 0;
+  if ((monster.burnedTurns ?? 0) > 0) {
+    monster.burnedTurns!--;
+  } else if (monster.hp < monster.maxHp) {
+    healed = Math.min(monster.maxHp - monster.hp, Math.round(monster.maxHp * W.REGEN));
+    monster.hp += healed;
+    messages.push(`The Wendigo's torn grey flesh knits back together. (+${healed} HP)`);
+  }
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const hurt = (dmg: number) => { char.hp = Math.max(0, char.hp - dmg); return dmg; };
+  const done = (dmg: number): MonsterActionResult =>
+    ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false, monsterHealed: healed || undefined });
+
+  const options: [string, number][] = [['frostbite-claws', W.CLAW_WEIGHT], ['devouring-bite', W.BITE_WEIGHT], ['hunger-howl', W.HOWL_WEIGHT]];
+  let roll = rng.float() * options.reduce((a, [, w]) => a + w, 0);
+  const ability = (options.find(([, w]) => (roll -= w) < 0) ?? options[0])[0];
+  out.ability = ability;
+  switch (ability) {
+    case 'frostbite-claws': {
+      const dmg = hurt(hit(W.CLAW_MULT));
+      messages.push(`Claws like icicles rake across you, burning with cold! You suffer ${dmg} damage.`);
+      if (char.hp > 0 && !char.statusEffects.some(e => e.type === 'dexterity-reduced')) {
+        addStatusEffect(char, { type: 'dexterity-reduced', value: W.NUMB_DEX, turns: W.NUMB_TURNS });
+        messages.push(`Frostbite numbs your hands. (-${W.NUMB_DEX} Dexterity)`);
+      }
+      return done(dmg);
+    }
+    case 'devouring-bite': {
+      const dmg = hurt(hit(W.BITE_MULT));
+      const feed = Math.min(monster.maxHp - monster.hp, Math.round(dmg * W.BITE_FEED));
+      monster.hp += feed;
+      healed += feed;
+      messages.push(`The Wendigo's lipless mouth tears a mouthful from you, and it swallows! You suffer ${dmg} damage.`,
+        ...(feed > 0 ? [`It grows stronger as it feeds. (+${feed} HP)`] : []));
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(W.HOWL_MULT));
+      messages.push(`The Wendigo throws back its antlered head and howls its endless hunger! The cold cuts you for ${dmg} damage.`);
+      if (char.hp > 0 && rng.float() < W.HOWL_FEAR_CHANCE) {
+        holdCharacter(char, 1, 'feared');
+        messages.push('Terror roots you to the spot.');
+      }
+      return done(dmg);
+    }
+  }
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -877,6 +993,8 @@ const ATTACK_NAMES: Record<string, string> = {
   'engulf-paralyze': 'engulfing mass',
   'gaze-paralyze': 'paralyzing gaze',
   'paralysis-touch': 'paralyzing touch',
+  'ghoul-claws': 'paralyzing claws',
+  'filthy-bite': 'festering bite',
   'spore-poison': 'poison spores',
   'slime-disease': 'diseased slime',
   'fear-ray': 'fear ray',
@@ -885,6 +1003,12 @@ const ATTACK_NAMES: Record<string, string> = {
   'telekinetic-ray': 'telekinetic ray',
   'charm-ray': 'charm ray',
   'sleep-ray': 'sleep ray',
+  'crushing-coils': 'crushing coils',
+  'titan-bite': 'bite',
+  'tail-slam': 'tail',
+  'frostbite-claws': 'frostbitten claws',
+  'devouring-bite': 'devouring bite',
+  'hunger-howl': 'howl',
   'bite': 'bite',
   'twin-claws': 'claws',
   'tail-whip': 'tail',
@@ -905,6 +1029,7 @@ export function killedBy(monster: Monster, ability: string | undefined): string 
     case 'radiation':        return `Killed by the radioactive flesh of ${who}.`;
     case 'hypnosis':         return `Hypnotized and drained dry by ${who}.`;
     case 'ball-of-doo':      return 'Turned into a pile of lizard shit by Asmodeus.';
+    case 'crushed':          return `Crushed to death in the coils of ${who}.`;
     case 'petrify-ray':      return `Turned to stone by ${who}.`;
     case 'death-ray':        return `Slain by the death ray of ${who}.`;
     case 'disintegrate-ray': return `Disintegrated by ${who}.`;
@@ -981,6 +1106,8 @@ function monsterActionInner(
 
   if (monster.type === 'Orc King') return orcKingAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Manticore') return manticoreAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Titanoboa') return titanoboaAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Wendigo') return wendigoAction(char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -1117,9 +1244,10 @@ function monsterActionInner(
 
   // Handle paralysis (Basilisk gaze, Gelatinous Cube engulf, Lich touch):
   // a paralyzed character loses their next rounds.
-  if (ability === 'gaze-paralyze' || ability === 'engulf-paralyze' || ability === 'paralysis-touch') {
+  if (ability === 'gaze-paralyze' || ability === 'engulf-paralyze' || ability === 'paralysis-touch' || ability === 'ghoul-claws') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked);
     char.hp = Math.max(0, char.hp - dmg);
+    if (ability === 'ghoul-claws') messages.push(`The ${monster.type}'s filthy claws rake you, and a creeping numbness spreads from the wound.`);
     if (rng.float() < COMBAT.PARALYSIS_CHANCE) {
       addStatusEffect(char, { type: 'paralyzed', value: 0, turns: 2 });
       const engulfed = ability === 'engulf-paralyze';
@@ -1223,7 +1351,7 @@ function monsterActionInner(
   messages.push(monsterAttackText(monster.type, dmg, ability));
 
   // Poison on poison-breath/spore etc
-  if ((ability === 'poison-breath' || ability === 'spore-poison' || ability === 'slime-disease') && rng.float() < 0.3) {
+  if ((ability === 'poison-breath' || ability === 'spore-poison' || ability === 'slime-disease' || ability === 'filthy-bite') && rng.float() < 0.3) {
     addStatusEffect(char, { type: 'poison', value: 4, turns: 6 });
     messages.push('You have been poisoned!');
   }
@@ -1501,12 +1629,24 @@ const HELD_TEXT: Record<HeldCondition, string> = {
   asleep:     'You are fast asleep!',
   charmed:    'You gaze adoringly at the Beholder and do nothing.',
   engulfed:   'You struggle inside the quivering jelly but cannot break free!',
+  constricted: 'You strain against the coils, but they only tighten!',
   petrifying: 'Your stone legs will not obey you!',
 };
 
 /** A round the character loses to being held: they do nothing and the
  * monster acts. */
 export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  // Coils can be fought: Strength gives a chance to wriggle free at once.
+  if (char.heldBy === 'constricted') {
+    const chance = Math.min(TITANOBOA.BREAK_FREE_MAX, getEffectiveStats(char).strength * TITANOBOA.BREAK_FREE_PER_STRENGTH);
+    if (rng.float() < chance) {
+      char.heldRounds = 0;
+      char.heldBy = undefined;
+      const messages = ['With a desperate heave you force the coils apart and tear yourself free!'];
+      const res = monsterAction(char, monster, rng, messages);
+      return { ...res, playerDamage: 0, monsterDied: false };
+    }
+  }
   const messages = [HELD_TEXT[char.heldBy ?? 'paralyzed']];
   char.heldRounds = Math.max(0, (char.heldRounds ?? 1) - 1);
   if (char.heldRounds === 0) char.heldBy = undefined;

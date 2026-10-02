@@ -21,7 +21,7 @@ import {
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
 import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE } from './config.js';
-import { LAIR_WARNINGS } from '../content/lair-text.js';
+import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair } from './lairs.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
@@ -1059,7 +1059,7 @@ export class GameEngine {
         const monsterId = (content.monsterId ?? 'Asmodeus') as MonsterType;
         if (ds.defeatedUniqueMonsters.has(content.id)) return null;
         if (monsterId === 'Asmodeus' && this.rng.float() < LAIR.ASMODEUS_DISMISS_CHANCE) return this.dismissedByAsmodeus();
-        if (LAIR_WARNINGS[monsterId]) return this.startLairWarning(content, monsterId);
+        if (LAIRS[monsterId]) return this.startLairWarning(content, monsterId);
         return this.startFixedEncounter(content, monsterId);
       }
 
@@ -1176,7 +1176,7 @@ export class GameEngine {
     const b = this.lairDexBonus();
     const bonus = b === 0 ? '' : ` ${b > 0 ? '+' : '−'} ${Math.abs(b)}`;
     this.messages = [
-      ...(LAIR_WARNINGS[monster] ?? []),
+      ...(LAIRS[monster]?.warning ?? []),
       '',
       `[A] Turn back: d20${bonus}, need ${LAIR.TURN_BACK_DC}. Fail, and you're dragged in and struck first.`,
       '[B] Step forward: face what waits on even terms.',
@@ -1210,6 +1210,7 @@ export class GameEngine {
   lairChoice(key: string): GameState {
     if (!this.char || this.phase !== 'lair-warning' || !this.lair) return this.getState();
     const { content, monster, from } = this.lair;
+    const text = LAIRS[monster]!;
     const bonus = this.lairDexBonus();
     const roll = (dc: number) => {
       const d = this.rng.die(20);
@@ -1226,17 +1227,17 @@ export class GameEngine {
         this.phase = 'playing';
         this.lightAround();
         this.lastArea = null;
-        this.messages = [`You tear your eyes away and back out of the smoke. ${r.text}`, '', 'Laughter follows you down the passage.', '', ...this.enterArea()];
+        this.messages = [`${text.backAway} ${r.text}`, '', text.afterBackAway, '', ...this.enterArea()];
         return this.getState();
       }
       this.startFixedEncounter(content, monster);
-      return this.lairFirstStrike([`You turn to flee... ${r.text}`, 'An unseen hand seizes you and drags you before the throne!', '']);
+      return this.lairFirstStrike([`You turn to flee... ${r.text}`, text.dragged, '']);
     }
 
     if (key === 'b') {
       this.lair = null;
       this.startFixedEncounter(content, monster);
-      this.messages = ['You steel yourself and step into the smoke.', '', ...this.messages];
+      this.messages = [text.stepIn, '', ...this.messages];
       return this.getState();
     }
 
@@ -1244,11 +1245,11 @@ export class GameEngine {
       const r = roll(LAIR.CHARGE_DC);
       this.lair = null;
       this.startFixedEncounter(content, monster);
-      if (!r.ok) return this.lairFirstStrike([`You charge, but it is faster. ${r.text}`, '']);
+      if (!r.ok) return this.lairFirstStrike([`${text.chargeFail} ${r.text}`, '']);
       const intro = this.messages;
       this.combat!.monster.caughtOffGuard = true;
       const state = this.combatAttack();
-      this.messages = [`You charge into the smoke! ${r.text}`, '', ...intro, '', ...this.messages];
+      this.messages = [`${text.charge} ${r.text}`, '', ...intro, '', ...this.messages];
       state.messages = [...this.messages];
       return state;
     }
@@ -1257,13 +1258,13 @@ export class GameEngine {
       const r = roll(LAIR.SNEAK_DC);
       this.lair = null;
       this.startFixedEncounter(content, monster);
-      if (!r.ok) return this.lairFirstStrike([`You creep through the smoke... but it was watching all along. ${r.text}`, '']);
+      if (!r.ok) return this.lairFirstStrike([`${text.sneakFail} ${r.text}`, '']);
       const intro = this.messages;
       const m = this.combat!.monster;
       m.caughtOffGuard = true;
       const hpBefore = m.hp;
       let state = this.combatAttack();
-      const lead = [`You slip through the smoke, unseen, and strike from the shadows! ${r.text}`, '', ...intro, ''];
+      const lead = [`${text.sneak} ${r.text}`, '', ...intro, ''];
       // The blow from the shadows lands twice as hard.
       const dealt = hpBefore - m.hp;
       if ((this.phase as GamePhase) === 'combat' && this.combat && dealt > 0 && m.hp > 0) {

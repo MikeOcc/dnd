@@ -140,6 +140,9 @@ export type MonsterType =
   | 'Giant'
   | 'Owlbear'
   | 'Manticore'
+  | 'Ghoul'
+  | 'Titanoboa'
+  | 'Wendigo'
   | 'Displacer Beast'
   | 'Basilisk'
   | 'Mold'
@@ -203,6 +206,7 @@ export interface Monster {
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  burnedTurns?: number;     // Wendigo: turns its regeneration stays stopped after fire
   scareAttempts?: number;   // failed attempts to scare it off this fight: each makes the next harder
   regenerated?: boolean;     // Asmodeus has used his Infernal Regeneration this fight
   caughtOffGuard?: boolean;  // a successful charge into its lair: it can't answer the first blow
@@ -224,7 +228,7 @@ export interface Fx {
   cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
 }
 
-export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed';
+export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted';
 
 /** The Beholder's eye rays, one per eyestalk. */
 export type BeholderRay =

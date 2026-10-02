@@ -33,7 +33,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   // the deeper levels.
   'Manticore': {
     type: 'Manticore', isUndead: false, isUnique: false,
-    minLevel: 52, maxLevel: 60, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
+    minLevel: 52, maxLevel: 60, naturalTier: 6, minDungeonLevel: 6, speed: 1.1,
     baseHpPerLevel: 11, baseAttackPerLevel: 4.0, baseDefensePerLevel: 2.5,
     fireballResistance: 1.0,
     encounterIntro: [
@@ -45,13 +45,46 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['bite', 'twin-claws', 'tail-whip', 'poison-stinger'],  // see combat.ts, manticoreAction
   },
+  // A snake as thick as a barrel and longer than the corridor it fills. It
+  // coils and crushes (combat.ts, titanoboaAction).
+  'Titanoboa': {
+    type: 'Titanoboa', isUndead: false, isUnique: false,
+    minLevel: 54, maxLevel: 60, naturalTier: 8, minDungeonLevel: 7, speed: 0.9,
+    baseHpPerLevel: 20, baseAttackPerLevel: 4.4, baseDefensePerLevel: 3.0,
+    fireballResistance: 1.0, coldResistance: 1.4,
+    encounterIntro: [
+      'The floor ahead moves. Then you see it is not the floor.',
+      'Coils as thick as a barrel slide out of the dark, scale over scale, and keep coming.',
+      'A head the size of a horse rises above you, tongue tasting the air.',
+      '',
+      'You have encountered a Level {LVL} Titanoboa!',
+    ],
+    specialAbilities: ['crushing-coils', 'titan-bite', 'tail-slam'],
+  },
+  // A gaunt, antlered spirit of starvation and winter, forever hungry. It
+  // regenerates unless burned (combat.ts, wendigoAction).
+  'Wendigo': {
+    type: 'Wendigo', isUndead: false, isUnique: false,
+    minLevel: 52, maxLevel: 60, naturalTier: 8, minDungeonLevel: 7, speed: 1.3,
+    baseHpPerLevel: 13, baseAttackPerLevel: 4.2, baseDefensePerLevel: 2.5,
+    fireballResistance: 1.8, coldResistance: 0.2,
+    encounterIntro: [
+      'From somewhere behind you, a friend\'s voice calls your name. You are alone down here.',
+      'The air turns bitterly cold. Frost spreads across the walls.',
+      'Something impossibly tall and thin unfolds from the dark: grey skin stretched over bone,',
+      'a skull crowned with antlers, and a lipless mouth that will not stop chewing.',
+      '',
+      'You have encountered a Level {LVL} Wendigo!',
+    ],
+    specialAbilities: ['frostbite-claws', 'devouring-bite', 'hunger-howl'],
+  },
   // The one Orc King, on level 4: a towering warlord in black plate, a
   // veteran of a hundred wars, who calls on Gruumsh for a few dark gifts.
   // His fighting is in combat.ts (orcKingAction).
   'Orc King': {
     type: 'Orc King', isUndead: false, isUnique: true,
-    minLevel: 42, maxLevel: 42, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
-    baseHpPerLevel: 18, baseAttackPerLevel: 3.2, baseDefensePerLevel: 5.0,
+    minLevel: 58, maxLevel: 58, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
+    baseHpPerLevel: 15, baseAttackPerLevel: 2.9, baseDefensePerLevel: 5.0,
     fireballResistance: 0.8, lightningResistance: 0.9,
     encounterIntro: [
       'War drums thunder, and the passage fills with torchlight.',
@@ -153,6 +186,21 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     fireballResistance: 1.0,
     encounterIntro: ['A grey shape with hollow eyes drifts through the stone wall.', '', 'You have encountered a Level {LVL} Wight!'],
     specialAbilities: ['life-drain'],
+  },
+  // Eaters of the dead, in packs on the middle levels. A ghoul's claws carry
+  // a numbing paralysis, and its bite festers.
+  'Ghoul': {
+    type: 'Ghoul', isUndead: true, isUnique: false,
+    minLevel: 4, maxLevel: 30, naturalTier: 3, minDungeonLevel: 2, speed: 1.2,
+    baseHpPerLevel: 8, baseAttackPerLevel: 3.2, baseDefensePerLevel: 2.0,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'A wet crunching stops. Something hunched over a corpse lifts its head.',
+      'Grey, hairless, all knuckles and teeth, it grins at you with a mouthful of someone else.',
+      '',
+      'You have encountered a Level {LVL} Ghoul!',
+    ],
+    specialAbilities: ['ghoul-claws', 'filthy-bite'],
   },
   'Spectre': {
     type: 'Spectre', isUndead: true, isUnique: false,
@@ -434,6 +482,7 @@ export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterTy
 export function monsterAttackText(type: MonsterType, damage: number, ability?: string): string {
   const actions: Record<string, string> = {
     'acid-breath':      `The ${type} breathes acid! You suffer ${damage} damage.`,
+    'filthy-bite':      `The ${type} sinks its filthy teeth into you! You suffer ${damage} damage.`,
     'poison-breath':    `The ${type} exhales venom! You suffer ${damage} damage.`,
     'lightning-breath': `The ${type} unleashes lightning! You suffer ${damage} damage.`,
     'frost-breath':     `The ${type} breathes frost! You suffer ${damage} damage.`,
@@ -466,7 +515,7 @@ export function monsterAttackText(type: MonsterType, damage: number, ability?: s
 }
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
 ];
 
 export function isUndead(type: MonsterType): boolean {
@@ -474,9 +523,9 @@ export function isUndead(type: MonsterType): boolean {
 }
 
 export const RANDOM_MONSTER_POOL: MonsterType[] = [
-  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Displacer Beast', 'Basilisk',
+  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Titanoboa', 'Wendigo', 'Displacer Beast', 'Basilisk',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
-  'Skeleton', 'Zombie', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon',
 ];

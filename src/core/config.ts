@@ -447,6 +447,30 @@ export const FIRST_LEVEL = {
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
 } as const;
 
+// The Titanoboa (level 7): a snake longer than a corridor. It bites, slams
+// with its tail, or coils around you; once coiled, every turn it crushes,
+// with a small chance of killing outright. Strength helps you wriggle free.
+export const TITANOBOA = {
+  BITE_WEIGHT: 30, BITE_MULT: 1.3,
+  SLAM_WEIGHT: 25, SLAM_MULT: 1.0,
+  COIL_WEIGHT: 45, COIL_MULT: 0.6, COIL_ROUNDS_MIN: 2, COIL_ROUNDS_MAX: 3,
+  CRUSH_MULT: 1.1,
+  CRUSH_DEATH_CHANCE: 0.05,     // per crushing turn
+  CRUSH_DEATH_STRONG: 0.025,    // ...halved with Strength at least STRONG_STRENGTH
+  STRONG_STRENGTH: 20,
+  BREAK_FREE_PER_STRENGTH: 0.015, BREAK_FREE_MAX: 0.5,   // chance per held round to wriggle free
+} as const;
+
+// The Wendigo (level 7): a gaunt spirit of hunger and winter. It knits its
+// wounds every turn unless fire has touched it lately.
+export const WENDIGO = {
+  REGEN: 0.06,                  // of max HP, each of its turns
+  BURN_STOPS_REGEN_TURNS: 2,    // after a Fireball
+  CLAW_WEIGHT: 40, CLAW_MULT: 1.0, NUMB_DEX: 3, NUMB_TURNS: 12,
+  BITE_WEIGHT: 35, BITE_MULT: 1.3, BITE_FEED: 0.5,   // heals this share of the bite
+  HOWL_WEIGHT: 25, HOWL_MULT: 0.5, HOWL_FEAR_CHANCE: 0.5,
+} as const;
+
 // The Manticore's fighting (combat.ts, manticoreAction). Each turn it picks
 // one attack by weight.
 export const MANTICORE = {

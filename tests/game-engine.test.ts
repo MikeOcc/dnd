@@ -2128,3 +2128,32 @@ describe('GameEngine — anaphylaxis', () => {
     expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'anaphylaxis')).toBe(true);
   });
 });
+
+describe("GameEngine — the Orc King's lair warning", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('stepping onto his throne brings up the hall of shields, with his own lines', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.dungeonLevel = 4; e.loadLevelIntoCache(4); e.phase = 'playing';
+    e.char.hp = e.char.maxHp = 1_000_000;
+    const lvl = e.getLevel(4);
+    const [kx, ky] = [...lvl.contents.entries()].find(([, c]: [string, { id: string }]) => c.id === 'unique-orc-king')![0].split(',').map(Number);
+    for (const [dir, ox, oy] of [['N', 0, 1], ['S', 0, -1], ['E', -1, 0], ['W', 1, 0]] as const) {
+      if (!canMove(lvl.grid, kx + ox, ky + oy, dir)) continue;
+      e.char.x = kx + ox; e.char.y = ky + oy; e.char.facing = dir;
+      const state = e.tryMove(dir, '');
+      expect(state.phase).toBe('lair-warning');
+      expect(state.lair).toEqual({ monster: 'Orc King' });
+      expect(state.messages.join(' ')).toContain('throne built of a hundred shields');
+      e.rng.die = () => 1;
+      expect(engine.lairChoice('a').messages.join(' ')).toContain('Orc guards drag you before the throne');
+      return;
+    }
+    throw new Error('no approach to the throne');
+  });
+});

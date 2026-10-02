@@ -1566,3 +1566,73 @@ describe('The Manticore in combat', () => {
     throw new Error('never went into shock');
   });
 });
+
+describe('Level 7: the Titanoboa and the Wendigo; and Ghouls', () => {
+  const hero = (str = 14) => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 60; c.hp = c.maxHp = 1_000_000; c.strength = str; c.statusEffects = [];
+    return c;
+  };
+
+  it('the Titanoboa coils you up, crushes you while held, and can crush you to death outright', () => {
+    const rng = new RNG(41);
+    let coiled = false, crushedDead = false;
+    for (let i = 0; i < 2000 && !(coiled && crushedDead); i++) {
+      const c = hero();
+      const snake = createMonster('Titanoboa', 56, 't');
+      const text = monsterFirstStrike(c, snake, rng).messages.join(' ');
+      if (text.includes('caught in its coils')) {
+        coiled = true;
+        expect(c.heldBy).toBe('constricted');
+        const crush = monsterFirstStrike(c, snake, rng);
+        if (crush.messages.join(' ').includes('CRUSHED TO DEATH')) {
+          crushedDead = true;
+          expect(c.hp).toBe(0);
+          expect(crush.deathCause).toMatch(/^Crushed to death in the coils of a Level \d+ Titanoboa\.$/);
+        }
+      }
+    }
+    expect(coiled).toBe(true);
+    expect(crushedDead).toBe(true);
+  });
+
+  it('strength helps break free of the coils', () => {
+    let freed = 0;
+    const rng = new RNG(3);
+    for (let i = 0; i < 400; i++) {
+      const c = hero(30);
+      c.heldRounds = 2; c.heldBy = 'constricted';
+      const snake = createMonster('Titanoboa', 56, 't');
+      if (playerHeld(c, snake, rng).messages[0].includes('tear yourself free')) freed++;
+    }
+    expect(freed).toBeGreaterThan(100);
+  });
+
+  it('the Wendigo regenerates each turn, unless fire has touched it', () => {
+    const w = createMonster('Wendigo', 55, 'w');
+    w.hp = Math.round(w.maxHp / 2);
+    const before = w.hp;
+    monsterFirstStrike(hero(), w, new RNG(5));
+    expect(w.hp).toBeGreaterThan(before);
+
+    const w2 = createMonster('Wendigo', 55, 'w2');
+    w2.hp = w2.maxHp = 1e7;
+    const c = hero();
+    playerFireball(c, w2, new RNG(6));
+    expect(w2.burnedTurns).toBeGreaterThan(0);
+    w2.hp = w2.maxHp / 2;
+    const text = monsterFirstStrike(c, w2, new RNG(8)).messages.join(' ');
+    expect(text).not.toContain('knits back together');
+  });
+
+  it('ghouls are undead with paralyzing claws', () => {
+    expect(createMonster('Ghoul', 10, 'g').definition.isUndead).toBe(true);
+    const rng = new RNG(13);
+    for (let i = 0; i < 400; i++) {
+      const c = hero();
+      const text = monsterFirstStrike(c, createMonster('Ghoul', 20, 'g'), rng).messages.join(' ');
+      if (text.includes('paralyzes you')) { expect(c.heldBy).toBe('paralyzed'); return; }
+    }
+    throw new Error('never paralyzed');
+  });
+});
