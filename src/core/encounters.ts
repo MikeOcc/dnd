@@ -301,6 +301,17 @@ export interface AltarResult {
 const ALTAR_WARD_ROUNDS = 2;
 
 export function resolveAltar(char: Character, rng: RNG): AltarResult {
+  // Holy fire burns out a ghoul's rot, if it hasn't gone too far, before anything else.
+  const rot = char.statusEffects.find(e => e.type === 'flesh-rot');
+  if (rot && rot.doom === undefined) {
+    char.statusEffects = char.statusEffects.filter(e => e !== rot);
+    const rest = resolveAltarBlessing(char, rng);
+    return { ...rest, messages: [`White fire races over your ${rot.part ?? 'wound'}, and the rot burns away to clean, pink flesh.`, '', ...rest.messages] };
+  }
+  return resolveAltarBlessing(char, rng);
+}
+
+function resolveAltarBlessing(char: Character, rng: RNG): AltarResult {
   const wisdomBonus = Math.floor(char.wisdom / 5);
   const roll = rng.float() - wisdomBonus * 0.02;
   const healBand = char.dungeonLevel === 1 ? FIRST_LEVEL.ALTAR_HEAL_CHANCE : 0.30;

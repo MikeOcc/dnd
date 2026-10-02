@@ -84,6 +84,9 @@ html, body {
 #hp-display.crit { color: var(--terminal-red); }
 #shock-display { color: var(--terminal-red); font-weight: bold; animation: fx-blink 1.1s steps(1) infinite; }
 #shock-display.hidden { display: none; }
+#rot-display { color: var(--terminal-amber); }
+#rot-display.doomed { color: var(--terminal-red); font-weight: bold; animation: fx-blink 1.1s steps(1) infinite; }
+#rot-display.hidden { display: none; }
 #xp-display       { color: var(--terminal-green-dim); }
 #gold-display     { color: var(--terminal-amber); }
 #potions-display  { color: var(--terminal-green-dim); }

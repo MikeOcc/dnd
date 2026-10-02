@@ -167,9 +167,10 @@ export function getEffectiveStats(char: Character): Character {
   return c;
 }
 
-export function tickStatusEffects(char: Character): { messages: string[]; damageTaken: number } {
+export function tickStatusEffects(char: Character): { messages: string[]; damageTaken: number; fatal?: string } {
   const messages: string[] = [];
   let damageTaken = 0;
+  let fatal: string | undefined;
 
   const remaining: StatusEffect[] = [];
   for (const eff of char.statusEffects) {
@@ -191,9 +192,12 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       messages.push(`You are bleeding! You suffer ${eff.value} damage.`);
     }
     if (eff.type === 'flesh-rot') {
-      char.hp = Math.max(1, char.hp - eff.value);
-      damageTaken += eff.value;
-      messages.push(`Your rotting flesh blackens and sloughs away. You suffer ${eff.value} damage.`);
+      const r = advanceFleshRot(char, eff);
+      messages.push(...r.messages);
+      damageTaken += r.damage;
+      if (r.fatal) fatal = r.fatal;
+      // Once it has gone too far, it doesn't burn out: the countdown runs.
+      if (eff.doom !== undefined) { remaining.push(eff); continue; }
     }
     const newTurns = eff.turns - 1;
     if (newTurns > 0) remaining.push({ ...eff, turns: newTurns });
@@ -210,7 +214,57 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
     }
   }
   char.statusEffects = remaining;
-  return { messages, damageTaken };
+  return { messages, damageTaken, fatal };
+}
+
+// ─── Flesh rot ───────────────────────────────────────────────────────────────
+
+function rotLimit(part: string | undefined): number {
+  return part === 'head' ? GHOUL.ROT_FATAL_HEAD : GHOUL.ROT_FATAL_LIMB;
+}
+
+/** One turn of flesh rot (a step, a second of rest, or a combat round): it
+ * eats a little HP and spreads a stage further through its body part. Too
+ * far, and the countdown starts: a warning next turn, death the turn after.
+ * Changes `eff` in place; returns what happened, and a death cause if it's
+ * over. */
+export function advanceFleshRot(char: Character, eff: StatusEffect): { messages: string[]; damage: number; fatal?: string } {
+  const part = eff.part ?? 'left arm';
+  if (eff.doom !== undefined) {
+    eff.doom--;
+    if (eff.doom <= 0) {
+      return { messages: [], damage: 0, fatal: part === 'head'
+        ? 'The flesh rot ate through your skull and into your brain.'
+        : `The flesh rot spread from your ${part} into your heart.` };
+    }
+    return { messages: [part === 'head'
+      ? 'Your thoughts are coming apart. You have moments left.'
+      : `Black veins race from your ${part} toward your heart. You have moments left.`], damage: 0 };
+  }
+  char.hp = Math.max(1, char.hp - eff.value);
+  eff.stage = (eff.stage ?? 0) + 1;
+  const limit = rotLimit(part);
+  if (eff.stage >= limit) {
+    eff.doom = GHOUL.ROT_DOOM_TURNS;
+    return { messages: [part === 'head'
+      ? 'The rot has eaten through to the bone of your skull. It is in your blood now. Nothing can stop it.'
+      : `The rot has eaten your ${part} to the bone. It is in your blood now. Nothing can stop it.`], damage: eff.value };
+  }
+  const frac = eff.stage / limit;
+  const where = `your ${part}`;
+  const msg = frac < 0.25 ? `The flesh of ${where} is grey and stinking. (-${eff.value} HP)`
+    : frac < 0.5 ? `The rot spreads through ${where}, black and weeping. (-${eff.value} HP)`
+    : frac < 0.75 ? `Flesh sloughs from ${where}. You can see bone. (-${eff.value} HP)`
+    : `The rot in ${where} is spreading fast. It will kill you soon. (-${eff.value} HP)`;
+  return { messages: [msg], damage: eff.value };
+}
+
+/** Healing beats flesh rot back a few stages, until it has gone too far. */
+export function slowFleshRot(char: Character, stages: number): string | null {
+  const rot = char.statusEffects.find(e => e.type === 'flesh-rot');
+  if (!rot || rot.doom !== undefined || !rot.stage) return null;
+  rot.stage = Math.max(0, rot.stage - stages);
+  return `The healing beats back the rot in your ${rot.part ?? 'flesh'}.`;
 }
 
 export function hasEffect(char: Character, type: StatusEffectType): boolean {

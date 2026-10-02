@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -545,9 +545,11 @@ export class GameEngine {
     this.cue('gulp');
     const actual = Math.min(potionHealAmount(this.char, this.rng), this.char.maxHp - this.char.hp);
     this.char.hp += actual;
+    const beaten = slowFleshRot(this.char, GHOUL.ROT_PUSHBACK_POTION);
     this.messages = [
       `You drink the healing potion and recover ${actual} HP.`,
       `(${this.char.inventory.potions} potions remaining)`,
+      ...(beaten ? [beaten] : []),
     ];
     return this.getState();
   }
@@ -595,7 +597,8 @@ export class GameEngine {
     if (!this.char || this.phase !== 'resting') return this.getState();
     this.restTicks++;
 
-    const { messages: statusMsgs } = tickStatusEffects(this.char);
+    const { messages: statusMsgs, fatal } = tickStatusEffects(this.char);
+    if (fatal) return this.handleDeath(fatal);
     const heal = Math.min(
       this.char.maxHp - this.char.hp,
       Math.max(1, Math.round(this.char.maxHp * GAMEPLAY.REST_HEAL_PCT_PER_TICK)),
@@ -820,8 +823,9 @@ export class GameEngine {
 
     // Tick status effects
     const dot = this.char.statusEffects.find(e => e.type === 'poison' || e.type === 'mummified' || e.type === 'bleeding' || e.type === 'flesh-rot');
-    const { messages: statusMsgs, damageTaken } = tickStatusEffects(this.char);
+    const { messages: statusMsgs, damageTaken, fatal } = tickStatusEffects(this.char);
     this.messages = statusMsgs;
+    if (fatal) return this.handleDeath(fatal);
     if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' || dot?.type === 'flesh-rot' ? 'drain' : 'physical';
 
     // Passive HP regeneration
@@ -1882,6 +1886,14 @@ export class GameEngine {
     if (result.playerDied) {
       const monster = this.combat!.monster;
       return this.handleDeath(result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`, result.killingBlow);
+    }
+
+    // Flesh rot keeps eating through a fight, a stage each round.
+    const rot = this.char.statusEffects.find(e => e.type === 'flesh-rot');
+    if (rot && !result.monsterDied) {
+      const r = advanceFleshRot(this.char, rot);
+      this.messages.push(...r.messages);
+      if (r.fatal) return this.handleDeath(r.fatal);
     }
 
     if (result.banished) {

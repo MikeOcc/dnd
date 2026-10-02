@@ -1,7 +1,7 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -113,6 +113,8 @@ export function playerPotion(char: Character, monster: Monster, rng: RNG): Comba
     `You gulp down a healing potion and recover ${healed} HP.`,
     `(${char.inventory.potions} potion${char.inventory.potions === 1 ? '' : 's'} left)`,
   ];
+  const beaten = slowFleshRot(char, GHOUL.ROT_PUSHBACK_POTION);
+  if (beaten) messages.push(beaten);
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: 0, monsterDied: false };
 }
@@ -419,6 +421,8 @@ export function playerHeal(char: Character, monster: Monster, rng: RNG): CombatR
 
   const messages: string[] = ['You cast Heal.'];
   if (healingFactor(char) < 1) messages.push('The rot in your flesh fights the magic.');
+  const beaten = slowFleshRot(char, GHOUL.ROT_PUSHBACK_HEAL);
+  if (beaten) messages.push(beaten);
   char.hp = Math.min(char.hp + healAmount, char.maxHp);
   messages.push(`You recover ${healAmount} hit points.`);
 
@@ -726,8 +730,20 @@ function maybeFleshRot(char: Character, monster: Monster, rng: RNG, messages: st
   if (rng.float() >= chance) return;
   const ancient = monster.level >= GHOUL.ANCIENT_LEVEL;
   const value = Math.max(2, Math.round(monster.level / GHOUL.ROT_LEVELS_PER_DAMAGE));
-  addStatusEffect(char, { type: 'flesh-rot', value, turns: ancient ? GHOUL.ANCIENT_ROT_STEPS : GHOUL.ROT_STEPS });
-  messages.push('The wound darkens and begins to stink. FLESH ROT! Healing will only half take until it passes.');
+  const turns = ancient ? GHOUL.ANCIENT_ROT_STEPS : GHOUL.ROT_STEPS;
+  const rot = char.statusEffects.find(e => e.type === 'flesh-rot');
+  if (rot) {
+    if (rot.doom !== undefined) return;
+    rot.stage = (rot.stage ?? 0) + GHOUL.ROT_REINFECT_STAGES;
+    rot.turns = Math.max(rot.turns, turns);
+    rot.value = Math.max(rot.value, value);
+    messages.push(`Fresh filth in the wound! The rot in your ${rot.part} surges forward.`);
+    return;
+  }
+  const part = rng.pick([...GHOUL.ROT_PARTS]);
+  char.statusEffects.push({ type: 'flesh-rot', value, turns, part, stage: 0 });
+  messages.push(`The wound on your ${part} darkens and begins to stink. FLESH ROT!`,
+    'It will spread with every step. Healing beats it back, but only half takes; an altar can burn it out.');
 }
 
 // ─── The Titanoboa ───────────────────────────────────────────────────────────

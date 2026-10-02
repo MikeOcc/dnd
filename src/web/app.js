@@ -494,6 +494,17 @@ function updateStatusBar(char) {
   const hpRatio = char.hp / char.maxHp;
   hpEl.className = hpRatio < 0.25 ? 'crit' : hpRatio < 0.5 ? 'warn' : '';
 
+  // A ghoul's flesh rot: which part, and how far it has spread toward fatal.
+  const rot = (char.statusEffects || []).find(e => e.type === 'flesh-rot');
+  const rotEl = document.getElementById('rot-display');
+  if (rot) {
+    const limit = rot.part === 'head' ? 30 : 45;   // GHOUL.ROT_FATAL_HEAD / ROT_FATAL_LIMB in config.ts
+    rotEl.textContent = rot.doom !== undefined ? `ROT ${rot.part.toUpperCase()}: DYING` : `Rot ${rot.part} ${rot.stage ?? 0}/${limit}`;
+    rotEl.className = rot.doom !== undefined ? 'doomed' : '';
+  } else {
+    rotEl.className = 'hidden';
+  }
+
   // A Manticore's anaphylaxis: count down the time left, between actions too.
   const shock = (char.statusEffects || []).find(e => e.type === 'anaphylaxis');
   shockDeadline = shock ? Date.now() + (shock.value - char.playTime) * 1000 : null;

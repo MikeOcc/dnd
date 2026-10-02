@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
-import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount } from '../src/core/character.js';
+import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
+import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
 import { GEMS, COMBAT, MANTICORE, GHOUL } from '../src/core/config.js';
@@ -1653,10 +1654,12 @@ describe('Ghouls: flesh rot, and the ancient ones below', () => {
       const rot = c.statusEffects.find(e => e.type === 'flesh-rot')!;
       expect(rot.value).toBe(3);   // level 24 / 8
       expect(rot.turns).toBe(GHOUL.ROT_STEPS);
+      expect(GHOUL.ROT_PARTS).toContain(rot.part);
       const hp = c.hp;
       const tick = tickStatusEffects(c);
       expect(c.hp).toBe(hp - 3);
-      expect(tick.messages.join(' ')).toContain('rotting flesh');
+      expect(tick.messages.join(' ')).toContain(`your ${rot.part}`);
+      expect(c.statusEffects.find(e => e.type === 'flesh-rot')!.stage).toBe(1);
       // Healing at half strength
       const healthy = hero();
       expect(potionHealAmount(c, new RNG(2))).toBe(Math.max(1, Math.round(potionHealAmount(healthy, new RNG(2)) * GHOUL.ROT_HEAL_FACTOR)));
@@ -1688,5 +1691,49 @@ describe('Ghouls: flesh rot, and the ancient ones below', () => {
       expect(share(d)).toBeGreaterThan(0);
       expect(share(d)).toBeLessThan(share(5));
     }
+  });
+});
+
+describe('Flesh rot eats one body part', () => {
+  const rotting = (part: string, stage: number) => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.hp = c.maxHp = 1_000_000;
+    c.statusEffects = [{ type: 'flesh-rot', value: 3, turns: 999, part, stage }];
+    return c;
+  };
+
+  it('too far into a limb: a warning next turn, death the turn after', () => {
+    const c = rotting('left leg', GHOUL.ROT_FATAL_LIMB - 1);
+    const t1 = tickStatusEffects(c);
+    expect(t1.messages.join(' ')).toContain('eaten your left leg to the bone');
+    expect(t1.fatal).toBeUndefined();
+    const t2 = tickStatusEffects(c);
+    expect(t2.messages.join(' ')).toContain('moments left');
+    expect(t2.fatal).toBeUndefined();
+    const t3 = tickStatusEffects(c);
+    expect(t3.fatal).toBe('The flesh rot spread from your left leg into your heart.');
+  });
+
+  it('the head goes faster than a limb', () => {
+    expect(GHOUL.ROT_FATAL_HEAD).toBeLessThan(GHOUL.ROT_FATAL_LIMB);
+    const c = rotting('head', GHOUL.ROT_FATAL_HEAD - 1);
+    tickStatusEffects(c); tickStatusEffects(c);
+    expect(tickStatusEffects(c).fatal).toContain('brain');
+  });
+
+  it('healing beats it back, until it has gone too far', () => {
+    const c = rotting('right arm', 20);
+    expect(slowFleshRot(c, GHOUL.ROT_PUSHBACK_POTION)).toContain('right arm');
+    expect(c.statusEffects[0].stage).toBe(20 - GHOUL.ROT_PUSHBACK_POTION);
+    const doomed = rotting('right arm', 10);
+    doomed.statusEffects[0].doom = 2;
+    expect(slowFleshRot(doomed, 8)).toBeNull();
+  });
+
+  it('an altar burns it out', () => {
+    const c = rotting('left arm', 20);
+    const res = resolveAltar(c, new RNG(4));
+    expect(res.messages[0]).toContain('rot burns away');
+    expect(c.statusEffects.some(e => e.type === 'flesh-rot')).toBe(false);
   });
 });

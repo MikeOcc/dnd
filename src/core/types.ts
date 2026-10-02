@@ -82,6 +82,9 @@ export interface StatusEffect {
   type: StatusEffectType;
   value: number;
   turns: number;
+  part?: string;    // flesh rot: the body part it is eating
+  stage?: number;   // flesh rot: how far it has spread through that part
+  doom?: number;    // flesh rot: turns left to live once it has gone too far
 }
 
 export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald';

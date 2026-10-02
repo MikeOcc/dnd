@@ -461,6 +461,15 @@ export const GHOUL = {
   ANCIENT_LEVEL: 40,            // at or above, an ancient ghoul: its own intro, and a longer rot
   ANCIENT_ROT_STEPS: 70,
   ROT_HEAL_FACTOR: 0.5,
+  // It eats one body part, a stage further each step or combat round. Too far
+  // into that part, and death follows two turns later (a warning between).
+  ROT_PARTS: ['left arm', 'right arm', 'left leg', 'right leg', 'head'],
+  ROT_FATAL_LIMB: 45,
+  ROT_FATAL_HEAD: 30,
+  ROT_REINFECT_STAGES: 10,      // another ghoul hit while rotting
+  ROT_PUSHBACK_POTION: 6,       // a potion beats it back this many stages
+  ROT_PUSHBACK_HEAL: 8,         // ...and the Heal spell this many
+  ROT_DOOM_TURNS: 2,
 } as const;
 
 // The Titanoboa (level 7): a snake longer than a corridor. It bites, slams
