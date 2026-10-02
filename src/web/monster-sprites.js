@@ -898,79 +898,152 @@ const MONSTER_SPRITES = {
   'Manticore': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Manticore">
     <defs>
-    <radialGradient id="mtc-fur" cx="45%" cy="35%" r="75%">
-    <stop offset="0" stop-color="#d8a050"/>
-    <stop offset="0.55" stop-color="#9a6024"/>
-    <stop offset="1" stop-color="#3a200a"/>
+    <radialGradient id="mtc-fur" cx="45%" cy="30%" r="80%">
+    <stop offset="0" stop-color="#c88a40"/>
+    <stop offset="0.45" stop-color="#8a5220"/>
+    <stop offset="1" stop-color="#2a1406"/>
     </radialGradient>
-    <radialGradient id="mtc-mane" cx="50%" cy="45%" r="60%">
-    <stop offset="0" stop-color="#7a3a14"/>
-    <stop offset="1" stop-color="#2a1004"/>
+    <radialGradient id="mtc-mane" cx="50%" cy="55%" r="65%">
+    <stop offset="0" stop-color="#4a1a08"/>
+    <stop offset="0.7" stop-color="#2a0c04"/>
+    <stop offset="1" stop-color="#0e0402"/>
     </radialGradient>
     <linearGradient id="mtc-wing" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#5a3a3a"/>
-    <stop offset="1" stop-color="#1e1010"/>
+    <stop offset="0" stop-color="#4a2626"/>
+    <stop offset="0.6" stop-color="#2a1212"/>
+    <stop offset="1" stop-color="#120606"/>
     </linearGradient>
-    <radialGradient id="mtc-face" cx="45%" cy="35%" r="70%">
-    <stop offset="0" stop-color="#e8b88a"/>
-    <stop offset="0.7" stop-color="#a87050"/>
-    <stop offset="1" stop-color="#5a3420"/>
+    <radialGradient id="mtc-face" cx="45%" cy="30%" r="75%">
+    <stop offset="0" stop-color="#c89878"/>
+    <stop offset="0.55" stop-color="#8a5a44"/>
+    <stop offset="1" stop-color="#3a1e14"/>
     </radialGradient>
     <linearGradient id="mtc-spike" x1="0" y1="1" x2="0" y2="0">
-    <stop offset="0" stop-color="#3a3e46"/>
-    <stop offset="1" stop-color="#c8ccd4"/>
+    <stop offset="0" stop-color="#2a2c32"/>
+    <stop offset="0.6" stop-color="#8a8e98"/>
+    <stop offset="1" stop-color="#e8ecf0"/>
     </linearGradient>
+    <linearGradient id="mtc-tooth" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fffef4"/>
+    <stop offset="1" stop-color="#c8bc98"/>
+    </linearGradient>
+    <radialGradient id="mtc-maw" cx="50%" cy="40%" r="60%">
+    <stop offset="0" stop-color="#7a0c08"/>
+    <stop offset="1" stop-color="#1a0202"/>
+    </radialGradient>
+    <pattern id="mtc-furlines" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(25)">
+    <path d="M 0 3 L 4 3" stroke="#2a1406" stroke-width="0.6" opacity="0.5"/>
+    </pattern>
     <filter id="mtc-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
-    <filter id="mtc-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <filter id="mtc-glow" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <filter id="mtc-shade" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5"/></filter>
     </defs>
 
-    <ellipse cx="80" cy="152" rx="58" ry="5" fill="#000" opacity="0.55" filter="url(#mtc-soft)"/>
+    <!-- shadow and a red underglow -->
+    <ellipse cx="80" cy="153" rx="62" ry="5.5" fill="#000" opacity="0.7" filter="url(#mtc-soft)"/>
+    <ellipse cx="80" cy="150" rx="40" ry="4" fill="#5a0606" opacity="0.35" filter="url(#mtc-shade)"/>
 
-    <!-- bat wings, spread behind -->
-    <path d="M 70 70 C 50 40 24 30 6 36 C 16 44 18 54 14 62 C 24 58 30 64 30 72 C 40 66 50 70 56 80 Z" fill="url(#mtc-wing)" stroke="#120808" stroke-width="1.1"/>
-    <path d="M 90 70 C 110 40 136 30 154 36 C 144 44 142 54 146 62 C 136 58 130 64 130 72 C 120 66 110 70 104 80 Z" fill="url(#mtc-wing)" stroke="#120808" stroke-width="1.1"/>
-    <path d="M 70 70 L 14 62 M 70 70 L 30 72 M 70 70 L 6 36" stroke="#3a2222" stroke-width="0.8"/>
-    <path d="M 90 70 L 146 62 M 90 70 L 130 72 M 90 70 L 154 36" stroke="#3a2222" stroke-width="0.8"/>
+    <!-- tattered bat wings, raised and spread -->
+    <path d="M 66 74 C 50 46 30 22 4 14 C 12 26 10 34 4 42 C 14 40 20 46 18 56 C 26 52 34 58 32 68 C 40 64 48 70 52 82 Z" fill="url(#mtc-wing)" stroke="#0a0404" stroke-width="1.2"/>
+    <path d="M 94 74 C 110 46 130 22 156 14 C 148 26 150 34 156 42 C 146 40 140 46 142 56 C 134 52 126 58 128 68 C 120 64 112 70 108 82 Z" fill="url(#mtc-wing)" stroke="#0a0404" stroke-width="1.2"/>
+    <!-- wing bones and veins -->
+    <g stroke="#5a3030" stroke-width="1.2" fill="none" stroke-linecap="round">
+      <path d="M 66 74 L 4 14"/><path d="M 62 72 L 4 42"/><path d="M 60 74 L 18 56"/><path d="M 58 76 L 32 68"/>
+      <path d="M 94 74 L 156 14"/><path d="M 98 72 L 156 42"/><path d="M 100 74 L 142 56"/><path d="M 102 76 L 128 68"/>
+    </g>
+    <g stroke="#3a1818" stroke-width="0.5" fill="none" opacity="0.8">
+      <path d="M 30 36 q 6 6 4 14"/><path d="M 20 30 q 4 8 0 14"/><path d="M 44 52 q 4 4 2 10"/>
+      <path d="M 130 36 q -6 6 -4 14"/><path d="M 140 30 q -4 8 0 14"/><path d="M 116 52 q -4 4 -2 10"/>
+    </g>
+    <!-- tears in the wing membrane -->
+    <path d="M 22 40 l 4 3 l -3 3 z M 138 40 l -4 3 l 3 3 z M 40 60 l 3 2 l -2 3 z" fill="#000" opacity="0.85"/>
+    <g fill="#c8ccd4"><path d="M 4 14 l -3 -5 l 6 3 z"/><path d="M 156 14 l 3 -5 l -6 3 z"/></g>
 
-    <!-- scorpion-like tail arching over, tipped with a cluster of spikes -->
-    <path d="M 112 112 C 140 104 150 76 138 54 C 130 40 116 36 108 44" fill="none" stroke="#3a200a" stroke-width="9" stroke-linecap="round"/>
-    <path d="M 112 112 C 140 104 150 76 138 54 C 130 40 116 36 108 44" fill="none" stroke="url(#mtc-fur)" stroke-width="6.5" stroke-linecap="round"/>
-    <g fill="url(#mtc-spike)" stroke="#121416" stroke-width="0.5">
-      <path d="M 108 44 L 96 30 L 104 46 Z"/><path d="M 108 44 L 104 26 L 110 42 Z"/><path d="M 108 44 L 114 28 L 112 44 Z"/>
-      <path d="M 108 44 L 94 40 L 106 48 Z"/><path d="M 108 44 L 120 34 L 112 46 Z"/>
-      <path d="M 140 70 L 152 64 L 142 74 Z"/><path d="M 136 88 L 148 88 L 136 92 Z"/><path d="M 128 100 L 138 106 L 126 104 Z"/>
+    <!-- scorpion tail, raised high over the back, segmented, with a crown of iron spikes -->
+    <path d="M 116 116 C 146 110 156 82 146 58 C 140 42 126 34 114 38" fill="none" stroke="#1a0c04" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 116 116 C 146 110 156 82 146 58 C 140 42 126 34 114 38" fill="none" stroke="url(#mtc-fur)" stroke-width="8" stroke-linecap="round"/>
+    <g stroke="#2a1406" stroke-width="1" fill="none">
+      <path d="M 138 108 q 4 -4 2 -8"/><path d="M 146 92 q 5 -2 4 -7"/><path d="M 149 74 q 4 0 2 -6"/><path d="M 144 56 q 3 2 4 -4"/><path d="M 132 42 q 2 3 6 0"/>
+    </g>
+    <g fill="url(#mtc-spike)" stroke="#0c0d10" stroke-width="0.6">
+      <path d="M 114 38 L 98 20 L 110 40 Z"/><path d="M 114 38 L 106 14 L 114 36 Z"/><path d="M 114 38 L 118 12 L 117 37 Z"/>
+      <path d="M 114 38 L 128 18 L 118 39 Z"/><path d="M 114 38 L 94 34 L 110 42 Z"/><path d="M 114 38 L 130 32 L 117 42 Z"/>
+      <path d="M 150 68 L 162 60 L 152 72 Z"/><path d="M 150 84 L 162 82 L 150 88 Z"/><path d="M 144 100 L 156 104 L 142 104 Z"/>
+      <path d="M 148 52 L 158 44 L 150 56 Z"/>
+    </g>
+    <!-- venom beading on the spikes -->
+    <g fill="#9adf3a" filter="url(#mtc-glow)" opacity="0.8"><circle cx="99" cy="21" r="1.4"/><circle cx="118" cy="13" r="1.2"/><circle cx="161" cy="61" r="1.2"/></g>
+    <g fill="#d4ff7a"><circle cx="99" cy="21" r="0.7"/><circle cx="118" cy="13" r="0.6"/><circle cx="161" cy="61" r="0.6"/></g>
+
+    <!-- lion body, crouched low, coiled to spring -->
+    <path d="M 36 112 C 30 92 44 80 64 80 L 106 82 C 124 84 132 98 126 116 C 122 126 110 130 96 128 L 56 128 C 44 126 38 120 36 112 Z" fill="url(#mtc-fur)" stroke="#1a0c04" stroke-width="1.4"/>
+    <path d="M 36 112 C 30 92 44 80 64 80 L 106 82 C 124 84 132 98 126 116 C 122 126 110 130 96 128 L 56 128 C 44 126 38 120 36 112 Z" fill="url(#mtc-furlines)"/>
+    <!-- ribs and muscle under the hide -->
+    <g stroke="#3a1c08" stroke-width="1" fill="none" opacity="0.75">
+      <path d="M 70 92 q 2 10 0 18"/><path d="M 78 92 q 2 10 0 18"/><path d="M 86 92 q 2 10 0 18"/><path d="M 94 93 q 2 10 0 17"/>
+      <path d="M 110 96 q 8 6 8 16"/><path d="M 48 98 q -6 6 -4 14"/>
+    </g>
+    <!-- old scars -->
+    <path d="M 100 100 l 12 8 M 103 98 l 12 8" stroke="#d8a888" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- forelegs braced, claws out and bloodied -->
+    <path d="M 46 116 C 40 128 36 138 32 148 L 50 148 C 54 140 58 130 62 122 Z" fill="url(#mtc-fur)" stroke="#1a0c04" stroke-width="1.2"/>
+    <path d="M 106 120 C 112 130 116 140 120 148 L 102 148 C 98 140 94 132 90 124 Z" fill="url(#mtc-fur)" stroke="#1a0c04" stroke-width="1.2"/>
+    <g fill="#f4ecd4" stroke="#3a2a14" stroke-width="0.4">
+      <path d="M 32 148 l -6 5 l 8 -2 z"/><path d="M 38 148 l -4 6 l 7 -3 z"/><path d="M 44 148 l -2 6 l 6 -4 z"/><path d="M 50 148 l 0 6 l 4 -5 z"/>
+      <path d="M 102 148 l 0 6 l -4 -5 z"/><path d="M 108 148 l 2 6 l -6 -4 z"/><path d="M 114 148 l 4 6 l -7 -3 z"/><path d="M 120 148 l 6 5 l -8 -2 z"/>
+    </g>
+    <g fill="#8a0a06" opacity="0.85"><path d="M 26 153 l 4 -2 l 1 2 z"/><path d="M 34 154 l 3 -2 l 1 2 z"/><path d="M 126 153 l -4 -2 l -1 2 z"/></g>
+    <g fill="#6a0404" opacity="0.6"><ellipse cx="30" cy="154" rx="4" ry="1"/><ellipse cx="124" cy="154" rx="3" ry="0.8"/></g>
+
+    <!-- the great matted mane -->
+    <path d="M 52 86 C 36 76 34 52 44 38 C 52 26 66 20 80 20 C 94 20 108 26 116 38 C 126 52 124 76 108 86 C 100 98 60 98 52 86 Z" fill="url(#mtc-mane)" stroke="#060200" stroke-width="1.3"/>
+    <g stroke="#5a2410" stroke-width="1.1" fill="none" opacity="0.8" stroke-linecap="round">
+      <path d="M 46 44 q -8 10 -4 22"/><path d="M 114 44 q 8 10 4 22"/><path d="M 56 30 q -6 8 -4 18"/><path d="M 104 30 q 6 8 4 18"/>
+      <path d="M 42 62 q -6 8 0 18"/><path d="M 118 62 q 6 8 0 18"/><path d="M 68 24 q -2 6 0 12"/><path d="M 92 24 q 2 6 0 12"/>
+      <path d="M 50 80 q -2 8 4 14"/><path d="M 110 80 q 2 8 -4 14"/>
+    </g>
+    <!-- spiky tufts at the mane's edge -->
+    <g fill="#1a0804">
+      <path d="M 40 50 l -8 -4 l 6 8 z"/><path d="M 120 50 l 8 -4 l -6 8 z"/><path d="M 38 70 l -8 2 l 8 4 z"/><path d="M 122 70 l 8 2 l -8 4 z"/>
+      <path d="M 60 22 l -4 -8 l 8 6 z"/><path d="M 100 22 l 4 -8 l -8 6 z"/><path d="M 80 20 l 0 -8 l 4 8 z"/>
     </g>
 
-    <!-- lion body, crouched to spring -->
-    <path d="M 40 110 C 34 92 46 80 66 80 L 104 82 C 120 84 128 98 122 114 C 118 124 106 128 94 126 L 58 126 C 48 124 42 118 40 110 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.3"/>
-    <path d="M 60 96 Q 80 92 100 98" stroke="#6a3a12" stroke-width="0.9" fill="none" opacity="0.7"/>
-    <!-- legs and claws -->
-    <path d="M 52 118 C 48 130 46 140 44 148 L 58 148 C 60 140 62 130 64 122 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.1"/>
-    <path d="M 100 120 C 104 132 106 140 108 148 L 94 148 C 92 140 90 132 88 124 Z" fill="url(#mtc-fur)" stroke="#2a1404" stroke-width="1.1"/>
-    <g stroke="#f0e8d0" stroke-width="1.4" stroke-linecap="round">
-      <path d="M 44 148 l -3 3 M 49 148 l -2 4 M 54 148 l -1 4"/>
-      <path d="M 96 148 l 1 4 M 101 148 l 2 4 M 106 148 l 3 3"/>
+    <!-- a gaunt human face, snarling -->
+    <path d="M 62 50 C 60 36 70 30 80 30 C 90 30 100 36 98 50 C 98 64 92 76 80 77 C 68 76 62 64 62 50 Z" fill="url(#mtc-face)" stroke="#2a140a" stroke-width="1.2"/>
+    <!-- hollow cheeks and a furrowed brow -->
+    <path d="M 66 58 q 4 6 6 12 M 94 58 q -4 6 -6 12" stroke="#4a2414" stroke-width="1" fill="none" opacity="0.8"/>
+    <path d="M 68 40 L 76 46 M 92 40 L 84 46 M 76 37 q 4 2 8 0" stroke="#2a1006" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <!-- deep-set eyes, burning red -->
+    <ellipse cx="72" cy="48" rx="4.4" ry="2.6" fill="#140404"/>
+    <ellipse cx="88" cy="48" rx="4.4" ry="2.6" fill="#140404"/>
+    <ellipse cx="72" cy="48" rx="3.2" ry="1.9" fill="#ff2008" filter="url(#mtc-glow)"/>
+    <ellipse cx="88" cy="48" rx="3.2" ry="1.9" fill="#ff2008" filter="url(#mtc-glow)"/>
+    <ellipse cx="72" cy="48" rx="2.2" ry="1.3" fill="#ff8a3a"/>
+    <ellipse cx="88" cy="48" rx="2.2" ry="1.3" fill="#ff8a3a"/>
+    <ellipse cx="72" cy="48" rx="0.6" ry="1.3" fill="#140202"/><ellipse cx="88" cy="48" rx="0.6" ry="1.3" fill="#140202"/>
+    <!-- a broken nose -->
+    <path d="M 80 47 L 78 56 L 82 57" stroke="#4a2414" stroke-width="1" fill="none"/>
+    <!-- the gaping maw: rows of shark teeth -->
+    <path d="M 66 61 Q 80 58 94 61 Q 92 76 80 78 Q 68 76 66 61 Z" fill="url(#mtc-maw)" stroke="#1a0402" stroke-width="0.9"/>
+    <g fill="url(#mtc-tooth)" stroke="#5a4a2a" stroke-width="0.3">
+      <path d="M 67 61.5 l 1.5 5 l 1.5 -5 z"/><path d="M 70 61 l 1.5 5.5 l 1.5 -5.5 z"/><path d="M 73 60.6 l 1.5 6 l 1.5 -6 z"/><path d="M 76 60.4 l 1.5 6 l 1.5 -6 z"/>
+      <path d="M 79 60.3 l 1.5 6 l 1.5 -6 z"/><path d="M 82 60.4 l 1.5 6 l 1.5 -6 z"/><path d="M 85 60.6 l 1.5 6 l 1.5 -6 z"/><path d="M 88 61 l 1.5 5.5 l 1.5 -5.5 z"/><path d="M 91 61.5 l 1.5 5 l 1.5 -5 z"/>
+      <path d="M 70 76 l 1.5 -5 l 1.5 5 z"/><path d="M 73 77 l 1.5 -5.5 l 1.5 5.5 z"/><path d="M 76 77.6 l 1.5 -6 l 1.5 6 z"/><path d="M 79 77.8 l 1.5 -6 l 1.5 6 z"/>
+      <path d="M 82 77.6 l 1.5 -6 l 1.5 6 z"/><path d="M 85 77 l 1.5 -5.5 l 1.5 5.5 z"/><path d="M 88 76 l 1.5 -5 l 1.5 5 z"/>
     </g>
-
-    <!-- great dark mane -->
-    <path d="M 56 78 C 44 70 42 50 52 38 C 58 30 70 26 80 26 C 90 26 102 30 108 38 C 118 50 116 70 104 78 C 98 90 62 90 56 78 Z" fill="url(#mtc-mane)" stroke="#1a0802" stroke-width="1.2"/>
-    <g stroke="#4a1c06" stroke-width="1" fill="none" opacity="0.8">
-      <path d="M 52 44 Q 46 54 50 64"/><path d="M 108 44 Q 114 54 110 64"/><path d="M 60 32 Q 56 40 58 48"/><path d="M 100 32 Q 104 40 102 48"/>
+    <!-- a second row, deeper in the throat -->
+    <g fill="#d8ccaa" opacity="0.7">
+      <path d="M 72 64 l 1 3 l 1 -3 z"/><path d="M 76 63.6 l 1 3 l 1 -3 z"/><path d="M 80 63.5 l 1 3 l 1 -3 z"/><path d="M 84 63.6 l 1 3 l 1 -3 z"/><path d="M 88 64 l 1 3 l 1 -3 z"/>
     </g>
-
-    <!-- a man's face: bearded, grinning with rows of shark teeth -->
-    <path d="M 64 52 C 62 40 70 34 80 34 C 90 34 98 40 96 52 C 96 62 90 70 80 70 C 70 70 64 62 64 52 Z" fill="url(#mtc-face)" stroke="#3a2010" stroke-width="1.1"/>
-    <path d="M 68 46 Q 73 43 77 46 M 83 46 Q 87 43 92 46" stroke="#2a1006" stroke-width="1.4" fill="none"/>
-    <ellipse cx="73" cy="49" rx="2.4" ry="1.6" fill="#ffd040" filter="url(#mtc-glow)" opacity="0.8"/>
-    <ellipse cx="87" cy="49" rx="2.4" ry="1.6" fill="#ffd040" filter="url(#mtc-glow)" opacity="0.8"/>
-    <ellipse cx="73" cy="49" rx="0.7" ry="1.5" fill="#1a0a02"/><ellipse cx="87" cy="49" rx="0.7" ry="1.5" fill="#1a0a02"/>
-    <path d="M 79 50 L 77 57 L 81 57" stroke="#6a3a20" stroke-width="0.9" fill="none"/>
-    <!-- the grin -->
-    <path d="M 68 60 Q 80 70 92 60 Q 80 66 68 60 Z" fill="#2a0404" stroke="#3a1006" stroke-width="0.7"/>
-    <path d="M 69 60.5 L 71 63 L 73 61.5 L 75 64 L 77 62 L 79 64.5 L 81 62 L 83 64.5 L 85 62 L 87 63.5 L 89 61.5 L 91 60.5" fill="none" stroke="#f4f0e4" stroke-width="0.9"/>
-    <!-- beard -->
-    <path d="M 66 62 C 66 74 74 84 80 86 C 86 84 94 74 94 62 C 90 68 86 70 80 70 C 74 70 70 68 66 62 Z" fill="#3a1a08" stroke="#1a0802" stroke-width="0.8"/>
-    <path d="M 74 72 L 74 82 M 80 72 L 80 85 M 86 72 L 86 82" stroke="#5a2a10" stroke-width="0.7"/>
+    <!-- drool and blood -->
+    <path d="M 70 76 q 0 6 -1 10" stroke="#c8d8e0" stroke-width="0.7" fill="none" opacity="0.7"/>
+    <path d="M 89 76 q 1 5 0 8" stroke="#8a0a06" stroke-width="1" fill="none"/>
+    <!-- a ragged beard framing the jaw -->
+    <path d="M 62 62 C 62 78 72 90 80 92 C 88 90 98 78 98 62 C 96 74 90 80 80 80 C 70 80 64 74 62 62 Z" fill="#2a0e04" stroke="#0a0402" stroke-width="0.8"/>
+    <path d="M 70 82 L 69 90 M 80 84 L 80 93 M 90 82 L 91 90" stroke="#4a1c08" stroke-width="0.8"/>
+    <!-- a faint rim of firelight -->
+    <path d="M 64 44 Q 66 34 76 31" stroke="#ffb070" stroke-width="0.7" fill="none" opacity="0.35"/>
     </svg>
   `,
 
@@ -4123,7 +4196,7 @@ const MONSTER_SPRITES = {
 const MONSTER_SPRITE_SCALE = {
   'Giant': 1.35,
   'Orc King': 1.25,
-  'Manticore': 1.2,
+  'Manticore': 1.35,
 };
 
 function getMonsterSprite(type) {
