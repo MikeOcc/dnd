@@ -3,7 +3,7 @@ import { generateLevel, deserializeLevel, floodFill } from '../src/core/dungeon.
 import { buildOrcKingLair, ORC_KING_LAIR } from '../src/core/lairs.js';
 import { mapAreas, areaAtCell } from '../src/core/regions.js';
 import { ceilingHeight } from '../src/content/area-text.js';
-import { getDefinition, pickRandomMonsterType } from '../src/core/monsters.js';
+import { getDefinition, pickRandomMonsterType, createMonster, randomMonsterLevel } from '../src/core/monsters.js';
 import { RNG } from '../src/core/random.js';
 
 describe("The Orc King's lair", () => {
@@ -53,5 +53,17 @@ describe('Orcs, the Orc King and the Manticore', () => {
     expect([king.minLevel, king.maxLevel]).toEqual([80, 90]);
     expect(getDefinition('Manticore').isUnique).toBe(false);
     expect(getDefinition('Manticore').minDungeonLevel).toBe(6);  // roams 6-7; level 4 has only the Orc King's guard
+  });
+});
+
+describe('Sanguinid levels', () => {
+  it('roll variably, staying under the usual cap up top and reaching as high as 85 on levels 6-7', () => {
+    const rng = new RNG(9);
+    const roll = (depth: number) => createMonster('Sanguinid', randomMonsterLevel(60, depth, rng, 'Sanguinid'), 's').level;
+    const shallow = Array.from({ length: 3000 }, () => roll(3));
+    const deep = Array.from({ length: 3000 }, () => roll(7));
+    expect(Math.max(...shallow)).toBeLessThanOrEqual(60);
+    expect(Math.max(...deep)).toBe(85);
+    expect(new Set(deep).size).toBeGreaterThan(10);
   });
 });

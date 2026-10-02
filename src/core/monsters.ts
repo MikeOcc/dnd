@@ -279,7 +279,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Sanguinid': {
     type: 'Sanguinid', isUndead: false, isUnique: false,
-    minLevel: 1, maxLevel: 35, naturalTier: 7, minDungeonLevel: 1, speed: 0.9,
+    minLevel: 1, maxLevel: 85, naturalTier: 7, minDungeonLevel: 1, speed: 0.9,
     baseHpPerLevel: 13, baseAttackPerLevel: 7.5, baseDefensePerLevel: 3.5,
     fireballResistance: 1.0,
     acidResistance: 2.0,     // weak to acid
