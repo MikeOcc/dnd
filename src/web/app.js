@@ -991,7 +991,7 @@ document.addEventListener('keydown', (e) => {
       if (gemBtn) gemBtn.click();
       return;
     }
-    if (['a','c','d','f','p'].includes(key)) apiAction('combat', { choice: key });
+    if (['a','c','d','f','p','h'].includes(key)) apiAction('combat', { choice: key });
     return;
   }
 

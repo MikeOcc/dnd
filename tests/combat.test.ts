@@ -3,8 +3,8 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
 import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
-import { GEMS, COMBAT, MANTICORE, GHOUL } from '../src/core/config.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
+import { GEMS, COMBAT, MANTICORE, GHOUL, PHOENIX, BANSHEE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -1735,5 +1735,102 @@ describe('Flesh rot eats one body part', () => {
     const res = resolveAltar(c, new RNG(4));
     expect(res.messages[0]).toContain('rot burns away');
     expect(c.statusEffects.some(e => e.type === 'flesh-rot')).toBe(false);
+  });
+});
+
+describe('Djinn, Phoenix, Banshee, Unicorn and Frost Giant', () => {
+  const hero = () => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 70; c.hp = c.maxHp = 1_000_000; c.statusEffects = []; c.charisma = 18; c.wisdom = 18;
+    return c;
+  };
+  const sees = (type: Parameters<typeof createMonster>[0], level: number, n: number, seed: number, setup?: (m: ReturnType<typeof createMonster>, c: ReturnType<typeof hero>) => void) => {
+    const rng = new RNG(seed);
+    const texts: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const c = hero();
+      const m = createMonster(type, level, 'm');
+      setup?.(m, c);
+      texts.push(monsterFirstStrike(c, m, rng).messages.join(' '));
+    }
+    return texts.join(' | ');
+  };
+
+  it('the Djinn: dust storm, ruby ray, punch, choke, and it flees when badly beaten', () => {
+    const all = sees('Djinn', 50, 200, 1);
+    for (const s of ['storm of sand', 'ruby in the Djinn', 'fist the size of an anvil', 'smoky tail whips']) expect(all).toContain(s);
+    const fled = monsterFirstStrike(hero(), Object.assign(createMonster('Djinn', 50, 'd'), {}), new RNG(2));
+    expect(fled.monsterFled).toBeFalsy();
+    const rng = new RNG(3);
+    let gone = false;
+    for (let i = 0; i < 100 && !gone; i++) {
+      const d = createMonster('Djinn', 50, 'd'); d.hp = Math.round(d.maxHp * 0.1);
+      gone = !!monsterFirstStrike(hero(), d, rng).monsterFled;
+    }
+    expect(gone).toBe(true);
+  });
+
+  it('the Phoenix: flurries, flash burns, and a screech that holds you 3 turns', () => {
+    const rng = new RNG(4);
+    let held = false;
+    for (let i = 0; i < 200 && !held; i++) {
+      const c = hero();
+      const text = monsterFirstStrike(c, createMonster('Phoenix', 60, 'p'), rng).messages.join(' ');
+      if (text.includes('SCREECHES')) { held = true; expect(c.heldRounds).toBe(PHOENIX.SCREECH_TURNS); }
+    }
+    expect(held).toBe(true);
+    expect(sees('Phoenix', 60, 100, 5)).toContain('wall of flame');
+    expect(createMonster('Phoenix', 60, 'p').definition.fireballResistance).toBe(0);
+  });
+
+  it('the Banshee wails, and goes invisible for 2 turns before a 6-turn wait', () => {
+    expect(sees('Banshee', 45, 200, 6)).toContain('WAILS');
+    const b = createMonster('Banshee', 45, 'b');
+    const rng = new RNG(7);
+    for (let i = 0; i < 50 && !b.invisibleTurns; i++) monsterFirstStrike(hero(), b, rng);
+    expect(b.invisibleTurns).toBe(BANSHEE.INVIS_TURNS);
+    expect(b.invisCooldown).toBe(BANSHEE.INVIS_COOLDOWN);
+    expect(b.definition.isUndead).toBe(true);
+  });
+
+  it('a Unicorn may accept your hand: full heal, every affliction cured, then it leaves', () => {
+    const rng = new RNG(8);
+    for (let i = 0; i < 100; i++) {
+      const c = hero();
+      c.hp = 10;
+      c.statusEffects = [
+        { type: 'anaphylaxis', value: 9999, turns: 9999 },
+        { type: 'flesh-rot', value: 3, turns: 40, part: 'head', stage: 29, doom: 1 },
+      ];
+      const res = petUnicorn(c, createMonster('Unicorn', 45, 'u'), rng);
+      if (res.monsterFled) {
+        expect(c.hp).toBe(c.maxHp);
+        expect(c.statusEffects).toEqual([]);
+        return;
+      }
+    }
+    throw new Error('never accepted');
+  });
+
+  it('a Unicorn you have hurt will not let you near', () => {
+    const u = createMonster('Unicorn', 45, 'u');
+    u.hp -= 1;
+    const res = petUnicorn(hero(), u, new RNG(9));
+    expect(res.monsterFled).toBeFalsy();
+    expect(res.messages.join(' ')).toContain('will not forgive');
+  });
+
+  it('the Frost Giant freezes you solid, and rages (two attacks) when badly hurt', () => {
+    const rng = new RNG(10);
+    let frozen = false;
+    for (let i = 0; i < 200 && !frozen; i++) {
+      const c = hero();
+      monsterFirstStrike(c, createMonster('Frost Giant', 70, 'f'), rng);
+      if (c.heldBy === 'frozen') frozen = true;
+    }
+    expect(frozen).toBe(true);
+    const g = createMonster('Frost Giant', 70, 'f');
+    g.hp = Math.round(g.maxHp * 0.2);
+    expect(monsterFirstStrike(hero(), g, new RNG(11)).messages.join(' ')).toContain('roars in fury');
   });
 });

@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
-  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare } from './combat.js';
+  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -20,7 +20,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair } from './lairs.js';
 import { getLevelIntro } from '../content/level-text.js';
@@ -270,6 +270,7 @@ export class GameEngine {
         { key: 'f', text: 'Scare' },
         { key: 'e', text: 'Use Gem' },
         { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
+        ...(this.combat.monster.type === 'Unicorn' ? [{ key: 'h', text: 'Offer Your Hand' }] : []),
       ];
     }
     if (this.interaction) {
@@ -1364,8 +1365,12 @@ export class GameEngine {
   combatAction(action: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
     if (this.isHeld()) return this.combatHeld();
+    if (['a', 'c', 'f'].includes(action) && this.targetInvisible()) return this.strikeAtNothing();
 
     switch (action) {
+      case 'h':
+        if (this.combat.monster.type !== 'Unicorn') return this.getState();
+        return this.processCombatResult(petUnicorn(this.char, this.combat.monster, this.rng));
       case 'a': return this.combatAttack();
       case 'b': return this.showSpellMenu();
       case 'c': return this.combatPray();
@@ -1389,6 +1394,7 @@ export class GameEngine {
     const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal', e: 'emerald' };
     const type = types[key];
     if (type && this.isHeld()) return this.combatHeld();
+    if ((type === 'opal' || type === 'sapphire') && this.targetInvisible()) return this.strikeAtNothing();
     if (!type) {
       this.phase = 'combat';
       this.messages = ['You reconsider.'];
@@ -1536,6 +1542,7 @@ export class GameEngine {
       return this.getState();
     }
     if (this.isHeld()) return this.combatHeld();
+    if (spell !== 'heal' && this.targetInvisible()) return this.strikeAtNothing();
     if (isMagic(spell)) {
       const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
       if (negated) return this.processCombatResult(negated);
@@ -1607,6 +1614,19 @@ export class GameEngine {
     this.handleDeath('Died of anaphylactic shock from a Manticore\'s sting.',
       ['Your throat closes. The torchlight narrows to a point, and goes out.']);
     this.dyingOfShock = false;
+  }
+
+  /** A Banshee gone invisible can't be attacked, though she can still act. */
+  private targetInvisible(): boolean {
+    return (this.combat?.monster.invisibleTurns ?? 0) > 0;
+  }
+
+  /** The character's attack finds nothing to hit, and the unseen monster acts. */
+  private strikeAtNothing(): GameState {
+    const monster = this.combat!.monster;
+    const res = monsterFirstStrike(this.char!, monster, this.rng,
+      [`You strike at empty air. The ${monster.type} is invisible, and cannot be attacked!`, '']);
+    return this.processCombatResult(res);
   }
 
   /** Queues a sound for the client to play after this action. */
@@ -1899,8 +1919,18 @@ export class GameEngine {
       if (r.fatal) return this.handleDeath(r.fatal);
     }
 
-    if (result.banished) {
+    if (result.banished || result.monsterFled) {
       this.endCombat(false);
+      return this.getState();
+    }
+
+    // A Phoenix rises once from its ashes.
+    const m = this.combat.monster;
+    if (result.monsterDied && m.type === 'Phoenix' && !m.reborn) {
+      m.reborn = true;
+      m.hp = Math.round(m.maxHp * PHOENIX.REBIRTH_HP);
+      this.messages.push('', 'The Phoenix falls in a shower of sparks and ash...',
+        '...and the ashes stir, and blaze, and it RISES AGAIN, burning brighter than before!');
       return this.getState();
     }
 
@@ -1950,6 +1980,15 @@ export class GameEngine {
 
     // Clear naked status
     this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'naked');
+
+    // Slaying a unicorn is a terrible thing.
+    if (monster.type === 'Unicorn') {
+      for (const type of ['strength-reduced', 'dexterity-reduced', 'intelligence-reduced'] as const) {
+        addStatusEffect(this.char, { type, value: UNICORN.CURSE_STATS, turns: UNICORN.CURSE_STEPS });
+      }
+      this.messages.push('', 'The Unicorn\'s light goes out. The silence afterward is terrible.',
+        `A curse settles on you for what you have done. (-${UNICORN.CURSE_STATS} Strength, Dexterity and Intelligence for a long while)`);
+    }
 
     // Victory?
     if (monster.type === 'Asmodeus') {

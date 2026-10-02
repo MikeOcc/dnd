@@ -319,13 +319,26 @@ export const MONSTER_SCALING = {
   HARD_LEVEL_CAP: 60,
 
   // A few ordinary monsters may break the hard cap, but only this deep:
-  // the White (frost) and Blue Dragons and the Sanguinid (75 on level 6, 85 on 7) can
+  // the dragons, the Sanguinid (75 on level 6, 85 on 7), the Phoenix and the Frost Giant can
   // climb as high as their own maxLevel on dungeon levels 6 and 7, rolled
   // like any other level.
-  EXTENDED_CAP_TYPES: ['White Dragon', 'Blue Dragon', 'Sanguinid'] as string[],
+  EXTENDED_CAP_TYPES: ['Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Sanguinid', 'Phoenix', 'Frost Giant'] as string[],
   EXTENDED_CAP_MIN_DEPTH: 6,
   // ...optionally a lower ceiling than maxLevel on a given depth.
-  EXTENDED_CAP_BY_DEPTH: { Sanguinid: { 6: 75 } } as Record<string, Record<number, number>>,
+  EXTENDED_CAP_BY_DEPTH: {
+    // Dragons reach 75 on level 6; on level 7, 95 (Green, Red), 100 (White),
+    // or 120 (Black, Blue: their maxLevel).
+    'Black Dragon': { 6: 75 }, 'Green Dragon': { 6: 75 }, 'Blue Dragon': { 6: 75 },
+    'White Dragon': { 6: 75 }, 'Red Dragon': { 6: 75 },
+    Sanguinid: { 6: 75 },
+    Phoenix: { 6: 62 },
+    'Frost Giant': { 6: 75 },
+  } as Record<string, Record<number, number>>,
+  // ...and a few whose rolls can reach past the depth's usual top, so their
+  // highest levels actually turn up.
+  EXTENDED_RANGE_TOP: {
+    'Black Dragon': { 7: 120 }, 'Blue Dragon': { 7: 120 },
+  } as Record<string, Record<number, number>>,
 
   // Random-encounter monster TYPE eligibility by dungeon depth (index 0 =
   // dungeon level 1): a floor on naturalTier, on top of each monster's own
@@ -394,7 +407,8 @@ export const SPELLS = {
   // immune. One cast per hour of play time.
   BANISH_FAIL_FACES_BY_TIER: { 8: 3, 9: 5, 10: 7 } as Record<number, number>,
   BANISH_HIGH_LEVEL_FAIL_FACES: 3,
-  BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this
+  BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this...
+  BANISH_HIGH_LEVEL_MAX: 60,          // ...or this, whichever is lower (so deep dragons count)
   BANISH_COOLDOWN_SECONDS: 3600,
 } as const;
 
@@ -497,6 +511,57 @@ export const WENDIGO = {
   CLAW_WEIGHT: 40, CLAW_MULT: 1.0, NUMB_DEX: 3, NUMB_TURNS: 12,
   BITE_WEIGHT: 35, BITE_MULT: 1.3, BITE_FEED: 0.5,   // heals this share of the bite
   HOWL_WEIGHT: 25, HOWL_MULT: 0.5, HOWL_FEAR_CHANCE: 0.5,
+} as const;
+
+// The Djinn: floats on a wisp of smoke; dust storms, a ruby ray, crushing
+// punches, and a choking tail. Badly beaten, it may teleport away.
+export const DJINN = {
+  DUST_WEIGHT: 25, DUST_MULT: 0.8, DUST_DEX: 4, DUST_TURNS: 10,
+  RUBY_WEIGHT: 25, RUBY_MULT: 1.4,
+  PUNCH_WEIGHT: 30, PUNCH_MULT: 1.3, PUNCH_STUN_CHANCE: 0.3,
+  CHOKE_WEIGHT: 20, CHOKE_MULT: 0.6, CHOKE_ROUNDS: 2, CHOKE_SQUEEZE_MULT: 0.9,
+  FLEE_BELOW: 0.2, FLEE_CHANCE: 0.35,
+} as const;
+
+// The Phoenix: several blows a turn, a flash burn, and a screech that holds
+// you in terror for 3 turns while it keeps attacking. Rises once from its ashes.
+export const PHOENIX = {
+  FLURRY_WEIGHT: 50, FLURRY_MIN: 2, FLURRY_MAX: 3, FLURRY_MULT: 0.6,
+  FLARE_WEIGHT: 30, FLARE_MULT: 1.9,
+  SCREECH_WEIGHT: 20, SCREECH_MULT: 0.3, SCREECH_TURNS: 3,
+  REBIRTH_HP: 0.4,
+} as const;
+
+// The Banshee: a wail of death, a draining touch, a dread whisper and a
+// spectral bolt. It can turn invisible for 2 turns (can't be attacked, but
+// still acts), then must wait 6 more before it can again.
+export const BANSHEE = {
+  WAIL_WEIGHT: 20, WAIL_MULT: 1.2, WAIL_SAVE_BASE: 0.45, WAIL_SAVE_PER_CON: 0.01, WAIL_SAVE_PER_WIS: 0.01, WAIL_FAIL_SHARE: 0.5,
+  TOUCH_WEIGHT: 40, TOUCH_MULT: 1.0, TOUCH_HEAL: 0.5,
+  WHISPER_WEIGHT: 20, WHISPER_MULT: 0.4,
+  BOLT_WEIGHT: 20, BOLT_MULT: 1.3,
+  INVIS_CHANCE: 0.35, INVIS_TURNS: 2, INVIS_COOLDOWN: 6,
+} as const;
+
+// The Unicorn: gore, hooves and a radiant horn. Offer your hand (a Charisma
+// and Wisdom roll) and it may bless and cure you instead. Slaying one curses you.
+export const UNICORN = {
+  GORE_WEIGHT: 40, GORE_MULT: 1.5, GORE_BLEED_CHANCE: 0.4,
+  HOOVES_WEIGHT: 35, HOOF_MULT: 0.7,
+  RADIANT_WEIGHT: 25, RADIANT_MULT: 1.3,
+  PET_BASE: 0.15, PET_PER_CHA: 0.02, PET_PER_WIS: 0.015, PET_MAX: 0.85,
+  CURSE_STATS: 3, CURSE_STEPS: 150,
+} as const;
+
+// The Frost Giant: one of the toughest things in the dungeon. Ice in every
+// blow; it can freeze you solid; badly hurt, it rages and strikes twice a turn.
+export const FROST_GIANT = {
+  AXE_WEIGHT: 30, AXE_MULT: 1.4,
+  BOULDER_WEIGHT: 20, BOULDER_MULT: 1.7,
+  SHARDS_WEIGHT: 20, SHARDS: 3, SHARD_MULT: 0.6,
+  STOMP_WEIGHT: 15, STOMP_MULT: 1.0, STOMP_DEX: 4, STOMP_TURNS: 12,
+  GRASP_WEIGHT: 15, GRASP_MULT: 0.8, GRASP_ROUNDS: 2,
+  RAGE_BELOW: 0.3,
 } as const;
 
 // The Manticore's fighting (combat.ts, manticoreAction). Each turn it picks

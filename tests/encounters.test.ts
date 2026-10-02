@@ -543,18 +543,19 @@ describe('Monster level rolls for the deep dragons', () => {
     return levels;
   };
 
-  it('White and Blue Dragons break the level-60 cap only on dungeon levels 6 and 7', () => {
-    for (const type of ['White Dragon', 'Blue Dragon']) {
+  it('dragons break the level-60 cap only on dungeon levels 6 and 7: 75 on 6, then 95-120 on 7', () => {
+    const top7: Record<string, number> = { 'Black Dragon': 120, 'Blue Dragon': 120, 'Green Dragon': 95, 'Red Dragon': 95, 'White Dragon': 100 };
+    for (const [type, top] of Object.entries(top7)) {
       expect(Math.max(...roll(type, 5, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
-      expect(Math.max(...roll(type, 6, 60))).toBeGreaterThan(MONSTER_SCALING.HARD_LEVEL_CAP);
+      expect(Math.max(...roll(type, 6, 60))).toBe(75);
       const deepest = roll(type, 7, 60);
-      expect(Math.max(...deepest)).toBeGreaterThan(90);
-      expect(Math.max(...deepest)).toBeLessThanOrEqual(100);
+      expect(Math.max(...deepest)).toBeLessThanOrEqual(top);
+      expect(Math.max(...deepest)).toBeGreaterThan(top - 6);
     }
   });
 
-  it('other monsters stay under the cap even on level 7', () => {
-    expect(Math.max(...roll('Red Dragon', 7, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
+  it('ordinary monsters stay under the cap even on level 7', () => {
+    expect(Math.max(...roll('Wizard', 7, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
     expect(Math.max(...roll(undefined, 7, 60))).toBeLessThanOrEqual(MONSTER_SCALING.HARD_LEVEL_CAP);
   });
 

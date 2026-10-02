@@ -78,6 +78,94 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['frostbite-claws', 'devouring-bite', 'hunger-howl'],
   },
+  // A towering spirit of wind and fire, legless, borne on a wisp of smoke.
+  // Fights in combat.ts, djinnAction.
+  'Djinn': {
+    type: 'Djinn', isUndead: false, isUnique: false,
+    minLevel: 40, maxLevel: 60, naturalTier: 8, minDungeonLevel: 5, speed: 1.3,
+    baseHpPerLevel: 14, baseAttackPerLevel: 4.0, baseDefensePerLevel: 3.0,
+    fireballResistance: 0.5, lightningResistance: 1.2,
+    encounterIntro: [
+      'A hot wind howls down the passage, full of stinging sand.',
+      'It gathers into a shape: a towering, blue-skinned figure, bare-chested and',
+      'bound in gold, a blazing ruby set in its brow. Below the waist it has no legs,',
+      'only a twisting tail of smoke that never quite touches the floor.',
+      '',
+      '"You have not summoned me, little one. That was your mistake."',
+      '',
+      'You have encountered a Level {LVL} Djinn!',
+    ],
+    specialAbilities: ['dust-storm', 'ruby-ray', 'djinn-punch', 'wisp-choke'],
+  },
+  // A bird of living flame. Fights in combat.ts, phoenixAction; rises once
+  // from its ashes (game-engine.ts).
+  'Phoenix': {
+    type: 'Phoenix', isUndead: false, isUnique: false,
+    minLevel: 50, maxLevel: 70, naturalTier: 9, minDungeonLevel: 6, speed: 1.4,
+    baseHpPerLevel: 14, baseAttackPerLevel: 4.8, baseDefensePerLevel: 3.5,
+    fireballResistance: 0.0, coldResistance: 1.5,
+    encounterIntro: [
+      'The darkness ahead turns gold, then white.',
+      'A great bird of living flame unfolds its wings from wall to wall,',
+      'every feather a tongue of fire, its eyes like two small suns.',
+      '',
+      'You have encountered a Level {LVL} Phoenix!',
+    ],
+    specialAbilities: ['talon-flurry', 'phoenix-flare', 'phoenix-screech'],
+  },
+  // A glowing, ghostly woman whose wail can stop a heart. Fights in
+  // combat.ts, bansheeAction; can turn invisible (game-engine.ts).
+  'Banshee': {
+    type: 'Banshee', isUndead: true, isUnique: false,
+    minLevel: 30, maxLevel: 55, naturalTier: 7, minDungeonLevel: 4, speed: 1.2,
+    baseHpPerLevel: 9, baseAttackPerLevel: 4.2, baseDefensePerLevel: 2.5,
+    fireballResistance: 0.8, coldResistance: 0.3,
+    encounterIntro: [
+      'A soft, sorrowful singing drifts down the corridor.',
+      'A woman glides toward you, pale and glowing, her feet not touching the stone.',
+      'Her hair drifts as if underwater. Her face is beautiful, until it is not.',
+      '',
+      'You have encountered a Level {LVL} Banshee!',
+    ],
+    specialAbilities: ['banshee-wail', 'chill-touch', 'dread-whisper', 'spectral-bolt'],
+  },
+  // A great white unicorn: dangerous to fight, and to those it deems worthy,
+  // a blessing. Fights in combat.ts, unicornAction; see also petUnicorn.
+  'Unicorn': {
+    type: 'Unicorn', isUndead: false, isUnique: false,
+    minLevel: 35, maxLevel: 55, naturalTier: 8, minDungeonLevel: 3, speed: 1.5,
+    baseHpPerLevel: 13, baseAttackPerLevel: 4.0, baseDefensePerLevel: 3.5,
+    fireballResistance: 0.8, lightningResistance: 0.8,
+    encounterIntro: [
+      'Silver light spills around the corner, and the air smells of spring.',
+      'A unicorn steps into view: white as new snow, as tall as a warhorse,',
+      'its spiral horn shining like a drawn blade. It lowers its head and regards you.',
+      '',
+      'It has not decided what you are yet.',
+      '',
+      'You have encountered a Level {LVL} Unicorn!',
+    ],
+    specialAbilities: ['horn-gore', 'hoof-strike', 'radiant-horn'],
+  },
+  // One of the deadliest things in the dungeon. Fights in combat.ts,
+  // frostGiantAction.
+  'Frost Giant': {
+    type: 'Frost Giant', isUndead: false, isUnique: false,
+    minLevel: 60, maxLevel: 85, naturalTier: 9, minDungeonLevel: 6, speed: 0.9,
+    baseHpPerLevel: 24, baseAttackPerLevel: 5.2, baseDefensePerLevel: 4.5,
+    fireballResistance: 1.5, coldResistance: 0.0,
+    encounterIntro: [
+      'The temperature plunges. Your breath freezes in your beard, and frost',
+      'creeps across the walls with a sound like breaking glass.',
+      'Then the giant ducks into view: blue-white skin, a beard of icicles,',
+      'armor of black iron rimed with frost, and an axe of solid ice taller than you are.',
+      '',
+      '"WARM LITTLE THING. I WILL KEEP YOU FROZEN, FOREVER."',
+      '',
+      'You have encountered a Level {LVL} Frost Giant!',
+    ],
+    specialAbilities: ['ice-axe', 'ice-boulder', 'shard-storm', 'frost-stomp', 'winters-grasp'],
+  },
   // The one Orc King, on level 4: a towering warlord in black plate, a
   // veteran of a hundred wars, who calls on Gruumsh for a few dark gifts.
   // His fighting is in combat.ts (orcKingAction).
@@ -289,7 +377,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Black Dragon': {
     type: 'Black Dragon', isUndead: false, isUnique: false,
-    minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
+    minLevel: 8, maxLevel: 120, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.0, baseDefensePerLevel: 4.0,
     fireballResistance: 1.0,
     lightningResistance: 2.0,  // weak to lightning
@@ -299,7 +387,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Green Dragon': {
     type: 'Green Dragon', isUndead: false, isUnique: false,
-    minLevel: 8, maxLevel: 50, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
+    minLevel: 8, maxLevel: 95, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 6.5, baseDefensePerLevel: 4.0,
     fireballResistance: 1.0,
     acidResistance: 2.0,       // weak to acid
@@ -309,7 +397,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Blue Dragon': {
     type: 'Blue Dragon', isUndead: false, isUnique: false,
-    minLevel: 8, maxLevel: 100, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
+    minLevel: 8, maxLevel: 120, naturalTier: 7, minDungeonLevel: 3, speed: 1.0,
     baseHpPerLevel: 14, baseAttackPerLevel: 7.5, baseDefensePerLevel: 4.0,
     fireballResistance: 3.0,  // highly susceptible — triple damage from Fireball
     lightningResistance: 0.3, // resistant to its own breath weapon
@@ -327,7 +415,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
   'Red Dragon': {
     type: 'Red Dragon', isUndead: false, isUnique: false,
-    minLevel: 10, maxLevel: 50, naturalTier: 8, minDungeonLevel: 4, speed: 1.0,
+    minLevel: 10, maxLevel: 95, naturalTier: 8, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 16, baseAttackPerLevel: 8.0, baseDefensePerLevel: 4.5,
     fireballResistance: 0.25,  // strongly resistant to its own breath weapon
     lightningResistance: 2.0,  // weak to lightning
@@ -461,7 +549,8 @@ export function randomMonsterLevel(
 ): number {
   const ranges = MONSTER_SCALING.LEVEL_RANGE_BY_DUNGEON_LEVEL;
   const range = ranges[Math.max(0, Math.min(ranges.length - 1, dungeonDepth - 1))];
-  const uncappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
+  const rangeTop = Math.max(range.max, (type && MONSTER_SCALING.EXTENDED_RANGE_TOP[type]?.[dungeonDepth]) || 0);
+  const uncappedMax = rangeTop + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
   const extended = !!type && MONSTER_SCALING.EXTENDED_CAP_TYPES.includes(type)
     && dungeonDepth >= MONSTER_SCALING.EXTENDED_CAP_MIN_DEPTH;
   const cap = extended
@@ -533,7 +622,7 @@ export const ANCIENT_GHOUL_INTRO = [
 ];
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
 ];
 
 export function isUndead(type: MonsterType): boolean {
@@ -541,7 +630,8 @@ export function isUndead(type: MonsterType): boolean {
 }
 
 export const RANDOM_MONSTER_POOL: MonsterType[] = [
-  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Titanoboa', 'Wendigo', 'Displacer Beast', 'Basilisk',
+  'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Titanoboa', 'Wendigo',
+  'Djinn', 'Phoenix', 'Banshee', 'Unicorn', 'Frost Giant', 'Displacer Beast', 'Basilisk',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',

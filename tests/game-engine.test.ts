@@ -1886,6 +1886,7 @@ describe("GameEngine — Asmodeus's lair warning", () => {
     const { engine, e, dir } = atLairEdge();
     approach(e, dir);
     e.rng.die = () => 1;
+    e.rng.float = () => 0.99;   // no lizard-curse instant death to hide the message
     const state = engine.lairChoice('d');
     expect(state.messages.join(' ')).toContain('watching all along');
   });
@@ -1912,6 +1913,7 @@ describe("GameEngine — Asmodeus's lair warning", () => {
     const { engine, e, dir } = atLairEdge();
     approach(e, dir);
     e.rng.die = () => 1;
+    e.rng.float = () => 0.99;   // no lizard-curse instant death to hide the message
     const state = engine.lairChoice('a');
     expect(['combat', 'death']).toContain(state.phase);
     expect(state.messages.join(' ')).toContain('drags you before the throne');
@@ -2154,5 +2156,52 @@ describe("GameEngine — the Orc King's lair warning", () => {
       return;
     }
     throw new Error('no approach to the throne');
+  });
+});
+
+describe('GameEngine — Phoenix rebirth, invisible Banshees, Unicorns', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+  function fight(type: Parameters<typeof createMonster>[0], level: number) {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.level = 90; e.char.hp = e.char.maxHp = 1_000_000; e.char.strength = 40;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster(type, level, 'm'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    return { engine, e };
+  }
+
+  it('the Phoenix rises once from its ashes', () => {
+    const { engine, e } = fight('Phoenix', 55);
+    e.combat.monster.hp = 1;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 20 && !e.combat.monster.reborn; i++) state = engine.combatAction('a');
+    expect(state.messages.join(' ')).toContain('RISES AGAIN');
+    expect(state.phase).toBe('combat');
+    e.combat.monster.hp = 1;
+    for (let i = 0; i < 30 && state.phase === 'combat'; i++) state = engine.combatAction('a');
+    expect(state.phase).toBe('playing');
+  });
+
+  it("an invisible Banshee can't be attacked", () => {
+    const { engine, e } = fight('Banshee', 45);
+    e.combat.monster.invisibleTurns = 2;
+    const hp = e.combat.monster.hp;
+    const state = engine.combatAction('a');
+    expect(state.messages[0]).toContain('invisible');
+    expect(e.combat.monster.hp).toBe(hp);
+  });
+
+  it('a Unicorn fight offers your hand, and slaying one brings a curse', () => {
+    const { engine, e } = fight('Unicorn', 45);
+    expect(engine.getState().choices!.some(c => c.key === 'h')).toBe(true);
+    e.combat.monster.hp = 1;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 20 && state.phase === 'combat'; i++) state = engine.combatAction('a');
+    expect(state.messages.join(' ')).toContain('A curse settles on you');
+    expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'strength-reduced')).toBe(true);
   });
 });

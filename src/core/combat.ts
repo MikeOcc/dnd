@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -18,6 +18,7 @@ export interface CombatRoundResult {
   deathCause?: string;         // when the monster killed the character: names the attack that did it
   killingBlow?: string[];      // ...and the monster's lines from that final turn
   runFailed?: boolean;
+  monsterFled?: boolean;       // the monster left the fight (a Djinn vanishing, a Unicorn departing): no XP
   ballOfDooFired?: boolean;
 }
 
@@ -858,6 +859,305 @@ function wendigoAction(
   }
 }
 
+// ─── Archons and other great beasts ──────────────────────────────────────────
+
+/** Picks an attack by weight. */
+function pickWeighted(rng: RNG, options: [string, number][]): string {
+  let roll = rng.float() * options.reduce((a, [, w]) => a + w, 0);
+  return (options.find(([, w]) => (roll -= w) < 0) ?? options[0])[0];
+}
+
+/** Shared helpers for the hand-written monster turns below. */
+function turnKit(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean) {
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const hurt = (dmg: number) => { char.hp = Math.max(0, char.hp - dmg); return dmg; };
+  const done = (dmg: number, extra: Partial<MonsterActionResult> = {}): MonsterActionResult =>
+    ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false, ...extra });
+  return { hit, hurt, done };
+}
+
+/** The Djinn: dust storm (blinds: -Dexterity), ruby ray, a crushing punch
+ * that can stun, or a choke with its smoky tail (held, squeezed each turn).
+ * Badly beaten, it may whirl away and be gone. */
+function djinnAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const D = DJINN;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  if (monster.hp < monster.maxHp * D.FLEE_BELOW && rng.float() < D.FLEE_CHANCE) {
+    messages.push('The Djinn snarls, then dissolves into a whirl of sand that spins away down the corridor.',
+      'It is gone. You will get nothing from it today.');
+    return done(0, { monsterFled: true });
+  }
+  if (char.heldBy === 'choked' && (char.heldRounds ?? 0) > 0) {
+    out.ability = 'wisp-choke';
+    const dmg = hurt(hit(D.CHOKE_SQUEEZE_MULT));
+    messages.push(`The smoky coil tightens around your throat. The world dims. You suffer ${dmg} damage.`);
+    return done(dmg);
+  }
+  const ability = pickWeighted(rng, [['dust-storm', D.DUST_WEIGHT], ['ruby-ray', D.RUBY_WEIGHT], ['djinn-punch', D.PUNCH_WEIGHT], ['wisp-choke', D.CHOKE_WEIGHT]]);
+  out.ability = ability;
+  switch (ability) {
+    case 'dust-storm': {
+      const dmg = hurt(hit(D.DUST_MULT));
+      messages.push(`The Djinn spins, and a howling storm of sand scours you! You suffer ${dmg} damage.`);
+      if (char.hp > 0 && !char.statusEffects.some(e => e.type === 'dexterity-reduced')) {
+        addStatusEffect(char, { type: 'dexterity-reduced', value: D.DUST_DEX, turns: D.DUST_TURNS });
+        messages.push(`Grit fills your eyes. (-${D.DUST_DEX} Dexterity)`);
+      }
+      return done(dmg);
+    }
+    case 'ruby-ray': {
+      const dmg = hurt(hit(D.RUBY_MULT));
+      messages.push(`The ruby in the Djinn's brow blazes, and a beam of searing red light burns into you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'djinn-punch': {
+      const dmg = hurt(hit(D.PUNCH_MULT));
+      messages.push(`A fist the size of an anvil slams into you! You suffer ${dmg} damage.`);
+      if (char.hp > 0 && rng.float() < D.PUNCH_STUN_CHANCE) {
+        holdCharacter(char, 1, 'dazed');
+        messages.push('Your head rings. You are stunned!');
+      }
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(D.CHOKE_MULT));
+      messages.push(`The Djinn's smoky tail whips around your throat and squeezes! You suffer ${dmg} damage.`);
+      if (char.hp > 0) holdCharacter(char, D.CHOKE_ROUNDS, 'choked');
+      return done(dmg);
+    }
+  }
+}
+
+/** The Phoenix: a flurry of talon, beak and wing; a blinding flash burn; or a
+ * screech that holds the character in terror for 3 turns while it attacks. */
+function phoenixAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const P = PHOENIX;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  const held = (char.heldRounds ?? 0) > 0;
+  const ability = pickWeighted(rng, [
+    ['talon-flurry', P.FLURRY_WEIGHT], ['phoenix-flare', P.FLARE_WEIGHT],
+    ...(held ? [] : [['phoenix-screech', P.SCREECH_WEIGHT] as [string, number]]),
+  ]);
+  out.ability = ability;
+  switch (ability) {
+    case 'talon-flurry': {
+      const blows = rng.int(P.FLURRY_MIN, P.FLURRY_MAX);
+      const kinds = ['Burning talons rake you', 'Its beak strikes like a spear', 'A blazing wing batters you'];
+      messages.push(`The Phoenix is a storm of fire and feathers! (${blows} blows)`);
+      let total = 0;
+      for (let i = 0; i < blows && char.hp > 0; i++) {
+        const dmg = hurt(hit(P.FLURRY_MULT));
+        total += dmg;
+        messages.push(`  ${kinds[i % kinds.length]} for ${dmg} damage.`);
+      }
+      return done(total);
+    }
+    case 'phoenix-flare': {
+      const dmg = hurt(hit(P.FLARE_MULT));
+      messages.push(`The Phoenix flares white-hot! A wall of flame washes over you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(P.SCREECH_MULT));
+      messages.push(`The Phoenix throws back its head and SCREECHES. The sound goes through you like a blade. (${dmg} damage)`);
+      if (char.hp > 0) {
+        holdCharacter(char, P.SCREECH_TURNS, 'paralyzed');
+        messages.push(`Terror locks every muscle. You cannot move for ${P.SCREECH_TURNS} turns!`);
+      }
+      return done(dmg);
+    }
+  }
+}
+
+/** The Banshee. It may first fade from sight (2 turns invisible, then a
+ * 6-turn wait), then: a wail of death (a save against Constitution and
+ * Wisdom, or it takes half your remaining life), a draining touch that feeds
+ * it, a dread whisper that freezes you, or a spectral bolt. */
+function bansheeAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const B = BANSHEE;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  if ((monster.invisibleTurns ?? 0) > 0) {
+    monster.invisibleTurns!--;
+    if (monster.invisibleTurns === 0) messages.push('The Banshee shimmers back into view, glowing faintly.');
+  } else if ((monster.invisCooldown ?? 0) > 0) {
+    monster.invisCooldown!--;
+  } else if (rng.float() < B.INVIS_CHANCE) {
+    monster.invisibleTurns = B.INVIS_TURNS;
+    monster.invisCooldown = B.INVIS_COOLDOWN;
+    messages.push('The Banshee\'s glow gutters out, and she is gone. You can hear her, somewhere close.');
+  }
+  const ability = pickWeighted(rng, [['banshee-wail', B.WAIL_WEIGHT], ['chill-touch', B.TOUCH_WEIGHT], ['dread-whisper', B.WHISPER_WEIGHT], ['spectral-bolt', B.BOLT_WEIGHT]]);
+  out.ability = ability;
+  const unseen = (monster.invisibleTurns ?? 0) > 0 ? 'From nowhere, ' : '';
+  switch (ability) {
+    case 'banshee-wail': {
+      const eff = getEffectiveStats(char);
+      const save = Math.min(0.9, B.WAIL_SAVE_BASE + eff.constitution * B.WAIL_SAVE_PER_CON + eff.wisdom * B.WAIL_SAVE_PER_WIS);
+      messages.push(`${unseen}The Banshee WAILS, a keening scream of every death there ever was.`);
+      if (rng.float() < save) {
+        const dmg = hurt(hit(B.WAIL_MULT));
+        messages.push(`You clap your hands to your ears and hold on. You suffer ${dmg} damage.`);
+        return done(dmg);
+      }
+      const dmg = hurt(Math.max(hit(B.WAIL_MULT), Math.round(char.hp * B.WAIL_FAIL_SHARE)));
+      messages.push(`Your heart stutters and nearly stops. The wail tears the life from you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'chill-touch': {
+      const dmg = hurt(hit(B.TOUCH_MULT));
+      const heal = Math.min(monster.maxHp - monster.hp, Math.round(dmg * B.TOUCH_HEAL));
+      monster.hp += heal;
+      messages.push(`${unseen}Icy fingers pass into your chest and squeeze your heart! You suffer ${dmg} damage.`,
+        ...(heal > 0 ? [`The Banshee's glow brightens as she feeds. (+${heal} HP)`] : []));
+      return done(dmg, { monsterHealed: heal || undefined });
+    }
+    case 'dread-whisper': {
+      const dmg = hurt(hit(B.WHISPER_MULT));
+      messages.push(`${unseen}A whisper at your ear names the day you will die. (${dmg} damage)`);
+      if (char.hp > 0) { holdCharacter(char, 1, 'feared'); messages.push('Dread freezes you where you stand.'); }
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(B.BOLT_MULT));
+      messages.push(`${unseen}A bolt of pale, ghostly fire strikes you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+  }
+}
+
+/** The Unicorn: a goring horn (can draw blood), a flurry of hooves, or a
+ * blast of radiance from its horn. */
+function unicornAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const U = UNICORN;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  const ability = pickWeighted(rng, [['horn-gore', U.GORE_WEIGHT], ['hoof-strike', U.HOOVES_WEIGHT], ['radiant-horn', U.RADIANT_WEIGHT]]);
+  out.ability = ability;
+  switch (ability) {
+    case 'horn-gore': {
+      const dmg = hurt(hit(U.GORE_MULT));
+      messages.push(`The Unicorn lowers its head and charges. The horn drives into you! You suffer ${dmg} damage.`);
+      if (char.hp > 0 && rng.float() < U.GORE_BLEED_CHANCE) {
+        addStatusEffect(char, { type: 'bleeding', value: 4, turns: 5 });
+        messages.push('The wound is deep. You are bleeding!');
+      }
+      return done(dmg);
+    }
+    case 'hoof-strike': {
+      messages.push('The Unicorn rears up and its hooves come down on you!');
+      let total = 0;
+      for (let i = 0; i < 2 && char.hp > 0; i++) {
+        const dmg = hurt(hit(U.HOOF_MULT));
+        total += dmg;
+        messages.push(`  A silver hoof strikes for ${dmg} damage.`);
+      }
+      return done(total);
+    }
+    default: {
+      const dmg = hurt(hit(U.RADIANT_MULT));
+      messages.push(`The Unicorn's horn blazes with white light, and the light burns! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+  }
+}
+
+/** Offer your hand to a Unicorn: a Charisma and Wisdom roll. If it judges you
+ * worthy it heals you fully, cures everything (even the incurable), leaves
+ * a blessing and departs. If not, it takes offense and charges. It won't
+ * let you near once you've hurt it. */
+export function petUnicorn(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const U = UNICORN;
+  const messages = ['You lower your weapon and slowly hold out your hand.'];
+  if (monster.hp < monster.maxHp) {
+    messages.push('The Unicorn\'s eyes flash. It will not forgive the blood you have drawn.');
+    const res = monsterAction(char, monster, rng, messages);
+    return { ...res, playerDamage: 0, monsterDied: false };
+  }
+  const eff = getEffectiveStats(char);
+  const chance = Math.min(U.PET_MAX, U.PET_BASE + eff.charisma * U.PET_PER_CHA + eff.wisdom * U.PET_PER_WIS);
+  if (rng.float() < chance) {
+    char.hp = char.maxHp;
+    char.statusEffects = char.statusEffects.filter(e => e.type === 'warded' || e.type === 'resistance-improved');
+    char.heldRounds = 0; char.heldBy = undefined;
+    const stats = ['strength', 'constitution', 'intelligence', 'wisdom', 'dexterity', 'charisma'] as const;
+    const stat = rng.pick([...stats]);
+    (char[stat] as number) += 1;
+    messages.push(
+      'The Unicorn steps forward and lays its muzzle in your palm. Its breath is warm.',
+      'It touches its horn to your brow, and light pours through you.',
+      'Every wound closes. Every poison, curse and rot burns away.',
+      `You feel blessed. (Fully healed, all afflictions cured, +1 ${stat})`,
+      '',
+      'Then it turns, and is gone, and the corridor is darker without it.',
+    );
+    return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false, monsterFled: true };
+  }
+  messages.push('The Unicorn snorts and stamps. It has judged you, and found you wanting.');
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
+}
+
+/** The Frost Giant: an ice axe cleave, a hurled boulder of ice, a storm of
+ * shards, a stomp that numbs, or Winter's Grasp, which freezes you solid.
+ * Below 30% health it rages, and attacks twice a turn. */
+function frostGiantAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const F = FROST_GIANT;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  const raging = monster.hp < monster.maxHp * F.RAGE_BELOW;
+  if (raging) messages.push('The Frost Giant roars in fury, ice cracking from its beard!');
+  let total = 0;
+  for (let n = 0; n < (raging ? 2 : 1) && char.hp > 0; n++) {
+    const frozen = char.heldBy === 'frozen' && (char.heldRounds ?? 0) > 0;
+    const ability = pickWeighted(rng, [
+      ['ice-axe', F.AXE_WEIGHT], ['ice-boulder', F.BOULDER_WEIGHT], ['shard-storm', F.SHARDS_WEIGHT], ['frost-stomp', F.STOMP_WEIGHT],
+      ...(frozen ? [] : [['winters-grasp', F.GRASP_WEIGHT] as [string, number]]),
+    ]);
+    out.ability = ability;
+    switch (ability) {
+      case 'ice-axe': {
+        const dmg = hurt(hit(F.AXE_MULT));
+        total += dmg;
+        messages.push(`The great axe of ice cleaves into you! You suffer ${dmg} damage.`);
+        break;
+      }
+      case 'ice-boulder': {
+        const dmg = hurt(hit(F.BOULDER_MULT));
+        total += dmg;
+        messages.push(`The giant tears a boulder of ice from the wall and hurls it! You suffer ${dmg} damage.`);
+        break;
+      }
+      case 'shard-storm': {
+        messages.push('The giant sweeps its hand, and a storm of razor-sharp ice shards fills the air!');
+        for (let i = 0; i < F.SHARDS && char.hp > 0; i++) {
+          const dmg = hurt(hit(F.SHARD_MULT));
+          total += dmg;
+          messages.push(`  A shard slices you for ${dmg} damage.`);
+        }
+        break;
+      }
+      case 'frost-stomp': {
+        const dmg = hurt(hit(F.STOMP_MULT));
+        total += dmg;
+        messages.push(`The giant stamps, and the floor erupts in frost! You suffer ${dmg} damage.`);
+        if (char.hp > 0 && !char.statusEffects.some(e => e.type === 'dexterity-reduced')) {
+          addStatusEffect(char, { type: 'dexterity-reduced', value: F.STOMP_DEX, turns: F.STOMP_TURNS });
+          messages.push(`Your feet and fingers go numb. (-${F.STOMP_DEX} Dexterity)`);
+        }
+        break;
+      }
+      default: {
+        const dmg = hurt(hit(F.GRASP_MULT));
+        total += dmg;
+        messages.push(`The giant seizes you in a fist of living winter. Ice races over your body! You suffer ${dmg} damage.`);
+        if (char.hp > 0) {
+          holdCharacter(char, F.GRASP_ROUNDS, 'frozen');
+          messages.push('You are frozen solid!');
+        }
+      }
+    }
+  }
+  return done(total);
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -914,7 +1214,7 @@ export function banishFailFaces(monster: Monster): number {
   if (monster.type === 'Asmodeus') return 12;
   const byTier = SPELLS.BANISH_FAIL_FACES_BY_TIER[monster.definition.naturalTier] ?? 0;
   const dragonOrUndead = monster.type.includes('Dragon') || monster.definition.isUndead;
-  const highLevel = monster.level >= monster.definition.maxLevel * SPELLS.BANISH_HIGH_LEVEL_FRACTION;
+  const highLevel = monster.level >= Math.min(monster.definition.maxLevel * SPELLS.BANISH_HIGH_LEVEL_FRACTION, SPELLS.BANISH_HIGH_LEVEL_MAX);
   const byKind = dragonOrUndead && highLevel ? SPELLS.BANISH_HIGH_LEVEL_FAIL_FACES : 0;
   return Math.max(byTier, byKind);
 }
@@ -985,6 +1285,10 @@ export function abilityElement(ability: string | undefined): FxElement {
   if (ability === 'telekinetic-ray') return 'physical';
   if (ability === 'eye-of-gruumsh') return 'fire';
   if (ability === 'curse-of-gruumsh') return 'drain';
+  if (ability === 'ruby-ray' || ability === 'phoenix-flare') return 'fire';
+  if (ability === 'chill-touch' || ability === 'banshee-wail') return 'drain';
+  if (ability === 'radiant-horn') return 'holy';
+  if (ability === 'winters-grasp' || ability === 'shard-storm') return 'cold';
   if (/disintegrate|petrify|paralyze-ray|slow-ray|magic|teleport|naked|light-bolt/.test(ability)) return 'arcane';
   if (/fire|flame|burn|infernal/.test(ability)) return 'fire';
   if (/frost|cold|ice/.test(ability)) return 'cold';
@@ -996,7 +1300,7 @@ export function abilityElement(ability: string | undefined): FxElement {
   return 'physical';
 }
 
-type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[] };
+type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[]; monsterFled?: boolean };
 
 /** The monster's turn. Also reports the element of whatever it did
  * (monsterElement), or nothing if it didn't get to act; and if it killed
@@ -1033,6 +1337,11 @@ const ATTACK_NAMES: Record<string, string> = {
   'charm-ray': 'charm ray',
   'sleep-ray': 'sleep ray',
   'crushing-coils': 'crushing coils',
+  'dust-storm': 'dust storm', 'ruby-ray': 'ruby ray', 'djinn-punch': 'fist', 'wisp-choke': 'choking tail',
+  'talon-flurry': 'talons', 'phoenix-flare': 'flash burn', 'phoenix-screech': 'screech',
+  'banshee-wail': 'wail', 'chill-touch': 'chilling touch', 'dread-whisper': 'whisper', 'spectral-bolt': 'spectral bolt',
+  'horn-gore': 'horn', 'hoof-strike': 'hooves', 'radiant-horn': 'radiant horn',
+  'ice-axe': 'ice axe', 'ice-boulder': 'hurled boulder', 'shard-storm': 'ice shards', 'frost-stomp': 'stomp', 'winters-grasp': "winter's grasp",
   'titan-bite': 'bite',
   'tail-slam': 'tail',
   'frostbite-claws': 'frostbitten claws',
@@ -1137,6 +1446,11 @@ function monsterActionInner(
   if (monster.type === 'Manticore') return manticoreAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Titanoboa') return titanoboaAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Wendigo') return wendigoAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Djinn') return djinnAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Phoenix') return phoenixAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Banshee') return bansheeAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Unicorn') return unicornAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Frost Giant') return frostGiantAction(char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -1663,6 +1977,8 @@ const HELD_TEXT: Record<HeldCondition, string> = {
   charmed:    'You gaze adoringly at the Beholder and do nothing.',
   engulfed:   'You struggle inside the quivering jelly but cannot break free!',
   constricted: 'You strain against the coils, but they only tighten!',
+  choked:     'You claw at the smoky coil around your throat, but cannot break its grip!',
+  frozen:     'You are frozen solid in a shell of ice and cannot move!',
   petrifying: 'Your stone legs will not obey you!',
 };
 
@@ -1670,7 +1986,7 @@ const HELD_TEXT: Record<HeldCondition, string> = {
  * monster acts. */
 export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   // Coils can be fought: Strength gives a chance to wriggle free at once.
-  if (char.heldBy === 'constricted') {
+  if (char.heldBy === 'constricted' || char.heldBy === 'choked') {
     const chance = Math.min(TITANOBOA.BREAK_FREE_MAX, getEffectiveStats(char).strength * TITANOBOA.BREAK_FREE_PER_STRENGTH);
     if (rng.float() < chance) {
       char.heldRounds = 0;
