@@ -81,7 +81,7 @@ const LEVELS: Record<number, LevelWords> = {
       'Black water laps around your ankles.',
       'Strange carvings of tentacled things cover the walls.',
       'Pale, eyeless fish flicker away through the shallows.',
-      'The ceiling is lost in darkness, and water falls from it like rain.',
+      'Water drips from somewhere overhead like slow rain.',
       'Faint whispers seem to rise from the water itself.',
       'Slick green weed hangs from the walls.',
     ],
@@ -134,6 +134,16 @@ function words(level: number): LevelWords {
   return LEVELS[level] ?? LEVELS[1];
 }
 
+/** How high an area's ceiling is: 0 ordinary, 1 high, 2 lost in darkness.
+ * Large rooms are high and vast ones soar out of sight; in the Caverns of
+ * Teeth and the Sunken Abyss, everything one size smaller does too. The
+ * corridor view draws this, and the room description mentions it. */
+export function ceilingHeight(level: number, area: Area): number {
+  if (area.kind !== 'room') return 0;
+  const rank = { small: 0, medium: 1, large: 2, vast: 3 }[sizeOf(area)] + (level === 4 || level === 6 ? 1 : 0);
+  return rank >= 3 ? 2 : rank === 2 ? 1 : 0;
+}
+
 /** The room's name, e.g. "a great ossuary". */
 export function roomName(level: number, area: Area): string {
   const w = words(level);
@@ -156,7 +166,10 @@ export function describeArea(level: number, area: Area, firstVisit: boolean): st
       : 'Your torchlight is swallowed by the dark long before it finds a far wall.';
     const shape = isLong(area) && area.cells >= 20 ? `It runs a long way, ${axis(area)}.` : reach;
     const flavor = w.flavor[hash(`${level}:${area.id}`) % w.flavor.length];
-    return [`You are in ${name}.`, shape, flavor, exitsLine(area.exits)];
+    const ceiling = ceilingHeight(level, area);
+    const overhead = ceiling === 2 ? ['Far overhead, the ceiling is lost in darkness.']
+      : ceiling === 1 ? ['The ceiling rises high above you.'] : [];
+    return [`You are in ${name}.`, shape, ...overhead, flavor, exitsLine(area.exits)];
   }
 
   if (!firstVisit || area.cells < 6) return [];

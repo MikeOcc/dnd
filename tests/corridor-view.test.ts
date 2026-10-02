@@ -726,3 +726,30 @@ describe('Wall materials and carvings', () => {
     }
   });
 });
+
+describe('High ceilings', () => {
+  const corridor = () => { const g = closedGrid(20, 20); carve(g, 5, 5, 6, 'E'); return g; };
+
+  it('an ordinary ceiling draws the top border; a high one leaves it open and runs the walls up', () => {
+    const low = renderCorridorView(corridor(), 5, 5, 'E', { level: 1, ceiling: () => 0 });
+    const high = renderCorridorView(corridor(), 5, 5, 'E', { level: 1, ceiling: () => 1 });
+    expect(low[0]).toMatch(/^\+-+\+$/);
+    expect(high[0]).not.toContain('-');
+    // The far frames' side walls reach up into rows that an ordinary ceiling closes off.
+    const upper = (v: string[]) => v.slice(1, 5).join('').replace(/[ ]/g, '').length;
+    expect(upper(high)).toBeGreaterThan(upper(low));
+  });
+
+  it('a ceiling lost in darkness fades out overhead, leaving the top of the view mostly empty', () => {
+    const lost = renderCorridorView(corridor(), 5, 5, 'E', { level: 1, ceiling: () => 2 });
+    const high = renderCorridorView(corridor(), 5, 5, 'E', { level: 1, ceiling: () => 1 });
+    const ink = (rows: string[]) => rows.join('').replace(/[ ]/g, '').length;
+    expect(ink(lost.slice(0, 4))).toBeLessThan(ink(high.slice(0, 4)));
+  });
+
+  it('a low passage nearer the viewer hides the tall chamber beyond above its opening', () => {
+    const v = renderCorridorView(corridor(), 5, 5, 'E', { level: 1, ceiling: (x) => (x >= 8 ? 1 : 0) });
+    expect(v[0]).toMatch(/^\+-+\+$/);  // the corridor's own ceiling still closes the view
+    expect(v).toHaveLength(CORRIDOR_VIEW_DEFAULTS.HEIGHT);
+  });
+});

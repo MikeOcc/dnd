@@ -25,7 +25,7 @@ import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
-import { describeArea } from '../content/area-text.js';
+import { describeArea, ceilingHeight } from '../content/area-text.js';
 import { mapAreas, areaAtCell, type AreaMap } from './regions.js';
 import type { Repository } from '../database/repositories.js';
 
@@ -150,7 +150,13 @@ export class GameEngine {
     if (!lvl) return [];
 
     const entities = this.findVisibleEntities(lvl);
-    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, { level: this.char.dungeonLevel }, undefined, entities);
+    const level = this.char.dungeonLevel;
+    const areas = (lvl.areas ??= mapAreas(lvl.grid));
+    const ceiling = (x: number, y: number) => {
+      const area = areaAtCell(areas, x, y);
+      return area ? ceilingHeight(level, area) : 0;
+    };
+    return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, { level, ceiling }, undefined, entities);
   }
 
   /** Scans the same visible depth the corridor renderer will draw and marks

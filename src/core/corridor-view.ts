@@ -2,7 +2,7 @@ import type { DungeonCell, Direction } from './types.js';
 import { scanCorridor } from './corridor-scan.js';
 import type { EdgeInfoLookup } from './corridor-scan.js';
 import { computeFrames } from './corridor-geometry.js';
-import { drawFrame, fillWallTexture, fillDoorAhead, drawEntities, CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
+import { drawFrame, fillWallTexture, fillDoorAhead, drawEntities, ceilingClips, CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
 import type { EntityMarker } from './corridor-render.js';
 export type { EntityMarker } from './corridor-render.js';
 export { CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
@@ -42,6 +42,8 @@ export interface CorridorViewOptions {
   height?: number;
   maxDepth?: number;
   level?: number;   // dungeon level: picks the wall materials and carvings (plain stone when absent)
+  /** Ceiling height of a square: 0 ordinary, 1 high, 2 lost in darkness. */
+  ceiling?: (x: number, y: number) => number;
 }
 
 export const CORRIDOR_VIEW_DEFAULTS = {
@@ -72,8 +74,13 @@ export function renderCorridorView(
   const frames = computeFrames(width, height, n, CORRIDOR_VIEW_DEFAULTS.DECAY);
 
   const style = { level: options.level, facing };
+  const heights = frames.map((_, i) => {
+    const st = scan.steps[i];
+    return st && options.ceiling ? options.ceiling(st.x, st.y) : 0;
+  });
+  const ceiling = { heights, clip: ceilingClips(frames, heights) };
   for (let i = 0; i < frames.length; i++) {
-    drawFrame(chars, frames, i, scan.steps[i], style);
+    drawFrame(chars, frames, i, scan.steps[i], style, ceiling);
   }
 
   const last = frames[frames.length - 1];
@@ -84,7 +91,8 @@ export function renderCorridorView(
       fillDoorAhead(chars, last);
     } else {
       // A plain wall, a secret wall (indistinguishable), or the map edge.
-      fillWallTexture(chars, last, style, lastStep?.x ?? playerX, lastStep?.y ?? playerY);
+      const li = frames.length - 1;
+      fillWallTexture(chars, last, style, lastStep?.x ?? playerX, lastStep?.y ?? playerY, heights[li], ceiling.clip[li]);
     }
   } else {
     // Corridor continues past the render distance — a hint of darkness ahead.

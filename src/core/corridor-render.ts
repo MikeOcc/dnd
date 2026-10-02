@@ -80,9 +80,10 @@ export function drawSideEdge(
   side: 'left' | 'right',
   x = 0,
   y = 0,
+  wallTop = f.top,  // a high ceiling: the wall runs up past the frame's top
 ): void {
   if (edge === 'wall' || edge === 'secret') {
-    for (let r = f.top; r <= f.bottom; r++) chars[r][col] = '|';
+    for (let r = Math.max(0, wallTop); r <= f.bottom; r++) chars[r][col] = '|';
     maybeDrawTorch(chars, f, col, x, y, side);
     return;
   }
@@ -103,7 +104,8 @@ export function drawSideEdge(
   if (hasRoom) {
     // An open door keeps one lip as a bracket — the leaf, swung back flat
     // against the frame — while a plain passage keeps both as bare bars.
-    chars[f.top + 1][col] = edge === 'door-open' ? bracket : '|';
+    // Under a tall ceiling there's no lintel for the top lip to hang from.
+    if (wallTop >= f.top) chars[f.top + 1][col] = edge === 'door-open' ? bracket : '|';
     chars[f.bottom - 1][col] = '|';
   }
 
@@ -134,6 +136,33 @@ export type WallMaterial = 'stone' | 'brick' | 'wood' | 'rough';
 export interface WallStyle {
   level?: number;
   facing?: Direction;
+}
+
+/** Ceiling heights along the view, one per depth: 0 a normal ceiling,
+ * 1 high (the walls run up out of the frame), 2 lost in darkness (the walls
+ * fade away overhead). `clip` is the highest row each depth can show — a
+ * low ceiling nearer the viewer hides anything above its opening. */
+export interface CeilingInfo {
+  heights: number[];
+  clip: number[];
+}
+
+/** Works out each depth's clip row from the heights and the frames. */
+export function ceilingClips(frames: Frame[], heights: number[]): number[] {
+  const clip: number[] = [];
+  let lowest = 0;  // the top row of the farthest low ceiling so far
+  for (let i = 0; i < frames.length; i++) {
+    clip.push(lowest);
+    if (!(heights[i] > 0)) lowest = Math.max(lowest, frames[i].top + 1);
+  }
+  return clip;
+}
+
+/** How high a wall's texture and edges reach under a tall ceiling: all the
+ * way up when high, a few rows past the frame when lost in darkness. */
+function wallReach(frameTop: number, height: number, clip: number): number {
+  if (height <= 0) return frameTop;
+  return height === 1 ? clip : Math.max(clip, frameTop - 3);
 }
 
 const MATERIAL_WEIGHTS: Record<number, [WallMaterial, number][]> = {
@@ -288,6 +317,8 @@ function fillWallPanel(
   x: number,
   y: number,
   style: WallStyle = {},
+  height = 0,
+  clip = 0,
 ): void {
   const nearCol = side === 'left' ? near.left : near.right;
   const farCol = side === 'left' ? far.left : far.right;
@@ -303,9 +334,13 @@ function fillWallPanel(
     const top = Math.round(near.top + (far.top - near.top) * t);
     const bottom = Math.round(near.bottom + (far.bottom - near.bottom) * t);
 
-    for (let r = top + 1; r < bottom; r++) {
+    // Under a tall ceiling the wall carries on above the frame, thinning out
+    // as it climbs into the dark.
+    const from = height > 0 ? wallReach(top, height, clip) : top + 1;
+    for (let r = Math.max(0, from); r < bottom; r++) {
       if (chars[r]?.[c] !== ' ') continue;
       const hash = spatialHash(x, y, salt + r * 977 + c * 31);
+      if (r <= top && (hash >>> 4) % 100 < (height === 1 ? 35 : 50 + (top - r) * 15)) continue;
       const ch = materialChar(material, depth, hash, r, c, nearCol);
       if (ch) chars[r][c] = ch;
     }
@@ -366,37 +401,63 @@ export function drawFrame(
   i: number,
   step: CorridorStep | undefined,
   style: WallStyle = {},
+  ceiling?: CeilingInfo,
 ): void {
   const f = frames[i];
+  const height = ceiling?.heights[i] ?? 0;
+  const prevHeight = i > 0 ? (ceiling?.heights[i - 1] ?? 0) : 0;
+  const clip = ceiling?.clip[i] ?? 0;
+  const high = height > 0;
 
   for (let c = f.left; c <= f.right; c++) {
-    chars[f.top][c] = '-';
+    if (!high) chars[f.top][c] = '-';
     chars[f.bottom][c] = '-';
   }
 
-  drawSideEdge(chars, f, f.left, step?.left ?? 'wall', 'left', step?.x, step?.y);
-  drawSideEdge(chars, f, f.right, step?.right ?? 'wall', 'right', step?.x, step?.y);
+  const x = step?.x ?? 0;
+  const y = step?.y ?? 0;
+  // Below f.top whenever the ceiling is tall, even for the nearest frame (whose top is row 0).
+  const wallTop = high ? Math.min(wallReach(f.top, height, clip), f.top - 1) : f.top;
+  drawSideEdge(chars, f, f.left, step?.left ?? 'wall', 'left', step?.x, step?.y, wallTop);
+  drawSideEdge(chars, f, f.right, step?.right ?? 'wall', 'right', step?.x, step?.y, wallTop);
 
-  chars[f.top][f.left] = '+';
-  chars[f.top][f.right] = '+';
+  if (!high) {
+    chars[f.top][f.left] = '+';
+    chars[f.top][f.right] = '+';
+  }
   chars[f.bottom][f.left] = '+';
   chars[f.bottom][f.right] = '+';
 
   if (i > 0) {
     const prev = frames[i - 1];
-    drawDiagonal(chars, prev.top, prev.left, f.top, f.left, '\\');
-    drawDiagonal(chars, prev.top, prev.right, f.top, f.right, '/');
+    // The ceiling's edges only where both depths have an ordinary ceiling.
+    if (!high && prevHeight === 0) {
+      drawDiagonal(chars, prev.top, prev.left, f.top, f.left, '\\');
+      drawDiagonal(chars, prev.top, prev.right, f.top, f.right, '/');
+    }
     drawDiagonal(chars, prev.bottom, prev.left, f.bottom, f.left, '/');
     drawDiagonal(chars, prev.bottom, prev.right, f.bottom, f.right, '\\');
 
-    const x = step?.x ?? 0;
-    const y = step?.y ?? 0;
     const leftEdge: EdgeType = step?.left ?? 'wall';
     const rightEdge: EdgeType = step?.right ?? 'wall';
-    if (leftEdge === 'wall' || leftEdge === 'secret') fillWallPanel(chars, prev, f, 'left', i, x, y, style);
-    if (rightEdge === 'wall' || rightEdge === 'secret') fillWallPanel(chars, prev, f, 'right', i, x, y, style);
+    if (leftEdge === 'wall' || leftEdge === 'secret') fillWallPanel(chars, prev, f, 'left', i, x, y, style, height, clip);
+    if (rightEdge === 'wall' || rightEdge === 'secret') fillWallPanel(chars, prev, f, 'right', i, x, y, style, height, clip);
     fillHorizontalPanel(chars, prev, f, 'floor', x, y);
-    fillHorizontalPanel(chars, prev, f, 'ceiling', x, y);
+    if (!high && prevHeight === 0) fillHorizontalPanel(chars, prev, f, 'ceiling', x, y);
+
+    // Leaving a tall chamber by a low passage: the chamber's end wall rises
+    // above the passage mouth.
+    if (!high && prevHeight > 0) {
+      const reach = wallReach(f.top, prevHeight, ceiling?.clip[i - 1] ?? 0);
+      for (let r = Math.max(0, reach); r < f.top; r++) {
+        for (let c = prev.left + 1; c < prev.right; c++) {
+          if (chars[r][c] !== ' ') continue;
+          const hash = spatialHash(x, y, 71 + r * 977 + c * 31);
+          const keep = prevHeight === 1 ? 30 : Math.max(0, 30 - (f.top - r) * 8);
+          if (hash % 100 < keep) chars[r][c] = (hash >>> 7) % 3 === 0 ? ':' : '.';
+        }
+      }
+    }
   }
 }
 
@@ -404,10 +465,19 @@ export function drawFrame(
  * brick course (each row's joints offset from the one above, like real
  * masonry) so it unmistakably reads as solid rather than just another
  * distant panel. */
-export function fillWallTexture(chars: string[][], f: Frame, style: WallStyle = {}, x = 0, y = 0): void {
+export function fillWallTexture(chars: string[][], f: Frame, style: WallStyle = {}, x = 0, y = 0, height = 0, clip = 0): void {
   const material = wallMaterial(style, x, y, 'front');
   const BRICK_WIDTH = 4;
-  for (let r = f.top + 1; r < f.bottom; r++) {
+  // Under a tall ceiling the end wall carries on above the frame, thinning
+  // out as it climbs into the dark.
+  for (let r = Math.max(0, wallReach(f.top, height, clip)); r < f.top; r++) {
+    for (let c = f.left + 1; c < f.right; c++) {
+      const hash = spatialHash(x, y, 73 + r * 977 + c * 31);
+      const keep = height === 1 ? 45 : Math.max(0, 40 - (f.top - r) * 12);
+      chars[r][c] = hash % 100 < keep ? ['.', ':', '=', '.'][(hash >>> 7) % 4] : ' ';
+    }
+  }
+  for (let r = height > 0 ? f.top : f.top + 1; r < f.bottom; r++) {
     const rowOffset = ((r - f.top) % 2) * (BRICK_WIDTH / 2);
     for (let c = f.left + 1; c < f.right; c++) {
       if (material === 'wood') {

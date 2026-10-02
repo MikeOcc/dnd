@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateLevel, deserializeLevel, canMove } from '../src/core/dungeon.js';
 import { mapAreas, areaAtCell } from '../src/core/regions.js';
-import { describeArea, roomName } from '../src/content/area-text.js';
+import { describeArea, roomName, ceilingHeight } from '../src/content/area-text.js';
 
 const isRock = (c: { walls: { N: boolean; E: boolean; S: boolean; W: boolean } }) => c.walls.N && c.walls.E && c.walls.S && c.walls.W;
 
@@ -58,5 +58,31 @@ describe('Area descriptions', () => {
     expect(describeArea(1, corridor(20, true), true)[0]).toBe('A very long stone passage runs north to south, farther than your light can follow.');
     expect(describeArea(1, corridor(8, false), true)[0]).toBe('A winding stone passage twists away into the dark.');
     expect(describeArea(1, corridor(20, true), false)).toEqual([]);
+  });
+});
+
+describe('Ceiling heights', () => {
+  const room = (w: number, h: number) =>
+    ({ id: '1,1', kind: 'room' as const, cells: w * h, minX: 0, maxX: w - 1, minY: 0, maxY: h - 1, exits: 2, junctions: 0, straight: false });
+
+  it('large rooms are high and vast ones soar out of sight; corridors and small rooms are low', () => {
+    expect(ceilingHeight(1, room(5, 5))).toBe(0);
+    expect(ceilingHeight(1, room(8, 8))).toBe(0);
+    expect(ceilingHeight(1, room(11, 11))).toBe(1);
+    expect(ceilingHeight(1, room(16, 16))).toBe(2);
+    expect(ceilingHeight(1, { ...room(1, 30), kind: 'corridor' as const })).toBe(0);
+  });
+
+  it('caverns and the abyss are a size taller', () => {
+    expect(ceilingHeight(4, room(8, 8))).toBe(1);
+    expect(ceilingHeight(6, room(11, 11))).toBe(2);
+  });
+
+  it('the room description mentions a tall ceiling', () => {
+    expect(describeArea(1, room(11, 11), true)).toContain('The ceiling rises high above you.');
+    expect(describeArea(1, room(16, 16), true)).toContain('Far overhead, the ceiling is lost in darkness.');
+    const small = describeArea(1, room(5, 5), true);
+    expect(small).not.toContain('The ceiling rises high above you.');
+    expect(small).not.toContain('Far overhead, the ceiling is lost in darkness.');
   });
 });
