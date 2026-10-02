@@ -2205,3 +2205,31 @@ describe('GameEngine — Phoenix rebirth, invisible Banshees, Unicorns', () => {
     expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'strength-reduced')).toBe(true);
   });
 });
+
+describe('GameEngine — death at the hands of Asmodeus', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('drains a level and 5% of gold, and wakes you at the entrance to level 7', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7);
+    e.char.level = 60; e.char.gold = 10000; e.char.xp = xpForLevel(60) + 100;
+    const xpBefore = e.char.xp;
+    forceLethalCombat(engine, 'Asmodeus');
+    e.rng.float = () => 0.99;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 20 && state.phase === 'combat'; i++) { e.char.hp = 1; state = engine.combatAction('a'); }
+    expect(state.phase).toBe('death');
+    expect(state.messages.join(' ')).toContain('Asmodeus is not done with you');
+    expect(e.char.level).toBe(59);
+    expect(e.char.gold).toBe(9500);
+    expect(e.char.xp).toBeLessThan(xpBefore);
+    const entrance = e.getLevel(7).entrance;
+    expect([e.char.x, e.char.y]).toEqual([entrance.x, entrance.y]);
+    expect(engine.reviveAfterDeath().phase).toBe('playing');
+  });
+});

@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -1158,6 +1158,70 @@ function frostGiantAction(char: Character, monster: Monster, rng: RNG, messages:
   return done(total);
 }
 
+/** The Gold Dragon: wallops you with a sack of gold (some coins come loose),
+ * claws and bites, breathes choking gold dust (a small chance of
+ * asphyxiation: no roll, you're dead), or casts a gilding spell: a saving
+ * roll (d20 + Constitution and Resistance bonuses) or you're a gold statue;
+ * make it, and you're half-gilded, frozen for a while. */
+function goldDragonAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const G = GOLD_DRAGON;
+  const { hit, hurt, done } = turnKit(char, monster, rng, messages, naked);
+  const held = (char.heldRounds ?? 0) > 0;
+  const ability = pickWeighted(rng, [
+    ['gold-wallop', G.WALLOP_WEIGHT], ['gold-claws', G.CLAW_WEIGHT], ['gold-dust-breath', G.DUST_WEIGHT],
+    ...(held ? [] : [['gilding', G.GILD_WEIGHT] as [string, number]]),
+  ]);
+  out.ability = ability;
+  switch (ability) {
+    case 'gold-wallop': {
+      const dmg = hurt(hit(G.WALLOP_MULT));
+      messages.push(`The Gold Dragon swings its great sack of treasure and WALLOPS you! You suffer ${dmg} damage.`);
+      if (char.hp > 0) {
+        const coins = rng.int(G.WALLOP_COINS_MIN, G.WALLOP_COINS_MAX);
+        char.gold += coins;
+        messages.push(`Coins burst from the sack and rain down around you. (You snatch up ${coins} gold.)`);
+      }
+      return done(dmg);
+    }
+    case 'gold-claws': {
+      const dmg = hurt(hit(G.CLAW_MULT));
+      messages.push(`Golden claws and gleaming teeth tear into you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'gold-dust-breath': {
+      messages.push('The Gold Dragon breathes out a glittering, blinding cloud of gold dust!');
+      if (rng.float() < G.ASPHYXIATION_CHANCE) {
+        out.ability = 'asphyxiated';
+        char.hp = 0;
+        messages.push('The dust fills your mouth, your nose, your lungs. You cannot breathe. You cannot breathe.',
+          'YOU HAVE ASPHYXIATED.');
+        return done(0);
+      }
+      const dmg = hurt(hit(G.DUST_MULT));
+      messages.push(`You cough and choke on the burning dust! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    default: {
+      const eff = getEffectiveStats(char);
+      const bonus = Math.floor((eff.constitution - 10) / 2) + Math.floor((eff.resistance - 10) / 2);
+      const d = rng.die(20);
+      messages.push('The Gold Dragon\'s eyes blaze, and it speaks a word of power. Gold spreads across your skin...',
+        `(Saving roll: d20 ${d} ${bonus >= 0 ? '+' : '-'} ${Math.abs(bonus)} = ${d + bonus}, needed ${G.GILD_DC})`);
+      if (d + bonus < G.GILD_DC) {
+        out.ability = 'gilded';
+        char.hp = 0;
+        messages.push('...and keeps spreading, over your face, into your eyes. You are a statue of solid gold.',
+          'It will look lovely in the hoard.');
+        return done(0);
+      }
+      const dmg = hurt(hit(G.GILD_MULT));
+      messages.push(`You fight it back, but your arms and legs are gilded and stiff! You suffer ${dmg} damage.`);
+      if (char.hp > 0) holdCharacter(char, G.GILD_ROUNDS, 'gilded');
+      return done(dmg);
+    }
+  }
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -1341,6 +1405,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'talon-flurry': 'talons', 'phoenix-flare': 'flash burn', 'phoenix-screech': 'screech',
   'banshee-wail': 'wail', 'chill-touch': 'chilling touch', 'dread-whisper': 'whisper', 'spectral-bolt': 'spectral bolt',
   'horn-gore': 'horn', 'hoof-strike': 'hooves', 'radiant-horn': 'radiant horn',
+  'gold-wallop': 'sack of gold', 'gold-claws': 'claws', 'gold-dust-breath': 'gold-dust breath', 'gilding': 'gilding spell',
   'ice-axe': 'ice axe', 'ice-boulder': 'hurled boulder', 'shard-storm': 'ice shards', 'frost-stomp': 'stomp', 'winters-grasp': "winter's grasp",
   'titan-bite': 'bite',
   'tail-slam': 'tail',
@@ -1368,6 +1433,8 @@ export function killedBy(monster: Monster, ability: string | undefined): string 
     case 'hypnosis':         return `Hypnotized and drained dry by ${who}.`;
     case 'ball-of-doo':      return 'Turned into a pile of lizard shit by Asmodeus.';
     case 'crushed':          return `Crushed to death in the coils of ${who}.`;
+    case 'gilded':           return `Turned to solid gold by ${who}.`;
+    case 'asphyxiated':      return `Choked to death on the gold-dust breath of ${who}.`;
     case 'petrify-ray':      return `Turned to stone by ${who}.`;
     case 'death-ray':        return `Slain by the death ray of ${who}.`;
     case 'disintegrate-ray': return `Disintegrated by ${who}.`;
@@ -1451,6 +1518,7 @@ function monsterActionInner(
   if (monster.type === 'Banshee') return bansheeAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Unicorn') return unicornAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Frost Giant') return frostGiantAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Gold Dragon') return goldDragonAction(char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -1979,6 +2047,7 @@ const HELD_TEXT: Record<HeldCondition, string> = {
   constricted: 'You strain against the coils, but they only tighten!',
   choked:     'You claw at the smoky coil around your throat, but cannot break its grip!',
   frozen:     'You are frozen solid in a shell of ice and cannot move!',
+  gilded:     'Your gilded limbs are heavy as ingots and will not move!',
   petrifying: 'Your stone legs will not obey you!',
 };
 

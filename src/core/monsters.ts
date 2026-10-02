@@ -413,6 +413,24 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     encounterIntro: ['Frost rimes the walls as a pale shape descends.', '', 'You have encountered a Level {LVL} White Dragon!'],
     specialAbilities: ['frost-breath'],
   },
+  // A dragon of living gold, hoarder of hoards. Fights in combat.ts,
+  // goldDragonAction.
+  'Gold Dragon': {
+    type: 'Gold Dragon', isUndead: false, isUnique: false,
+    minLevel: 40, maxLevel: 95, naturalTier: 9, minDungeonLevel: 5, speed: 1.0,
+    baseHpPerLevel: 18, baseAttackPerLevel: 5.0, baseDefensePerLevel: 4.5,
+    fireballResistance: 0.4, lightningResistance: 0.8,
+    encounterIntro: [
+      'Coins slide and chime underfoot. Then the whole floor of coins moves.',
+      'A dragon rises out of the hoard, scales of burnished gold, eyes like molten coins,',
+      'a great sack of treasure clutched in one claw as if it were a club.',
+      '',
+      '"A THIEF. HOW TIRESOME. YOU WILL MAKE A LOVELY ORNAMENT."',
+      '',
+      'You have encountered a Level {LVL} Gold Dragon!',
+    ],
+    specialAbilities: ['gold-wallop', 'gold-claws', 'gold-dust-breath', 'gilding'],
+  },
   'Red Dragon': {
     type: 'Red Dragon', isUndead: false, isUnique: false,
     minLevel: 10, maxLevel: 95, naturalTier: 8, minDungeonLevel: 4, speed: 1.0,
@@ -635,5 +653,5 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',
-  'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon',
+  'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon',
 ];

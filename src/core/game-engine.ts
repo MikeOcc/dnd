@@ -14,7 +14,7 @@ import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost,
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
-  applyDeath, resolveChest, readBook, resolveAltar, resolveFountain,
+  applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain,
   chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
@@ -1908,7 +1908,7 @@ export class GameEngine {
 
     if (result.playerDied) {
       const monster = this.combat!.monster;
-      return this.handleDeath(result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`, result.killingBlow);
+      return this.handleDeath(result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`, result.killingBlow, monster.type);
     }
 
     // Flesh rot keeps eating through a fight, a stage each round.
@@ -2004,12 +2004,15 @@ export class GameEngine {
    * toll. Dying costs gold and experience and drops the character at this
    * level's entrance; from there they can revive, restore the last save
    * instead (undoing the toll), or quit. Nothing is written to the save. */
-  private handleDeath(cause: string, killingBlow: string[] = []): GameState {
+  private handleDeath(cause: string, killingBlow: string[] = [], killer?: MonsterType): GameState {
     if (!this.char) return this.getState();
 
     this.endCombat(false);
     const entrance = this.getLevel(this.char.dungeonLevel)?.entrance ?? { x: 0, y: 0 };
-    const toll = applyDeath(this.char, entrance.x, entrance.y);
+    // Asmodeus takes a level and a little gold, and leaves you at level 7's entrance.
+    const toll = killer === 'Asmodeus'
+      ? applyAsmodeusDeath(this.char, entrance.x, entrance.y)
+      : applyDeath(this.char, entrance.x, entrance.y);
 
     // Renderers show 'YOU HAVE DIED.' as a banner.
     this.messages = [

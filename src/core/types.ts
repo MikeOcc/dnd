@@ -174,6 +174,7 @@ export type MonsterType =
   | 'Blue Dragon'
   | 'White Dragon'
   | 'Red Dragon'
+  | 'Gold Dragon'
   | 'Aboleth'
   | 'Dracolich'
   | 'Nightwalker'
@@ -239,7 +240,7 @@ export interface Fx {
   cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
 }
 
-export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen';
+export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded';
 
 /** The Beholder's eye rays, one per eyestalk. */
 export type BeholderRay =

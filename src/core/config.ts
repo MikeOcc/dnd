@@ -322,14 +322,14 @@ export const MONSTER_SCALING = {
   // the dragons, the Sanguinid (75 on level 6, 85 on 7), the Phoenix and the Frost Giant can
   // climb as high as their own maxLevel on dungeon levels 6 and 7, rolled
   // like any other level.
-  EXTENDED_CAP_TYPES: ['Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Sanguinid', 'Phoenix', 'Frost Giant'] as string[],
+  EXTENDED_CAP_TYPES: ['Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon', 'Sanguinid', 'Phoenix', 'Frost Giant'] as string[],
   EXTENDED_CAP_MIN_DEPTH: 6,
   // ...optionally a lower ceiling than maxLevel on a given depth.
   EXTENDED_CAP_BY_DEPTH: {
     // Dragons reach 75 on level 6; on level 7, 95 (Green, Red), 100 (White),
     // or 120 (Black, Blue: their maxLevel).
     'Black Dragon': { 6: 75 }, 'Green Dragon': { 6: 75 }, 'Blue Dragon': { 6: 75 },
-    'White Dragon': { 6: 75 }, 'Red Dragon': { 6: 75 },
+    'White Dragon': { 6: 75 }, 'Red Dragon': { 6: 75 }, 'Gold Dragon': { 6: 75 },
     Sanguinid: { 6: 75 },
     Phoenix: { 6: 62 },
     'Frost Giant': { 6: 75 },
@@ -564,6 +564,16 @@ export const FROST_GIANT = {
   RAGE_BELOW: 0.3,
 } as const;
 
+// The Gold Dragon: a wallop with a sack of gold, claws and bite, a breath of
+// choking gold dust (a small chance of asphyxiation, no saving roll), and a
+// gilding spell (a saving roll, or you're a solid gold statue).
+export const GOLD_DRAGON = {
+  WALLOP_WEIGHT: 35, WALLOP_MULT: 1.9, WALLOP_COINS_MIN: 5, WALLOP_COINS_MAX: 40,
+  CLAW_WEIGHT: 25, CLAW_MULT: 1.1,
+  DUST_WEIGHT: 25, DUST_MULT: 1.5, ASPHYXIATION_CHANCE: 0.03,
+  GILD_WEIGHT: 15, GILD_DC: 15, GILD_MULT: 1.2, GILD_ROUNDS: 2,
+} as const;
+
 // The Manticore's fighting (combat.ts, manticoreAction). Each turn it picks
 // one attack by weight.
 export const MANTICORE = {
@@ -687,6 +697,7 @@ export const GEMS = {
 
 export const DEATH = {
   GOLD_LOSS_FRACTION: 0.15,
+  ASMODEUS_GOLD_LOSS_FRACTION: 0.05,   // killed by Asmodeus: less gold, but a level drained instead of XP
   XP_LOSS_FRACTION: 0.10,   // of total XP, but never below the current level's threshold
 } as const;
 

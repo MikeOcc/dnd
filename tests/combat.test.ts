@@ -1834,3 +1834,53 @@ describe('Djinn, Phoenix, Banshee, Unicorn and Frost Giant', () => {
     expect(monsterFirstStrike(hero(), g, new RNG(11)).messages.join(' ')).toContain('roars in fury');
   });
 });
+
+describe('The Gold Dragon', () => {
+  const hero = (con = 10, res = 10) => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = 70; c.hp = c.maxHp = 1_000_000; c.statusEffects = []; c.constitution = con; c.resistance = res; c.gold = 0;
+    return c;
+  };
+
+  it('wallops with a sack of gold (and coins come loose), claws, breathes gold dust, and gilds', () => {
+    const rng = new RNG(21);
+    const seen = new Set<string>();
+    for (let i = 0; i < 400; i++) {
+      const c = hero(30, 30);
+      const text = monsterFirstStrike(c, createMonster('Gold Dragon', 80, 'g'), rng).messages.join(' ');
+      if (text.includes('WALLOPS')) { seen.add('wallop'); expect(c.gold).toBeGreaterThan(0); }
+      if (text.includes('Golden claws')) seen.add('claws');
+      if (text.includes('gold dust')) seen.add('dust');
+      if (text.includes('word of power')) seen.add('gild');
+    }
+    expect([...seen].sort()).toEqual(['claws', 'dust', 'gild', 'wallop']);
+  });
+
+  it('a failed saving roll against gilding means a solid gold statue', () => {
+    const rng = new RNG(22);
+    for (let i = 0; i < 2000; i++) {
+      const c = hero(3, 3);
+      const res = monsterFirstStrike(c, createMonster('Gold Dragon', 80, 'g'), rng);
+      if (res.messages.join(' ').includes('statue of solid gold')) {
+        expect(c.hp).toBe(0);
+        expect(res.deathCause).toMatch(/^Turned to solid gold by a Level \d+ Gold Dragon\.$/);
+        return;
+      }
+    }
+    throw new Error('never gilded');
+  });
+
+  it('its gold dust can asphyxiate, with no saving roll', () => {
+    const rng = new RNG(23);
+    for (let i = 0; i < 6000; i++) {
+      const c = hero(40, 40);
+      const res = monsterFirstStrike(c, createMonster('Gold Dragon', 80, 'g'), rng);
+      if (res.messages.join(' ').includes('ASPHYXIATED')) {
+        expect(c.hp).toBe(0);
+        expect(res.deathCause).toMatch(/^Choked to death on the gold-dust breath/);
+        return;
+      }
+    }
+    throw new Error('never asphyxiated');
+  });
+});

@@ -1,7 +1,7 @@
 import type { Character, Monster, StatusEffect, GemType, ChestTrapType } from './types.js';
 import type { RNG } from './random.js';
 import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL } from './config.js';
-import { addStatusEffect, xpForLevel } from './character.js';
+import { addStatusEffect, xpForLevel, applyLevelDrain } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
 
@@ -84,6 +84,32 @@ export function applyDeath(char: Character, entranceX: number, entranceY: number
     ],
     goldLost,
     xpLost,
+  };
+}
+
+/** Killed by Asmodeus: you wake at the entrance to level 7, a level poorer
+ * (drained, not just experience) and 5% lighter in gold. */
+export function applyAsmodeusDeath(char: Character, entranceX: number, entranceY: number): DeathResult {
+  const goldLost = Math.floor(char.gold * DEATH.ASMODEUS_GOLD_LOSS_FRACTION);
+  char.gold = Math.max(0, char.gold - goldLost);
+  const before = char.level;
+  const { newLevel } = applyLevelDrain(char);
+  char.hp = char.maxHp;
+  char.x = entranceX;
+  char.y = entranceY;
+  char.facing = 'N';
+  char.deathCount++;
+  char.statusEffects = [];
+  return {
+    messages: [
+      'YOU HAVE DIED.',
+      '',
+      'Asmodeus is not done with you. You wake at the entrance to Level 7, gasping.',
+      newLevel < before ? `Something was taken from you in the dark. YOU HAVE BEEN DRAINED. You are now Level ${newLevel}.` : 'You have nothing more he can take.',
+      goldLost > 0 ? `Some of your gold is missing. (Lost ${goldLost} gold)` : 'You clutch your remaining gold tightly.',
+    ],
+    goldLost,
+    xpLost: 0,
   };
 }
 
