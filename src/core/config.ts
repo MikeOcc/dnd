@@ -444,6 +444,19 @@ export const FIRST_LEVEL = {
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
 } as const;
 
+// Scare: frighten a monster off instead of fighting or fleeing. No XP, no
+// price. Mindless things can't be scared, and great lords only laugh.
+export const SCARE = {
+  BASE_CHANCE: 0.30,
+  PER_LEVEL: 0.03,          // per level the character has over the monster (or under, negative)
+  PER_CHARISMA: 0.02,       // per point of Charisma over 10
+  PER_TIER: 0.04,           // minus this per point of the monster's natural tier
+  OUTCLASSED_BONUS: 0.30,   // the monster is under half the character's level
+  REPEAT_PENALTY: 0.15,     // each failed attempt this fight makes the next harder
+  MIN_CHANCE: 0.02,
+  MAX_CHANCE: 0.95,
+} as const;
+
 // A successful run: the character bolts along real passages, farther the
 // scarier the monster, and pays for it. A trap on the way goes off.
 export const FLEE = {

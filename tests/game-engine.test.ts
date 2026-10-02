@@ -2041,3 +2041,56 @@ describe('GameEngine — sound hints', () => {
     expect(state.fx?.monsterDied).toBe(true);
   });
 });
+
+describe('GameEngine — scare, and more sound cues', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function fight(type: Parameters<typeof createMonster>[0], monsterLevel: number, charLevel: number, id = 'm') {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.level = charLevel; e.char.hp = e.char.maxHp = 1_000_000;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster(type, monsterLevel, id), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat.monster.level = monsterLevel;  // whatever the type's usual range
+    return { engine, e };
+  }
+
+  it('Scare is on the combat menu, and scaring a lair monster off clears its lair', () => {
+    const { engine, e } = fight('Orc', 2, 60, 'lair-orc');
+    expect(engine.getState().choices!.some(c => c.key === 'f' && c.text === 'Scare')).toBe(true);
+    e.getLevel(e.char.dungeonLevel).contents.set('70,50', { type: 'fixed-monster', id: 'lair-orc', monsterId: 'Orc' });
+    let state = engine.combatAction('f');
+    for (let i = 0; i < 20 && state.phase === 'combat'; i++) state = engine.combatAction('f');
+    expect(state.phase).toBe('playing');
+    expect(state.messages.join(' ')).toContain('bolts into the darkness');
+    expect(e.dungeonState.defeatedFixedMonsters.has('lair-orc')).toBe(true);
+    expect(state.fx?.cues).toContain('scare');
+  });
+
+  it('no fanfare for a foe far beneath you; a fanfare that grows with the challenge', () => {
+    const win = (monsterLevel: number, charLevel: number, type: Parameters<typeof createMonster>[0] = 'Orc') => {
+      const { engine, e } = fight(type, monsterLevel, charLevel);
+      e.combat.monster.hp = 1;
+      let state = engine.combatAction('a');
+      for (let i = 0; i < 30 && state.phase === 'combat'; i++) state = engine.combatAction('a');
+      return (state.fx?.cues ?? []).find((c: string) => c.startsWith('victory-'));
+    };
+    expect(win(2, 40)).toBeUndefined();
+    expect(win(30, 40)).toBe('victory-1');
+    expect(win(40, 40)).toBe('victory-3');
+    expect(win(30, 20, 'Giant')).toBe('victory-4');
+  });
+
+  it('drinking a potion gulps; using a gem names the gem', () => {
+    const { engine, e } = fight('Orc', 5, 40);
+    e.combat.monster.hp = e.combat.monster.maxHp = 1e9;
+    e.char.inventory.potions = 2; e.char.hp = 10;
+    expect(engine.combatAction('p').fx?.cues).toContain('gulp');
+    e.char.inventory.gems.emerald = 1; e.char.intelligence = 30;
+    expect(engine.gemAction('e').fx?.cues).toContain('gem-emerald');
+  });
+});

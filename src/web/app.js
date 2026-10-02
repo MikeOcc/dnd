@@ -53,6 +53,7 @@ async function apiAction(action, payload) {
 
   const data = await res.json();
   if (data.characterId) characterId = data.characterId;
+  lastAction = action;
   lastActionWalked = action === 'move-forward' || action === 'move-backward'
     || (action === 'map-move' && (payload?.dir === 'forward' || payload?.dir === 'backward'));
   applyState(data.state);
@@ -233,13 +234,16 @@ function fxMonster(cls, element) {
 // ─── Sound ───────────────────────────────────────────────────────────────────
 
 let lastActionWalked = false;  // the action just sent was a step forward or back
+let lastAction = '';           // the action just sent
 
 /** Footsteps for a one-square move; a thud for walking into a wall; in a
  * fight, spells as they're cast, a monster's crushing blow (a quarter of
  * your health or more, or the killing blow), and a monster's death. */
 function playSounds(prev, state) {
   const walked = lastActionWalked;
+  const action = lastAction;
   lastActionWalked = false;
+  lastAction = '';
   const pc = prev?.character, nc = state.character;
   const fx = state.fx || {};
 
@@ -248,6 +252,27 @@ function playSounds(prev, state) {
   const after = fx.cast ? 450 : 150;
   if (fx.monsterDied) setTimeout(() => SFX.monsterDeath(), after);
   const sameChar = pc && nc && pc.id === nc.id;
+
+  // Cues from the engine: potions, gems, war-cries, and victory fanfares
+  // (which wait for the monster's death to finish).
+  for (const cue of fx.cues || []) {
+    if (cue === 'gulp') SFX.gulp();
+    else if (cue === 'scare') SFX.scare();
+    else if (cue.startsWith('gem-')) SFX.gem(cue.slice(4));
+    else if (cue.startsWith('victory-')) setTimeout(() => SFX.victory(Number(cue.slice(8))), after + 1100);
+  }
+
+  // Picking things up from a chest, tome, altar or the like: more gold or
+  // more in the pack after an interaction.
+  if (sameChar && action === 'interact') {
+    const gems = (c) => Object.values(c.inventory?.gems || {}).reduce((a, n) => a + n, 0);
+    const gained = nc.gold > pc.gold
+      || (nc.inventory?.potions ?? 0) > (pc.inventory?.potions ?? 0)
+      || (nc.inventory?.books ?? 0) > (pc.inventory?.books ?? 0)
+      || gems(nc) > gems(pc);
+    if (gained) SFX.snatch();
+  }
+
   const killed = state.phase === 'death' && prev?.phase !== 'death';
   const crushing = sameChar && fx.monsterAttacked && state.phase !== 'death' && (pc.hp - nc.hp) >= nc.maxHp * 0.25;
   if (killed || crushing) setTimeout(() => SFX.crit(), after + 150);
@@ -613,7 +638,7 @@ function updateHelpLine(phase) {
     case 'inventory':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
-      hint.textContent = 'A: Attack  B: Spell/Skill  C: Pray  D: Run  E: Gem  P: Potion'; break;
+      hint.textContent = 'A: Attack  B: Spell/Skill  C: Pray  D: Run  F: Scare  E: Gem  P: Potion'; break;
     case 'interaction':
       hint.textContent = 'Choose an option above'; break;
     case 'name-entry':
@@ -894,7 +919,7 @@ document.addEventListener('keydown', (e) => {
       if (gemBtn) gemBtn.click();
       return;
     }
-    if (['a','c','d','p'].includes(key)) apiAction('combat', { choice: key });
+    if (['a','c','d','f','p'].includes(key)) apiAction('combat', { choice: key });
     return;
   }
 

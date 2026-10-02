@@ -200,6 +200,7 @@ export interface Monster {
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  scareAttempts?: number;   // failed attempts to scare it off this fight: each makes the next harder
   regenerated?: boolean;     // Asmodeus has used his Infernal Regeneration this fight
   caughtOffGuard?: boolean;  // a successful charge into its lair: it can't answer the first blow
 }
@@ -217,6 +218,7 @@ export interface Fx {
   monsterAttacked?: boolean; // the monster took a swing (portrait lunges)
   cast?: 'attack' | 'heal';  // the character cast an offensive or a healing spell (for sounds)
   monsterDied?: boolean;     // the monster was slain this action
+  cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
 }
 
 export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed';

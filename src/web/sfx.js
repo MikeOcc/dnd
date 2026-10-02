@@ -207,6 +207,99 @@ const SFX = (() => {
       noise(t + 0.2, { dur: 0.6, freq: 7000, q: 0.5, type: 'highpass', gain: 0.04, attack: 0.2 });
     },
 
+    /** Drinking a potion: three gulps and a sigh of relief. */
+    gulp() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      for (let i = 0; i < 3; i++) {
+        const at = t + i * 0.26;
+        tone(at, { freq: 190 - i * 15, freqTo: 120, dur: 0.12, gain: 0.35, attack: 0.02, filter: 600 });
+        noise(at, { dur: 0.1, freq: 500, q: 3, type: 'lowpass', gain: 0.25, attack: 0.015 });
+      }
+      noise(t + 0.85, { dur: 0.35, freq: 1200, q: 0.6, type: 'lowpass', gain: 0.08, attack: 0.08 });
+    },
+
+    /** Snatching something up: a quick swipe and a clink. */
+    snatch() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      noise(t, { dur: 0.12, freq: 1800, q: 1, gain: 0.3, attack: 0.01, sweepTo: 600 });
+      tone(t + 0.1, { type: 'triangle', freq: 2093, dur: 0.18, gain: 0.08 });
+      tone(t + 0.13, { type: 'triangle', freq: 2637, dur: 0.15, gain: 0.06 });
+    },
+
+    /** Each gem's magic has its own voice. */
+    gem(type) {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      const sparkle = (at, n, lo, hi, gain = 0.05) => {
+        for (let i = 0; i < n; i++) tone(at + Math.random() * 0.5, { type: 'triangle', freq: lo + Math.random() * (hi - lo), dur: 0.15, gain });
+      };
+      switch (type) {
+        case 'ruby':      // the corridor folds away: a warping rise and a pop
+          tone(t, { type: 'sawtooth', freq: 110, freqTo: 1760, dur: 0.7, gain: 0.12, attack: 0.05, filter: 2500 });
+          noise(t, { dur: 0.7, freq: 300, q: 2, gain: 0.2, attack: 0.1, sweepTo: 4000 });
+          thump(t + 0.7, { freq: 120, dur: 0.12, gain: 0.4 });
+          break;
+        case 'sapphire':  // cold blue light: a monster erased
+          [1318, 1568, 1976].forEach((f, i) => tone(t + i * 0.04, { freq: f, freqTo: f / 2, dur: 0.9, gain: 0.08 }));
+          noise(t, { dur: 0.8, freq: 5000, q: 0.5, type: 'highpass', gain: 0.1, attack: 0.05 });
+          break;
+        case 'diamond':   // the whole level unfolds: a bright, spreading glitter
+          sparkle(t, 14, 2000, 5000, 0.05);
+          tone(t, { type: 'triangle', freq: 1047, dur: 1.0, gain: 0.08, attack: 0.05 });
+          break;
+        case 'opal':      // a blinding flash
+          noise(t, { dur: 0.25, freq: 6000, q: 0.5, type: 'highpass', gain: 0.4, attack: 0.005 });
+          tone(t, { freq: 2600, freqTo: 400, dur: 0.4, gain: 0.15 });
+          break;
+        case 'emerald':   // a ward closing around you: a soft, rising hum
+          [196, 294, 392].forEach(f => tone(t, { type: 'sine', freq: f, freqTo: f * 1.5, dur: 1.1, gain: 0.08, attack: 0.3 }));
+          sparkle(t + 0.4, 5, 1500, 2500, 0.03);
+          break;
+      }
+    },
+
+    /** Five fanfares, from a short nod to a full triumph for a unique lord. */
+    victory(tier) {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      const C4 = 261.63;
+      const note = (semis) => C4 * Math.pow(2, semis / 12);
+      const play = (seq, voice = 'triangle', gain = 0.12) => {
+        for (const [at, semis, dur] of seq) {
+          tone(t + at, { type: voice, freq: note(semis), dur, gain, attack: 0.02 });
+          tone(t + at, { type: 'sine', freq: note(semis + 12), dur: dur * 0.8, gain: gain * 0.3, attack: 0.02 });
+        }
+      };
+      switch (tier) {
+        case 1: play([[0, 7, 0.18], [0.15, 12, 0.35]]); break;
+        case 2: play([[0, 0, 0.15], [0.13, 4, 0.15], [0.26, 7, 0.45]]); break;
+        case 3: play([[0, 0, 0.14], [0.12, 4, 0.14], [0.24, 7, 0.14], [0.36, 12, 0.6]]); break;
+        case 4:
+          play([[0, 0, 0.12], [0.1, 0, 0.12], [0.2, 0, 0.12], [0.32, 7, 0.3], [0.62, 4, 0.18], [0.8, 12, 0.9]], 'sawtooth', 0.06);
+          play([[0.8, 7, 0.9], [0.8, 4, 0.9]], 'triangle', 0.07);
+          thump(t + 0.8, { freq: 70, dur: 0.4, gain: 0.4 });
+          break;
+        case 5:
+          play([[0, -5, 0.2], [0.18, 0, 0.2], [0.36, 4, 0.2], [0.54, 7, 0.4], [0.94, 4, 0.18], [1.12, 7, 0.18], [1.3, 12, 1.4]], 'sawtooth', 0.06);
+          play([[1.3, 7, 1.4], [1.3, 4, 1.4], [1.3, 0, 1.4]], 'triangle', 0.07);
+          thump(t + 1.3, { freq: 60, dur: 0.6, gain: 0.5 });
+          for (let i = 0; i < 3; i++) thump(t + 0.54 + i * 0.12, { freq: 90, dur: 0.1, gain: 0.25 });
+          break;
+      }
+    },
+
+    /** A war-cry to scare a monster off: a growling shout. */
+    scare() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      tone(t, { type: 'sawtooth', freq: 140, freqTo: 220, dur: 0.5, gain: 0.18, attack: 0.04, filter: 1200 });
+      tone(t, { type: 'sawtooth', freq: 147, freqTo: 230, dur: 0.5, gain: 0.12, attack: 0.04, filter: 1000 });
+      noise(t, { dur: 0.5, freq: 900, q: 1, gain: 0.25, attack: 0.04 });
+      thump(t, { freq: 80, dur: 0.15, gain: 0.4 });
+    },
+
     /** Walking into a wall. */
     bump() {
       if (!audio()) return;

@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR } from './config.js';
-import type { Character, Monster, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE } from './config.js';
+import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
@@ -564,6 +564,44 @@ export function prayerBanishChance(char: Character, monster: Monster, wisdom: nu
     + (wisdom - COMBAT.PRAYER_BANISH_MIN_WISDOM) * COMBAT.PRAYER_BANISH_PER_WISDOM
     + (char.level - COMBAT.PRAYER_BANISH_MIN_CHAR_LEVEL) * COMBAT.PRAYER_BANISH_PER_LEVEL;
   return Math.min(COMBAT.PRAYER_BANISH_MAX_CHANCE, chance);
+}
+
+// ─── Scare ───────────────────────────────────────────────────────────────────
+
+/** Things with no mind to frighten. */
+const FEARLESS: MonsterType[] = ['Mold', 'Slime Mold', 'Gelatinous Cube', 'Skeleton', 'Zombie'];
+
+/** Chance to frighten a monster off: better against weaker foes and with
+ * Charisma, worse against fearsome ones and after failed attempts. 0 for the
+ * mindless and the unique lords. */
+export function scareChance(char: Character, monster: Monster): number {
+  if (FEARLESS.includes(monster.type) || monster.definition.isUnique) return 0;
+  const eff = getEffectiveStats(char);
+  let chance = SCARE.BASE_CHANCE
+    + (char.level - monster.level) * SCARE.PER_LEVEL
+    + (eff.charisma - 10) * SCARE.PER_CHARISMA
+    - monster.definition.naturalTier * SCARE.PER_TIER
+    - (monster.scareAttempts ?? 0) * SCARE.REPEAT_PENALTY;
+  if (monster.level < char.level * 0.5) chance += SCARE.OUTCLASSED_BONUS;
+  return Math.max(SCARE.MIN_CHANCE, Math.min(SCARE.MAX_CHANCE, chance));
+}
+
+/** Rears up, roars and brandishes: the monster may bolt. If not, it acts. */
+export function playerScare(char: Character, monster: Monster, rng: RNG): CombatRoundResult & { scared?: boolean } {
+  const messages = ['You draw yourself up, roar, and come at it with murder in your eyes!'];
+  if (monster.definition.isUnique) {
+    messages.push(`The ${monster.type} laughs at you.`);
+  } else if (FEARLESS.includes(monster.type)) {
+    messages.push(`The ${monster.type} has no mind to frighten.`);
+  } else if (rng.float() < scareChance(char, monster)) {
+    messages.push(`The ${monster.type} falters... then turns tail and bolts into the darkness!`, 'You are free to move on.');
+    return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false, scared: true };
+  } else {
+    monster.scareAttempts = (monster.scareAttempts ?? 0) + 1;
+    messages.push(`The ${monster.type} is not impressed.`);
+  }
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
 }
 
 // ─── First strike ────────────────────────────────────────────────────────────

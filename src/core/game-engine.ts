@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
-  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike } from './combat.js';
+  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
@@ -137,7 +137,7 @@ export class GameEngine {
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
-    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied) state.fx = this.fx;
+    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied || this.fx.cues) state.fx = this.fx;
     this.fx = {};
 
     state.choices = this.buildChoices();
@@ -264,6 +264,7 @@ export class GameEngine {
         { key: 'b', text: this.char?.charClass === 'warrior' ? 'Combat Skill' : 'Cast Spell' },
         { key: 'c', text: 'Pray' },
         { key: 'd', text: 'Run' },
+        { key: 'f', text: 'Scare' },
         { key: 'e', text: 'Use Gem' },
         { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
       ];
@@ -537,6 +538,7 @@ export class GameEngine {
       return this.getState();
     }
     this.char.inventory.potions--;
+    this.cue('gulp');
     const actual = Math.min(potionHealAmount(this.char, this.rng), this.char.maxHp - this.char.hp);
     this.char.hp += actual;
     this.messages = [
@@ -1342,6 +1344,7 @@ export class GameEngine {
       case 'b': return this.showSpellMenu();
       case 'c': return this.combatPray();
       case 'd': return this.combatRun();
+      case 'f': return this.combatScare();
       case 'e': return this.showGemMenu();
       case 'p': return this.combatPotion();
       default:  return this.getState();
@@ -1410,6 +1413,7 @@ export class GameEngine {
       if (negated) return this.processCombatResult(negated);
     }
 
+    this.cue(`gem-${type}`);
     switch (type) {
       case 'ruby':     return this.useRuby();
       case 'sapphire': return this.useSapphire();
@@ -1569,6 +1573,40 @@ export class GameEngine {
   }
 
   /** Records what the monster did this round, for the hit effects. */
+  /** Queues a sound for the client to play after this action. */
+  private cue(name: string): void {
+    this.fx.cues = [...(this.fx.cues ?? []), name];
+  }
+
+  /** Try to frighten the monster off. It works better on weaker foes and
+   * with Charisma; it never works on the mindless or the great lords. A
+   * monster scared from its lair doesn't come back. */
+  private combatScare(): GameState {
+    const monster = this.combat!.monster;
+    this.cue('scare');
+    const result = playerScare(this.char!, monster, this.rng);
+    if (!result.scared) return this.processCombatResult(result);
+    const lvl = this.getLevel(this.char!.dungeonLevel);
+    const lair = lvl && [...lvl.contents.values()].find(c => c.type === 'fixed-monster' && c.id === monster.id);
+    if (lair) this.dungeonState!.defeatedFixedMonsters.add(lair.id);
+    this.endCombat(false);
+    this.messages = result.messages;
+    return this.getState();
+  }
+
+  /** How grand a victory was, for its fanfare: 0 (none: the monster was far
+   * beneath you) through 5 (a unique lord). */
+  private victoryTier(monster: Monster): number {
+    const char = this.char!;
+    if (monster.definition.isUnique) return 5;
+    const ratio = monster.level / Math.max(1, char.level);
+    if (ratio < 0.5) return 0;
+    if (ratio >= 1.3 || monster.definition.naturalTier >= 9) return 4;
+    if (ratio >= 1.0) return 3;
+    if (ratio >= 0.8) return 2;
+    return 1;
+  }
+
   private noteMonsterTurn(result: { monsterElement?: FxElement }): void {
     if (!result.monsterElement) return;
     this.fx.player = result.monsterElement;
@@ -1666,6 +1704,7 @@ export class GameEngine {
       this.messages = ['You are already at full health.'];
       return this.getState();
     }
+    this.cue('gulp');
     return this.processCombatResult(playerPotion(this.char!, this.combat!.monster, this.rng));
   }
 
@@ -1831,6 +1870,8 @@ export class GameEngine {
   private handleMonsterDefeated(): GameState {
     if (!this.char || !this.combat || !this.dungeonState) return this.getState();
     this.fx.monsterDied = true;
+    const tier = this.victoryTier(this.combat.monster);
+    if (tier > 0) this.cue(`victory-${tier}`);
 
     const monster = this.combat.monster;
     const def = monster.definition;

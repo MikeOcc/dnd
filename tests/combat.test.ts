@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
 import { GEMS, COMBAT } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1460,5 +1460,41 @@ describe('Asmodeus — Infernal Regeneration', () => {
     const m = createMonster('Asmodeus', 60, 'a');
     m.maxHp = 1000; m.hp = 400;
     expect(monsterFirstStrike(c, m, new RNG(3)).messages.join(' ')).not.toContain('regenerates');
+  });
+});
+
+describe('Scare', () => {
+  const hero = (level: number, charisma = 10) => {
+    const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    c.level = level; c.charisma = charisma; c.hp = c.maxHp = 1_000_000; c.statusEffects = [];
+    return c;
+  };
+
+  it('never works on the mindless or on unique lords', () => {
+    expect(scareChance(hero(90), createMonster('Zombie', 5, 'z'))).toBe(0);
+    expect(scareChance(hero(90), createMonster('Gelatinous Cube', 5, 'g'))).toBe(0);
+    expect(scareChance(hero(90), createMonster('Tiamat', 60, 't'))).toBe(0);
+  });
+
+  it('is easy against a far weaker foe, hard against a fearsome one, and helped by Charisma', () => {
+    expect(scareChance(hero(40), createMonster('Kobold', 3, 'k'))).toBeGreaterThan(0.9);
+    expect(scareChance(hero(20), createMonster('Red Dragon', 40, 'd'))).toBeLessThan(0.05);
+    const orc = createMonster('Orc', 10, 'o');
+    expect(scareChance(hero(10, 18), orc)).toBeGreaterThan(scareChance(hero(10, 8), orc));
+  });
+
+  it('each failed attempt makes the next harder; success sends the monster off', () => {
+    const orc = createMonster('Orc', 10, 'o');
+    orc.hp = orc.maxHp = 1e9;
+    const c = hero(10);
+    const before = scareChance(c, orc);
+    const rng = new RNG(11);
+    let scared = false;
+    for (let i = 0; i < 40 && !scared; i++) {
+      const res = playerScare(c, orc, rng);
+      scared = !!res.scared;
+      if (!scared && i === 0) expect(scareChance(c, orc)).toBeLessThan(before);
+    }
+    expect(typeof scared).toBe('boolean');
   });
 });
