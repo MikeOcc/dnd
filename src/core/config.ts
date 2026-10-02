@@ -319,11 +319,13 @@ export const MONSTER_SCALING = {
   HARD_LEVEL_CAP: 60,
 
   // A few ordinary monsters may break the hard cap, but only this deep:
-  // the White (frost) and Blue Dragons and the Sanguinid (up to 85) can
+  // the White (frost) and Blue Dragons and the Sanguinid (75 on level 6, 85 on 7) can
   // climb as high as their own maxLevel on dungeon levels 6 and 7, rolled
   // like any other level.
   EXTENDED_CAP_TYPES: ['White Dragon', 'Blue Dragon', 'Sanguinid'] as string[],
   EXTENDED_CAP_MIN_DEPTH: 6,
+  // ...optionally a lower ceiling than maxLevel on a given depth.
+  EXTENDED_CAP_BY_DEPTH: { Sanguinid: { 6: 75 } } as Record<string, Record<number, number>>,
 
   // Random-encounter monster TYPE eligibility by dungeon depth (index 0 =
   // dungeon level 1): a floor on naturalTier, on top of each monster's own

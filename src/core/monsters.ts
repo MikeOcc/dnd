@@ -464,7 +464,9 @@ export function randomMonsterLevel(
   const uncappedMax = range.max + Math.floor(characterLevel / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR);
   const extended = !!type && MONSTER_SCALING.EXTENDED_CAP_TYPES.includes(type)
     && dungeonDepth >= MONSTER_SCALING.EXTENDED_CAP_MIN_DEPTH;
-  const cap = extended ? getDefinition(type!).maxLevel : MONSTER_SCALING.HARD_LEVEL_CAP;
+  const cap = extended
+    ? (MONSTER_SCALING.EXTENDED_CAP_BY_DEPTH[type!]?.[dungeonDepth] ?? getDefinition(type!).maxLevel)
+    : MONSTER_SCALING.HARD_LEVEL_CAP;
   const cappedMax = Math.min(cap, uncappedMax);
   return rng.int(range.min, Math.max(range.min, cappedMax));
 }

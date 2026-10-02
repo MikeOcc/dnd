@@ -57,12 +57,13 @@ describe('Orcs, the Orc King and the Manticore', () => {
 });
 
 describe('Sanguinid levels', () => {
-  it('roll variably, staying under the usual cap up top and reaching as high as 85 on levels 6-7', () => {
+  it('roll variably: under the usual cap up top, up to 75 on level 6 and 85 on level 7', () => {
     const rng = new RNG(9);
     const roll = (depth: number) => createMonster('Sanguinid', randomMonsterLevel(60, depth, rng, 'Sanguinid'), 's').level;
-    const shallow = Array.from({ length: 3000 }, () => roll(3));
-    const deep = Array.from({ length: 3000 }, () => roll(7));
-    expect(Math.max(...shallow)).toBeLessThanOrEqual(60);
+    const many = (depth: number) => Array.from({ length: 3000 }, () => roll(depth));
+    expect(Math.max(...many(3))).toBeLessThanOrEqual(60);
+    expect(Math.max(...many(6))).toBe(75);
+    const deep = many(7);
     expect(Math.max(...deep)).toBe(85);
     expect(new Set(deep).size).toBeGreaterThan(10);
   });
