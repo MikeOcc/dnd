@@ -2094,3 +2094,37 @@ describe('GameEngine — scare, and more sound cues', () => {
     expect(engine.gemAction('e').fx?.cues).toContain('gem-emerald');
   });
 });
+
+describe('GameEngine — anaphylaxis', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it("kills the character once the time is up, whatever they're doing", () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.statusEffects = [{ type: 'anaphylaxis', value: e.char.playTime + 120, turns: 9999 }];
+    expect(engine.getState().phase).toBe('playing');
+    e.char.playTime += 121;
+    const state = engine.getState();
+    expect(state.phase).toBe('death');
+    expect(state.messages[0]).toContain('anaphylactic shock');
+  });
+
+  it("doesn't tick away with steps; walking warns how long is left", () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.statusEffects = [{ type: 'anaphylaxis', value: e.char.playTime + 240, turns: 9999 }];
+    e.pace.graceMoves = 1000;
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const dir = (['N', 'E', 'S', 'W'] as const).find(d => canMove(lvl.grid, e.char.x, e.char.y, d))!;
+    const state = e.tryMove(dir, '');
+    expect(state.messages.join(' ')).toContain('throat is swelling shut');
+    expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'anaphylaxis')).toBe(true);
+  });
+});

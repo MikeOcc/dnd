@@ -95,6 +95,8 @@ export class GameEngine {
   private mapFull = false;
   private fx: Fx = {};   // hit-effect hints gathered during the current action
   private lastArea: string | null = null;
+  private dyingOfShock = false;
+  private shockWarnedAt = -Infinity;  // play time of the last anaphylaxis warning while walking  // guards checkAnaphylaxis against re-entry through handleDeath's getState
   private stepFrom: { x: number; y: number } | null = null;  // where the last step started
   private lair: { content: CellContent; monster: MonsterType; from: { x: number; y: number } } | null = null;  // lair-warning: whose, and the way back
   private mapAreaLines: string[] = [];     // map mode: the description of the area just walked into, shown under the legend  // "level:areaId" the character was last described in
@@ -116,6 +118,7 @@ export class GameEngine {
 
   getState(): GameState {
     this.bankPlayTime();
+    this.checkAnaphylaxis();
     const state: GameState = {
       phase: this.phase,
       messages: [...this.messages],
@@ -833,6 +836,14 @@ export class GameEngine {
 
     incrementPace(this.pace);
     this.lightAround();
+    const shock = this.char.statusEffects.find(e => e.type === 'anaphylaxis');
+    if (shock && this.char.playTime - this.shockWarnedAt >= 30) {
+      this.shockWarnedAt = this.char.playTime;
+      const left = Math.max(0, shock.value - this.char.playTime);
+      this.messages = [...this.messages, left > 60
+        ? `Your throat is swelling shut. Every breath is a fight. (About ${Math.round(left / 60)} minutes left.)`
+        : 'Your lips are blue and the world is going grey. Seconds now.'];
+    }
     const areaLines = this.enterArea();
     if (areaLines.length) this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...areaLines];
 
@@ -1574,6 +1585,21 @@ export class GameEngine {
   }
 
   /** Records what the monster did this round, for the hit effects. */
+  /** A Manticore's sting gone wrong: once its time is up, the character dies,
+   * wherever they are and whatever they're doing. */
+  private checkAnaphylaxis(): void {
+    if (this.dyingOfShock || !this.char) return;
+    const shock = this.char.statusEffects.find(e => e.type === 'anaphylaxis');
+    if (!shock || this.char.playTime < shock.value) return;
+    if (!['playing', 'combat', 'interaction', 'resting', 'map', 'lair-warning', 'status', 'inventory'].includes(this.phase)) return;
+    this.dyingOfShock = true;
+    this.interaction = null;
+    this.char.hp = 0;
+    this.handleDeath('Died of anaphylactic shock from a Manticore\'s sting.',
+      ['Your throat closes. The torchlight narrows to a point, and goes out.']);
+    this.dyingOfShock = false;
+  }
+
   /** Queues a sound for the client to play after this action. */
   private cue(name: string): void {
     this.fx.cues = [...(this.fx.cues ?? []), name];

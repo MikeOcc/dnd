@@ -33,7 +33,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   // the deeper levels.
   'Manticore': {
     type: 'Manticore', isUndead: false, isUnique: false,
-    minLevel: 20, maxLevel: 45, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
+    minLevel: 52, maxLevel: 60, naturalTier: 6, minDungeonLevel: 4, speed: 1.1,
     baseHpPerLevel: 11, baseAttackPerLevel: 4.0, baseDefensePerLevel: 2.5,
     fireballResistance: 1.0,
     encounterIntro: [
@@ -43,7 +43,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       '',
       'You have encountered a Level {LVL} Manticore!',
     ],
-    specialAbilities: ['tail-spikes', 'tail-spikes', 'rending-claws'],
+    specialAbilities: ['bite', 'twin-claws', 'tail-whip', 'poison-stinger'],  // see combat.ts, manticoreAction
   },
   // The one Orc King, on level 4: a towering warlord in black plate, a
   // veteran of a hundred wars, who calls on Gruumsh for a few dark gifts.
@@ -434,8 +434,6 @@ export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterTy
 export function monsterAttackText(type: MonsterType, damage: number, ability?: string): string {
   const actions: Record<string, string> = {
     'acid-breath':      `The ${type} breathes acid! You suffer ${damage} damage.`,
-    'tail-spikes':      `The ${type} lashes its tail, and a volley of iron spikes slams into you! You suffer ${damage} damage.`,
-    'rending-claws':    `The ${type} leaps and rakes you with its claws! You suffer ${damage} damage.`,
     'poison-breath':    `The ${type} exhales venom! You suffer ${damage} damage.`,
     'lightning-breath': `The ${type} unleashes lightning! You suffer ${damage} damage.`,
     'frost-breath':     `The ${type} breathes frost! You suffer ${damage} damage.`,

@@ -82,6 +82,8 @@ html, body {
 #hp-display   { color: var(--terminal-green); min-width: 100px; }
 #hp-display.warn { color: var(--terminal-amber); }
 #hp-display.crit { color: var(--terminal-red); }
+#shock-display { color: var(--terminal-red); font-weight: bold; animation: fx-blink 1.1s steps(1) infinite; }
+#shock-display.hidden { display: none; }
 #xp-display       { color: var(--terminal-green-dim); }
 #gold-display     { color: var(--terminal-amber); }
 #potions-display  { color: var(--terminal-green-dim); }

@@ -74,7 +74,8 @@ export type StatusEffectType =
   | 'dexterity-reduced'
   | 'strength-reduced'
   | 'resistance-improved'
-  | 'warded';   // emerald ward: value = fights left (doesn't tick with steps)
+  | 'warded'    // emerald ward: value = fights left (doesn't tick with steps)
+  | 'anaphylaxis';  // a Manticore's sting: value = the play-time second the character dies (doesn't tick with steps)
 ;
 
 export interface StatusEffect {

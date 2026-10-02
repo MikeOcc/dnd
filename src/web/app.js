@@ -236,6 +236,26 @@ function fxMonster(cls, element) {
   restartAnimation(portrait, cls);
 }
 
+// ─── Anaphylaxis countdown ───────────────────────────────────────────────────
+
+let shockDeadline = null;   // when the character dies of a Manticore's sting (local clock), or null
+function updateShockDisplay() {
+  const el = document.getElementById('shock-display');
+  if (!el) return;
+  const inGame = ['playing', 'combat', 'interaction', 'resting', 'map', 'lair-warning', 'status', 'inventory'].includes(currentState.phase);
+  if (shockDeadline === null || !inGame) { el.classList.add('hidden'); return; }
+  const left = Math.max(0, Math.round((shockDeadline - Date.now()) / 1000));
+  el.textContent = `SHOCK ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  el.classList.remove('hidden');
+  // Time's up: ask the server for the state, which brings the death with it.
+  if (left === 0 && Date.now() - shockPolledAt > 3000) {
+    shockPolledAt = Date.now();
+    if (characterId) apiAction('resume', { characterId });
+  }
+}
+let shockPolledAt = 0;
+setInterval(updateShockDisplay, 1000);
+
 // ─── Message log ─────────────────────────────────────────────────────────────
 
 const LOG_PHASES = ['playing', 'combat'];
@@ -465,6 +485,11 @@ function updateStatusBar(char) {
   hpEl.textContent = `HP: ${char.hp}/${char.maxHp}`;
   const hpRatio = char.hp / char.maxHp;
   hpEl.className = hpRatio < 0.25 ? 'crit' : hpRatio < 0.5 ? 'warn' : '';
+
+  // A Manticore's anaphylaxis: count down the time left, between actions too.
+  const shock = (char.statusEffects || []).find(e => e.type === 'anaphylaxis');
+  shockDeadline = shock ? Date.now() + (shock.value - char.playTime) * 1000 : null;
+  updateShockDisplay();
 
   document.getElementById('xp-display').textContent = `XP: ${char.xp}`;
   document.getElementById('gold-display').textContent = `Gold: ${char.gold}`;

@@ -447,6 +447,19 @@ export const FIRST_LEVEL = {
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
 } as const;
 
+// The Manticore's fighting (combat.ts, manticoreAction). Each turn it picks
+// one attack by weight.
+export const MANTICORE = {
+  BITE_WEIGHT: 25, BITE_MULT: 1.7,
+  CLAWS_WEIGHT: 30, CLAW_MULT: 0.7,                 // two strikes
+  TAIL_WEIGHT: 25, TAIL_MULT: 1.0, TAIL_CRIT_CHANCE: 0.2, TAIL_CRIT_MULT: 2.5,
+  STING_WEIGHT: 20, STING_MULT: 0.6,
+  POISON_DAMAGE: 6, POISON_TURNS: 10,               // a nastier poison than most
+  ANAPHYLAXIS_CHANCE: 0.05,
+  ANAPHYLAXIS_MIN_SECONDS: 180,                     // death comes within five minutes of play
+  ANAPHYLAXIS_MAX_SECONDS: 300,
+} as const;
+
 // The Orc King's fighting (combat.ts, orcKingAction). Each turn he picks
 // one of these by weight; the war-chant only when he's hurt.
 export const ORC_KING = {

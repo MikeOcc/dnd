@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
@@ -651,6 +651,68 @@ function orcKingAction(
   }
 }
 
+// ─── The Manticore ───────────────────────────────────────────────────────────
+
+/** The Manticore's turn: a crushing bite, two claw strikes, a tail whip
+ * that can land a critical blow, or the poison stinger, a nasty poison that
+ * now and then sends the character into anaphylactic shock: death within
+ * minutes of play, with no cure. */
+function manticoreAction(
+  char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
+  const M = MANTICORE;
+  const options: [string, number][] = [
+    ['bite', M.BITE_WEIGHT], ['twin-claws', M.CLAWS_WEIGHT], ['tail-whip', M.TAIL_WEIGHT], ['poison-stinger', M.STING_WEIGHT],
+  ];
+  let roll = rng.float() * options.reduce((a, [, w]) => a + w, 0);
+  const ability = (options.find(([, w]) => (roll -= w) < 0) ?? options[0])[0];
+  out.ability = ability;
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const hurt = (dmg: number) => { char.hp = Math.max(0, char.hp - dmg); return dmg; };
+  const done = (dmg: number): MonsterActionResult => ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false });
+
+  switch (ability) {
+    case 'bite': {
+      const dmg = hurt(hit(M.BITE_MULT));
+      messages.push(`The Manticore's jaws gape impossibly wide, and three rows of teeth close on you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    case 'twin-claws': {
+      messages.push('The Manticore rears up and rakes at you with both forepaws!');
+      let total = 0;
+      for (let i = 0; i < 2 && char.hp > 0; i++) {
+        const dmg = hurt(hit(M.CLAW_MULT));
+        total += dmg;
+        messages.push(`  Its claws tear into you for ${dmg} damage.`);
+      }
+      return done(total);
+    }
+    case 'tail-whip': {
+      const crit = rng.float() < M.TAIL_CRIT_CHANCE;
+      const dmg = hurt(hit(M.TAIL_MULT * (crit ? M.TAIL_CRIT_MULT : 1)));
+      messages.push(crit
+        ? `The spiked tail whips around and catches you full on. A CRITICAL HIT! You suffer ${dmg} damage.`
+        : `The Manticore's spiked tail lashes you! You suffer ${dmg} damage.`);
+      return done(dmg);
+    }
+    default: {
+      const dmg = hurt(hit(M.STING_MULT));
+      messages.push(`The Manticore's tail arcs over its back and drives its stinger into you! You suffer ${dmg} damage.`);
+      if (char.hp <= 0) return done(dmg);
+      addStatusEffect(char, { type: 'poison', value: M.POISON_DAMAGE, turns: M.POISON_TURNS });
+      messages.push('Venom burns through your veins. You are badly poisoned!');
+      if (!char.statusEffects.some(e => e.type === 'anaphylaxis') && rng.float() < M.ANAPHYLAXIS_CHANCE) {
+        const seconds = rng.int(M.ANAPHYLAXIS_MIN_SECONDS, M.ANAPHYLAXIS_MAX_SECONDS);
+        addStatusEffect(char, { type: 'anaphylaxis', value: char.playTime + seconds, turns: 9999 });
+        messages.push('Your throat begins to swell shut. Your heart hammers. Something is very wrong.',
+          `ANAPHYLACTIC SHOCK. You have perhaps ${Math.round(seconds / 60)} minutes to live.`);
+      }
+      return done(dmg);
+    }
+  }
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -823,8 +885,10 @@ const ATTACK_NAMES: Record<string, string> = {
   'telekinetic-ray': 'telekinetic ray',
   'charm-ray': 'charm ray',
   'sleep-ray': 'sleep ray',
-  'tail-spikes': 'tail spikes',
-  'rending-claws': 'rending claws',
+  'bite': 'bite',
+  'twin-claws': 'claws',
+  'tail-whip': 'tail',
+  'poison-stinger': 'poison stinger',
   'axe-flurry': 'whirling axe',
   'shield-slam': 'spiked shield',
   'heavy-blow': 'axe',
@@ -916,6 +980,7 @@ function monsterActionInner(
   const eff = getEffectiveStats(char);
 
   if (monster.type === 'Orc King') return orcKingAction(char, monster, rng, messages, naked, out);
+  if (monster.type === 'Manticore') return manticoreAction(char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -1138,18 +1203,6 @@ function monsterActionInner(
     messages.push('The wound is deep. You are bleeding!');
     const playerDied = char.hp <= 0;
     return { messages, monsterDamage: dmg, playerDied, monsterDied: false };
-  }
-
-  // A Manticore's spike volley can leave barbs in the wound.
-  if (ability === 'tail-spikes') {
-    const dmg = Math.round(calculateMonsterDamage(monster, char, rng, naked, ability) * 1.2);
-    char.hp = Math.max(0, char.hp - dmg);
-    messages.push(monsterAttackText(monster.type, dmg, ability));
-    if (char.hp > 0 && rng.float() < 0.35) {
-      addStatusEffect(char, { type: 'bleeding', value: 3, turns: 5 });
-      messages.push('Barbed spikes stay lodged in your flesh. You are bleeding!');
-    }
-    return { messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false };
   }
 
   // Handle terror/fear

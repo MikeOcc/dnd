@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
-import { GEMS, COMBAT } from '../src/core/config.js';
+import { GEMS, COMBAT, MANTICORE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
   const rng = new RNG(1234);
@@ -1522,5 +1522,47 @@ describe('The Orc King in combat', () => {
     king.hp = king.maxHp = 1e9;
     const text = playerAttack(c, king, new RNG(3)).messages.join(' ');
     if (text.includes('You strike')) expect(text).toContain('plate turns part of it aside');
+  });
+});
+
+describe('The Manticore in combat', () => {
+  it('is at least level 52', () => {
+    expect(createMonster('Manticore', 10, 'm').level).toBeGreaterThanOrEqual(52);
+  });
+
+  it('bites, claws twice, whips its tail (sometimes critically) and stings with a nasty poison', () => {
+    const seen = new Set<string>();
+    const rng = new RNG(29);
+    for (let i = 0; i < 300; i++) {
+      const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+      c.level = 60; c.hp = c.maxHp = 1_000_000; c.statusEffects = [];
+      const text = monsterFirstStrike(c, createMonster('Manticore', 55, 'm'), rng).messages.join(' ');
+      if (text.includes('three rows of teeth')) seen.add('bite');
+      if ((text.match(/Its claws tear into you/g) ?? []).length === 2) seen.add('claws');
+      if (text.includes('CRITICAL HIT')) seen.add('crit');
+      if (text.includes("spiked tail lashes")) seen.add('tail');
+      if (text.includes('badly poisoned')) {
+        seen.add('sting');
+        expect(c.statusEffects.find(e => e.type === 'poison')!.value).toBe(MANTICORE.POISON_DAMAGE);
+      }
+    }
+    expect([...seen].sort()).toEqual(['bite', 'claws', 'crit', 'sting', 'tail']);
+  });
+
+  it('a sting can bring on anaphylaxis, with death a few minutes of play away', () => {
+    const rng = new RNG(31);
+    for (let i = 0; i < 5000; i++) {
+      const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+      c.hp = c.maxHp = 1_000_000; c.statusEffects = []; c.playTime = 1000;
+      const text = monsterFirstStrike(c, createMonster('Manticore', 55, 'm'), rng).messages.join(' ');
+      const shock = c.statusEffects.find(e => e.type === 'anaphylaxis');
+      if (shock) {
+        expect(text).toContain('ANAPHYLACTIC SHOCK');
+        expect(shock.value - 1000).toBeGreaterThanOrEqual(MANTICORE.ANAPHYLAXIS_MIN_SECONDS);
+        expect(shock.value - 1000).toBeLessThanOrEqual(MANTICORE.ANAPHYLAXIS_MAX_SECONDS);
+        return;
+      }
+    }
+    throw new Error('never went into shock');
   });
 });

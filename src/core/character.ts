@@ -168,7 +168,7 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
   const remaining: StatusEffect[] = [];
   for (const eff of char.statusEffects) {
     // An emerald ward counts down by fights, not steps.
-    if (eff.type === 'warded') { remaining.push(eff); continue; }
+    if (eff.type === 'warded' || eff.type === 'anaphylaxis') { remaining.push(eff); continue; }
     if (eff.type === 'poison') {
       char.hp = Math.max(1, char.hp - eff.value);
       damageTaken += eff.value;
