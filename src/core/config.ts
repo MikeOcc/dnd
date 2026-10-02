@@ -444,6 +444,22 @@ export const FIRST_LEVEL = {
   ALTAR_HEAL_CHANCE: 0.55,     // share of altar blessings that heal (0.30 elsewhere)
 } as const;
 
+// A successful run: the character bolts along real passages, farther the
+// scarier the monster, and pays for it. A trap on the way goes off.
+export const FLEE = {
+  MIN_STEPS: 3,
+  RANDOM_EXTRA: 3,           // plus 0..this
+  PER_TIER: 1,               // plus the monster's natural tier (1 kobold .. 10 Asmodeus)
+  LEVELS_ABOVE_PER_STEP: 5,  // plus 1 per this many levels the monster has over the character
+  MAX_STEPS: 25,
+  AWAY_WEIGHT: 3,            // a step that gets farther from the monster is this much likelier
+  GOLD_DROP_MIN: 0.05,       // share of gold that spills from the pack
+  GOLD_DROP_MAX: 0.12,
+  POTION_BREAK_CHANCE: 0.25,
+  WINDED_DEX: 3,             // Dexterity lost while catching your breath...
+  WINDED_STEPS: 20,          // ...for this many steps
+} as const;
+
 // Stepping into a great lair (content/lair-text.ts) stops you at its edge.
 // Turning back or charging in is a d20 roll plus a Dexterity bonus.
 export const LAIR = {

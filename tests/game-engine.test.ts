@@ -1938,3 +1938,72 @@ describe("GameEngine — Asmodeus's lair warning", () => {
     expect(e.char.hp).toBe(e.char.maxHp);
   });
 });
+
+describe('GameEngine — fleeing', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  /** Fights a monster in the open and keeps running until a run succeeds;
+   * returns the engine and how many squares the flight covered. */
+  function runFrom(type: Parameters<typeof createMonster>[0], level: number, setup?: (e: any) => void) {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.level = 30; e.char.dexterity = 30;
+    e.char.hp = e.char.maxHp = 1_000_000;
+    e.char.gold = 1000; e.char.inventory.potions = 5;
+    setup?.(e);
+    for (let i = 0; i < 200; i++) {
+      e.phase = 'combat';
+      e.combat = { monster: createMonster(type, level, 'm' + i), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+      e.combat.monster.hp = e.combat.monster.maxHp = 1e9;
+      const state = engine.combatAction('d');
+      const m = state.messages.join(' ').match(/You run (\d+) square/);
+      if (m) return { engine, e, state, ran: Number(m[1]) };
+    }
+    throw new Error('never got away');
+  }
+
+  it('a successful run carries you several squares along real passages, and costs you', () => {
+    const { e, state, ran } = runFrom('Kobold', 1);
+    expect(state.phase).toBe('playing');
+    expect(ran).toBeGreaterThanOrEqual(1);
+    const lvl = e.getLevel(e.char.dungeonLevel);
+    const c = lvl.grid[e.char.y][e.char.x];
+    expect(c.walls.N && c.walls.E && c.walls.S && c.walls.W).toBe(false);
+    expect(e.char.gold).toBeLessThan(1000);
+    expect(state.messages.join(' ')).toContain('winded');
+    expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'dexterity-reduced')).toBe(true);
+  });
+
+  it('the scarier the monster, the farther you run', () => {
+    let kobold = 0, dragon = 0;
+    for (let i = 0; i < 6; i++) {
+      kobold += runFrom('Kobold', 1).ran;
+      dragon += runFrom('Red Dragon', 60).ran;
+      db.close(); db = createMemoryDb();
+    }
+    expect(dragon).toBeGreaterThan(kobold);
+  });
+
+  it('running blind into a trap sets it off', () => {
+    let trapId = '';
+    const { e, state } = runFrom('Kobold', 1, (eng) => {
+      const lvl = eng.getLevel(eng.char.dungeonLevel);
+      const { x, y } = eng.char;
+      // A pit in every open square next to the fight: the first step must find one.
+      for (const [d, dx, dy] of [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]] as const) {
+        if (!canMove(lvl.grid, x, y, d)) continue;
+        trapId = `test-trap-${x + dx}-${y + dy}`;
+        lvl.contents.set(`${x + dx},${y + dy}`, { type: 'trap', id: trapId, trapVariant: 'pit' });
+      }
+    });
+    expect(state.messages.join(' ')).toContain('blunder straight into a trap');
+    expect(state.messages.join(' ')).toContain('hidden pit');
+    expect([...e.dungeonState.triggeredTraps].some((id: string) => id.startsWith('test-trap-'))).toBe(true);
+    expect(trapId).not.toBe('');
+  });
+});

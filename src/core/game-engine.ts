@@ -20,7 +20,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR } from './config.js';
+import { CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE } from './config.js';
 import { LAIR_WARNINGS } from '../content/lair-text.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
@@ -1690,14 +1690,109 @@ export class GameEngine {
       return this.handleDeath(cause.replace(/\.$/, ' as you tried to flee.'), result.killingBlow);
     }
 
-    if (result.ran) {
-      // Return to pre-combat position
-      this.char!.x = this.combat!.preCombatX;
-      this.char!.y = this.combat!.preCombatY;
-      this.endCombat(false);
-      return this.getState();
+    if (result.ran) return this.flee(monster);
+
+    return this.getState();
+  }
+
+  /** A successful run: bolt along the passages, back the way you came first,
+   * a few squares from a kobold and a long way from a dragon, then pay for
+   * it in spilled gold, perhaps a smashed potion, and lost breath. Running
+   * blind, any trap on the way goes off. */
+  private flee(monster: Monster): GameState {
+    const char = this.char!;
+    const lvl = this.getLevel(char.dungeonLevel)!;
+    const ds = this.dungeonState!;
+    const back = { x: this.combat!.preCombatX, y: this.combat!.preCombatY };
+    const start = { x: char.x, y: char.y };
+    this.endCombat(false);
+
+    const levelsAbove = Math.max(0, monster.level - char.level);
+    const target = Math.min(FLEE.MAX_STEPS,
+      FLEE.MIN_STEPS + this.rng.int(0, FLEE.RANDOM_EXTRA)
+      + monster.definition.naturalTier * FLEE.PER_TIER
+      + Math.floor(levelsAbove / FLEE.LEVELS_ABOVE_PER_STEP));
+
+    // Never flee into a monster's lair.
+    const blocked = (x: number, y: number) => {
+      const c = lvl.contents.get(`${x},${y}`);
+      if (c?.type === 'fixed-monster') return !ds.defeatedFixedMonsters.has(c.id);
+      if (c?.type === 'unique-monster') return !ds.defeatedUniqueMonsters.has(c.id);
+      return false;
+    };
+    const dirs: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+    let prev: { x: number; y: number } | null = null;
+    let ran = 0;
+    let cornered = false;
+    let trap: CellContent | undefined;
+    while (ran < target) {
+      const here = { x: char.x, y: char.y };
+      const away = Math.abs(here.x - start.x) + Math.abs(here.y - start.y);
+      const options = dirs
+        .filter(([d]) => canMove(lvl.grid, here.x, here.y, d))
+        .map(([d, dx, dy]) => ({ d, x: here.x + dx, y: here.y + dy }))
+        .filter(n => !(prev && n.x === prev.x && n.y === prev.y) && !blocked(n.x, n.y));
+      if (options.length === 0) { cornered = true; break; }
+      const weight = (n: { x: number; y: number }) =>
+        ran === 0 && n.x === back.x && n.y === back.y ? 6
+        : Math.abs(n.x - start.x) + Math.abs(n.y - start.y) > away ? FLEE.AWAY_WEIGHT : 1;
+      const total = options.reduce((a, n) => a + weight(n), 0);
+      let roll = this.rng.float() * total;
+      const next = options.find(n => (roll -= weight(n)) < 0) ?? options[options.length - 1];
+      prev = here;
+      char.x = next.x; char.y = next.y;
+      char.facing = next.d;
+      char.stepsTaken++;
+      ran++;
+      this.lightAround();
+      const c = lvl.contents.get(`${next.x},${next.y}`);
+      if (c?.type === 'trap' && !ds.triggeredTraps.has(c.id) && !ds.disarmedTraps.has(c.id)) { trap = c; break; }
     }
 
+    const lines = [...this.messages, ''];
+    lines.push(cornered
+      ? `You run ${ran} square${ran === 1 ? '' : 's'} before a dead end stops you, gasping.`
+      : `You run ${ran} squares through the dark before you dare to stop.`);
+
+    // The price of running.
+    const dropped = Math.floor(char.gold * (FLEE.GOLD_DROP_MIN + this.rng.float() * (FLEE.GOLD_DROP_MAX - FLEE.GOLD_DROP_MIN)));
+    if (dropped > 0) {
+      char.gold -= dropped;
+      lines.push(`Coins spill from your pack as you run. (Lost ${dropped} gold)`);
+    }
+    if (char.inventory.potions > 0 && this.rng.float() < FLEE.POTION_BREAK_CHANCE) {
+      char.inventory.potions--;
+      lines.push('A potion smashes against the stone as you stumble. (Lost 1 potion)');
+    }
+    if (!char.statusEffects.some(e => e.type === 'dexterity-reduced')) {
+      addStatusEffect(char, { type: 'dexterity-reduced', value: FLEE.WINDED_DEX, turns: FLEE.WINDED_STEPS });
+      lines.push(`You are winded. (-${FLEE.WINDED_DEX} Dexterity while you catch your breath)`);
+    }
+
+    this.lastArea = null;
+    const area = this.enterArea();
+    if (area.length) lines.push('', ...area);
+    this.pace.movesSinceCombat = 0;
+
+    if (trap) {
+      const variant = trap.trapVariant ?? 'pit';
+      const result = resolveTrapTriggered(char, variant, this.rng);
+      ds.triggeredTraps.add(trap.id);
+      this.fx.player = trapElement(variant);
+      lines.push('', 'In your panic you blunder straight into a trap!', ...result.messages);
+      if (result.teleported) {
+        this.teleportPlayer();
+        lines.push('', 'You find yourself in another part of the dungeon.');
+      }
+      if (char.hp <= 0) return this.handleDeath(this.trapDeathCause(variant));
+      if (result.triggerMonster) {
+        this.startRandomEncounter();
+        this.messages = [...lines, '', ...this.messages];
+        return this.getState();
+      }
+    }
+
+    this.messages = lines;
     return this.getState();
   }
 
