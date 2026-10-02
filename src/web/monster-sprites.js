@@ -1164,49 +1164,67 @@ const MONSTER_SPRITES = {
   'Djinn': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Djinn">
     <defs>
-    <radialGradient id="djn-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#7ab0ff"/><stop offset="0.55" stop-color="#2e5cc8"/><stop offset="1" stop-color="#0c1c52"/></radialGradient>
-    <linearGradient id="djn-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#d4a02a"/><stop offset="1" stop-color="#6a4a0a"/></linearGradient>
-    <linearGradient id="djn-smoke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a64c8" stop-opacity="0.95"/><stop offset="0.6" stop-color="#6a8ad8" stop-opacity="0.6"/><stop offset="1" stop-color="#c8d4f0" stop-opacity="0"/></linearGradient>
-    <radialGradient id="djn-ruby" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#ffd0d0"/><stop offset="0.4" stop-color="#ff1a3a"/><stop offset="1" stop-color="#5a0010"/></radialGradient>
-    <filter id="djn-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="2"/></filter>
-    <filter id="djn-mist" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <radialGradient id="djn-skin" cx="40%" cy="28%" r="80%"><stop offset="0" stop-color="#8fc0ff"/><stop offset="0.5" stop-color="#3366d6"/><stop offset="1" stop-color="#0e1f5c"/></radialGradient>
+    <linearGradient id="djn-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset="0.5" stop-color="#d9a52c"/><stop offset="1" stop-color="#6e4c0a"/></linearGradient>
+    <linearGradient id="djn-tail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6ad8"/><stop offset="0.55" stop-color="#5d8be8"/><stop offset="1" stop-color="#a9c4f4" stop-opacity="0.15"/></linearGradient>
+    <linearGradient id="djn-cloth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4ecdc"/><stop offset="1" stop-color="#b8a684"/></linearGradient>
+    <radialGradient id="djn-ruby" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#ffd8d8"/><stop offset="0.4" stop-color="#ff1a3a"/><stop offset="1" stop-color="#5a0010"/></radialGradient>
+    <radialGradient id="djn-aura" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="#6aa0ff" stop-opacity="0.35"/><stop offset="1" stop-color="#1a3aa0" stop-opacity="0"/></radialGradient>
+    <filter id="djn-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="djn-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="djn-blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
     </defs>
-    <!-- swirling sand -->
-    <g fill="none" stroke="#d8b878" stroke-width="1" opacity="0.45" filter="url(#djn-mist)">
-      <path d="M 20 120 C 40 100 120 100 140 120"/><path d="M 30 136 C 60 118 110 118 136 138"/><path d="M 14 100 C 50 88 112 86 150 104"/>
+
+    <ellipse cx="80" cy="76" rx="70" ry="76" fill="url(#djn-aura)" filter="url(#djn-blur)"/>
+
+    <!-- the smoke tail: thick at the waist, spiraling down to a wisp -->
+    <path d="M 56 100 C 50 116 60 126 76 128 C 94 130 102 138 92 146 C 84 152 74 150 72 156 C 66 150 70 142 80 140 C 90 138 86 132 74 132 C 52 130 42 116 50 100 Z" fill="url(#djn-tail)" stroke="#1a3a8a" stroke-width="1" filter="url(#djn-soft)"/>
+    <path d="M 104 100 C 112 114 104 124 90 126" fill="none" stroke="url(#djn-tail)" stroke-width="14" stroke-linecap="round" filter="url(#djn-soft)"/>
+    <g fill="none" stroke="#c8dcff" stroke-width="0.9" opacity="0.7">
+      <path d="M 58 110 C 66 120 82 122 92 120"/><path d="M 70 134 C 80 134 88 138 86 142"/>
     </g>
-    <!-- the smoky tail where legs should be, spiraling down to a wisp -->
-    <path d="M 58 96 C 54 112 70 120 82 124 C 96 128 98 138 86 144 C 76 149 70 146 74 152 C 66 150 64 142 74 138 C 84 134 80 128 70 126 C 54 122 46 110 52 96 Z" fill="url(#djn-smoke)" filter="url(#djn-mist)"/>
-    <path d="M 102 96 C 106 110 96 118 84 122 C 72 126 70 134 80 140" fill="none" stroke="url(#djn-smoke)" stroke-width="10" filter="url(#djn-mist)"/>
-    <!-- golden sash at the waist -->
-    <path d="M 52 90 Q 80 98 108 90 L 106 100 Q 80 108 54 100 Z" fill="url(#djn-gold)" stroke="#4a3006" stroke-width="0.8"/>
-    <!-- massive torso -->
-    <path d="M 48 92 C 40 74 44 54 58 46 C 70 40 90 40 102 46 C 116 54 120 74 112 92 Z" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.3"/>
-    <path d="M 66 62 Q 80 70 94 62 M 80 66 L 80 88 M 68 78 q 6 3 12 0 M 80 78 q 6 3 12 0" stroke="#0c1c52" stroke-width="1.1" fill="none" opacity="0.7"/>
-    <!-- arms: one fist raised high, one reaching -->
-    <path d="M 102 50 C 116 44 126 32 128 18" fill="none" stroke="#06103a" stroke-width="13" stroke-linecap="round"/>
-    <path d="M 102 50 C 116 44 126 32 128 18" fill="none" stroke="url(#djn-skin)" stroke-width="10" stroke-linecap="round"/>
-    <circle cx="128" cy="15" r="9" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.2"/>
-    <path d="M 122 12 h 12 M 122 16 h 12" stroke="#0c1c52" stroke-width="0.9"/>
-    <rect x="118" y="22" width="14" height="6" rx="2" fill="url(#djn-gold)" transform="rotate(-25 125 25)"/>
-    <path d="M 58 50 C 42 56 30 70 24 86" fill="none" stroke="#06103a" stroke-width="13" stroke-linecap="round"/>
-    <path d="M 58 50 C 42 56 30 70 24 86" fill="none" stroke="url(#djn-skin)" stroke-width="10" stroke-linecap="round"/>
-    <rect x="22" y="72" width="14" height="6" rx="2" fill="url(#djn-gold)" transform="rotate(60 29 75)"/>
-    <path d="M 24 86 l -6 6 M 24 86 l -2 8 M 24 86 l 3 8 M 24 86 l 6 5" stroke="#2e5cc8" stroke-width="3" stroke-linecap="round"/>
-    <!-- head: turban with the blazing ruby, fierce brows, forked beard -->
-    <path d="M 66 38 C 64 26 72 18 80 18 C 88 18 96 26 94 38 C 93 46 88 52 80 52 C 72 52 67 46 66 38 Z" fill="url(#djn-skin)" stroke="#06103a" stroke-width="1.2"/>
-    <path d="M 62 26 C 62 10 98 10 98 26 C 92 22 68 22 62 26 Z" fill="#e8e0d0" stroke="#5a4a30" stroke-width="1"/>
-    <path d="M 64 22 Q 80 14 96 22" stroke="#b8a888" stroke-width="1" fill="none"/>
-    <path d="M 80 8 q 6 -8 2 -14" stroke="#e8e0d0" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <circle cx="80" cy="22" r="5" fill="#ff2a3a" filter="url(#djn-glow)"/>
-    <circle cx="80" cy="22" r="3.6" fill="url(#djn-ruby)" stroke="#d4a02a" stroke-width="1"/>
-    <path d="M 70 33 L 77 36 M 90 33 L 83 36" stroke="#06103a" stroke-width="1.8" stroke-linecap="round"/>
-    <ellipse cx="74" cy="38" rx="2.6" ry="1.6" fill="#fff6c0" filter="url(#djn-glow)"/><ellipse cx="86" cy="38" rx="2.6" ry="1.6" fill="#fff6c0" filter="url(#djn-glow)"/>
-    <ellipse cx="74" cy="38" rx="1.6" ry="1" fill="#fffbe0"/><ellipse cx="86" cy="38" rx="1.6" ry="1" fill="#fffbe0"/>
-    <path d="M 74 46 Q 80 49 86 46" stroke="#06103a" stroke-width="1.2" fill="none"/>
-    <path d="M 72 48 C 72 58 76 64 78 70 L 80 62 L 82 70 C 84 64 88 58 88 48 C 84 52 76 52 72 48 Z" fill="#0a0a1a"/>
-    <!-- gold earring and armbands -->
-    <circle cx="66" cy="42" r="2.4" fill="none" stroke="url(#djn-gold)" stroke-width="1.2"/>
+
+    <!-- golden sash and belt at the waist -->
+    <path d="M 52 94 Q 80 102 108 94 L 106 106 Q 80 114 54 106 Z" fill="url(#djn-gold)" stroke="#4a3006" stroke-width="0.9"/>
+    <circle cx="80" cy="104" r="4" fill="url(#djn-ruby)" stroke="#d9a52c" stroke-width="1"/>
+
+    <!-- a broad, V-shaped chest: huge shoulders, a narrow waist -->
+    <path d="M 52 96 C 46 80 34 66 34 56 C 34 46 46 42 58 42 L 102 42 C 114 42 126 46 126 56 C 126 66 114 80 108 96 Z" fill="url(#djn-skin)" stroke="#081448" stroke-width="1.4"/>
+    <g stroke="#0e1f5c" stroke-width="1.2" fill="none" opacity="0.75">
+      <path d="M 60 52 Q 70 58 80 54 Q 90 58 100 52"/><path d="M 80 56 L 80 92"/>
+      <path d="M 70 76 q 5 3 10 0 M 80 76 q 5 3 10 0"/><path d="M 70 86 q 5 3 10 0 M 80 86 q 5 3 10 0"/>
+    </g>
+
+    <!-- arms folded across the chest, gold bracers on the wrists -->
+    <path d="M 40 54 C 34 64 38 74 52 74 L 104 70" fill="none" stroke="#081448" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 40 54 C 34 64 38 74 52 74 L 104 70" fill="none" stroke="url(#djn-skin)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 120 54 C 126 64 122 74 108 76 L 56 72" fill="none" stroke="#081448" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 120 54 C 126 64 122 74 108 76 L 56 72" fill="none" stroke="url(#djn-skin)" stroke-width="12" stroke-linecap="round"/>
+    <rect x="94" y="64" width="12" height="13" rx="2" fill="url(#djn-gold)" stroke="#4a3006" stroke-width="0.8"/>
+    <rect x="54" y="66" width="12" height="13" rx="2" fill="url(#djn-gold)" stroke="#4a3006" stroke-width="0.8"/>
+    <!-- gold armbands high on the arms -->
+    <path d="M 34 54 q 6 -4 12 0" stroke="url(#djn-gold)" stroke-width="3" fill="none"/>
+    <path d="M 114 54 q 6 -4 12 0" stroke="url(#djn-gold)" stroke-width="3" fill="none"/>
+
+    <!-- head: a heavy brow, glowing eyes, pointed ears, a long forked beard -->
+    <path d="M 66 30 C 64 18 72 12 80 12 C 88 12 96 18 94 30 C 93 38 88 44 80 44 C 72 44 67 38 66 30 Z" fill="url(#djn-skin)" stroke="#081448" stroke-width="1.2"/>
+    <path d="M 66 28 L 56 20 L 64 34 Z" fill="url(#djn-skin)" stroke="#081448" stroke-width="0.9"/>
+    <path d="M 94 28 L 104 20 L 96 34 Z" fill="url(#djn-skin)" stroke="#081448" stroke-width="0.9"/>
+    <circle cx="61" cy="30" r="2" fill="none" stroke="url(#djn-gold)" stroke-width="1.2"/>
+    <circle cx="99" cy="30" r="2" fill="none" stroke="url(#djn-gold)" stroke-width="1.2"/>
+    <path d="M 69 24 L 77 28 M 91 24 L 83 28" stroke="#081448" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="73" cy="30" rx="3" ry="1.8" fill="#fff6b0" filter="url(#djn-glow)"/>
+    <ellipse cx="87" cy="30" rx="3" ry="1.8" fill="#fff6b0" filter="url(#djn-glow)"/>
+    <ellipse cx="73" cy="30" rx="1.8" ry="1.1" fill="#fffde8"/><ellipse cx="87" cy="30" rx="1.8" ry="1.1" fill="#fffde8"/>
+    <path d="M 74 38 Q 80 35 86 38" stroke="#081448" stroke-width="1.3" fill="none"/>
+    <path d="M 72 39 C 72 48 75 54 77 62 L 80 54 L 83 62 C 85 54 88 48 88 39 C 84 43 76 43 72 39 Z" fill="#0a0c1e" stroke="#000" stroke-width="0.5"/>
+    <!-- a great wrapped turban, the ruby blazing at its front, a plume above -->
+    <path d="M 60 20 C 58 4 70 -2 80 -2 C 90 -2 102 4 100 20 C 94 16 66 16 60 20 Z" fill="url(#djn-cloth)" stroke="#6a5a3a" stroke-width="1"/>
+    <path d="M 62 16 C 72 8 88 8 98 16 M 61 12 C 72 4 88 4 99 12" stroke="#9a8a68" stroke-width="1" fill="none"/>
+    <path d="M 80 -2 C 84 -10 92 -12 96 -8 C 90 -8 86 -4 82 0 Z" fill="#e8463a" stroke="#6a0a0a" stroke-width="0.6"/>
+    <circle cx="80" cy="13" r="7" fill="#ff2a3a" filter="url(#djn-glow)" opacity="0.8"/>
+    <circle cx="80" cy="13" r="4.6" fill="url(#djn-ruby)" stroke="url(#djn-gold)" stroke-width="1.4"/>
+    <circle cx="78.6" cy="11.4" r="1.2" fill="#ffffff" opacity="0.8"/>
     </svg>
   `,
 
@@ -1311,7 +1329,8 @@ const MONSTER_SPRITES = {
     <!-- feathered fetlocks -->
     <g fill="#f4f8ff" opacity="0.9"><path d="M 122 138 q 6 4 12 0 l -2 8 h -8 z"/></g>
     <!-- neck, head, lowered for the charge -->
-    <path d="M 62 72 C 54 58 50 44 46 32 L 62 26 C 68 40 74 54 80 66 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1"/>
+    <path d="M 56 80 C 46 66 40 50 40 36 C 44 28 54 24 62 26 C 66 40 76 54 88 66 C 80 72 66 78 56 80 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1.1"/>
+    <path d="M 50 70 C 46 58 46 46 48 38" stroke="#c8cee0" stroke-width="1" fill="none"/>
     <path d="M 46 32 C 40 26 30 30 24 38 C 20 44 22 50 28 52 C 34 52 40 48 46 46 C 54 44 60 38 62 30 Z" fill="url(#uni-coat)" stroke="#7a84a4" stroke-width="1.1"/>
     <circle cx="26" cy="46" r="1" fill="#7a84a4"/>
     <path d="M 40 36 Q 43 33 46 36" stroke="#2a2e44" stroke-width="1.2" fill="none"/>
@@ -1322,7 +1341,7 @@ const MONSTER_SPRITES = {
     <path d="M 44 24 l 4 0 M 41 19 l 4 0 M 38 14 l 4 0 M 35 9 l 3 0" stroke="#a89860" stroke-width="0.8"/>
     <circle cx="30" cy="4" r="3" fill="#ffffff" filter="url(#uni-blur)"/>
     <!-- flowing mane -->
-    <path d="M 60 24 C 66 36 70 50 80 62 C 76 52 78 46 74 40 C 80 46 84 50 88 52 C 80 40 74 30 66 22 Z" fill="url(#uni-mane)" stroke="#9aa4c4" stroke-width="0.7"/>
+    <path d="M 60 22 C 70 34 78 48 92 62 C 86 52 86 46 82 40 C 90 48 96 52 102 54 C 92 42 84 32 76 26 C 82 28 86 30 90 30 C 80 22 70 18 60 22 Z" fill="url(#uni-mane)" stroke="#9aa4c4" stroke-width="0.7"/>
     </svg>
   `,
 
@@ -4736,6 +4755,7 @@ const MONSTER_SPRITE_SCALE = {
   'Manticore': 1.35,
   'Titanoboa': 1.4,
   'Wendigo': 1.35,
+  'Ghoul': 1.25,
   'Djinn': 1.4,
   'Phoenix': 1.4,
   'Banshee': 1.3,
