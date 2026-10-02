@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THE SEVEN LEVELS</title>
-  <link rel="stylesheet" href="styles.css?v=31">
+  <link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body>
   <div id="terminal">
@@ -66,20 +66,37 @@
         <button class="ctrl-btn arrow-btn" id="btn-turn-right" title="Turn Right (→)">▷</button>
       </div>
       <div class="command-bar">
-        <button class="ctrl-btn" id="btn-climb-up"   title="Climb Up (U)">Up [U]</button>
-        <button class="ctrl-btn" id="btn-climb-down" title="Climb Down (D)">Dn [D]</button>
-        <button class="ctrl-btn" id="btn-wait"       title="Rest until healed or disturbed (W)">Rest [W]</button>
-        <button class="ctrl-btn" id="btn-map"        title="Show Map (M)">Mp [M]</button>
-        <button class="ctrl-btn" id="btn-potion"     title="Drink Healing Potion (P)">Pt [P]</button>
-        <button class="ctrl-btn" id="btn-book"       title="Read Magic Tome (B)">Tm [B]</button>
-        <button class="ctrl-btn" id="btn-diamond"    title="Use Diamond — Reveal Map (G)">Dm [G]</button>
-        <button class="ctrl-btn" id="btn-emerald"    title="Use Emerald — Warding for a few fights (E)">Em [E]</button>
-        <button class="ctrl-btn" id="btn-status"     title="Character Status (T)">St [T]</button>
-        <button class="ctrl-btn" id="btn-inventory"  title="Inventory (I)">Inv [I]</button>
-        <button class="ctrl-btn" id="btn-save"       title="Save Game (S)">Sv [S]</button>
-        <button class="ctrl-btn" id="btn-restore"    title="Restore from Save (R)">Rt [R]</button>
-        <button class="ctrl-btn" id="btn-sound"      title="Sound effects on/off (N)">Snd On [N]</button>
-        <button class="ctrl-btn" id="btn-arrows"     title="On-screen arrows on/off (V)">Arrows [V]</button>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-climb-up"   title="Climb Up (U)">Up [U]</button>
+          <button class="ctrl-btn" id="btn-climb-down" title="Climb Down (D)">Dn [D]</button>
+        </span>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-wait"       title="Rest until healed or disturbed (W)">Rest [W]</button>
+          <button class="ctrl-btn" id="btn-map"        title="Show Map (M)">Mp [M]</button>
+        </span>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-potion"     title="Drink Healing Potion (P)">Pt [P]</button>
+          <button class="ctrl-btn" id="btn-book"       title="Read Magic Tome (B)">Tm [B]</button>
+          <button class="ctrl-btn" id="btn-diamond"    title="Use Diamond — Reveal Map (G)">Dm [G]</button>
+          <button class="ctrl-btn" id="btn-emerald"    title="Use Emerald — Warding for a few fights (E)">Em [E]</button>
+        </span>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-status"     title="Character Status (T)">St [T]</button>
+          <button class="ctrl-btn" id="btn-inventory"  title="Inventory (I)">Inv [I]</button>
+        </span>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-save"       title="Save Game (S)">Sv [S]</button>
+          <button class="ctrl-btn" id="btn-restore"    title="Restore from Save (R)">Rt [R]</button>
+        </span>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span class="cmd-group">
+          <button class="ctrl-btn" id="btn-sound"      title="Sound effects on/off (N)">Snd On [N]</button>
+          <button class="ctrl-btn" id="btn-arrows"     title="On-screen arrows on/off (V)">Arrows [V]</button>
+        </span>
       </div>
     </div>
 

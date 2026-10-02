@@ -397,7 +397,18 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  align-items: center;
   align-content: center;
+}
+/* Commands come in groups that wrap as a unit, with thin bars between */
+.cmd-group { display: inline-flex; gap: 6px; flex-wrap: nowrap; }
+.bar-sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 22px;
+  margin: 2px 4px;
+  background: var(--terminal-green-dim);
+  opacity: 0.6;
 }
 
 .ctrl-btn {
