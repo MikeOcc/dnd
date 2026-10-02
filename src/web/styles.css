@@ -276,6 +276,10 @@ html, body {
   font-size: 13px;
   line-height: 1.5;
 }
+/* Messages from a few seconds ago, kept above the newest ones */
+#messages .msg-current, #messages .msg-earlier { display: block; }
+#messages .msg-earlier { opacity: 0.45; }
+#messages .msg-earlier::after { content: ''; display: block; border-bottom: 1px dashed var(--terminal-green-dim); margin: 2px 0 4px; opacity: 0.6; }
 
 /* Choices — same panel treatment as the controls bar below: this and
    #movement-controls occupy the same "control strip" slot (one has combat/

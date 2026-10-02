@@ -150,9 +150,14 @@ function applyState(state) {
   mapLegend.textContent = legendAt >= 0 ? lines.slice(legendAt).map(l => l.trim()).join('\n') : '';
   const bodyLines = isMap ? lines.slice(1, legendAt >= 0 ? legendAt : undefined) : lines;
   while (isMap && bodyLines.length && bodyLines[bodyLines.length - 1] === '') bodyLines.pop();
-  const msgs = bodyLines.join('\n');
   const msgEl = document.getElementById('messages');
-  msgEl.textContent = msgs;
+  // While exploring or fighting, recent messages linger (dimmed) above the
+  // newest for a few seconds, so nothing important vanishes the moment you
+  // take another step; a step with nothing to say doesn't wipe them.
+  const sameChar = prev?.character && state.character && prev.character.id === state.character.id;
+  const logging = LOG_PHASES.includes(phase) && LOG_PHASES.includes(prev?.phase) && sameChar;
+  updateMessageLog(bodyLines, logging);
+  renderMessageLog(msgEl);
   msgEl.classList.toggle('map-view', phase === 'map');
   msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
   msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
@@ -229,6 +234,35 @@ function fxMonster(cls, element) {
   if (portrait.classList.contains('hidden')) return;
   portrait.style.setProperty('--fx', FX_COLOR[element] || '#ffffff');
   restartAnimation(portrait, cls);
+}
+
+// ─── Message log ─────────────────────────────────────────────────────────────
+
+const LOG_PHASES = ['playing', 'combat'];
+const LOG_LINGER_MS = 5000;   // how long earlier messages stay up after something new arrives
+const LOG_MAX_BLOCKS = 4;
+let messageLog = [];          // [{ lines, at }], oldest first; the last is the current one
+
+function updateMessageLog(lines, keepRecent) {
+  const now = Date.now();
+  const block = { lines: [...lines], at: now };
+  if (!keepRecent) { messageLog = [block]; return; }
+  if (lines.every(l => l === '')) return;   // nothing new to say: leave what's there
+  const last = messageLog[messageLog.length - 1];
+  if (last && last.lines.join('\n') === block.lines.join('\n')) { last.at = now; return; }
+  messageLog = messageLog.filter(b => now - b.at < LOG_LINGER_MS);
+  messageLog.push(block);
+  messageLog = messageLog.slice(-LOG_MAX_BLOCKS);
+}
+
+function renderMessageLog(el) {
+  el.innerHTML = '';
+  messageLog.forEach((block, i) => {
+    const span = document.createElement('span');
+    span.className = i === messageLog.length - 1 ? 'msg-current' : 'msg-earlier';
+    span.textContent = block.lines.join('\n');
+    el.appendChild(span);
+  });
 }
 
 // ─── Sound ───────────────────────────────────────────────────────────────────
