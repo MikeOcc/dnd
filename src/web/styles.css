@@ -138,6 +138,19 @@ html, body {
   height: calc(190px * var(--sprite-scale, 1));
 }
 
+/* A great lord seen from afar: Asmodeus on his throne, smaller the farther away */
+#sighting {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; z-index: 2;
+}
+#sighting.hidden { display: none; }
+#sighting .seat { position: relative; width: var(--sight-w, 40%); animation: lair-in 700ms ease-out; }
+#sighting .seat > svg { width: 100%; height: auto; display: block; }
+#sighting .seat.mirrored > svg { transform: scaleX(-1); }
+#sighting .lord { position: absolute; left: 27%; width: 46%; bottom: 17%; }
+#sighting .lord svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 8px rgba(255, 60, 20, 0.5)); }
+
 /* ─── A great lair's warning screen ──────────────────────────────────────
    The corridor fades to a red-dark backdrop and the lair's art fills the view. */
 #view-container.lair-mode #dungeon-view { opacity: 0.12; transition: opacity 600ms ease; }

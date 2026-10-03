@@ -20,7 +20,7 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
 import { placeTreasures, TREASURE_CHEST_PREFIX } from './treasures.js';
@@ -146,6 +146,10 @@ export class GameEngine {
     }
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
+    if (this.phase === 'playing') {
+      const seen = this.sightAsmodeus();
+      if (seen) state.sighting = seen;
+    }
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
     if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied || this.fx.cues) state.fx = this.fx;
@@ -1665,6 +1669,29 @@ export class GameEngine {
     const res = monsterFirstStrike(this.char!, this.combat!.monster, this.rng,
       ['Your magic washes over the Rakshasa and slides off like rain. It laughs.', '(Spells cannot touch a Rakshasa. Fight it hand to hand.)', '']);
     return this.processCombatResult(res);
+  }
+
+  /** Asmodeus on his throne, if the character is looking straight at it from
+   * close by with nothing in the way. */
+  private sightAsmodeus(): GameState['sighting'] | null {
+    if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return null;
+    const lvl = this.getLevel(7);
+    if (!lvl) return null;
+    const lair = [...lvl.contents.entries()].find(([, c]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus');
+    if (!lair || this.dungeonState.defeatedUniqueMonsters.has(lair[1].id)) return null;
+    const range = PRESENCE.ASMODEUS_SIGHT_RANGE;
+    const scan = scanCorridor(lvl.grid, this.char.x, this.char.y, this.char.facing, range + 1);
+    const d = scan.steps.findIndex(s => `${s.x},${s.y}` === lair[0]);
+    if (d < 1 || d > range) return null;
+    // His throne faces the way intruders come: toward the level's entrance.
+    const [lx, ly] = lair[0].split(',').map(Number);
+    const dx = lvl.entrance.x - lx, dy = lvl.entrance.y - ly;
+    const throne: Direction = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
+    const f = this.char.facing;
+    const opposite: Record<Direction, Direction> = { N: 'S', S: 'N', E: 'W', W: 'E' };
+    const rightOf: Record<Direction, Direction> = { N: 'E', E: 'S', S: 'W', W: 'N' };
+    const view = throne === opposite[f] ? 'front' : throne === f ? 'back' : throne === rightOf[f] ? 'faces-right' : 'faces-left';
+    return { monster: 'Asmodeus', distance: d, view };
   }
 
   /** Queues a sound for the client to play after this action. */

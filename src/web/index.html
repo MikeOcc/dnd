@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THE SEVEN LEVELS</title>
-  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles.css?v=38">
 </head>
 <body>
   <div id="terminal">
@@ -34,6 +34,8 @@
       <pre id="dungeon-view"></pre>
       <!-- Monster portrait (shown only during combat), overlaid on the corridor -->
       <div id="monster-portrait" class="hidden"></div>
+      <!-- A great lord seen from afar (Asmodeus on his throne), drawn over the corridor -->
+      <div id="sighting" class="hidden"></div>
       <!-- Hit effects: flashes and floating damage numbers -->
       <div id="fx-layer"></div>
     </div>
@@ -117,8 +119,8 @@
   </div>
 
   <script src="monster-sprites.js?v=12"></script>
-  <script src="lair-art.js?v=2"></script>
+  <script src="lair-art.js?v=3"></script>
   <script src="sfx.js?v=3"></script>
-  <script src="app.js?v=47"></script>
+  <script src="app.js?v=49"></script>
 </body>
 </html>

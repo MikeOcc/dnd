@@ -2350,3 +2350,34 @@ describe('GameEngine — the Zork treasures', () => {
     expect(engine.showInventory().messages.join('\n')).toContain('A zorkmid');
   });
 });
+
+describe('GameEngine — seeing Asmodeus on his throne', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('within 3 squares, looking straight at him, you see the side of the throne that faces you', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    const [lx, ly] = [...lvl.contents.entries()].find(([, c]: [string, { monsterId?: string }]) => c.monsterId === 'Asmodeus')![0].split(',').map(Number);
+    const seen = new Set<string>();
+    for (const [dir, ox, oy] of [['N', 0, 1], ['S', 0, -1], ['E', -1, 0], ['W', 1, 0]] as const) {
+      if (!canMove(lvl.grid, lx + ox, ly + oy, dir)) continue;
+      e.char.x = lx + ox * 2; e.char.y = ly + oy * 2; e.char.facing = dir;
+      if (!canMove(lvl.grid, e.char.x, e.char.y, dir)) continue;
+      const s = engine.getState().sighting;
+      expect(s?.monster).toBe('Asmodeus');
+      expect(s?.distance).toBe(2);
+      seen.add(s!.view);
+      // Turned away, or too far, and he's not in view.
+      e.char.facing = ({ N: 'S', S: 'N', E: 'W', W: 'E' } as const)[dir];
+      expect(engine.getState().sighting).toBeUndefined();
+    }
+    expect(seen.size).toBeGreaterThanOrEqual(2);   // different approaches, different sides of the throne
+  });
+});

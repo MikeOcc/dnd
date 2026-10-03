@@ -113,6 +113,28 @@ function applyState(state) {
     document.getElementById('dungeon-view').textContent = state.view.join('\n');
   }
 
+  // Asmodeus on his throne, seen from a few squares away
+  const sightEl = document.getElementById('sighting');
+  const sight = phase === 'playing' ? state.sighting : null;
+  if (sight && getLairArt(sight.monster) && getMonsterSprite(sight.monster)) {
+    const key = `${sight.monster}:${sight.distance}:${sight.view}`;
+    if (sightEl.dataset.key !== key) {
+      sightEl.dataset.key = key;
+      // From the front he sits glaring at you; from the side or behind you
+      // see the throne from that side (the side view is mirrored as needed).
+      const other = getSightArt(sight.monster, sight.view);
+      sightEl.innerHTML = other
+        ? `<div class="seat${sight.view === 'faces-left' ? ' mirrored' : ''}">${other}</div>`
+        : `<div class="seat">${getLairArt(sight.monster)}<div class="lord">${getMonsterSprite(sight.monster)}</div></div>`;
+      sightEl.style.setProperty('--sight-w', ({ 1: '78%', 2: '56%', 3: '40%' })[sight.distance] || '40%');
+    }
+    sightEl.classList.remove('hidden');
+  } else {
+    sightEl.classList.add('hidden');
+    sightEl.innerHTML = '';
+    delete sightEl.dataset.key;
+  }
+
   // Monster portrait, or at a great lair's edge, the lair itself
   const portraitEl = document.getElementById('monster-portrait');
   const monster = phase === 'combat' ? state.combat?.monster : null;

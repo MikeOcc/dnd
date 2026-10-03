@@ -347,6 +347,7 @@ export interface GameState {
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
+  sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right' };  // a great lord seen from afar, straight ahead (playing only); view: which side of his throne you see
 }
 
 export interface CharacterSummary {

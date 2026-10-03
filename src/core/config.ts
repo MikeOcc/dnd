@@ -450,6 +450,7 @@ export const PRESENCE = {
   // Asmodeus taunts and lashes out far more often. His attacks there allow a
   // saving roll (d20 + Wisdom and Resistance bonuses) for half damage, no curse.
   ASMODEUS_DOOR_RADIUS: 3,
+  ASMODEUS_SIGHT_RANGE: 3,                // looking straight at his throne from this close, you see him on it
   ASMODEUS_DOOR_TAUNT_CHANCE: 0.45,
   ASMODEUS_DOOR_ATTACK_CHANCE: 0.25,
   ASMODEUS_DOOR_SAVE_DC: 16,

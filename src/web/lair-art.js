@@ -273,3 +273,117 @@ const LAIR_ART = {
 function getLairArt(monsterType) {
   return LAIR_ART[monsterType] || null;
 }
+
+// Asmodeus on his throne seen from the side (drawn facing right; the client
+// mirrors it for the other side) and from behind. The front view is the lair
+// art with his portrait seated on it.
+const SIGHT_ART = {
+  Asmodeus: {
+    side: `
+    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus on his throne, seen from the side">
+    <defs>
+      <radialGradient id="ass-glow" cx="50%" cy="65%" r="55%"><stop offset="0" stop-color="#ff3a14" stop-opacity="0.5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ass-iron" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0c0606"/><stop offset="0.6" stop-color="#2a1210"/><stop offset="1" stop-color="#140808"/></linearGradient>
+      <radialGradient id="ass-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#ff6a4a"/><stop offset="0.45" stop-color="#c0200e"/><stop offset="1" stop-color="#3a0202"/></radialGradient>
+      <linearGradient id="ass-horn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0a0404"/><stop offset="1" stop-color="#c8b4a8"/></linearGradient>
+      <linearGradient id="ass-robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0412"/><stop offset="1" stop-color="#050104"/></linearGradient>
+      <linearGradient id="ass-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset="1" stop-color="#6e4c0a"/></linearGradient>
+      <linearGradient id="ass-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a0610"/><stop offset="1" stop-color="#050001"/></linearGradient>
+      <filter id="ass-hot" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="ass-blur"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <rect width="400" height="240" fill="url(#ass-glow)"/>
+    <!-- smoke -->
+    <g filter="url(#ass-blur)" fill="#5a2a24" opacity="0.6"><circle class="lair-smoke s1" cx="150" cy="60" r="24"/><circle class="lair-smoke s3" cx="190" cy="50" r="20"/></g>
+    <!-- the dais, in profile -->
+    <path d="M 70 232 L 330 232 L 320 214 L 80 214 Z" fill="#2a1410" stroke="#a0240c" stroke-width="1.2"/>
+    <path d="M 100 214 L 300 214 L 292 198 L 108 198 Z" fill="#30160f" stroke="#c4300e" stroke-width="1.2"/>
+    <g fill="#c9b9a4"><circle cx="100" cy="224" r="5"/><circle cx="140" cy="224" r="5"/><circle cx="180" cy="224" r="5"/><circle cx="220" cy="224" r="5"/><circle cx="260" cy="224" r="5"/><circle cx="300" cy="224" r="5"/></g>
+    <!-- the throne's high back seen edge-on, spiked, red-hot along its rim -->
+    <g filter="url(#ass-hot)">
+      <path d="M 150 198 L 150 46 L 158 30 L 164 46 L 170 20 L 176 46 L 176 198 Z" fill="url(#ass-iron)" stroke="#ff4a14" stroke-width="1.6"/>
+      <path d="M 170 150 L 250 150 L 254 168 L 166 168 Z" fill="#1e0c0a" stroke="#ff4a14" stroke-width="1.6"/>
+      <path d="M 176 168 L 248 168 L 244 198 L 180 198 Z" fill="#120606" stroke="#c4300e" stroke-width="1.2"/>
+      <path d="M 200 126 L 250 126 L 254 140 L 200 140 Z" fill="#1e0c0a" stroke="#ff4a14" stroke-width="1.4"/>
+      <path d="M 254 128 l 10 -6 M 254 134 l 12 0 M 254 140 l 10 6" stroke="#ff6a2a" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <!-- a folded wing, rising behind him -->
+    <path d="M 186 70 C 170 40 150 20 128 12 C 136 30 138 50 134 70 C 146 74 160 84 170 100 Z" fill="url(#ass-wing)" stroke="#000" stroke-width="1"/>
+    <!-- Asmodeus, seated, in profile, facing right -->
+    <path d="M 182 74 C 176 96 178 120 186 150 L 236 150 C 236 130 228 104 214 80 C 204 70 190 68 182 74 Z" fill="url(#ass-robe)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 196 82 C 206 90 212 104 212 120" stroke="url(#ass-skin)" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <path d="M 186 150 L 246 150 L 252 168 L 196 168 Z" fill="url(#ass-robe)" stroke="#000" stroke-width="1"/>
+    <path d="M 240 168 L 246 196 L 262 198" stroke="url(#ass-skin)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <!-- the arm resting on the throne's arm, the ruby rod upright -->
+    <path d="M 206 96 C 220 110 232 122 246 126" stroke="url(#ass-skin)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M 252 126 L 262 44" stroke="url(#ass-gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 262 34 L 268 44 L 262 54 L 256 44 Z" fill="#ff1a3a" stroke="url(#ass-gold)" stroke-width="1.2" filter="url(#ass-hot)"/>
+    <!-- head in profile: a long jaw, hooked nose, goatee, a great curling horn -->
+    <path d="M 192 52 C 190 38 200 30 212 32 C 222 34 228 44 226 52 L 232 58 L 224 62 C 222 70 214 76 204 74 C 196 72 192 64 192 52 Z" fill="url(#ass-skin)" stroke="#1a0000" stroke-width="1.2"/>
+    <path d="M 212 70 L 210 84 L 218 72 Z" fill="#0a0202"/>
+    <path d="M 214 46 L 222 47" stroke="#1a0000" stroke-width="2.4" stroke-linecap="round"/>
+    <ellipse cx="217" cy="50" rx="3" ry="1.6" fill="#ffd040" filter="url(#ass-hot)"/>
+    <path d="M 222 64 L 226 64 M 223 62 l 1 3" stroke="#f4ecd8" stroke-width="1"/>
+    <path d="M 198 38 C 186 22 168 22 164 36 C 162 48 172 54 180 48 C 174 44 176 34 184 34 C 192 34 196 40 200 44 Z" fill="url(#ass-horn)" stroke="#000" stroke-width="1"/>
+    <path d="M 196 42 L 186 36 L 196 50 Z" fill="url(#ass-skin)" stroke="#1a0000" stroke-width="0.8"/>
+    <g fill="url(#ass-gold)"><path d="M 204 32 L 206 22 L 209 31 Z"/><path d="M 211 31 L 214 20 L 216 32 Z"/></g>
+    <!-- the tail, hanging from the seat and curling across the dais -->
+    <path d="M 186 168 C 176 190 150 200 128 196 C 110 192 104 178 116 172" fill="none" stroke="#1a0000" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 186 168 C 176 190 150 200 128 196 C 110 192 104 178 116 172" fill="none" stroke="#c0200e" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 112 166 L 126 168 L 118 178 Z" fill="#c0200e" stroke="#1a0000" stroke-width="1"/>
+    <!-- braziers -->
+    <path d="M 44 232 L 70 232 L 64 196 L 50 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
+    <path class="lair-flame f1" d="M 57 194 C 40 178 46 158 57 140 C 68 158 74 178 57 194 Z" fill="#ff8a1a"/>
+    <path d="M 330 232 L 356 232 L 350 196 L 336 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
+    <path class="lair-flame f2" d="M 343 194 C 326 178 332 158 343 140 C 354 158 360 178 343 194 Z" fill="#ff8a1a"/>
+    </svg>`,
+    back: `
+    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The back of Asmodeus's throne">
+    <defs>
+      <radialGradient id="asb-glow" cx="50%" cy="60%" r="55%"><stop offset="0" stop-color="#ff3a14" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="asb-iron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1210"/><stop offset="1" stop-color="#0c0404"/></linearGradient>
+      <linearGradient id="asb-horn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0a0404"/><stop offset="1" stop-color="#c8b4a8"/></linearGradient>
+      <linearGradient id="asb-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a0610"/><stop offset="1" stop-color="#050001"/></linearGradient>
+      <filter id="asb-hot" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="asb-blur"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <rect width="400" height="240" fill="url(#asb-glow)"/>
+    <g filter="url(#asb-blur)" fill="#5a2a24" opacity="0.6"><circle class="lair-smoke s2" cx="200" cy="40" r="26"/><circle class="lair-smoke s4" cx="170" cy="56" r="18"/></g>
+    <!-- his wings, spread wide behind the throne -->
+    <path d="M 168 70 C 140 40 100 22 60 20 C 72 34 68 48 60 58 C 80 58 86 70 76 84 C 100 80 112 92 104 108 C 124 98 140 104 150 118 Z" fill="url(#asb-wing)" stroke="#000" stroke-width="1"/>
+    <path d="M 232 70 C 260 40 300 22 340 20 C 328 34 332 48 340 58 C 320 58 314 70 324 84 C 300 80 288 92 296 108 C 276 98 260 104 250 118 Z" fill="url(#asb-wing)" stroke="#000" stroke-width="1"/>
+    <!-- the tips of his horns, curling above the throne's crest -->
+    <path d="M 186 40 C 170 26 150 24 142 34 C 136 44 144 54 154 50 C 150 44 154 36 162 36 C 172 36 178 42 182 48 Z" fill="url(#asb-horn)" stroke="#000" stroke-width="1"/>
+    <path d="M 214 40 C 230 26 250 24 258 34 C 264 44 256 54 246 50 C 250 44 246 36 238 36 C 228 36 222 42 218 48 Z" fill="url(#asb-horn)" stroke="#000" stroke-width="1"/>
+    <!-- the dais -->
+    <path d="M 70 232 L 330 232 L 318 214 L 82 214 Z" fill="#2a1410" stroke="#a0240c" stroke-width="1.2"/>
+    <path d="M 94 214 L 306 214 L 296 198 L 104 198 Z" fill="#30160f" stroke="#c4300e" stroke-width="1.2"/>
+    <!-- the throne's back: a wall of black iron, spiked, rivets glowing -->
+    <g filter="url(#asb-hot)">
+      <path d="M 150 198 L 150 66 L 162 50 L 170 66 L 182 36 L 192 60 L 200 22 L 208 60 L 218 36 L 230 66 L 238 50 L 250 66 L 250 198 Z" fill="url(#asb-iron)" stroke="#ff4a14" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M 160 80 L 240 80 M 160 120 L 240 120 M 160 160 L 240 160 M 200 70 L 200 196" stroke="#3a1a14" stroke-width="2"/>
+      <g fill="#ff6a2a"><circle cx="164" cy="84" r="2"/><circle cx="236" cy="84" r="2"/><circle cx="164" cy="156" r="2"/><circle cx="236" cy="156" r="2"/></g>
+      <!-- an inverted sigil burned into the back -->
+      <circle cx="200" cy="120" r="22" fill="none" stroke="#ff4a14" stroke-width="1.6" opacity="0.8"/>
+      <path d="M 200 98 L 213 138 L 179 113 L 221 113 L 187 138 Z" fill="none" stroke="#ff4a14" stroke-width="1.2" opacity="0.8"/>
+    </g>
+    <!-- his tail, hanging out from under the seat and across the dais -->
+    <path d="M 238 196 C 260 204 286 200 300 186 C 312 174 304 160 292 166" fill="none" stroke="#1a0000" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 238 196 C 260 204 286 200 300 186 C 312 174 304 160 292 166" fill="none" stroke="#c0200e" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 286 160 L 298 156 L 296 170 Z" fill="#c0200e" stroke="#1a0000" stroke-width="1"/>
+    <!-- braziers -->
+    <path d="M 44 232 L 70 232 L 64 196 L 50 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
+    <path class="lair-flame f1" d="M 57 194 C 40 178 46 158 57 140 C 68 158 74 178 57 194 Z" fill="#ff8a1a"/>
+    <path d="M 330 232 L 356 232 L 350 196 L 336 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
+    <path class="lair-flame f2" d="M 343 194 C 326 178 332 158 343 140 C 354 158 360 178 343 194 Z" fill="#ff8a1a"/>
+    </svg>`,
+  },
+};
+
+function getSightArt(monsterType, view) {
+  const art = SIGHT_ART[monsterType];
+  if (!art) return null;
+  if (view === 'back') return art.back || null;
+  if (view === 'faces-left' || view === 'faces-right') return art.side || null;
+  return null;
+}
