@@ -266,6 +266,49 @@ function scrollMessagesToEnd() {
   requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
 }
 
+// ─── Settings ────────────────────────────────────────────────────────────────
+// Per-browser options. Arrows and sound keep their own keys (V, N) and
+// storage; this screen just gathers them, plus the saving-roll details.
+
+const ROLLS_KEY = 'sevenLevels.showRolls';
+let showRolls = (() => { try { return localStorage.getItem(ROLLS_KEY) !== '0'; } catch { return true; } })();
+let settingsOpen = false;
+
+const SETTINGS = [
+  { key: 'a', label: 'On-screen arrows',  get: () => arrowsShown,   toggle: () => toggleArrows() },
+  { key: 'b', label: 'Show saving rolls', get: () => showRolls,     toggle: () => {
+      showRolls = !showRolls;
+      try { localStorage.setItem(ROLLS_KEY, showRolls ? '1' : '0'); } catch { /* storage blocked */ }
+      renderMessageLog(document.getElementById('messages'));
+    } },
+  { key: 'c', label: 'Sound effects',     get: () => !SFX.muted,    toggle: () => toggleSound() },
+];
+
+function renderSettings() {
+  const rows = document.getElementById('settings-rows');
+  rows.innerHTML = '';
+  for (const s of SETTINGS) {
+    const btn = makeChoiceBtn(s.key.toUpperCase(), s.label);
+    const val = document.createElement('span');
+    val.className = s.get() ? 'val-on' : 'val-off';
+    val.textContent = s.get() ? 'ON' : 'OFF';
+    btn.appendChild(val);
+    btn.onclick = () => { s.toggle(); renderSettings(); };
+    rows.appendChild(btn);
+  }
+}
+
+function openSettings() {
+  settingsOpen = true;
+  renderSettings();
+  document.getElementById('settings-panel').classList.remove('hidden');
+}
+
+function closeSettings() {
+  settingsOpen = false;
+  document.getElementById('settings-panel').classList.add('hidden');
+}
+
 // ─── Message log ─────────────────────────────────────────────────────────────
 
 const LOG_PHASES = ['playing', 'combat'];
@@ -290,9 +333,17 @@ function renderMessageLog(el) {
   messageLog.forEach((block, i) => {
     const span = document.createElement('span');
     span.className = i === messageLog.length - 1 ? 'msg-current' : 'msg-earlier';
-    span.textContent = block.lines.join('\n');
+    span.textContent = block.lines.map(displayLine).filter(l => l !== null).join('\n');
     el.appendChild(span);
   });
+}
+
+/** With saving rolls hidden, drop "(Saving roll: ...)" lines and strip the
+ * "(d20: ...)" details out of sentences; the outcome text stays. */
+function displayLine(line) {
+  if (showRolls) return line;
+  if (/^\s*\(Saving roll:[^)]*\)\s*$/.test(line)) return null;
+  return line.replace(/\s*\((?:Saving roll:|d20:?\s)[^)]*\)/g, '');
 }
 
 // ─── Sound ───────────────────────────────────────────────────────────────────
@@ -715,7 +766,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -853,6 +904,16 @@ function submitName() {
 document.addEventListener('keydown', (e) => {
   const phase = currentState.phase;
 
+  // The settings panel takes the keyboard while it's open.
+  if (settingsOpen) {
+    e.preventDefault();
+    const k = e.key.toLowerCase();
+    if (k === 'x' || k === 'o' || e.key === 'Escape') { closeSettings(); return; }
+    const s = SETTINGS.find(x => x.key === k);
+    if (s) { s.toggle(); renderSettings(); }
+    return;
+  }
+
   // Resting: any key stops
   if (phase === 'resting') {
     e.preventDefault();
@@ -923,6 +984,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 's') apiAction('save');
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
+    if (key === 'o') openSettings();
     if (key === 'q') { characterId = null; apiAction('main-menu'); }
     return;
   }
@@ -944,6 +1006,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') apiAction('map-move', { dir: 'right' });
     if (key === 'f') apiAction('toggle-map-view');
     if (key === 'x' && currentState.mapRevealed) apiAction('toggle-map-reveal');
+    if (key === 'o') openSettings();
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
     if (key === '+' || key === '=') zoomMap(1);
@@ -1039,6 +1102,7 @@ document.getElementById('btn-backward')  ?.addEventListener('click', () => move(
 document.getElementById('btn-turn-left') ?.addEventListener('click', () => move('turn-left', 'left'));
 document.getElementById('btn-turn-right')?.addEventListener('click', () => move('turn-right', 'right'));
 document.getElementById('btn-arrows')    ?.addEventListener('click', toggleArrows);
+document.getElementById('btn-settings')  ?.addEventListener('click', openSettings);
 applyArrows();
 
 document.getElementById('btn-climb-up')  ?.addEventListener('click', () => apiAction('climb-up'));

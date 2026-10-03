@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THE SEVEN LEVELS</title>
-  <link rel="stylesheet" href="styles.css?v=35">
+  <link rel="stylesheet" href="styles.css?v=36">
 </head>
 <body>
   <div id="terminal">
@@ -75,6 +75,7 @@
         <span class="cmd-group">
           <button class="ctrl-btn" id="btn-wait"       title="Rest until healed or disturbed (W)">Rest [W]</button>
           <button class="ctrl-btn" id="btn-map"        title="Show Map (M)">Mp [M]</button>
+          <button class="ctrl-btn" id="btn-settings"   title="Settings (O)">Set [O]</button>
         </span>
         <span class="bar-sep" aria-hidden="true"></span>
         <span class="cmd-group">
@@ -101,6 +102,13 @@
       </div>
     </div>
 
+    <!-- Settings: per-browser options, opened with O or the Set button -->
+    <div id="settings-panel" class="hidden" role="dialog" aria-labelledby="settings-title">
+      <div id="settings-title">══ SETTINGS ══</div>
+      <div id="settings-rows"></div>
+      <div class="settings-hint">Press a letter to toggle. X, O or Esc to close.</div>
+    </div>
+
     <!-- Help line -->
     <div id="help-line">
       <span id="key-hint">PRESS ANY KEY TO BEGIN</span>
@@ -111,6 +119,6 @@
   <script src="monster-sprites.js?v=12"></script>
   <script src="lair-art.js?v=2"></script>
   <script src="sfx.js?v=3"></script>
-  <script src="app.js?v=46"></script>
+  <script src="app.js?v=47"></script>
 </body>
 </html>

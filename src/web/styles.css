@@ -373,6 +373,26 @@ html, body {
 
 #name-input:focus { box-shadow: 0 0 8px var(--terminal-green-dim); }
 
+/* Settings panel: a small dialog over the game */
+#settings-panel {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 340px;
+  background: var(--panel);
+  border: 1px solid var(--terminal-green);
+  box-shadow: 0 0 24px rgba(0, 255, 0, 0.15), 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  padding: 14px 18px;
+  z-index: 50;
+  font-size: 14px;
+}
+#settings-panel.hidden { display: none; }
+#settings-title { color: var(--terminal-green-bright); margin-bottom: 10px; letter-spacing: 0.1em; }
+#settings-rows button { display: flex; justify-content: space-between; gap: 24px; width: 100%; margin: 4px 0; text-align: left; }
+#settings-rows .val-on { color: var(--terminal-green-bright); }
+#settings-rows .val-off { color: var(--terminal-green-dim); }
+.settings-hint { margin-top: 10px; color: var(--terminal-green-dim); font-size: 12px; }
+
 /* Command bar while playing, with the optional on-screen arrows */
 #movement-controls {
   display: flex;
