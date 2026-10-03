@@ -307,6 +307,7 @@ const SIGHT_ART = {
       <path d="M 200 126 L 250 126 L 254 140 L 200 140 Z" fill="#1e0c0a" stroke="#ff4a14" stroke-width="1.4"/>
       <path d="M 254 128 l 10 -6 M 254 134 l 12 0 M 254 140 l 10 6" stroke="#ff6a2a" stroke-width="2" stroke-linecap="round"/>
     </g>
+    <g class="lord-figure">
     <!-- a folded wing, rising behind him -->
     <path d="M 186 70 C 170 40 150 20 128 12 C 136 30 138 50 134 70 C 146 74 160 84 170 100 Z" fill="url(#ass-wing)" stroke="#000" stroke-width="1"/>
     <!-- Asmodeus, seated, in profile, facing right -->
@@ -331,6 +332,7 @@ const SIGHT_ART = {
     <path d="M 186 168 C 176 190 150 200 128 196 C 110 192 104 178 116 172" fill="none" stroke="#1a0000" stroke-width="8" stroke-linecap="round"/>
     <path d="M 186 168 C 176 190 150 200 128 196 C 110 192 104 178 116 172" fill="none" stroke="#c0200e" stroke-width="5" stroke-linecap="round"/>
     <path d="M 112 166 L 126 168 L 118 178 Z" fill="#c0200e" stroke="#1a0000" stroke-width="1"/>
+    </g>
     <!-- braziers -->
     <path d="M 44 232 L 70 232 L 64 196 L 50 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
     <path class="lair-flame f1" d="M 57 194 C 40 178 46 158 57 140 C 68 158 74 178 57 194 Z" fill="#ff8a1a"/>
@@ -349,12 +351,14 @@ const SIGHT_ART = {
     </defs>
     <rect width="400" height="240" fill="url(#asb-glow)"/>
     <g filter="url(#asb-blur)" fill="#5a2a24" opacity="0.6"><circle class="lair-smoke s2" cx="200" cy="40" r="26"/><circle class="lair-smoke s4" cx="170" cy="56" r="18"/></g>
+    <g class="lord-figure">
     <!-- his wings, spread wide behind the throne -->
     <path d="M 168 70 C 140 40 100 22 60 20 C 72 34 68 48 60 58 C 80 58 86 70 76 84 C 100 80 112 92 104 108 C 124 98 140 104 150 118 Z" fill="url(#asb-wing)" stroke="#000" stroke-width="1"/>
     <path d="M 232 70 C 260 40 300 22 340 20 C 328 34 332 48 340 58 C 320 58 314 70 324 84 C 300 80 288 92 296 108 C 276 98 260 104 250 118 Z" fill="url(#asb-wing)" stroke="#000" stroke-width="1"/>
     <!-- the tips of his horns, curling above the throne's crest -->
     <path d="M 186 40 C 170 26 150 24 142 34 C 136 44 144 54 154 50 C 150 44 154 36 162 36 C 172 36 178 42 182 48 Z" fill="url(#asb-horn)" stroke="#000" stroke-width="1"/>
     <path d="M 214 40 C 230 26 250 24 258 34 C 264 44 256 54 246 50 C 250 44 246 36 238 36 C 228 36 222 42 218 48 Z" fill="url(#asb-horn)" stroke="#000" stroke-width="1"/>
+    </g>
     <!-- the dais -->
     <path d="M 70 232 L 330 232 L 318 214 L 82 214 Z" fill="#2a1410" stroke="#a0240c" stroke-width="1.2"/>
     <path d="M 94 214 L 306 214 L 296 198 L 104 198 Z" fill="#30160f" stroke="#c4300e" stroke-width="1.2"/>
@@ -367,10 +371,12 @@ const SIGHT_ART = {
       <circle cx="200" cy="120" r="22" fill="none" stroke="#ff4a14" stroke-width="1.6" opacity="0.8"/>
       <path d="M 200 98 L 213 138 L 179 113 L 221 113 L 187 138 Z" fill="none" stroke="#ff4a14" stroke-width="1.2" opacity="0.8"/>
     </g>
+    <g class="lord-figure">
     <!-- his tail, hanging out from under the seat and across the dais -->
     <path d="M 238 196 C 260 204 286 200 300 186 C 312 174 304 160 292 166" fill="none" stroke="#1a0000" stroke-width="8" stroke-linecap="round"/>
     <path d="M 238 196 C 260 204 286 200 300 186 C 312 174 304 160 292 166" fill="none" stroke="#c0200e" stroke-width="5" stroke-linecap="round"/>
     <path d="M 286 160 L 298 156 L 296 170 Z" fill="#c0200e" stroke="#1a0000" stroke-width="1"/>
+    </g>
     <!-- braziers -->
     <path d="M 44 232 L 70 232 L 64 196 L 50 196 Z" fill="#1a0a08" stroke="#a0240c" stroke-width="1.2"/>
     <path class="lair-flame f1" d="M 57 194 C 40 178 46 158 57 140 C 68 158 74 178 57 194 Z" fill="#ff8a1a"/>

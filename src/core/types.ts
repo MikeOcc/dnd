@@ -350,7 +350,7 @@ export interface GameState {
   /** A great lord seen from afar (playing only): how far, which side of his
    * throne you see, where across the view he is (-1 left edge .. 1 right
    * edge), and whether only out of the corner of your eye. */
-  sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right'; offset: number; peripheral: boolean };
+  sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right'; offset: number; peripheral: boolean; empty?: boolean };
 }
 
 export interface CharacterSummary {

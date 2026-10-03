@@ -1682,7 +1682,8 @@ export class GameEngine {
     const lvl = this.getLevel(7);
     if (!lvl) return null;
     const lair = [...lvl.contents.entries()].find(([, c]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus');
-    if (!lair || this.dungeonState.defeatedUniqueMonsters.has(lair[1].id)) return null;
+    if (!lair) return null;
+    const empty = this.dungeonState.defeatedUniqueMonsters.has(lair[1].id);   // the throne remains
     const [lx, ly] = lair[0].split(',').map(Number);
     const { x: px, y: py, facing: f } = this.char;
     if (px === lx && py === ly) return null;
@@ -1717,7 +1718,7 @@ export class GameEngine {
     const view = Math.abs(along) >= Math.abs(side)
       ? (along >= 0 ? 'front' : 'back')
       : (throne === rightOf[f] ? 'faces-right' : throne === f ? 'back' : rightOf[throne] === f ? 'faces-left' : 'front');
-    return { monster: 'Asmodeus', distance: Math.max(1, Math.round(Math.hypot(dx, dy))), view, offset, peripheral };
+    return { monster: 'Asmodeus', distance: Math.max(1, Math.round(Math.hypot(dx, dy))), view, offset, peripheral, ...(empty ? { empty } : {}) };
   }
 
   /** Queues a sound for the client to play after this action. */

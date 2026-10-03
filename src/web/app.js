@@ -117,15 +117,18 @@ function applyState(state) {
   const sightEl = document.getElementById('sighting');
   const sight = phase === 'playing' ? state.sighting : null;
   if (sight && getLairArt(sight.monster) && getMonsterSprite(sight.monster)) {
-    const key = `${sight.monster}:${sight.distance}:${sight.view}`;
+    const key = `${sight.monster}:${sight.distance}:${sight.view}:${sight.empty ? 'empty' : 'seated'}`;
     if (sightEl.dataset.key !== key) {
       sightEl.dataset.key = key;
       // From the front he sits glaring at you; from the side or behind you
       // see the throne from that side (the side view is mirrored as needed).
+      // Once he's gone the throne stands empty. Mist and fire drift around it.
       const other = getSightArt(sight.monster, sight.view);
+      const mist = `<div class="mist"><i></i><i></i><i></i><i></i><i></i><b></b></div>`;
+      const cls = `seat${sight.view === 'faces-left' ? ' mirrored' : ''}${sight.empty ? ' empty' : ''}`;
       sightEl.innerHTML = other
-        ? `<div class="seat${sight.view === 'faces-left' ? ' mirrored' : ''}">${other}</div>`
-        : `<div class="seat">${getLairArt(sight.monster)}<div class="lord">${getMonsterSprite(sight.monster)}</div></div>`;
+        ? `<div class="${cls}">${other}${mist}</div>`
+        : `<div class="${cls}">${getLairArt(sight.monster)}${sight.empty ? '' : `<div class="lord">${getMonsterSprite(sight.monster)}</div>`}${mist}</div>`;
     }
     // Smaller with distance; across the view by where he stands; faint out of the corner of the eye.
     const seat = sightEl.querySelector('.seat');

@@ -2418,3 +2418,24 @@ describe('GameEngine — Asmodeus seen across his throne room', () => {
     expect(checked).toBeGreaterThan(10);
   });
 });
+
+describe('GameEngine — the empty throne', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('once Asmodeus is defeated, his throne is still seen, empty', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const [k, c] = [...e.getLevel(7).contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
+    const [lx, ly] = k.split(',').map(Number);
+    e.char.x = lx; e.char.y = ly + 2; e.char.facing = 'N';
+    expect(engine.getState().sighting?.empty).toBeUndefined();
+    e.dungeonState.defeatedUniqueMonsters.add(c.id);
+    expect(engine.getState().sighting?.empty).toBe(true);
+  });
+});
