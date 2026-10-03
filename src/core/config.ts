@@ -236,6 +236,11 @@ export const COMBAT = {
   ASMODEUS_REGEN_MIN: 0.25,
   ASMODEUS_REGEN_MAX: 0.50,
 
+  // A sapphire can't banish Asmodeus from his own Hells, but it staggers him:
+  // stunned this many turns, then only claws and tail for this many more.
+  ASMODEUS_SAPPHIRE_STUN_TURNS: 3,
+  ASMODEUS_SAPPHIRE_PHYSICAL_TURNS: 2,
+
   // Monster speed effect on run chance
   SPEED_RUN_MODIFIER: 0.1,    // per speed point above 1.0
 
@@ -701,11 +706,12 @@ export const GEMS = {
   // real class check later.
   MAGIC_INT_THRESHOLD: 13,
 
-  // Opal: (charLevel*2 + WIS/2) * randomFactor, same shape as the spells.
+  // Opal: (charLevel*2 + WIS/2) * randomFactor, same shape as the spells,
+  // but wildly uneven: anywhere from a fizzle to 8× its old best (1.6).
   OPAL_LEVEL_MULT: 2,
   OPAL_WIS_DIVISOR: 2,
-  OPAL_RAND_MIN: 0.9,
-  OPAL_RAND_MAX: 1.6,
+  OPAL_RAND_MIN: 0.5,
+  OPAL_RAND_MAX: 12.8,
 
   OPAL_CONFUSE_TURNS: 2,
   CONFUSION_FAIL_CHANCE: 0.5, // per confused turn, chance the monster's action is wasted

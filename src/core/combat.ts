@@ -398,6 +398,21 @@ export function playerOpal(char: Character, monster: Monster, rng: RNG): CombatR
   };
 }
 
+/** A sapphire against Asmodeus: it can't banish him from his own Hells,
+ * but the blast staggers him. Stunned for a few turns, then able only to
+ * claw and lash for a couple more while his magic gathers itself again. */
+export function playerSapphireOnAsmodeus(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  monster.stunnedTurns = Math.max(monster.stunnedTurns ?? 0, COMBAT.ASMODEUS_SAPPHIRE_STUN_TURNS);
+  monster.physicalOnlyTurns = COMBAT.ASMODEUS_SAPPHIRE_PHYSICAL_TURNS;
+  const messages = [
+    'The sapphire pulses with cold blue light and the air around Asmodeus tears open...',
+    'He laughs. "Banish me? From my own Hells?" The rift snaps shut on him like a jaw.',
+    `The banishment FAILS, but Asmodeus staggers on his throne, stunned! (${COMBAT.ASMODEUS_SAPPHIRE_STUN_TURNS} turns, then no spells for ${COMBAT.ASMODEUS_SAPPHIRE_PHYSICAL_TURNS} more)`,
+  ];
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: false };
+}
+
 // ─── Poison Spray ────────────────────────────────────────────────────────────
 
 export function playerPoison(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
@@ -1649,7 +1664,12 @@ function monsterActionInner(
   }
 
   // Special Asmodeus logic
-  if (monster.type === 'Asmodeus') {
+  if (monster.type === 'Asmodeus' && (monster.physicalOnlyTurns ?? 0) > 0) {
+    // Still shaken by a sapphire: no spells, just claws and tail.
+    monster.physicalOnlyTurns!--;
+    messages.push('His magic still scattered by the sapphire, Asmodeus lashes out with claw and tail!');
+    ability = '';
+  } else if (monster.type === 'Asmodeus') {
     // Badly wounded, he spends his turn knitting himself back together, once a fight.
     if (!monster.regenerated && monster.hp > 0 && monster.hp < COMBAT.ASMODEUS_REGEN_BELOW_HP) {
       monster.regenerated = true;

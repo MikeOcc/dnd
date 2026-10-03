@@ -9,7 +9,7 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, beholderAntimagic, calculateXPReward,
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, beholderAntimagic, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
@@ -1523,6 +1523,7 @@ export class GameEngine {
   private useSapphire(): GameState {
     this.char!.inventory.gems.sapphire--;
     const monster = this.combat!.monster;
+    if (monster.type === 'Asmodeus') return this.processCombatResult(playerSapphireOnAsmodeus(this.char!, monster, this.rng));
     this.messages = [
       `The sapphire pulses with cold blue light — the ${monster.type} vanishes without a trace!`,
       'You are free to move on.',

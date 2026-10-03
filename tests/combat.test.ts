@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
 import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus } from '../src/core/combat.js';
 import { GEMS, COMBAT, MANTICORE, GHOUL, PHOENIX, BANSHEE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1084,6 +1084,21 @@ describe('Opal (gem)', () => {
     expect(monster.confusedTurns).toBeGreaterThan(0);
   });
 
+  it('its damage ranges widely, up to 8× its old best', () => {
+    const char = makeChar({ level: 20, wisdom: 18 });
+    const base = 20 * GEMS.OPAL_LEVEL_MULT + Math.floor(18 / GEMS.OPAL_WIS_DIVISOR);
+    const rng = new RNG(3);
+    const hits: number[] = [];
+    for (let i = 0; i < 400; i++) {
+      const m = createMonster('Giant', 10, `opr${i}`); m.hp = m.maxHp = 1e6;
+      hits.push(playerOpal({ ...char }, m, rng).playerDamage);
+    }
+    expect(Math.min(...hits)).toBeGreaterThanOrEqual(Math.round(base * 0.5));
+    expect(Math.max(...hits)).toBeLessThanOrEqual(Math.round(base * 1.6 * 8));
+    expect(Math.max(...hits)).toBeGreaterThan(base * 1.6 * 6);
+    expect(Math.min(...hits)).toBeLessThan(base * 1.6);
+  });
+
   it('can defeat a weak monster outright', () => {
     const char = makeChar({ level: 20, wisdom: 18 });
     const monster = createMonster('Kobold', 1, 'op2');
@@ -1882,5 +1897,28 @@ describe('The Gold Dragon', () => {
       }
     }
     throw new Error('never asphyxiated');
+  });
+});
+
+describe('A sapphire against Asmodeus', () => {
+  it('fails to banish him, stuns him 3 turns, then he can only use physical attacks for 2', () => {
+    const char = makeChar({ level: 60 });
+    char.hp = char.maxHp = 1e6;
+    const m = createMonster('Asmodeus', 100, 'a');
+    m.hp = m.maxHp = 1e7;
+    const rng = new RNG(1);
+    rng.float = () => 0;   // every roll his way: without the sapphire he'd transform you at once
+
+    const turns = [playerSapphireOnAsmodeus(char, m, rng)];
+    expect(turns[0].messages.join(' ')).toContain('banishment FAILS');
+    expect(turns[0].monsterDied).toBe(false);
+    for (let i = 0; i < 4; i++) turns.push(playerAttack(char, m, rng));
+    const text = turns.map(t => t.messages.join(' '));
+    for (const t of text.slice(0, 3)) expect(t).toContain('still stunned');
+    for (const t of text.slice(3, 5)) expect(t).toContain('claw and tail');
+    expect(turns.some(t => t.ballOfDooFired)).toBe(false);
+
+    // Then his spells are back.
+    expect(playerAttack(char, m, rng).ballOfDooFired).toBe(true);
   });
 });
