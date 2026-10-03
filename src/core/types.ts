@@ -32,6 +32,7 @@ export interface CellContent {
   monsterId?: string;   // for fixed/unique monsters
   descriptionId?: string;
   trapVariant?: string;
+  treasure?: string;    // a Zork treasure chest: which treasure (content/treasures.ts)
 }
 
 export interface SerializedDungeon {
@@ -96,6 +97,7 @@ export interface Inventory {
   potions: number;
   books: number;
   gems: Record<GemType, number>;
+  treasures?: string[];   // Zork treasures found (content/treasures.ts)
 }
 
 export interface Character {

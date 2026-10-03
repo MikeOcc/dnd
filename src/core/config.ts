@@ -713,6 +713,7 @@ export const SCORING = {
   UNIQUE_MULT: 500,
   ASMODEUS_BONUS: 10000,
   DEATH_PENALTY: 200,
+  TREASURE_POINTS: 100,   // each Zork treasure found
 } as const;
 
 export const FOV = {

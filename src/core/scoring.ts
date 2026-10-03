@@ -8,7 +8,8 @@ export function calculateScore(char: Character, playTimeSeconds: number): ScoreR
     + char.monstersDefeated     * SCORING.MONSTER_MULT
     + char.uniqueMonstersDefeated * SCORING.UNIQUE_MULT
     + (char.asmodeusDefeated ? SCORING.ASMODEUS_BONUS : 0)
-    - char.deathCount   * SCORING.DEATH_PENALTY;
+    - char.deathCount   * SCORING.DEATH_PENALTY
+    + (char.inventory.treasures?.length ?? 0) * SCORING.TREASURE_POINTS;
 
   return {
     characterLevel: char.level,

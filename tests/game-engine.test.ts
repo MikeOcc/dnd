@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
+import { calculateScore } from '../src/core/scoring.js';
 import { createMonster } from '../src/core/monsters.js';
 import { chestTrapFor } from '../src/core/encounters.js';
 import { xpForLevel } from '../src/core/character.js';
@@ -2310,5 +2311,42 @@ describe('GameEngine — the great bestiary', () => {
       ambushed = state.messages.join(' ').includes('springs out of the shadows');
     }
     expect(ambushed).toBe(true);
+  });
+});
+
+describe('GameEngine — the Zork treasures', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('each treasure lies alone in its own chest on its level, in a quiet room', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    for (const [level, id] of [[1, 'zorkmid'], [2, 'nest'], [4, 'zork-ring'], [6, 'flathead-crown']] as const) {
+      e.loadLevelIntoCache(level);
+      const chests = [...e.getLevel(level).contents.values()].filter((c: { treasure?: string }) => c.treasure);
+      expect(chests.map((c: { treasure: string }) => c.treasure)).toEqual([id]);
+    }
+  });
+
+  it('opening the chest gives the treasure, its blessing, and score', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const cha = e.char.charisma;
+    const before = calculateScore(e.char, 0).finalScore;
+    e.phase = 'interaction';
+    e.interaction = { type: 'chest', contentId: 'treasure-zorkmid', choices: [] };
+    e.char.statusEffects = [];
+    const state = e.openChest('treasure-zorkmid', null, []);
+    expect(state.messages.join(' ')).toContain('ZORKMID');
+    expect(state.messages.join(' ')).toContain('Your score just went up by 100 points.');
+    expect(e.char.inventory.treasures).toEqual(['zorkmid']);
+    expect(e.char.charisma).toBe(cha + 1);
+    expect(calculateScore(e.char, 0).finalScore).toBe(before + 100);
+    expect(engine.showInventory().messages.join('\n')).toContain('A zorkmid');
   });
 });

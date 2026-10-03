@@ -23,6 +23,8 @@ import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair } from './lairs.js';
+import { placeTreasures, TREASURE_CHEST_PREFIX } from './treasures.js';
+import { treasureById } from '../content/treasures.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
@@ -341,6 +343,7 @@ export class GameEngine {
       { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
+      ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
     ];
     const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
     const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
@@ -717,6 +720,7 @@ export class GameEngine {
       // Cache level 1
       if (lvl === 1) {
         const { grid, entrance, exit, contents } = deserializeLevel(serialized);
+        placeTreasures(1, grid, entrance, exit, contents);
         this.levelCache.set(1, { grid, entrance, exit, contents });
         this.char.x = entrance.x;
         this.char.y = entrance.y;
@@ -2249,6 +2253,22 @@ export class GameEngine {
       alarm = !!sprung.triggerMonster;
     }
 
+    // A Zork treasure chest holds its treasure and nothing else.
+    const treasure = id.startsWith(TREASURE_CHEST_PREFIX) ? treasureById(id.slice(TREASURE_CHEST_PREFIX.length)) : undefined;
+    if (treasure) {
+      const owned = this.char.inventory.treasures ?? [];
+      if (!owned.includes(treasure.id)) {
+        this.char.inventory.treasures = [...owned, treasure.id];
+        messages.push(...treasure.found, '', treasure.bless(this.char), '', `Your score just went up by ${treasure.points} points.`);
+        this.cue('victory-3');
+      } else {
+        messages.push('The chest is empty.');
+      }
+      this.messages = messages;
+      if (alarm) { this.closeInteraction(); return this.startRandomEncounter(); }
+      return this.closeInteractionWithSave();
+    }
+
     const result = resolveChest(this.char, this.rng);
     messages.push(...result.messages);
 
@@ -2461,6 +2481,7 @@ export class GameEngine {
 
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
+    placeTreasures(levelNum, grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
   }
 
