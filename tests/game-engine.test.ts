@@ -2381,3 +2381,40 @@ describe('GameEngine — seeing Asmodeus on his throne', () => {
     expect(seen.size).toBeGreaterThanOrEqual(2);   // different approaches, different sides of the throne
   });
 });
+
+describe('GameEngine — Asmodeus seen across his throne room', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it("is visible from anywhere in his room unless he's behind you; off to one side he's off-centre", () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    const [lk] = [...lvl.contents.entries()].find(([, c]: [string, { monsterId?: string }]) => c.monsterId === 'Asmodeus')!;
+    const [lx, ly] = lk.split(',').map(Number);
+    const areas = mapAreas(lvl.grid);
+    const room = areaAtCell(areas, lx, ly)!;
+    let checked = 0;
+    for (let y = room.minY; y <= room.maxY; y++) for (let x = room.minX; x <= room.maxX; x++) {
+      if (areaAtCell(areas, x, y) !== room || (x === lx && y === ly)) continue;
+      e.char.x = x; e.char.y = y;
+      // Facing him (roughly): visible. Facing away: not.
+      const dx = lx - x, dy = ly - y;
+      const toward = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
+      const away = ({ N: 'S', S: 'N', E: 'W', W: 'E' } as const)[toward as 'N'];
+      e.char.facing = toward;
+      const seen = engine.getState().sighting;
+      expect(seen?.monster).toBe('Asmodeus');
+      expect(Math.abs(seen!.offset)).toBeLessThanOrEqual(1);
+      e.char.facing = away;
+      expect(engine.getState().sighting).toBeUndefined();
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+});

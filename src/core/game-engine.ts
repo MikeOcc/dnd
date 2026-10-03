@@ -1671,27 +1671,53 @@ export class GameEngine {
     return this.processCombatResult(res);
   }
 
-  /** Asmodeus on his throne, if the character is looking straight at it from
-   * close by with nothing in the way. */
+  /** Asmodeus on his throne, if the character can see it: from anywhere in
+   * his throne room that isn't behind them (faintly, at the edge, if it's
+   * only in the corner of their eye), or straight down a passage from a few
+   * squares away. Which side of the throne they see depends on where they
+   * stand around it; the throne faces the way intruders come, toward the
+   * level's entrance. */
   private sightAsmodeus(): GameState['sighting'] | null {
     if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return null;
     const lvl = this.getLevel(7);
     if (!lvl) return null;
     const lair = [...lvl.contents.entries()].find(([, c]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus');
     if (!lair || this.dungeonState.defeatedUniqueMonsters.has(lair[1].id)) return null;
-    const range = PRESENCE.ASMODEUS_SIGHT_RANGE;
-    const scan = scanCorridor(lvl.grid, this.char.x, this.char.y, this.char.facing, range + 1);
-    const d = scan.steps.findIndex(s => `${s.x},${s.y}` === lair[0]);
-    if (d < 1 || d > range) return null;
-    // His throne faces the way intruders come: toward the level's entrance.
     const [lx, ly] = lair[0].split(',').map(Number);
-    const dx = lvl.entrance.x - lx, dy = lvl.entrance.y - ly;
-    const throne: Direction = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
-    const f = this.char.facing;
-    const opposite: Record<Direction, Direction> = { N: 'S', S: 'N', E: 'W', W: 'E' };
+    const { x: px, y: py, facing: f } = this.char;
+    if (px === lx && py === ly) return null;
+
+    // In view? Same room (rooms are open inside), or straight ahead down a passage.
+    const areas = (lvl.areas ??= mapAreas(lvl.grid));
+    const room = areaAtCell(areas, lx, ly);
+    const sameRoom = room?.kind === 'room' && areaAtCell(areas, px, py) === room;
+    const range = PRESENCE.ASMODEUS_SIGHT_RANGE;
+    const straight = scanCorridor(lvl.grid, px, py, f, range + 1).steps.findIndex(s => s.x === lx && s.y === ly);
+    if (!sameRoom && !(straight >= 1 && straight <= range)) return null;
+
+    // Where he is relative to the way the character faces.
+    const fwd: Record<Direction, [number, number]> = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+    const [fx, fy] = fwd[f];
+    const dx = lx - px, dy = ly - py;
+    const ahead = dx * fx + dy * fy;          // squares in front
+    const across = dx * -fy + dy * fx;        // squares to the right
+    if (ahead < 0 || (ahead === 0 && Math.abs(across) > 0 && !sameRoom)) return null;   // behind you
+    const ratio = ahead > 0 ? across / ahead : Math.sign(across) * 99;
+    const peripheral = Math.abs(ratio) > 1.2;
+    if (Math.abs(ratio) > 6) return null;     // too far round to see at all
+    const offset = Math.max(-1, Math.min(1, ratio / 1.2));
+
+    // Which side of the throne faces the character.
+    const ex = lvl.entrance.x - lx, ey = lvl.entrance.y - ly;
+    const throne: Direction = Math.abs(ex) > Math.abs(ey) ? (ex > 0 ? 'E' : 'W') : (ey > 0 ? 'S' : 'N');
+    const [tx, ty] = fwd[throne];
+    const along = -dx * tx + -dy * ty;        // the character's position, in front of (+) or behind (-) the throne
+    const side = -dx * -ty + -dy * tx;
     const rightOf: Record<Direction, Direction> = { N: 'E', E: 'S', S: 'W', W: 'N' };
-    const view = throne === opposite[f] ? 'front' : throne === f ? 'back' : throne === rightOf[f] ? 'faces-right' : 'faces-left';
-    return { monster: 'Asmodeus', distance: d, view };
+    const view = Math.abs(along) >= Math.abs(side)
+      ? (along >= 0 ? 'front' : 'back')
+      : (throne === rightOf[f] ? 'faces-right' : throne === f ? 'back' : rightOf[throne] === f ? 'faces-left' : 'front');
+    return { monster: 'Asmodeus', distance: Math.max(1, Math.round(Math.hypot(dx, dy))), view, offset, peripheral };
   }
 
   /** Queues a sound for the client to play after this action. */

@@ -126,8 +126,12 @@ function applyState(state) {
       sightEl.innerHTML = other
         ? `<div class="seat${sight.view === 'faces-left' ? ' mirrored' : ''}">${other}</div>`
         : `<div class="seat">${getLairArt(sight.monster)}<div class="lord">${getMonsterSprite(sight.monster)}</div></div>`;
-      sightEl.style.setProperty('--sight-w', ({ 1: '78%', 2: '56%', 3: '40%' })[sight.distance] || '40%');
     }
+    // Smaller with distance; across the view by where he stands; faint out of the corner of the eye.
+    const seat = sightEl.querySelector('.seat');
+    seat.style.setProperty('--sight-w', `${Math.max(12, Math.round(80 / Math.pow(sight.distance, 0.95)))}%`);
+    seat.style.setProperty('--sight-x', `${50 + sight.offset * 44}%`);
+    seat.style.setProperty('--sight-o', sight.peripheral ? '0.45' : '1');
     sightEl.classList.remove('hidden');
   } else {
     sightEl.classList.add('hidden');

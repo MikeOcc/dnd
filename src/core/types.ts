@@ -347,7 +347,10 @@ export interface GameState {
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
-  sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right' };  // a great lord seen from afar, straight ahead (playing only); view: which side of his throne you see
+  /** A great lord seen from afar (playing only): how far, which side of his
+   * throne you see, where across the view he is (-1 left edge .. 1 right
+   * edge), and whether only out of the corner of your eye. */
+  sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right'; offset: number; peripheral: boolean };
 }
 
 export interface CharacterSummary {

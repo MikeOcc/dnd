@@ -141,11 +141,14 @@ html, body {
 /* A great lord seen from afar: Asmodeus on his throne, smaller the farther away */
 #sighting {
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none; z-index: 2;
+  pointer-events: none; z-index: 2; overflow: hidden;
 }
 #sighting.hidden { display: none; }
-#sighting .seat { position: relative; width: var(--sight-w, 40%); animation: lair-in 700ms ease-out; }
+#sighting .seat {
+  position: absolute; left: var(--sight-x, 50%); top: 50%;
+  width: var(--sight-w, 40%); transform: translate(-50%, -48%);
+  opacity: var(--sight-o, 1); transition: left 300ms ease, width 300ms ease, opacity 300ms ease;
+}
 #sighting .seat > svg { width: 100%; height: auto; display: block; }
 #sighting .seat.mirrored > svg { transform: scaleX(-1); }
 #sighting .lord { position: absolute; left: 27%; width: 46%; bottom: 17%; }
