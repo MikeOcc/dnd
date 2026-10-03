@@ -402,15 +402,20 @@ export function playerOpal(char: Character, monster: Monster, rng: RNG): CombatR
  * but the blast staggers him. Stunned for a few turns, then able only to
  * claw and lash for a couple more while his magic gathers itself again. */
 export function playerSapphireOnAsmodeus(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
-  monster.stunnedTurns = Math.max(monster.stunnedTurns ?? 0, COMBAT.ASMODEUS_SAPPHIRE_STUN_TURNS);
-  monster.physicalOnlyTurns = COMBAT.ASMODEUS_SAPPHIRE_PHYSICAL_TURNS;
   const messages = [
     'The sapphire pulses with cold blue light and the air around Asmodeus tears open...',
     'He laughs. "Banish me? From my own Hells?" The rift snaps shut on him like a jaw.',
-    `The banishment FAILS, but Asmodeus staggers on his throne, stunned! (${COMBAT.ASMODEUS_SAPPHIRE_STUN_TURNS} turns, then no spells for ${COMBAT.ASMODEUS_SAPPHIRE_PHYSICAL_TURNS} more)`,
   ];
+  staggerAsmodeus(monster, COMBAT.ASMODEUS_SAPPHIRE_STUN_TURNS, COMBAT.ASMODEUS_SAPPHIRE_PHYSICAL_TURNS, messages);
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: 0, monsterDied: false };
+}
+
+/** A failed banishment that still shakes him: stunned, then claws and tail only. */
+function staggerAsmodeus(monster: Monster, stun: number, physical: number, messages: string[]): void {
+  monster.stunnedTurns = Math.max(monster.stunnedTurns ?? 0, stun);
+  monster.physicalOnlyTurns = Math.max(monster.physicalOnlyTurns ?? 0, physical);
+  messages.push(`The banishment FAILS, but Asmodeus staggers on his throne, stunned! (${stun} turns, then no spells for ${physical} more)`);
 }
 
 // ─── Poison Spray ────────────────────────────────────────────────────────────
@@ -1406,7 +1411,8 @@ export function playerBanish(char: Character, monster: Monster, rng: RNG): Comba
   const failFaces = banishFailFaces(monster);
   let banished: boolean;
   if (monster.type === 'Asmodeus') {
-    messages.push('Asmodeus laughs. "Banish me? From my own Hells?" The rift gutters out.');
+    messages.push('Asmodeus laughs. "Banish me? From my own Hells?" But the rift lashes at him as it gutters out.');
+    staggerAsmodeus(monster, COMBAT.ASMODEUS_BANISH_STUN_TURNS, COMBAT.ASMODEUS_BANISH_PHYSICAL_TURNS, messages);
     banished = false;
   } else if (failFaces === 0) {
     banished = true;

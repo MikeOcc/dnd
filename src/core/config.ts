@@ -240,6 +240,9 @@ export const COMBAT = {
   // stunned this many turns, then only claws and tail for this many more.
   ASMODEUS_SAPPHIRE_STUN_TURNS: 3,
   ASMODEUS_SAPPHIRE_PHYSICAL_TURNS: 2,
+  // The Banish spell does the same, a little weaker.
+  ASMODEUS_BANISH_STUN_TURNS: 2,
+  ASMODEUS_BANISH_PHYSICAL_TURNS: 1,
 
   // Monster speed effect on run chance
   SPEED_RUN_MODIFIER: 0.1,    // per speed point above 1.0

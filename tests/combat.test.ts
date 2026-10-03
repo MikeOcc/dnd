@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
 import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus, playerBanish } from '../src/core/combat.js';
 import { GEMS, COMBAT, MANTICORE, GHOUL, PHOENIX, BANSHEE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1919,6 +1919,27 @@ describe('A sapphire against Asmodeus', () => {
     expect(turns.some(t => t.ballOfDooFired)).toBe(false);
 
     // Then his spells are back.
+    expect(playerAttack(char, m, rng).ballOfDooFired).toBe(true);
+  });
+});
+
+describe('The Banish spell against Asmodeus', () => {
+  it('fails, but stuns him 2 turns and limits him to physical attacks for 1: a little weaker than the sapphire', () => {
+    const char = makeChar({ level: 60 });
+    char.hp = char.maxHp = 1e6;
+    const m = createMonster('Asmodeus', 100, 'a');
+    m.hp = m.maxHp = 1e7;
+    const rng = new RNG(1);
+    rng.float = () => 0;
+
+    const turns = [playerBanish(char, m, rng)];
+    expect(turns[0].banished).toBeFalsy();
+    expect(turns[0].messages.join(' ')).toContain('banishment FAILS');
+    for (let i = 0; i < 2; i++) turns.push(playerAttack(char, m, rng));
+    const text = turns.map(t => t.messages.join(' '));
+    for (const t of text.slice(0, 2)) expect(t).toContain('still stunned');
+    expect(text[2]).toContain('claw and tail');
+    expect(turns.some(t => t.ballOfDooFired)).toBe(false);
     expect(playerAttack(char, m, rng).ballOfDooFired).toBe(true);
   });
 });
