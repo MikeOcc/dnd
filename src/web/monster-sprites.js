@@ -1451,6 +1451,845 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Giant Spider': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant Spider">
+    <defs>
+    <radialGradient id="gsp-body" cx="40%" cy="30%" r="75%"><stop offset="0" stop-color="#5a4a40"/><stop offset="0.6" stop-color="#2a201a"/><stop offset="1" stop-color="#0a0806"/></radialGradient>
+    <radialGradient id="gsp-abd" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#4a3a30"/><stop offset="1" stop-color="#120c08"/></radialGradient>
+    <filter id="gsp-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <filter id="gsp-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <!-- web strands behind -->
+    <g stroke="#c8c8c0" stroke-width="0.5" opacity="0.35" fill="none">
+      <path d="M 80 0 L 80 60 M 0 20 L 80 60 L 160 20 M 0 90 L 80 60 L 160 90"/><path d="M 40 30 Q 80 44 120 30 M 20 60 Q 80 76 140 60"/>
+      <path d="M 80 0 v 40" stroke-width="1.2" opacity="0.9"/>
+    </g>
+    <ellipse cx="80" cy="150" rx="60" ry="5" fill="#000" opacity="0.6" filter="url(#gsp-soft)"/>
+    <!-- eight long, jointed legs -->
+    <g fill="none" stroke="#1a120c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 68 82 L 40 56 L 14 76 L 6 104"/><path d="M 66 90 L 34 82 L 16 108 L 14 138"/><path d="M 68 98 L 40 108 L 30 134 L 34 152"/><path d="M 72 104 L 56 124 L 54 146"/>
+      <path d="M 92 82 L 120 56 L 146 76 L 154 104"/><path d="M 94 90 L 126 82 L 144 108 L 146 138"/><path d="M 92 98 L 120 108 L 130 134 L 126 152"/><path d="M 88 104 L 104 124 L 106 146"/>
+    </g>
+    <g fill="none" stroke="#5a4a3a" stroke-width="1.6" stroke-linecap="round" opacity="0.8">
+      <path d="M 68 82 L 40 56 L 14 76"/><path d="M 92 82 L 120 56 L 146 76"/><path d="M 66 90 L 34 82"/><path d="M 94 90 L 126 82"/>
+    </g>
+    <!-- bristles -->
+    <g stroke="#0a0806" stroke-width="0.8"><path d="M 40 56 l -3 -4 M 28 66 l -4 -2 M 120 56 l 3 -4 M 132 66 l 4 -2 M 34 82 l -2 -4 M 126 82 l 2 -4"/></g>
+    <!-- abdomen with a red hourglass -->
+    <ellipse cx="80" cy="112" rx="26" ry="30" fill="url(#gsp-abd)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 74 104 L 86 104 L 80 112 L 86 120 L 74 120 L 80 112 Z" fill="#c81a1a"/>
+    <!-- head and thorax -->
+    <ellipse cx="80" cy="80" rx="18" ry="16" fill="url(#gsp-body)" stroke="#000" stroke-width="1.2"/>
+    <!-- a cluster of glittering eyes -->
+    <g fill="#ff3a2a" filter="url(#gsp-glow)"><circle cx="74" cy="72" r="2.6"/><circle cx="86" cy="72" r="2.6"/><circle cx="69" cy="76" r="1.6"/><circle cx="91" cy="76" r="1.6"/><circle cx="77" cy="67" r="1.4"/><circle cx="83" cy="67" r="1.4"/></g>
+    <g fill="#ffb0a0"><circle cx="74" cy="72" r="1.1"/><circle cx="86" cy="72" r="1.1"/></g>
+    <!-- fangs, dripping -->
+    <path d="M 74 88 C 72 94 74 98 77 99 C 76 95 77 92 78 89 Z" fill="#1a120c" stroke="#5a4a3a" stroke-width="0.6"/>
+    <path d="M 86 88 C 88 94 86 98 83 99 C 84 95 83 92 82 89 Z" fill="#1a120c" stroke="#5a4a3a" stroke-width="0.6"/>
+    <circle cx="77" cy="102" r="1.2" fill="#9adf3a"/><circle cx="83" cy="103" r="1" fill="#9adf3a"/>
+    </svg>
+  `,
+
+  'Stirge Swarm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stirge Swarm">
+    <defs>
+    <radialGradient id="stg-body" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#8a5a4a"/><stop offset="1" stop-color="#2a1410"/></radialGradient>
+    <linearGradient id="stg-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3a3a"/><stop offset="1" stop-color="#1a0c0c"/></linearGradient>
+    <g id="stg-one">
+      <path d="M 0 0 C -10 -10 -22 -8 -28 -2 C -20 -2 -14 2 -6 4 Z" fill="url(#stg-wing)" stroke="#0a0404" stroke-width="0.6"/>
+      <path d="M 0 0 C 10 -10 22 -8 28 -2 C 20 -2 14 2 6 4 Z" fill="url(#stg-wing)" stroke="#0a0404" stroke-width="0.6"/>
+      <ellipse cx="0" cy="3" rx="6" ry="7" fill="url(#stg-body)" stroke="#0a0404" stroke-width="0.6"/>
+      <path d="M 0 9 L 0 22" stroke="#3a1a10" stroke-width="1.4" stroke-linecap="round"/>
+      <circle cx="-2.4" cy="0" r="1.4" fill="#ffd040"/><circle cx="2.4" cy="0" r="1.4" fill="#ffd040"/>
+      <path d="M -4 8 l -4 6 M 4 8 l 4 6" stroke="#2a1410" stroke-width="0.8"/>
+    </g>
+    </defs>
+    <!-- the whole cloud of them, near and far -->
+    <g opacity="0.5"><use href="#stg-one" transform="translate(30 30) scale(0.6)"/><use href="#stg-one" transform="translate(130 26) scale(0.55)"/><use href="#stg-one" transform="translate(80 18) scale(0.5)"/><use href="#stg-one" transform="translate(140 100) scale(0.55)"/><use href="#stg-one" transform="translate(20 100) scale(0.6)"/></g>
+    <use href="#stg-one" transform="translate(48 60) scale(1.1) rotate(-12)"/>
+    <use href="#stg-one" transform="translate(112 58) scale(1.1) rotate(14)"/>
+    <use href="#stg-one" transform="translate(80 90) scale(1.6)"/>
+    <use href="#stg-one" transform="translate(44 118) scale(1.0) rotate(8)"/>
+    <use href="#stg-one" transform="translate(118 122) scale(1.0) rotate(-10)"/>
+    <!-- blood drips from the near one's proboscis -->
+    <circle cx="80" cy="128" r="1.6" fill="#a00a0a"/><circle cx="80" cy="134" r="1.1" fill="#a00a0a"/>
+    </svg>
+  `,
+
+  'Rust Monster': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rust Monster">
+    <defs>
+    <radialGradient id="rst-shell" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#d88a4a"/><stop offset="0.55" stop-color="#9a4a1a"/><stop offset="1" stop-color="#3a1806"/></radialGradient>
+    <linearGradient id="rst-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8a878"/><stop offset="1" stop-color="#6a4a2a"/></linearGradient>
+    <filter id="rst-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="150" rx="56" ry="5" fill="#000" opacity="0.6" filter="url(#rst-soft)"/>
+    <!-- feathery antennae, reaching for your iron -->
+    <g fill="none" stroke="#c87a3a" stroke-width="2" stroke-linecap="round">
+      <path d="M 70 62 C 60 40 44 28 30 24"/><path d="M 90 62 C 100 40 116 28 130 24"/>
+    </g>
+    <g stroke="#e8a868" stroke-width="1" stroke-linecap="round">
+      <path d="M 58 44 l -6 -4 M 52 38 l -6 -2 M 46 33 l -5 -1 M 40 29 l -5 0 M 60 48 l -4 -6 M 54 41 l -2 -6"/>
+      <path d="M 102 44 l 6 -4 M 108 38 l 6 -2 M 114 33 l 5 -1 M 120 29 l 5 0 M 100 48 l 4 -6 M 106 41 l 2 -6"/>
+    </g>
+    <!-- six stubby legs -->
+    <g stroke="#3a1806" stroke-width="5" stroke-linecap="round"><path d="M 50 110 L 34 136"/><path d="M 66 116 L 58 144"/><path d="M 94 116 L 102 144"/><path d="M 110 110 L 126 136"/></g>
+    <!-- segmented, armored body -->
+    <path d="M 36 104 C 30 80 50 62 80 62 C 110 62 130 80 124 104 C 120 120 100 124 80 124 C 60 124 40 120 36 104 Z" fill="url(#rst-shell)" stroke="#2a1004" stroke-width="1.4"/>
+    <g stroke="#3a1806" stroke-width="1.2" fill="none"><path d="M 44 84 Q 80 76 116 84"/><path d="M 40 98 Q 80 90 120 98"/><path d="M 44 112 Q 80 106 116 112"/></g>
+    <!-- a ridge of plates down the back -->
+    <g fill="#b85a22" stroke="#2a1004" stroke-width="0.8"><path d="M 72 66 l 8 -8 l 8 8 z"/><path d="M 70 80 l 10 -8 l 10 8 z"/><path d="M 70 94 l 10 -8 l 10 8 z"/></g>
+    <!-- rust flakes drifting off it -->
+    <g fill="#c86a2a" opacity="0.8"><rect x="26" y="70" width="2" height="2"/><rect x="132" y="80" width="2" height="2"/><rect x="40" y="56" width="1.6" height="1.6"/><rect x="122" y="60" width="1.6" height="1.6"/></g>
+    <!-- the head: little black eyes, a tail-like snout -->
+    <path d="M 66 68 C 66 56 94 56 94 68 C 92 74 68 74 66 68 Z" fill="url(#rst-belly)" stroke="#2a1004" stroke-width="1"/>
+    <circle cx="73" cy="64" r="2.4" fill="#0a0402"/><circle cx="87" cy="64" r="2.4" fill="#0a0402"/>
+    <circle cx="72.4" cy="63.4" r="0.8" fill="#ffffff"/><circle cx="86.4" cy="63.4" r="0.8" fill="#ffffff"/>
+    <!-- a rusted sword in its path, eaten through -->
+    <g transform="rotate(-20 30 140)"><rect x="6" y="138" width="50" height="5" fill="#8a4a1a"/><rect x="2" y="134" width="6" height="13" fill="#5a3a1a"/><g fill="#000"><circle cx="24" cy="140" r="1.6"/><circle cx="36" cy="141" r="2"/><circle cx="46" cy="139" r="1.4"/></g></g>
+    </svg>
+  `,
+
+  'Bugbear': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bugbear">
+    <defs>
+    <radialGradient id="bgb-fur" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#b8844a"/><stop offset="0.55" stop-color="#7a4e22"/><stop offset="1" stop-color="#2a1806"/></radialGradient>
+    <radialGradient id="bgb-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#d8a868"/><stop offset="1" stop-color="#7a4a1e"/></radialGradient>
+    <linearGradient id="bgb-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8bcc4"/><stop offset="1" stop-color="#2a2c30"/></linearGradient>
+    <filter id="bgb-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="152" rx="50" ry="5" fill="#000" opacity="0.6" filter="url(#bgb-soft)"/>
+    <!-- morningstar raised overhead -->
+    <path d="M 110 76 L 132 26" stroke="#3a2410" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="134" cy="20" r="11" fill="url(#bgb-iron)" stroke="#0c0d10" stroke-width="1"/>
+    <g fill="url(#bgb-iron)" stroke="#0c0d10" stroke-width="0.5"><path d="M 134 6 l -3 6 h 6 z"/><path d="M 148 20 l -6 -3 v 6 z"/><path d="M 120 20 l 6 -3 v 6 z"/><path d="M 144 10 l -6 2 l 3 4 z"/><path d="M 124 10 l 6 2 l -3 4 z"/><path d="M 144 30 l -6 -2 l 3 -4 z"/></g>
+    <!-- legs -->
+    <path d="M 60 118 L 54 148 L 70 148 L 74 120 Z" fill="url(#bgb-fur)" stroke="#1a0e04" stroke-width="1.1"/>
+    <path d="M 100 118 L 106 148 L 90 148 L 86 120 Z" fill="url(#bgb-fur)" stroke="#1a0e04" stroke-width="1.1"/>
+    <!-- hulking furred body, leather harness -->
+    <path d="M 46 82 C 40 100 46 116 58 124 L 102 124 C 114 116 120 100 114 82 C 104 66 56 66 46 82 Z" fill="url(#bgb-fur)" stroke="#1a0e04" stroke-width="1.3"/>
+    <path d="M 52 76 L 106 118 M 108 76 L 54 118" stroke="#3a2008" stroke-width="5" opacity="0.9"/>
+    <circle cx="80" cy="97" r="4" fill="url(#bgb-iron)"/>
+    <!-- arms: one up holding the morningstar, one reaching -->
+    <path d="M 108 82 C 116 80 112 76 112 74" fill="none" stroke="url(#bgb-fur)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 50 84 C 38 92 30 104 26 116" fill="none" stroke="#1a0e04" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 50 84 C 38 92 30 104 26 116" fill="none" stroke="url(#bgb-fur)" stroke-width="10" stroke-linecap="round"/>
+    <g stroke="#f0e0c0" stroke-width="1.4" stroke-linecap="round"><path d="M 26 116 l -5 5 M 26 116 l -1 7 M 26 116 l 4 6"/></g>
+    <!-- head: bear-like, with a goblin's ears and grin -->
+    <path d="M 62 52 C 60 36 70 28 80 28 C 90 28 100 36 98 52 C 98 62 90 70 80 70 C 70 70 62 62 62 52 Z" fill="url(#bgb-fur)" stroke="#1a0e04" stroke-width="1.2"/>
+    <path d="M 62 44 L 48 34 L 62 52 Z M 98 44 L 112 34 L 98 52 Z" fill="url(#bgb-fur)" stroke="#1a0e04" stroke-width="0.9"/>
+    <path d="M 68 52 C 68 46 92 46 92 52 C 92 62 86 66 80 66 C 74 66 68 62 68 52 Z" fill="url(#bgb-face)"/>
+    <path d="M 68 44 L 76 48 M 92 44 L 84 48" stroke="#1a0e04" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="73" cy="50" r="2" fill="#ffe060"/><circle cx="87" cy="50" r="2" fill="#ffe060"/>
+    <circle cx="73" cy="50" r="0.8" fill="#000"/><circle cx="87" cy="50" r="0.8" fill="#000"/>
+    <ellipse cx="80" cy="56" rx="3.4" ry="2.4" fill="#2a1406"/>
+    <path d="M 72 62 Q 80 66 88 62" stroke="#1a0e04" stroke-width="1.2" fill="none"/>
+    <path d="M 74 62 l 1 3 l 1 -3 M 84 62 l 1 3 l 1 -3" fill="#f4ecd8"/>
+    </svg>
+  `,
+
+  'Troll': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Troll">
+    <defs>
+    <radialGradient id="trl-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#8aaa5a"/><stop offset="0.55" stop-color="#4a6a2a"/><stop offset="1" stop-color="#18240a"/></radialGradient>
+    <filter id="trl-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="trl-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="56" ry="5" fill="#000" opacity="0.6" filter="url(#trl-soft)"/>
+    <!-- long thin legs, knobby knees -->
+    <path d="M 64 112 C 58 126 62 136 56 150 L 68 150 C 72 138 70 126 74 114 Z" fill="url(#trl-skin)" stroke="#0e1606" stroke-width="1.1"/>
+    <path d="M 96 112 C 102 126 98 136 104 150 L 92 150 C 88 138 90 126 86 114 Z" fill="url(#trl-skin)" stroke="#0e1606" stroke-width="1.1"/>
+    <!-- hunched, rubbery torso -->
+    <path d="M 52 66 C 46 84 52 104 62 116 L 98 116 C 108 104 114 84 108 66 C 96 58 64 58 52 66 Z" fill="url(#trl-skin)" stroke="#0e1606" stroke-width="1.3"/>
+    <g fill="#2a3a14" opacity="0.6"><circle cx="66" cy="80" r="3"/><circle cx="92" cy="74" r="2.4"/><circle cx="84" cy="96" r="3.4"/><circle cx="70" cy="104" r="2"/></g>
+    <!-- lumpy healed scars -->
+    <path d="M 60 88 q 8 -2 14 4 M 90 86 q 6 4 12 0" stroke="#a8c878" stroke-width="1.4" fill="none" opacity="0.7"/>
+    <!-- arms so long they drag on the floor, with hooked claws -->
+    <path d="M 54 68 C 38 84 30 108 26 144" fill="none" stroke="#0e1606" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 54 68 C 38 84 30 108 26 144" fill="none" stroke="url(#trl-skin)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 106 68 C 122 84 130 108 134 144" fill="none" stroke="#0e1606" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 106 68 C 122 84 130 108 134 144" fill="none" stroke="url(#trl-skin)" stroke-width="9" stroke-linecap="round"/>
+    <g fill="#1a1a10"><path d="M 20 146 l -4 8 l 7 -5 z"/><path d="M 26 148 l -1 8 l 4 -7 z"/><path d="M 32 146 l 3 8 l 0 -8 z"/><path d="M 140 146 l 4 8 l -7 -5 z"/><path d="M 134 148 l 1 8 l -4 -7 z"/><path d="M 128 146 l -3 8 l 0 -8 z"/></g>
+    <!-- head: long nose, warty, stringy black hair, mouth full of tusks -->
+    <path d="M 64 46 C 62 30 70 22 80 22 C 90 22 98 30 96 46 C 96 58 90 66 80 68 C 70 66 64 58 64 46 Z" fill="url(#trl-skin)" stroke="#0e1606" stroke-width="1.2"/>
+    <path d="M 64 36 C 56 40 52 54 50 66 M 96 36 C 104 40 108 54 110 66 M 70 26 C 64 30 60 40 58 52 M 90 26 C 96 30 100 40 102 52" stroke="#0a0a06" stroke-width="2" fill="none"/>
+    <path d="M 78 44 C 74 54 76 60 80 62 C 84 60 86 54 82 44 Z" fill="#5a7a32" stroke="#0e1606" stroke-width="0.8"/>
+    <ellipse cx="72" cy="42" rx="2.6" ry="1.8" fill="#ffcc40" filter="url(#trl-glow)"/><ellipse cx="88" cy="42" rx="2.6" ry="1.8" fill="#ffcc40" filter="url(#trl-glow)"/>
+    <circle cx="72" cy="42" r="0.8" fill="#000"/><circle cx="88" cy="42" r="0.8" fill="#000"/>
+    <path d="M 70 62 Q 80 70 90 62" stroke="#0a0a06" stroke-width="1.6" fill="none"/>
+    <path d="M 72 63 L 71 56 L 75 63 Z M 88 63 L 89 56 L 85 63 Z" fill="#e8e0c0"/>
+    <path d="M 76 64 v 3 M 80 65 v 3 M 84 64 v 3" stroke="#e8e0c0" stroke-width="1.2"/>
+    <circle cx="68" cy="52" r="1.4" fill="#2a3a14"/><circle cx="92" cy="34" r="1.6" fill="#2a3a14"/>
+    </svg>
+  `,
+
+  'Minotaur': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Minotaur">
+    <defs>
+    <radialGradient id="min-fur" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#7a4a2a"/><stop offset="0.55" stop-color="#4a2a14"/><stop offset="1" stop-color="#180c04"/></radialGradient>
+    <radialGradient id="min-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#c8865a"/><stop offset="0.6" stop-color="#8a5030"/><stop offset="1" stop-color="#3a1e0c"/></radialGradient>
+    <linearGradient id="min-horn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#8a7a5a"/><stop offset="1" stop-color="#f4ecd4"/></linearGradient>
+    <linearGradient id="min-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ccd4"/><stop offset="1" stop-color="#2a2c32"/></linearGradient>
+    <filter id="min-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="min-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="58" ry="5" fill="#000" opacity="0.6" filter="url(#min-soft)"/>
+    <!-- great double axe -->
+    <path d="M 120 150 L 136 30" stroke="#3a2410" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M 132 36 C 150 26 160 44 152 62 C 144 54 136 52 128 54 Z" fill="url(#min-iron)" stroke="#0c0d10" stroke-width="1"/>
+    <path d="M 136 36 C 120 24 108 36 110 54 C 116 48 124 46 132 48 Z" fill="url(#min-iron)" stroke="#0c0d10" stroke-width="1"/>
+    <!-- hooves and legs -->
+    <path d="M 58 114 C 54 128 56 138 52 148 L 68 148 C 70 138 70 126 74 116 Z" fill="url(#min-fur)" stroke="#0a0602" stroke-width="1.1"/>
+    <path d="M 102 114 C 106 128 104 138 108 148 L 92 148 C 90 138 90 126 86 116 Z" fill="url(#min-fur)" stroke="#0a0602" stroke-width="1.1"/>
+    <g fill="#1a1006"><path d="M 50 146 h 20 l -2 6 h -16 z"/><path d="M 90 146 h 20 l 2 6 h -16 z"/></g>
+    <!-- massive, muscled man's torso -->
+    <path d="M 40 70 C 34 92 42 110 56 118 L 104 118 C 118 110 126 92 120 70 C 106 60 54 60 40 70 Z" fill="url(#min-skin)" stroke="#2a1006" stroke-width="1.3"/>
+    <g stroke="#3a1e0c" stroke-width="1.2" fill="none" opacity="0.75"><path d="M 60 76 Q 70 84 80 80 Q 90 84 100 76"/><path d="M 80 82 L 80 110"/><path d="M 68 96 q 6 3 12 0 M 80 96 q 6 3 12 0"/></g>
+    <path d="M 52 112 L 108 112 L 110 122 L 50 122 Z" fill="#3a2410" stroke="#0a0602" stroke-width="0.8"/>
+    <!-- arms -->
+    <path d="M 118 74 C 128 84 128 98 122 110" fill="none" stroke="#2a1006" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 118 74 C 128 84 128 98 122 110" fill="none" stroke="url(#min-skin)" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 42 74 C 30 84 26 100 30 114" fill="none" stroke="#2a1006" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 42 74 C 30 84 26 100 30 114" fill="none" stroke="url(#min-skin)" stroke-width="11" stroke-linecap="round"/>
+    <!-- bull's head, lowered to charge, horns forward -->
+    <path d="M 60 48 C 56 32 66 22 80 22 C 94 22 104 32 100 48 C 98 60 92 70 80 72 C 68 70 62 60 60 48 Z" fill="url(#min-fur)" stroke="#0a0602" stroke-width="1.3"/>
+    <path d="M 62 34 C 46 30 34 18 32 4 C 42 16 54 22 66 26 Z" fill="url(#min-horn)" stroke="#4a3a24" stroke-width="0.8"/>
+    <path d="M 98 34 C 114 30 126 18 128 4 C 118 16 106 22 94 26 Z" fill="url(#min-horn)" stroke="#4a3a24" stroke-width="0.8"/>
+    <path d="M 70 56 C 70 66 90 66 90 56 C 90 52 70 52 70 56 Z" fill="#5a3418" stroke="#0a0602" stroke-width="0.8"/>
+    <ellipse cx="75" cy="60" rx="2" ry="1.4" fill="#0a0602"/><ellipse cx="85" cy="60" rx="2" ry="1.4" fill="#0a0602"/>
+    <path d="M 76 64 A 4 4 0 0 0 84 64" stroke="url(#min-iron)" stroke-width="1.6" fill="none"/>
+    <ellipse cx="70" cy="42" rx="3" ry="2" fill="#ff3a14" filter="url(#min-glow)"/><ellipse cx="90" cy="42" rx="3" ry="2" fill="#ff3a14" filter="url(#min-glow)"/>
+    <circle cx="70" cy="42" r="1" fill="#ffd0a0"/><circle cx="90" cy="42" r="1" fill="#ffd0a0"/>
+    <!-- steam snorted from the nostrils -->
+    <g fill="#e8e8e8" opacity="0.45"><circle cx="64" cy="62" r="3"/><circle cx="58" cy="60" r="2.2"/><circle cx="96" cy="62" r="3"/><circle cx="102" cy="60" r="2.2"/></g>
+    </svg>
+  `,
+
+  'Werewolf': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Werewolf">
+    <defs>
+    <radialGradient id="wwf-fur" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#8a8278"/><stop offset="0.55" stop-color="#4a443c"/><stop offset="1" stop-color="#16130f"/></radialGradient>
+    <radialGradient id="wwf-moon" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fffbe8"/><stop offset="0.7" stop-color="#e8e0c0"/><stop offset="1" stop-color="#e8e0c0" stop-opacity="0"/></radialGradient>
+    <filter id="wwf-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="wwf-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <circle cx="124" cy="26" r="20" fill="url(#wwf-moon)" opacity="0.5"/>
+    <ellipse cx="80" cy="153" rx="52" ry="5" fill="#000" opacity="0.6" filter="url(#wwf-soft)"/>
+    <!-- digitigrade wolf legs -->
+    <path d="M 62 112 C 54 122 62 132 54 140 L 50 150 L 64 150 L 68 140 C 74 132 70 122 74 114 Z" fill="url(#wwf-fur)" stroke="#0a0806" stroke-width="1.1"/>
+    <path d="M 98 112 C 106 122 98 132 106 140 L 110 150 L 96 150 L 92 140 C 86 132 90 122 86 114 Z" fill="url(#wwf-fur)" stroke="#0a0806" stroke-width="1.1"/>
+    <!-- hunched, shaggy torso, the shreds of a shirt -->
+    <path d="M 46 70 C 40 90 48 108 60 116 L 100 116 C 112 108 120 90 114 70 C 102 58 58 58 46 70 Z" fill="url(#wwf-fur)" stroke="#0a0806" stroke-width="1.3"/>
+    <g stroke="#2a2620" stroke-width="1.2" fill="none"><path d="M 54 74 l -4 6 M 62 70 l -2 7 M 98 70 l 2 7 M 106 74 l 4 6 M 70 90 l -3 6 M 90 90 l 3 6"/></g>
+    <path d="M 60 104 L 66 116 L 70 108 L 76 116 L 80 106 L 86 116 L 90 108 L 96 116 L 100 104 Z" fill="#6a2a2a" opacity="0.85"/>
+    <!-- arms, claws spread -->
+    <path d="M 50 74 C 36 84 28 98 24 112" fill="none" stroke="#0a0806" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 50 74 C 36 84 28 98 24 112" fill="none" stroke="url(#wwf-fur)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 110 74 C 124 84 132 98 136 112" fill="none" stroke="#0a0806" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 110 74 C 124 84 132 98 136 112" fill="none" stroke="url(#wwf-fur)" stroke-width="10" stroke-linecap="round"/>
+    <g stroke="#f0e8d8" stroke-width="1.6" stroke-linecap="round"><path d="M 24 112 l -7 3 M 24 112 l -5 7 M 24 112 l -1 9 M 24 112 l 4 8"/><path d="M 136 112 l 7 3 M 136 112 l 5 7 M 136 112 l 1 9 M 136 112 l -4 8"/></g>
+    <!-- wolf head: long snout, snarling -->
+    <path d="M 62 44 C 60 30 68 22 80 22 C 92 22 100 30 98 44 C 98 52 94 58 90 62 L 70 62 C 66 58 62 52 62 44 Z" fill="url(#wwf-fur)" stroke="#0a0806" stroke-width="1.2"/>
+    <path d="M 64 30 L 58 10 L 72 24 Z M 96 30 L 102 10 L 88 24 Z" fill="url(#wwf-fur)" stroke="#0a0806" stroke-width="0.9"/>
+    <path d="M 70 46 C 70 58 74 72 80 74 C 86 72 90 58 90 46 Z" fill="#7a7268" stroke="#0a0806" stroke-width="1"/>
+    <path d="M 76 50 L 80 66 L 84 50" stroke="#3a342c" stroke-width="1" fill="none" opacity="0.7"/>
+    <ellipse cx="80" cy="72" rx="4" ry="2.6" fill="#0a0806"/>
+    <path d="M 72 64 C 76 70 84 70 88 64 L 86 70 C 82 74 78 74 74 70 Z" fill="#5a0a0a"/>
+    <g fill="#f4ecd8"><path d="M 73 64 l 1 4 l 1 -4 z"/><path d="M 85 64 l 1 4 l 1 -4 z"/><path d="M 76 66 l 1 3 l 1 -3 z"/><path d="M 82 66 l 1 3 l 1 -3 z"/></g>
+    <path d="M 66 38 L 75 42 M 94 38 L 85 42" stroke="#0a0806" stroke-width="1.8" stroke-linecap="round"/>
+    <ellipse cx="72" cy="44" rx="2.8" ry="1.8" fill="#ffd040" filter="url(#wwf-glow)"/><ellipse cx="88" cy="44" rx="2.8" ry="1.8" fill="#ffd040" filter="url(#wwf-glow)"/>
+    <ellipse cx="72" cy="44" rx="0.7" ry="1.6" fill="#000"/><ellipse cx="88" cy="44" rx="0.7" ry="1.6" fill="#000"/>
+    <path d="M 78 76 q 0 6 -1 10" stroke="#c8d8e0" stroke-width="0.8" fill="none" opacity="0.7"/>
+    </svg>
+  `,
+
+  'Gargoyle': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gargoyle">
+    <defs>
+    <radialGradient id="grg-stone" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#a8a49c"/><stop offset="0.55" stop-color="#5e5a54"/><stop offset="1" stop-color="#1e1c1a"/></radialGradient>
+    <linearGradient id="grg-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a766e"/><stop offset="1" stop-color="#2a2826"/></linearGradient>
+    <filter id="grg-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="grg-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="56" ry="5" fill="#000" opacity="0.6" filter="url(#grg-soft)"/>
+    <!-- stone wings, raised -->
+    <path d="M 64 70 C 46 50 26 30 6 26 C 14 36 12 46 6 52 C 18 52 22 60 16 68 C 28 66 34 74 30 82 C 42 78 50 82 54 90 Z" fill="url(#grg-wing)" stroke="#121110" stroke-width="1.1"/>
+    <path d="M 96 70 C 114 50 134 30 154 26 C 146 36 148 46 154 52 C 142 52 138 60 144 68 C 132 66 126 74 130 82 C 118 78 110 82 106 90 Z" fill="url(#grg-wing)" stroke="#121110" stroke-width="1.1"/>
+    <!-- crouched on a broken plinth -->
+    <path d="M 40 146 L 120 146 L 116 134 L 44 134 Z" fill="#3a3834" stroke="#121110" stroke-width="1"/>
+    <path d="M 56 136 L 50 120 L 66 112 L 72 132 Z M 104 136 L 110 120 L 94 112 L 88 132 Z" fill="url(#grg-stone)" stroke="#121110" stroke-width="1.1"/>
+    <path d="M 52 98 C 46 112 52 126 62 132 L 98 132 C 108 126 114 112 108 98 C 98 88 62 88 52 98 Z" fill="url(#grg-stone)" stroke="#121110" stroke-width="1.3"/>
+    <path d="M 56 74 C 50 86 54 96 60 100 L 100 100 C 106 96 110 86 104 74 C 96 66 64 66 56 74 Z" fill="url(#grg-stone)" stroke="#121110" stroke-width="1.3"/>
+    <!-- cracks in the stone -->
+    <g stroke="#1a1816" stroke-width="0.9" fill="none"><path d="M 70 80 l 4 8 l -2 6"/><path d="M 94 106 l -6 6 l 2 6"/><path d="M 60 110 l 6 4"/></g>
+    <!-- clawed hands on its knees -->
+    <g fill="url(#grg-stone)" stroke="#121110" stroke-width="1"><ellipse cx="56" cy="116" rx="8" ry="6"/><ellipse cx="104" cy="116" rx="8" ry="6"/></g>
+    <g stroke="#1a1816" stroke-width="1.6" stroke-linecap="round"><path d="M 50 120 l -3 6 M 55 122 l -1 6 M 60 121 l 1 6 M 110 120 l 3 6 M 105 122 l 1 6 M 100 121 l -1 6"/></g>
+    <!-- grotesque head: horns, wide grin of granite teeth -->
+    <path d="M 64 50 C 62 36 70 28 80 28 C 90 28 98 36 96 50 C 96 60 90 68 80 70 C 70 68 64 60 64 50 Z" fill="url(#grg-stone)" stroke="#121110" stroke-width="1.2"/>
+    <path d="M 66 38 C 58 30 56 18 60 10 C 64 20 68 26 72 32 Z M 94 38 C 102 30 104 18 100 10 C 96 20 92 26 88 32 Z" fill="url(#grg-stone)" stroke="#121110" stroke-width="0.9"/>
+    <path d="M 66 46 L 76 50 M 94 46 L 84 50" stroke="#121110" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="72" cy="52" rx="2.6" ry="1.6" fill="#ff6a1a" filter="url(#grg-glow)"/><ellipse cx="88" cy="52" rx="2.6" ry="1.6" fill="#ff6a1a" filter="url(#grg-glow)"/>
+    <path d="M 68 60 Q 80 70 92 60 Q 80 64 68 60 Z" fill="#121110"/>
+    <path d="M 69 60.5 L 71 64 L 73 61.5 L 75 65 L 77 62 L 79 65 L 81 62 L 83 65 L 85 62 L 87 65 L 89 61.5 L 91 60.5" fill="none" stroke="#c8c4bc" stroke-width="1"/>
+    </svg>
+  `,
+
+  'Harpy': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Harpy">
+    <defs>
+    <linearGradient id="hrp-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a5a48"/><stop offset="1" stop-color="#1e1812"/></linearGradient>
+    <radialGradient id="hrp-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#e8c8a8"/><stop offset="1" stop-color="#8a6a50"/></radialGradient>
+    <filter id="hrp-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <!-- musical notes of her song -->
+    <g fill="#c8b8ff" opacity="0.6"><circle cx="30" cy="40" r="2.6"/><path d="M 32.4 40 V 30 l 6 2" stroke="#c8b8ff" stroke-width="1" fill="none"/><circle cx="130" cy="34" r="2.6"/><path d="M 132.4 34 V 24 l 6 2" stroke="#c8b8ff" stroke-width="1" fill="none"/></g>
+    <!-- great ragged wings -->
+    <path d="M 66 64 C 46 44 22 36 4 40 C 14 46 10 54 4 60 C 18 58 20 66 12 74 C 26 70 30 78 24 88 C 38 82 48 86 54 96 Z" fill="url(#hrp-wing)" stroke="#120e0a" stroke-width="1"/>
+    <path d="M 94 64 C 114 44 138 36 156 40 C 146 46 150 54 156 60 C 142 58 140 66 148 74 C 134 70 130 78 136 88 C 122 82 112 86 106 96 Z" fill="url(#hrp-wing)" stroke="#120e0a" stroke-width="1"/>
+    <g stroke="#3a3024" stroke-width="0.8" fill="none"><path d="M 60 66 L 10 48 M 58 74 L 14 70 M 56 82 L 28 86"/><path d="M 100 66 L 150 48 M 102 74 L 146 70 M 104 82 L 132 86"/></g>
+    <!-- feathered bird body and scaled legs ending in talons -->
+    <path d="M 62 84 C 58 100 64 116 80 120 C 96 116 102 100 98 84 Z" fill="url(#hrp-wing)" stroke="#120e0a" stroke-width="1.1"/>
+    <path d="M 70 118 L 64 138 M 90 118 L 96 138" stroke="#c8a040" stroke-width="3"/>
+    <g stroke="#2a1a0a" stroke-width="2" stroke-linecap="round"><path d="M 64 138 l -8 6 M 64 138 l -2 9 M 64 138 l 5 7"/><path d="M 96 138 l 8 6 M 96 138 l 2 9 M 96 138 l -5 7"/></g>
+    <!-- a woman's torso and lovely, cruel face -->
+    <path d="M 66 62 C 64 74 66 84 72 90 L 88 90 C 94 84 96 74 94 62 C 88 58 72 58 66 62 Z" fill="url(#hrp-skin)" stroke="#5a3a28" stroke-width="1"/>
+    <path d="M 68 38 C 66 26 72 20 80 20 C 88 20 94 26 92 38 C 92 48 86 56 80 56 C 74 56 68 48 68 38 Z" fill="url(#hrp-skin)" stroke="#5a3a28" stroke-width="1"/>
+    <!-- wild, matted hair -->
+    <path d="M 66 34 C 60 24 66 12 80 12 C 94 12 100 24 94 34 C 100 42 100 54 96 64 C 94 52 92 44 90 38 C 86 30 74 30 70 38 C 68 44 66 52 64 64 C 60 54 60 42 66 34 Z" fill="#2a1a10"/>
+    <path d="M 72 38 Q 75 36 78 38 M 82 38 Q 85 36 88 38" stroke="#2a1a10" stroke-width="1.2" fill="none"/>
+    <ellipse cx="75" cy="40" rx="1.8" ry="1.2" fill="#3a8a3a"/><ellipse cx="85" cy="40" rx="1.8" ry="1.2" fill="#3a8a3a"/>
+    <path d="M 76 49 Q 80 52 84 49 Q 80 50 76 49 Z" fill="#8a2a2a"/>
+    <!-- her mouth open in song -->
+    <ellipse cx="80" cy="49.5" rx="2.4" ry="1.6" fill="#3a0a0a"/>
+    </svg>
+  `,
+
+  'Hydra': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hydra">
+    <defs>
+    <linearGradient id="hyd-neck" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1a4a3a"/><stop offset="0.5" stop-color="#3a8a6a"/><stop offset="1" stop-color="#1a4a3a"/></linearGradient>
+    <radialGradient id="hyd-body" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#4a9a7a"/><stop offset="1" stop-color="#0a2a1e"/></radialGradient>
+    <radialGradient id="hyd-head" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#5aaa8a"/><stop offset="1" stop-color="#1a4a3a"/></radialGradient>
+    <g id="hyd-h">
+      <path d="M -10 0 C -10 -10 10 -10 12 -2 L 20 2 L 12 6 C 8 10 -10 10 -10 0 Z" fill="url(#hyd-head)" stroke="#06140e" stroke-width="0.9"/>
+      <path d="M 12 2 L 20 2" stroke="#06140e" stroke-width="0.8"/>
+      <path d="M 13 3 l 1 3 l 1 -3 M 16 3 l 1 3 l 1 -3" fill="#f4f0e0"/>
+      <circle cx="2" cy="-2" r="1.8" fill="#ffd040"/><ellipse cx="2" cy="-2" rx="0.5" ry="1.6" fill="#000"/>
+      <path d="M -6 -6 L -10 -12 M -2 -7 L -4 -13" stroke="#1a4a3a" stroke-width="1.4" stroke-linecap="round"/>
+    </g>
+    <filter id="hyd-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="152" rx="66" ry="6" fill="#0a2030" opacity="0.8" filter="url(#hyd-soft)"/>
+    <!-- five serpent necks rising from one body -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M 66 112 C 46 96 30 76 26 50" stroke="#06140e" stroke-width="14"/><path d="M 66 112 C 46 96 30 76 26 50" stroke="url(#hyd-neck)" stroke-width="11"/>
+      <path d="M 72 108 C 62 86 54 60 56 30" stroke="#06140e" stroke-width="14"/><path d="M 72 108 C 62 86 54 60 56 30" stroke="url(#hyd-neck)" stroke-width="11"/>
+      <path d="M 80 106 C 80 80 80 50 82 18" stroke="#06140e" stroke-width="14"/><path d="M 80 106 C 80 80 80 50 82 18" stroke="url(#hyd-neck)" stroke-width="11"/>
+      <path d="M 88 108 C 98 86 106 60 104 30" stroke="#06140e" stroke-width="14"/><path d="M 88 108 C 98 86 106 60 104 30" stroke="url(#hyd-neck)" stroke-width="11"/>
+      <path d="M 94 112 C 114 96 130 76 134 50" stroke="#06140e" stroke-width="14"/><path d="M 94 112 C 114 96 130 76 134 50" stroke="url(#hyd-neck)" stroke-width="11"/>
+    </g>
+    <use href="#hyd-h" transform="translate(26 48) rotate(-150) scale(1.1, -1.1)"/>
+    <use href="#hyd-h" transform="translate(56 28) rotate(-120) scale(1.1, -1.1)"/>
+    <use href="#hyd-h" transform="translate(82 16) rotate(-90) scale(1.2)"/>
+    <use href="#hyd-h" transform="translate(104 28) rotate(-60) scale(1.1)"/>
+    <use href="#hyd-h" transform="translate(134 48) rotate(-30) scale(1.1)"/>
+    <!-- the squat, scaled body, half in dark water -->
+    <ellipse cx="80" cy="124" rx="44" ry="24" fill="url(#hyd-body)" stroke="#06140e" stroke-width="1.3"/>
+    <g stroke="#0a2a1e" stroke-width="1" fill="none" opacity="0.7"><path d="M 50 118 Q 80 110 110 118"/><path d="M 46 128 Q 80 120 114 128"/></g>
+    <path d="M 16 138 Q 40 132 64 138 T 112 138 T 150 136 L 150 160 L 10 160 Z" fill="#0a2030" opacity="0.85"/>
+    <path d="M 22 138 q 10 -3 20 0 M 90 140 q 10 -3 20 0" stroke="#4a8ab8" stroke-width="0.8" fill="none" opacity="0.6"/>
+    </svg>
+  `,
+
+  'Medusa': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Medusa">
+    <defs>
+    <radialGradient id="med-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#b8d8a8"/><stop offset="0.6" stop-color="#6a9a5a"/><stop offset="1" stop-color="#2a4a22"/></radialGradient>
+    <linearGradient id="med-tail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a7a3a"/><stop offset="1" stop-color="#1a2e14"/></linearGradient>
+    <linearGradient id="med-snake" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a5a22"/><stop offset="0.5" stop-color="#6aaa4a"/><stop offset="1" stop-color="#2a5a22"/></linearGradient>
+    <filter id="med-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="med-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="56" ry="5" fill="#000" opacity="0.6" filter="url(#med-soft)"/>
+    <!-- a statue of a victim, behind her -->
+    <g fill="#8a8a86" stroke="#3a3a38" stroke-width="0.8" opacity="0.85"><circle cx="134" cy="92" r="7"/><path d="M 126 100 L 142 100 L 144 140 L 124 140 Z"/><path d="M 126 104 L 116 90 M 142 104 L 150 116" stroke-width="4" stroke="#8a8a86"/></g>
+    <!-- serpent's tail coiling below -->
+    <path d="M 70 104 C 58 120 60 140 80 146 C 104 152 128 146 132 132 C 120 140 100 140 92 132 C 84 124 92 114 90 104 Z" fill="url(#med-tail)" stroke="#0e1a0a" stroke-width="1.2"/>
+    <g stroke="#0e1a0a" stroke-width="0.8" fill="none" opacity="0.6"><path d="M 66 124 q 10 4 20 0"/><path d="M 70 136 q 14 4 28 0"/><path d="M 100 142 q 10 2 20 -2"/></g>
+    <!-- torso, bronze breastplate -->
+    <path d="M 64 66 C 62 82 64 96 70 106 L 90 106 C 96 96 98 82 96 66 C 90 60 70 60 64 66 Z" fill="url(#med-skin)" stroke="#1e3418" stroke-width="1.1"/>
+    <path d="M 66 70 Q 80 78 94 70 L 94 82 Q 80 90 66 82 Z" fill="#a87a2a" stroke="#4a3006" stroke-width="0.8"/>
+    <!-- arms: one drawing a bow -->
+    <path d="M 66 70 C 52 74 42 80 34 86" fill="none" stroke="url(#med-skin)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 94 70 C 106 74 112 80 114 86" fill="none" stroke="url(#med-skin)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 30 60 C 20 76 20 96 30 112" stroke="#5a3a1a" stroke-width="2.6" fill="none"/>
+    <path d="M 30 60 L 34 86 L 30 112" stroke="#d8d0c0" stroke-width="0.6" fill="none"/>
+    <path d="M 34 86 L 64 86" stroke="#c8b898" stroke-width="1.2"/>
+    <!-- her face, and the eyes you must not meet -->
+    <path d="M 68 40 C 66 28 72 22 80 22 C 88 22 94 28 92 40 C 92 50 86 58 80 58 C 74 58 68 50 68 40 Z" fill="url(#med-skin)" stroke="#1e3418" stroke-width="1.1"/>
+    <ellipse cx="75" cy="40" rx="3.2" ry="2" fill="#d8ff6a" filter="url(#med-glow)"/><ellipse cx="85" cy="40" rx="3.2" ry="2" fill="#d8ff6a" filter="url(#med-glow)"/>
+    <ellipse cx="75" cy="40" rx="2" ry="1.3" fill="#f4ffc8"/><ellipse cx="85" cy="40" rx="2" ry="1.3" fill="#f4ffc8"/>
+    <ellipse cx="75" cy="40" rx="0.5" ry="1.2" fill="#000"/><ellipse cx="85" cy="40" rx="0.5" ry="1.2" fill="#000"/>
+    <path d="M 76 50 Q 80 53 84 50" stroke="#3a1a1a" stroke-width="1.2" fill="none"/>
+    <!-- a crown of living snakes -->
+    <g fill="none" stroke="url(#med-snake)" stroke-width="3.4" stroke-linecap="round">
+      <path d="M 70 28 C 60 20 56 10 62 4"/><path d="M 76 24 C 72 14 74 6 80 2"/><path d="M 84 24 C 88 14 86 6 80 2" opacity="0"/><path d="M 86 24 C 90 14 96 8 100 6"/>
+      <path d="M 92 30 C 102 26 108 18 108 10"/><path d="M 68 34 C 56 34 50 28 48 20"/><path d="M 92 38 C 104 40 110 36 114 28"/><path d="M 68 42 C 58 46 54 54 54 60"/>
+    </g>
+    <g fill="#6aaa4a" stroke="#1e3418" stroke-width="0.6"><circle cx="62" cy="4" r="2.6"/><circle cx="80" cy="2" r="2.6"/><circle cx="100" cy="6" r="2.6"/><circle cx="108" cy="10" r="2.6"/><circle cx="48" cy="20" r="2.6"/><circle cx="114" cy="28" r="2.6"/><circle cx="54" cy="60" r="2.6"/></g>
+    <g fill="#ff2a2a"><circle cx="61" cy="3.4" r="0.6"/><circle cx="79" cy="1.4" r="0.6"/><circle cx="101" cy="5.4" r="0.6"/><circle cx="109" cy="9.4" r="0.6"/><circle cx="47" cy="19.4" r="0.6"/><circle cx="115" cy="27.4" r="0.6"/></g>
+    </svg>
+  `,
+
+  'Doppelganger': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Doppelganger">
+    <defs>
+    <linearGradient id="dpl-split" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c8c4d8"/><stop offset="0.48" stop-color="#9a96b0"/><stop offset="0.52" stop-color="#4a6a3a"/><stop offset="1" stop-color="#2a4a1e"/></linearGradient>
+    <radialGradient id="dpl-face" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#e8e4f4"/><stop offset="1" stop-color="#8a86a0"/></radialGradient>
+    <radialGradient id="dpl-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#e8b88a"/><stop offset="1" stop-color="#8a5a3a"/></radialGradient>
+    <linearGradient id="dpl-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8dce4"/><stop offset="1" stop-color="#3a3c42"/></linearGradient>
+    <filter id="dpl-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <clipPath id="dpl-left"><rect x="0" y="0" width="80" height="160"/></clipPath>
+    <clipPath id="dpl-right"><rect x="80" y="0" width="80" height="160"/></clipPath>
+    </defs>
+    <ellipse cx="80" cy="153" rx="46" ry="5" fill="#000" opacity="0.6" filter="url(#dpl-soft)"/>
+    <!-- a sword, raised in "your" hand -->
+    <path d="M 112 78 L 134 22" stroke="url(#dpl-iron)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 106 80 L 120 74" stroke="#a87a2a" stroke-width="3"/>
+    <!-- the body: an adventurer's cloak and boots on one side, grey featureless flesh on the other -->
+    <path d="M 56 70 C 50 92 54 112 60 124 L 64 150 L 76 150 L 80 126 L 84 150 L 96 150 L 100 124 C 106 112 110 92 104 70 C 96 62 64 62 56 70 Z" fill="url(#dpl-split)" stroke="#1a1a24" stroke-width="1.2"/>
+    <path d="M 80 70 L 80 124" stroke="#1a1a24" stroke-width="0.8" stroke-dasharray="3 2"/>
+    <path d="M 84 92 L 104 92 M 84 104 L 102 104" stroke="#1a2a10" stroke-width="1.4"/>
+    <!-- arms -->
+    <path d="M 58 74 C 48 86 44 100 44 112" fill="none" stroke="#9a96b0" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 102 74 C 108 76 110 78 112 78" fill="none" stroke="#3a5a2a" stroke-width="8" stroke-linecap="round"/>
+    <!-- the face: half yours, half a blank, smooth nothing that is still forming -->
+    <g clip-path="url(#dpl-left)">
+      <path d="M 64 44 C 62 30 70 22 80 22 C 90 22 98 30 96 44 C 96 56 90 66 80 66 C 70 66 64 56 64 44 Z" fill="url(#dpl-face)" stroke="#4a4660" stroke-width="1.1"/>
+      <ellipse cx="73" cy="44" rx="3.6" ry="2.2" fill="#ffffff"/><circle cx="73" cy="44" r="1.4" fill="#2a2440"/>
+      <path d="M 70 56 Q 76 60 80 58" stroke="#4a4660" stroke-width="1.2" fill="none"/>
+    </g>
+    <g clip-path="url(#dpl-right)">
+      <path d="M 64 44 C 62 30 70 22 80 22 C 90 22 98 30 96 44 C 96 56 90 66 80 66 C 70 66 64 56 64 44 Z" fill="url(#dpl-skin)" stroke="#3a2010" stroke-width="1.1"/>
+      <path d="M 80 22 C 92 18 100 26 98 38 C 94 30 88 28 80 28 Z" fill="#5a3418"/>
+      <ellipse cx="87" cy="44" rx="2.4" ry="1.6" fill="#ffffff"/><circle cx="87" cy="44" r="1.1" fill="#3a5a8a"/>
+      <path d="M 84 40 L 90 39" stroke="#3a2010" stroke-width="1.2"/>
+      <path d="M 80 58 Q 86 60 90 55" stroke="#3a2010" stroke-width="1.2" fill="none"/>
+    </g>
+    <path d="M 80 22 L 80 66" stroke="#1a1a24" stroke-width="0.6"/>
+    <!-- ripples where the flesh is still shifting -->
+    <g stroke="#e8e4f4" stroke-width="0.8" fill="none" opacity="0.6"><path d="M 60 40 q -4 4 0 8"/><path d="M 58 90 q -4 4 0 8"/><path d="M 62 112 q -4 4 0 8"/></g>
+    </svg>
+  `,
+
+  'Purple Worm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Purple Worm">
+    <defs>
+    <linearGradient id="pwm-flesh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a0a3a"/><stop offset="0.5" stop-color="#7a3a9a"/><stop offset="1" stop-color="#2a0a3a"/></linearGradient>
+    <radialGradient id="pwm-maw" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000"/><stop offset="0.55" stop-color="#3a0a1a"/><stop offset="0.85" stop-color="#8a2a4a"/><stop offset="1" stop-color="#5a1a6a"/></radialGradient>
+    <filter id="pwm-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <!-- the floor bursting apart -->
+    <g fill="#3a3430" stroke="#121010" stroke-width="0.8"><path d="M 4 150 L 30 132 L 42 150 Z"/><path d="M 118 150 L 134 128 L 156 150 Z"/><path d="M 24 120 l 8 -6 l 4 8 z"/><path d="M 128 112 l 8 -4 l 2 8 z"/></g>
+    <!-- the vast segmented body rising out of the rock -->
+    <path d="M 40 160 C 36 120 40 80 50 50 L 110 50 C 120 80 124 120 120 160 Z" fill="url(#pwm-flesh)" stroke="#120418" stroke-width="1.4"/>
+    <g stroke="#1a0624" stroke-width="2" fill="none" opacity="0.8"><path d="M 46 70 Q 80 78 114 70"/><path d="M 42 92 Q 80 100 118 92"/><path d="M 40 114 Q 80 122 120 114"/><path d="M 40 136 Q 80 144 120 136"/></g>
+    <!-- the head: nothing but a mouth, ringed with teeth, gaping at you -->
+    <ellipse cx="80" cy="46" rx="44" ry="36" fill="url(#pwm-flesh)" stroke="#120418" stroke-width="1.4"/>
+    <ellipse cx="80" cy="46" rx="34" ry="27" fill="url(#pwm-maw)"/>
+    <g fill="#f0e8d8" stroke="#5a4a3a" stroke-width="0.4">
+      <path d="M 80 19 l -3 8 h 6 z"/><path d="M 96 22 l -5 7 l 6 2 z"/><path d="M 108 32 l -7 4 l 5 4 z"/><path d="M 113 46 l -8 0 l 3 5 z"/><path d="M 108 60 l -7 -4 l 2 6 z"/><path d="M 96 70 l -5 -7 l -1 7 z"/>
+      <path d="M 80 73 l -3 -8 h 6 z"/><path d="M 64 70 l 5 -7 l 1 7 z"/><path d="M 52 60 l 7 -4 l -2 6 z"/><path d="M 47 46 l 8 0 l -3 5 z"/><path d="M 52 32 l 7 4 l -5 4 z"/><path d="M 64 22 l 5 7 l -6 2 z"/>
+    </g>
+    <!-- an inner ring of teeth, further down the throat -->
+    <g fill="#c8c0b0" opacity="0.8"><path d="M 80 30 l -2 5 h 4 z"/><path d="M 94 40 l -5 2 l 4 3 z"/><path d="M 94 54 l -5 -2 l 1 4 z"/><path d="M 80 62 l -2 -5 h 4 z"/><path d="M 66 54 l 5 -2 l -1 4 z"/><path d="M 66 40 l 5 2 l -4 3 z"/></g>
+    <!-- slime dripping from the lip -->
+    <g fill="#9a6aba" opacity="0.7"><path d="M 56 74 q 1 8 -1 12 q -2 -4 -1 -12 z"/><path d="M 104 72 q 1 10 -1 14 q -2 -5 -1 -14 z"/></g>
+    <!-- the tail stinger curling up behind -->
+    <path d="M 128 160 C 150 140 156 110 144 96" fill="none" stroke="url(#pwm-flesh)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 144 96 L 140 80 L 150 92 Z" fill="#d8d0c0" stroke="#3a2a1a" stroke-width="0.6"/>
+    <circle cx="140" cy="80" r="1.6" fill="#9adf3a"/>
+    </svg>
+  `,
+
+  'Iron Golem': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Iron Golem">
+    <defs>
+    <linearGradient id="igl-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a6e78"/><stop offset="0.5" stop-color="#2a2c32"/><stop offset="1" stop-color="#0a0b0e"/></linearGradient>
+    <linearGradient id="igl-edge" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9a9ea8"/><stop offset="1" stop-color="#4a4e58"/></linearGradient>
+    <radialGradient id="igl-fire" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d8ffb0"/><stop offset="0.5" stop-color="#4adf3a"/><stop offset="1" stop-color="#0a5a0a" stop-opacity="0"/></radialGradient>
+    <filter id="igl-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="igl-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="igl-steam" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    </defs>
+    <ellipse cx="80" cy="154" rx="60" ry="5" fill="#000" opacity="0.7" filter="url(#igl-soft)"/>
+    <!-- pillar legs -->
+    <path d="M 54 116 L 50 150 L 72 150 L 72 116 Z M 106 116 L 110 150 L 88 150 L 88 116 Z" fill="url(#igl-iron)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 50 138 h 22 M 88 138 h 22" stroke="url(#igl-edge)" stroke-width="2"/>
+    <!-- massive riveted torso -->
+    <path d="M 38 62 L 122 62 L 116 120 L 44 120 Z" fill="url(#igl-iron)" stroke="#000" stroke-width="1.4"/>
+    <path d="M 46 70 L 114 70 L 110 112 L 50 112 Z" fill="none" stroke="url(#igl-edge)" stroke-width="1.4"/>
+    <g fill="#8a8e98"><circle cx="50" cy="74" r="1.6"/><circle cx="110" cy="74" r="1.6"/><circle cx="52" cy="108" r="1.6"/><circle cx="108" cy="108" r="1.6"/><circle cx="80" cy="74" r="1.6"/><circle cx="80" cy="108" r="1.6"/></g>
+    <!-- green fire glowing through a grille in the chest -->
+    <circle cx="80" cy="90" r="14" fill="url(#igl-fire)" filter="url(#igl-glow)"/>
+    <g stroke="#0a0b0e" stroke-width="2.4"><path d="M 70 82 v 16 M 76 80 v 20 M 82 80 v 20 M 88 82 v 16"/></g>
+    <!-- great arms ending in hammer-like fists -->
+    <path d="M 38 66 C 26 76 22 92 22 108" fill="none" stroke="#000" stroke-width="17" stroke-linecap="round"/>
+    <path d="M 38 66 C 26 76 22 92 22 108" fill="none" stroke="url(#igl-iron)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 122 66 C 134 76 138 92 138 108" fill="none" stroke="#000" stroke-width="17" stroke-linecap="round"/>
+    <path d="M 122 66 C 134 76 138 92 138 108" fill="none" stroke="url(#igl-iron)" stroke-width="14" stroke-linecap="round"/>
+    <rect x="10" y="104" width="24" height="22" rx="4" fill="url(#igl-iron)" stroke="#000" stroke-width="1.2"/>
+    <rect x="126" y="104" width="24" height="22" rx="4" fill="url(#igl-iron)" stroke="#000" stroke-width="1.2"/>
+    <!-- shoulder plates -->
+    <path d="M 28 58 L 56 54 L 54 72 L 26 74 Z M 132 58 L 104 54 L 106 72 L 134 74 Z" fill="url(#igl-iron)" stroke="#000" stroke-width="1.1"/>
+    <!-- the helm: a bucket of iron with a visor slit full of green fire -->
+    <path d="M 62 22 L 98 22 L 102 56 L 58 56 Z" fill="url(#igl-iron)" stroke="#000" stroke-width="1.3"/>
+    <path d="M 62 22 L 98 22" stroke="url(#igl-edge)" stroke-width="2"/>
+    <rect x="64" y="34" width="32" height="6" fill="#0a0b0e"/>
+    <rect x="64" y="34" width="32" height="6" fill="url(#igl-fire)" filter="url(#igl-glow)"/>
+    <path d="M 80 40 v 14" stroke="#0a0b0e" stroke-width="2"/>
+    <!-- poison steam hissing from the joints -->
+    <g fill="#8adf6a" opacity="0.35" filter="url(#igl-steam)"><circle cx="54" cy="56" r="6"/><circle cx="106" cy="56" r="6"/><circle cx="80" cy="14" r="7"/></g>
+    </svg>
+  `,
+
+  'Behir': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Behir">
+    <defs>
+    <linearGradient id="bhr-scale" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a8ae8"/><stop offset="0.6" stop-color="#2a4aa8"/><stop offset="1" stop-color="#0a1a4a"/></linearGradient>
+    <radialGradient id="bhr-head" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#7aa8ff"/><stop offset="1" stop-color="#1a2a6a"/></radialGradient>
+    <filter id="bhr-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="bhr-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="152" rx="70" ry="5" fill="#000" opacity="0.6" filter="url(#bhr-soft)"/>
+    <!-- the long serpentine body, winding back and forth -->
+    <path d="M 4 130 C 30 110 50 140 76 128 C 100 116 112 140 140 126 C 150 120 156 110 156 100" fill="none" stroke="#06103a" stroke-width="24" stroke-linecap="round"/>
+    <path d="M 4 130 C 30 110 50 140 76 128 C 100 116 112 140 140 126 C 150 120 156 110 156 100" fill="none" stroke="url(#bhr-scale)" stroke-width="20" stroke-linecap="round"/>
+    <path d="M 4 136 C 30 116 50 146 76 134 C 100 122 112 146 140 132" fill="none" stroke="#c8d8f8" stroke-width="3" stroke-dasharray="3 3" opacity="0.6"/>
+    <!-- a dozen short legs -->
+    <g stroke="#0a1a4a" stroke-width="4" stroke-linecap="round"><path d="M 20 126 l -2 18 M 36 124 l 0 20 M 56 132 l 0 18 M 92 124 l 2 20 M 110 132 l 0 18 M 128 128 l 2 18"/></g>
+    <!-- neck rising, head reared back to breathe lightning -->
+    <path d="M 76 128 C 70 100 64 74 72 52" fill="none" stroke="#06103a" stroke-width="20" stroke-linecap="round"/>
+    <path d="M 76 128 C 70 100 64 74 72 52" fill="none" stroke="url(#bhr-scale)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M 56 46 C 54 30 66 22 80 24 C 96 26 104 36 102 48 L 112 56 L 96 60 C 88 66 64 64 56 46 Z" fill="url(#bhr-head)" stroke="#06103a" stroke-width="1.3"/>
+    <!-- two great swept-back horns -->
+    <path d="M 64 30 C 56 18 46 12 36 12 C 46 18 52 26 58 34 Z" fill="#e8e0c8" stroke="#3a3a2a" stroke-width="0.6"/>
+    <path d="M 72 26 C 68 14 60 6 52 4 C 60 12 64 20 66 28 Z" fill="#e8e0c8" stroke="#3a3a2a" stroke-width="0.6"/>
+    <ellipse cx="82" cy="38" rx="3" ry="2" fill="#ffffff" filter="url(#bhr-glow)"/><ellipse cx="82" cy="38" rx="1" ry="1.8" fill="#000"/>
+    <path d="M 96 56 L 112 56 M 98 56 l 1 3 l 1 -3 M 104 56 l 1 3 l 1 -3" stroke="#f4f0e0" stroke-width="1"/>
+    <!-- lightning crackling from its jaws and along its body -->
+    <g fill="none" stroke="#e8f4ff" stroke-width="1.6" filter="url(#bhr-glow)">
+      <path d="M 110 56 L 124 50 L 120 58 L 138 54 L 130 62 L 150 60"/>
+      <path d="M 30 112 l 4 -6 l 2 6 l 4 -5" stroke-width="1"/><path d="M 118 116 l 4 -6 l 2 6 l 4 -5" stroke-width="1"/>
+    </g>
+    </svg>
+  `,
+
+  'Rakshasa': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rakshasa">
+    <defs>
+    <radialGradient id="rak-fur" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#f0a040"/><stop offset="0.6" stop-color="#b8661a"/><stop offset="1" stop-color="#4a2406"/></radialGradient>
+    <linearGradient id="rak-silk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a1a5a"/><stop offset="0.5" stop-color="#5a0a3a"/><stop offset="1" stop-color="#2a0418"/></linearGradient>
+    <linearGradient id="rak-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset="1" stop-color="#8a5a0a"/></linearGradient>
+    <filter id="rak-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <filter id="rak-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="46" ry="5" fill="#000" opacity="0.6" filter="url(#rak-soft)"/>
+    <!-- a shimmer of ghostly copies behind it: its illusions -->
+    <g opacity="0.15"><path d="M 30 70 C 26 100 30 130 34 150 L 56 150 L 58 70 Z" fill="url(#rak-silk)"/><path d="M 130 70 C 134 100 130 130 126 150 L 104 150 L 102 70 Z" fill="url(#rak-silk)"/></g>
+    <!-- long embroidered silk robes -->
+    <path d="M 56 66 C 48 96 46 128 44 150 L 116 150 C 114 128 112 96 104 66 C 96 60 64 60 56 66 Z" fill="url(#rak-silk)" stroke="#1a0210" stroke-width="1.2"/>
+    <path d="M 80 66 L 80 150" stroke="url(#rak-gold)" stroke-width="2"/>
+    <g fill="none" stroke="url(#rak-gold)" stroke-width="1" opacity="0.8"><path d="M 50 130 q 30 8 60 0"/><path d="M 52 110 q 28 6 56 0"/><circle cx="80" cy="90" r="5"/></g>
+    <!-- arms in wide sleeves, the hands turned the wrong way, claws out -->
+    <path d="M 58 70 C 46 80 40 92 36 102 L 48 106 C 52 96 58 88 64 82 Z" fill="url(#rak-silk)" stroke="#1a0210" stroke-width="1"/>
+    <path d="M 102 70 C 114 80 120 92 124 102 L 112 106 C 108 96 102 88 96 82 Z" fill="url(#rak-silk)" stroke="#1a0210" stroke-width="1"/>
+    <path d="M 36 104 C 32 112 36 118 42 116 C 46 114 48 108 46 104 Z" fill="url(#rak-fur)"/>
+    <path d="M 124 104 C 128 112 124 118 118 116 C 114 114 112 108 114 104 Z" fill="url(#rak-fur)"/>
+    <g stroke="#f4ecd8" stroke-width="1.4" stroke-linecap="round"><path d="M 36 108 l -5 -4 M 37 112 l -6 0 M 40 116 l -4 4"/><path d="M 124 108 l 5 -4 M 123 112 l 6 0 M 120 116 l 4 4"/></g>
+    <!-- a tiger's head, smiling -->
+    <path d="M 60 40 C 58 24 68 16 80 16 C 92 16 102 24 100 40 C 100 52 92 62 80 62 C 68 62 60 52 60 40 Z" fill="url(#rak-fur)" stroke="#3a1a04" stroke-width="1.2"/>
+    <path d="M 62 26 L 58 12 L 70 20 Z M 98 26 L 102 12 L 90 20 Z" fill="url(#rak-fur)" stroke="#3a1a04" stroke-width="0.9"/>
+    <g stroke="#1a0a02" stroke-width="2" stroke-linecap="round" fill="none"><path d="M 80 18 v 8 M 72 20 l 2 6 M 88 20 l -2 6"/><path d="M 60 40 l 8 2 M 60 46 l 8 0 M 100 40 l -8 2 M 100 46 l -8 0"/></g>
+    <path d="M 70 46 C 70 56 76 60 80 60 C 84 60 90 56 90 46 Z" fill="#f8f0e0"/>
+    <ellipse cx="72" cy="36" rx="3" ry="2" fill="#a0ff4a" filter="url(#rak-glow)"/><ellipse cx="88" cy="36" rx="3" ry="2" fill="#a0ff4a" filter="url(#rak-glow)"/>
+    <ellipse cx="72" cy="36" rx="0.6" ry="1.8" fill="#000"/><ellipse cx="88" cy="36" rx="0.6" ry="1.8" fill="#000"/>
+    <path d="M 77 46 L 83 46 L 80 50 Z" fill="#3a1a1a"/>
+    <path d="M 74 54 Q 80 58 86 54" stroke="#3a1a1a" stroke-width="1.2" fill="none"/>
+    <path d="M 75 54 l 1 3 l 1 -3 M 83 54 l 1 3 l 1 -3" fill="#ffffff"/>
+    <!-- a jeweled turban pin -->
+    <circle cx="80" cy="14" r="3" fill="#3a8aff" stroke="url(#rak-gold)" stroke-width="1"/>
+    </svg>
+  `,
+
+  'Death Tyrant': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Death Tyrant">
+    <defs>
+    <radialGradient id="dty-body" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#a8a49a"/><stop offset="0.55" stop-color="#5a5650"/><stop offset="1" stop-color="#1a1816"/></radialGradient>
+    <radialGradient id="dty-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8ffe0"/><stop offset="0.4" stop-color="#6aff8a"/><stop offset="1" stop-color="#0a3a1a"/></radialGradient>
+    <filter id="dty-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="dty-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <g id="dty-stalk-eye"><circle r="5" fill="#d8d4c8" stroke="#2a2826" stroke-width="0.8"/><circle r="2.4" fill="#5aff7a" filter="url(#dty-glow)"/><circle r="1.2" fill="#0a1a0a"/></g>
+    </defs>
+    <ellipse cx="80" cy="150" rx="40" ry="5" fill="#000" opacity="0.6" filter="url(#dty-soft)"/>
+    <!-- withered eyestalks, some broken -->
+    <g fill="none" stroke="#4a4640" stroke-width="3" stroke-linecap="round">
+      <path d="M 54 50 C 44 34 30 30 22 34"/><path d="M 62 38 C 56 20 46 10 36 10"/><path d="M 74 32 C 72 16 70 6 64 2"/>
+      <path d="M 86 32 C 88 16 92 6 98 4"/><path d="M 98 38 C 106 22 118 14 126 14"/><path d="M 106 50 C 118 38 132 36 140 42"/>
+      <path d="M 50 64 C 36 60 26 64 18 72"/><path d="M 110 64 C 122 64 128 72 132 80"/>
+    </g>
+    <use href="#dty-stalk-eye" x="22" y="34"/><use href="#dty-stalk-eye" x="36" y="10"/><use href="#dty-stalk-eye" x="64" y="2"/><use href="#dty-stalk-eye" x="98" y="4"/>
+    <use href="#dty-stalk-eye" x="126" y="14"/><use href="#dty-stalk-eye" x="140" y="42"/><use href="#dty-stalk-eye" x="18" y="72"/>
+    <circle cx="132" cy="80" r="3" fill="#2a2826"/>
+    <!-- the great rotting sphere of its body -->
+    <circle cx="80" cy="84" r="48" fill="url(#dty-body)" stroke="#121110" stroke-width="1.4"/>
+    <g fill="#3a3632" opacity="0.7"><path d="M 46 70 q 6 -4 10 2 q -4 4 -10 -2 z"/><path d="M 108 100 q 6 -2 8 4 q -6 2 -8 -4 z"/><path d="M 56 112 q 4 -4 8 0 q -4 4 -8 0 z"/></g>
+    <g stroke="#2a2826" stroke-width="1" fill="none"><path d="M 44 92 l 6 2 M 112 76 l 6 -2 M 70 124 l 4 4"/></g>
+    <!-- the great central eye, dead and terrible -->
+    <ellipse cx="80" cy="74" rx="22" ry="16" fill="#e8e4d8" stroke="#2a2826" stroke-width="1.4"/>
+    <circle cx="80" cy="74" r="12" fill="url(#dty-eye)" filter="url(#dty-glow)"/>
+    <circle cx="80" cy="74" r="10" fill="url(#dty-eye)"/>
+    <ellipse cx="80" cy="74" rx="2.6" ry="8" fill="#0a1a0a"/>
+    <path d="M 58 66 Q 80 52 102 66" stroke="#2a2826" stroke-width="2" fill="none"/>
+    <!-- a broad maw of jagged teeth -->
+    <path d="M 52 104 Q 80 124 108 104 Q 80 114 52 104 Z" fill="#1a0806" stroke="#000" stroke-width="1"/>
+    <path d="M 54 104.6 L 58 110 L 62 106.6 L 66 113 L 70 108 L 74 115 L 78 109 L 82 115 L 86 109 L 90 114 L 94 108 L 98 112 L 102 106.6 L 106 104.6" fill="none" stroke="#d8d0b8" stroke-width="1.3"/>
+    </svg>
+  `,
+
+  'Demilich': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Demilich">
+    <defs>
+    <radialGradient id="dml-bone" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#f4ecd8"/><stop offset="0.6" stop-color="#b8a888"/><stop offset="1" stop-color="#5a4a30"/></radialGradient>
+    <radialGradient id="dml-gem" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#b85aff"/><stop offset="1" stop-color="#3a0a6a"/></radialGradient>
+    <radialGradient id="dml-aura" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#9a4aff" stop-opacity="0.35"/><stop offset="1" stop-color="#2a0a4a" stop-opacity="0"/></radialGradient>
+    <filter id="dml-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.6"/></filter>
+    <filter id="dml-blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+    </defs>
+    <circle cx="80" cy="70" r="64" fill="url(#dml-aura)" filter="url(#dml-blur)"/>
+    <!-- the heap of dust it rose from -->
+    <path d="M 30 156 C 50 138 110 138 130 156 Z" fill="#6a6050" opacity="0.8"/>
+    <g fill="#d8ccb0" opacity="0.7"><path d="M 50 150 l 14 -3 l 1 2 l -14 3 z"/><path d="M 98 150 l 12 2 l -1 2 l -12 -2 z"/></g>
+    <!-- wisps of soul-stuff drawn toward it -->
+    <g fill="none" stroke="#c8a8ff" stroke-width="1" opacity="0.5"><path d="M 10 40 C 30 50 40 60 58 64"/><path d="M 150 30 C 130 44 118 56 102 62"/><path d="M 20 110 C 40 100 52 92 62 86"/></g>
+    <!-- the floating skull -->
+    <path d="M 46 66 C 42 36 60 18 80 18 C 100 18 118 36 114 66 C 112 82 104 90 100 96 L 60 96 C 56 90 48 82 46 66 Z" fill="url(#dml-bone)" stroke="#3a2e1a" stroke-width="1.4"/>
+    <path d="M 60 96 L 62 112 C 70 118 90 118 98 112 L 100 96 Z" fill="url(#dml-bone)" stroke="#3a2e1a" stroke-width="1.2"/>
+    <!-- great gem eyes, burning -->
+    <path d="M 56 60 Q 66 50 76 60 Q 66 72 56 60 Z" fill="#120a18"/>
+    <path d="M 84 60 Q 94 50 104 60 Q 94 72 84 60 Z" fill="#120a18"/>
+    <circle cx="66" cy="61" r="6" fill="#b85aff" filter="url(#dml-glow)"/><circle cx="94" cy="61" r="6" fill="#b85aff" filter="url(#dml-glow)"/>
+    <path d="M 66 55 L 71 61 L 66 67 L 61 61 Z" fill="url(#dml-gem)"/><path d="M 94 55 L 99 61 L 94 67 L 89 61 Z" fill="url(#dml-gem)"/>
+    <!-- nasal cavity and gem-studded teeth -->
+    <path d="M 77 72 L 80 82 L 83 72 Z" fill="#120a18"/>
+    <rect x="62" y="98" width="36" height="9" fill="#120a18"/>
+    <g fill="#f4ecd8" stroke="#3a2e1a" stroke-width="0.4"><rect x="63" y="98" width="4" height="5"/><rect x="68" y="98" width="4" height="5"/><rect x="73" y="98" width="4" height="5"/><rect x="83" y="98" width="4" height="5"/><rect x="88" y="98" width="4" height="5"/><rect x="93" y="98" width="4" height="5"/></g>
+    <rect x="78" y="98" width="4" height="5" fill="#ff3a5a"/>
+    <g fill="#3aff8a"><rect x="68" y="98" width="4" height="5" opacity="0.8"/><rect x="88" y="98" width="4" height="5" opacity="0.8"/></g>
+    <!-- cracks -->
+    <path d="M 82 20 l -3 12 l 5 8 M 50 50 l 8 6" stroke="#3a2e1a" stroke-width="1" fill="none"/>
+    </svg>
+  `,
+
+  'Chimera': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chimera">
+    <defs>
+    <radialGradient id="chm-lion" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#e0b060"/><stop offset="0.55" stop-color="#a06a24"/><stop offset="1" stop-color="#3a2408"/></radialGradient>
+    <radialGradient id="chm-mane" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#8a4a14"/><stop offset="1" stop-color="#2a1404"/></radialGradient>
+    <radialGradient id="chm-goat" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#e8e0d0"/><stop offset="1" stop-color="#7a7060"/></radialGradient>
+    <linearGradient id="chm-dragon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d84a2a"/><stop offset="1" stop-color="#4a0a04"/></linearGradient>
+    <linearGradient id="chm-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a3a2a"/><stop offset="1" stop-color="#2a0a06"/></linearGradient>
+    <radialGradient id="chm-fire" cx="20%" cy="50%" r="80%"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.4" stop-color="#ff8a1a"/><stop offset="1" stop-color="#c81a04" stop-opacity="0"/></radialGradient>
+    <filter id="chm-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="64" ry="5" fill="#000" opacity="0.6" filter="url(#chm-soft)"/>
+    <!-- bat wings -->
+    <path d="M 70 78 C 56 54 36 40 14 40 C 22 48 20 56 14 62 C 26 60 30 68 24 76 C 36 72 46 78 50 88 Z" fill="url(#chm-wing)" stroke="#1a0604" stroke-width="1"/>
+    <path d="M 98 78 C 112 54 132 40 154 40 C 146 48 148 56 154 62 C 142 60 138 68 144 76 C 132 72 122 78 118 88 Z" fill="url(#chm-wing)" stroke="#1a0604" stroke-width="1"/>
+    <!-- a lion's body and legs -->
+    <path d="M 40 112 C 36 92 50 80 80 80 C 110 80 126 92 122 112 C 120 124 106 130 80 130 C 54 130 42 124 40 112 Z" fill="url(#chm-lion)" stroke="#2a1404" stroke-width="1.3"/>
+    <g fill="url(#chm-lion)" stroke="#2a1404" stroke-width="1"><path d="M 50 120 L 44 148 L 58 148 L 62 122 Z"/><path d="M 108 120 L 114 148 L 100 148 L 98 122 Z"/></g>
+    <g stroke="#f0e8d0" stroke-width="1.4" stroke-linecap="round"><path d="M 44 148 l -3 4 M 49 148 l -1 4 M 54 148 l 1 4 M 114 148 l 3 4 M 109 148 l 1 4 M 104 148 l -1 4"/></g>
+    <!-- the tail: a serpent with its own head -->
+    <path d="M 122 106 C 140 104 148 92 144 80" fill="none" stroke="#3a5a1a" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="143" cy="77" rx="5" ry="3.4" fill="#4a7a22" stroke="#1a2a0a" stroke-width="0.8"/><circle cx="144" cy="76" r="0.9" fill="#ff2a2a"/>
+    <!-- the goat's head, rising from its back, curled horns -->
+    <path d="M 94 84 C 96 72 100 62 108 58" fill="none" stroke="url(#chm-goat)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 102 54 C 102 46 112 42 118 48 C 122 54 120 62 114 66 C 108 66 102 62 102 54 Z" fill="url(#chm-goat)" stroke="#3a3428" stroke-width="1"/>
+    <path d="M 106 48 C 98 40 100 30 108 30 C 114 32 112 40 106 40" fill="none" stroke="#5a4a30" stroke-width="2.6" stroke-linecap="round"/>
+    <ellipse cx="114" cy="54" rx="2" ry="1.2" fill="#ffd040"/><rect x="113.6" y="53.6" width="1.6" height="0.8" fill="#000"/>
+    <path d="M 116 64 l 1 6 l 2 -5" stroke="#d8d0c0" stroke-width="1" fill="none"/>
+    <!-- the dragon's head on a long neck, breathing fire -->
+    <path d="M 64 86 C 54 70 42 60 30 58" fill="none" stroke="url(#chm-dragon)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 34 56 C 28 48 16 48 10 54 L 2 58 L 12 62 C 18 66 30 64 34 56 Z" fill="url(#chm-dragon)" stroke="#2a0402" stroke-width="1"/>
+    <path d="M 26 50 l 4 -8 l 0 8 M 32 52 l 6 -6 l -2 8" fill="#d8d0b8" stroke="#3a2a1a" stroke-width="0.5"/>
+    <circle cx="22" cy="54" r="1.4" fill="#ffd040"/>
+    <path d="M 2 58 C -2 60 -4 62 0 66" fill="url(#chm-fire)"/>
+    <ellipse cx="2" cy="60" rx="10" ry="6" fill="url(#chm-fire)"/>
+    <!-- and the lion's head itself, roaring -->
+    <circle cx="74" cy="76" r="20" fill="url(#chm-mane)" stroke="#1a0a02" stroke-width="1"/>
+    <path d="M 62 72 C 62 62 86 62 86 72 C 86 82 80 90 74 90 C 68 90 62 82 62 72 Z" fill="url(#chm-lion)" stroke="#2a1404" stroke-width="1"/>
+    <path d="M 66 70 L 71 72 M 82 70 L 77 72" stroke="#1a0a02" stroke-width="1.4"/>
+    <circle cx="69" cy="73" r="1.4" fill="#ffd040"/><circle cx="79" cy="73" r="1.4" fill="#ffd040"/>
+    <path d="M 68 82 Q 74 90 80 82 Q 74 85 68 82 Z" fill="#5a0a0a"/>
+    <path d="M 69 82 l 1 3 l 1 -3 M 77 82 l 1 3 l 1 -3" fill="#f4ecd8"/>
+    </svg>
+  `,
+
+  'Pit Fiend': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pit Fiend">
+    <defs>
+    <radialGradient id="ptf-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#e84a2a"/><stop offset="0.55" stop-color="#9a1a0a"/><stop offset="1" stop-color="#2a0402"/></radialGradient>
+    <linearGradient id="ptf-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a0a06"/><stop offset="1" stop-color="#140202"/></linearGradient>
+    <linearGradient id="ptf-horn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2a2420"/><stop offset="1" stop-color="#c8b8a0"/></linearGradient>
+    <radialGradient id="ptf-heat" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="#ff5a1a" stop-opacity="0.45"/><stop offset="1" stop-color="#5a0a00" stop-opacity="0"/></radialGradient>
+    <filter id="ptf-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    <filter id="ptf-blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="ptf-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="84" rx="76" ry="72" fill="url(#ptf-heat)" filter="url(#ptf-blur)"/>
+    <ellipse cx="80" cy="153" rx="60" ry="5" fill="#000" opacity="0.6" filter="url(#ptf-soft)"/>
+    <!-- vast wings, folded high like a cloak -->
+    <path d="M 60 60 C 40 30 18 10 2 8 C 12 30 10 60 18 96 C 28 82 40 76 52 80 Z" fill="url(#ptf-wing)" stroke="#0a0000" stroke-width="1.1"/>
+    <path d="M 100 60 C 120 30 142 10 158 8 C 148 30 150 60 142 96 C 132 82 120 76 108 80 Z" fill="url(#ptf-wing)" stroke="#0a0000" stroke-width="1.1"/>
+    <g stroke="#2a0402" stroke-width="1" fill="none"><path d="M 58 62 L 6 14 M 56 70 L 12 54 M 54 78 L 18 94"/><path d="M 102 62 L 154 14 M 104 70 L 148 54 M 106 78 L 142 94"/></g>
+    <!-- legs -->
+    <path d="M 60 116 L 54 150 L 70 150 L 74 118 Z M 100 116 L 106 150 L 90 150 L 86 118 Z" fill="url(#ptf-skin)" stroke="#1a0202" stroke-width="1.1"/>
+    <!-- scaled, armored torso -->
+    <path d="M 46 70 C 40 92 46 110 58 120 L 102 120 C 114 110 120 92 114 70 C 104 60 56 60 46 70 Z" fill="url(#ptf-skin)" stroke="#1a0202" stroke-width="1.3"/>
+    <g stroke="#3a0602" stroke-width="1.2" fill="none" opacity="0.8"><path d="M 60 78 Q 80 86 100 78"/><path d="M 58 92 Q 80 100 102 92"/><path d="M 60 106 Q 80 114 100 106"/></g>
+    <!-- arms: a flanged mace in one fist -->
+    <path d="M 112 74 C 124 84 128 96 124 108" fill="none" stroke="#1a0202" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 112 74 C 124 84 128 96 124 108" fill="none" stroke="url(#ptf-skin)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 124 108 L 140 140" stroke="#2a2420" stroke-width="4"/>
+    <path d="M 136 132 l 12 6 l -4 8 l -12 -4 z" fill="#3a3430" stroke="#000" stroke-width="0.8"/>
+    <path d="M 48 74 C 36 84 30 98 30 110" fill="none" stroke="#1a0202" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 48 74 C 36 84 30 98 30 110" fill="none" stroke="url(#ptf-skin)" stroke-width="10" stroke-linecap="round"/>
+    <g stroke="#e8e0c8" stroke-width="1.6" stroke-linecap="round"><path d="M 30 110 l -5 6 M 30 110 l -1 8 M 30 110 l 4 7"/></g>
+    <!-- the head: a horned devil's face, fanged, eyes like coals -->
+    <path d="M 64 46 C 62 32 70 24 80 24 C 90 24 98 32 96 46 C 96 56 90 64 80 66 C 70 64 64 56 64 46 Z" fill="url(#ptf-skin)" stroke="#1a0202" stroke-width="1.2"/>
+    <path d="M 66 34 C 54 26 48 12 52 0 C 58 12 64 20 72 26 Z M 94 34 C 106 26 112 12 108 0 C 102 12 96 20 88 26 Z" fill="url(#ptf-horn)" stroke="#1a1410" stroke-width="0.8"/>
+    <path d="M 66 42 L 76 46 M 94 42 L 84 46" stroke="#1a0202" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="72" cy="48" rx="3" ry="2" fill="#ffd040" filter="url(#ptf-glow)"/><ellipse cx="88" cy="48" rx="3" ry="2" fill="#ffd040" filter="url(#ptf-glow)"/>
+    <ellipse cx="72" cy="48" rx="2" ry="1.3" fill="#fff8d0"/><ellipse cx="88" cy="48" rx="2" ry="1.3" fill="#fff8d0"/>
+    <path d="M 70 58 Q 80 66 90 58 Q 80 61 70 58 Z" fill="#1a0202"/>
+    <path d="M 72 58 l 1.4 6 l 1.4 -5 M 86 58 l -1.4 6 l -1.4 -5" fill="#f4ecd8"/>
+    <!-- smoke curling off it -->
+    <g fill="#3a2a28" opacity="0.4" filter="url(#ptf-soft)"><circle cx="56" cy="20" r="5"/><circle cx="104" cy="18" r="6"/></g>
+    </svg>
+  `,
+
+  'Balor': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Balor">
+    <defs>
+    <radialGradient id="blr-skin" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#5a1a0a"/><stop offset="0.6" stop-color="#2a0602"/><stop offset="1" stop-color="#0a0000"/></radialGradient>
+    <radialGradient id="blr-flame" cx="50%" cy="80%" r="70%"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.35" stop-color="#ffa02a"/><stop offset="0.75" stop-color="#e2380c"/><stop offset="1" stop-color="#7a0a00" stop-opacity="0"/></radialGradient>
+    <linearGradient id="blr-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0a06"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <filter id="blr-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="blr-blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <!-- a halo of fire all around it -->
+    <path d="M 20 150 C 4 110 10 60 30 30 C 30 50 40 56 44 40 C 48 20 64 8 80 2 C 96 8 112 20 116 40 C 120 56 130 50 130 30 C 150 60 156 110 140 150 Z" fill="url(#blr-flame)" filter="url(#blr-blur)" opacity="0.85"/>
+    <!-- huge black wings -->
+    <path d="M 62 62 C 40 36 18 26 0 28 C 8 40 6 52 0 60 C 14 58 16 68 8 78 C 22 74 28 82 22 94 C 36 86 46 88 52 96 Z" fill="url(#blr-wing)" stroke="#000" stroke-width="1"/>
+    <path d="M 98 62 C 120 36 142 26 160 28 C 152 40 154 52 160 60 C 146 58 144 68 152 78 C 138 74 132 82 138 94 C 124 86 114 88 108 96 Z" fill="url(#blr-wing)" stroke="#000" stroke-width="1"/>
+    <!-- legs wreathed in flame -->
+    <path d="M 60 116 L 52 152 L 70 152 L 74 118 Z M 100 116 L 108 152 L 90 152 L 86 118 Z" fill="url(#blr-skin)" stroke="#000" stroke-width="1.1"/>
+    <!-- massive torso -->
+    <path d="M 42 70 C 36 92 44 110 58 120 L 102 120 C 116 110 124 92 118 70 C 106 58 54 58 42 70 Z" fill="url(#blr-skin)" stroke="#000" stroke-width="1.3"/>
+    <g stroke="#ff6a1a" stroke-width="1" fill="none" opacity="0.6"><path d="M 60 80 l 6 8 l -4 8"/><path d="M 96 82 l -5 9 l 4 7"/><path d="M 78 100 l 4 10"/></g>
+    <!-- the whip of flame -->
+    <path d="M 46 74 C 34 82 28 94 26 104" fill="none" stroke="url(#blr-skin)" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 26 104 C 12 110 4 124 10 136 C 18 148 34 146 40 154" fill="none" stroke="#ff8a1a" stroke-width="3" filter="url(#blr-glow)"/>
+    <path d="M 26 104 C 12 110 4 124 10 136 C 18 148 34 146 40 154" fill="none" stroke="#fff0a0" stroke-width="1"/>
+    <!-- the sword of lightning -->
+    <path d="M 114 74 C 126 82 130 92 128 100" fill="none" stroke="url(#blr-skin)" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 128 100 L 146 18" stroke="#e8f4ff" stroke-width="4" filter="url(#blr-glow)"/>
+    <path d="M 132 76 l 8 -6 l -4 -2 l 10 -10 M 138 46 l 8 -4 l -4 -2 l 6 -8" stroke="#bfe0ff" stroke-width="1.2" fill="none" filter="url(#blr-glow)"/>
+    <path d="M 120 104 L 136 98" stroke="#3a3a3a" stroke-width="3"/>
+    <!-- the head: a horned skull-like face of shadow, eyes of fire -->
+    <path d="M 62 46 C 60 32 70 22 80 22 C 90 22 100 32 98 46 C 98 58 90 66 80 68 C 70 66 62 58 62 46 Z" fill="url(#blr-skin)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 64 32 C 50 26 42 12 44 0 C 52 12 60 20 70 24 Z M 96 32 C 110 26 118 12 116 0 C 108 12 100 20 90 24 Z" fill="#1a1410" stroke="#000" stroke-width="0.8"/>
+    <ellipse cx="71" cy="46" rx="4" ry="2.4" fill="#ffd040" filter="url(#blr-glow)"/><ellipse cx="89" cy="46" rx="4" ry="2.4" fill="#ffd040" filter="url(#blr-glow)"/>
+    <path d="M 70 58 Q 80 66 90 58 Q 80 62 70 58 Z" fill="#ff6a1a" filter="url(#blr-glow)"/>
+    <path d="M 72 58 l 1.4 5 l 1.4 -4 M 86 58 l -1.4 5 l -1.4 -4 M 78 60 l 1 3 l 1 -3" fill="#e8e0c8"/>
+    </svg>
+  `,
+
+  'Marilith': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Marilith">
+    <defs>
+    <radialGradient id="mrl-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#c88a6a"/><stop offset="0.6" stop-color="#8a4a3a"/><stop offset="1" stop-color="#3a1a14"/></radialGradient>
+    <linearGradient id="mrl-tail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1a3a2a"/><stop offset="0.5" stop-color="#3a7a5a"/><stop offset="1" stop-color="#1a3a2a"/></linearGradient>
+    <linearGradient id="mrl-blade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f4ff"/><stop offset="1" stop-color="#5a5e68"/></linearGradient>
+    <filter id="mrl-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="mrl-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="62" ry="5" fill="#000" opacity="0.6" filter="url(#mrl-soft)"/>
+    <!-- the great serpent's tail, coiled -->
+    <path d="M 70 96 C 54 112 46 132 62 146 C 82 160 120 156 136 140 C 148 126 140 110 124 112 C 110 114 112 132 100 136 C 88 140 80 128 88 112 Z" fill="url(#mrl-tail)" stroke="#0a1a12" stroke-width="1.3"/>
+    <g stroke="#0a1a12" stroke-width="0.8" fill="none" opacity="0.6"><path d="M 60 120 q 10 4 20 0"/><path d="M 70 140 q 16 4 32 0"/><path d="M 112 140 q 10 -2 18 -8"/></g>
+    <!-- six arms, six swords, fanned out -->
+    <g fill="none" stroke="url(#mrl-skin)" stroke-width="6" stroke-linecap="round">
+      <path d="M 66 64 C 52 54 40 44 30 30"/><path d="M 64 72 C 46 70 32 70 18 64"/><path d="M 66 82 C 50 88 36 96 24 106"/>
+      <path d="M 94 64 C 108 54 120 44 130 30"/><path d="M 96 72 C 114 70 128 70 142 64"/><path d="M 94 82 C 110 88 124 96 136 106"/>
+    </g>
+    <g stroke="url(#mrl-blade)" stroke-width="2.6" stroke-linecap="round">
+      <path d="M 30 30 L 14 4"/><path d="M 18 64 L -2 58"/><path d="M 24 106 L 6 124"/>
+      <path d="M 130 30 L 146 4"/><path d="M 142 64 L 162 58"/><path d="M 136 106 L 154 124"/>
+    </g>
+    <g stroke="#a87a2a" stroke-width="2.4"><path d="M 26 32 l 8 -4 M 18 60 l 2 8 M 22 102 l 6 6 M 134 32 l -8 -4 M 142 60 l -2 8 M 138 102 l -6 6"/></g>
+    <!-- a woman's torso, with bronze ornaments -->
+    <path d="M 66 58 C 62 74 64 88 70 98 L 90 98 C 96 88 98 74 94 58 C 88 54 72 54 66 58 Z" fill="url(#mrl-skin)" stroke="#2a1008" stroke-width="1.1"/>
+    <path d="M 66 64 Q 80 72 94 64 L 92 70 Q 80 78 68 70 Z" fill="#c8962a" stroke="#4a3006" stroke-width="0.7"/>
+    <!-- her face, cold and beautiful, with a serpent's eyes -->
+    <path d="M 70 36 C 68 24 74 18 80 18 C 86 18 92 24 90 36 C 90 46 86 52 80 52 C 74 52 70 46 70 36 Z" fill="url(#mrl-skin)" stroke="#2a1008" stroke-width="1"/>
+    <path d="M 68 30 C 66 14 94 14 92 30 C 96 40 98 54 94 62 C 92 50 90 40 88 32 C 84 28 76 28 72 32 C 70 40 68 50 66 62 C 62 54 64 40 68 30 Z" fill="#0a0a10"/>
+    <ellipse cx="76" cy="36" rx="2.4" ry="1.4" fill="#d8ff4a" filter="url(#mrl-glow)"/><ellipse cx="84" cy="36" rx="2.4" ry="1.4" fill="#d8ff4a" filter="url(#mrl-glow)"/>
+    <ellipse cx="76" cy="36" rx="0.5" ry="1.3" fill="#000"/><ellipse cx="84" cy="36" rx="0.5" ry="1.3" fill="#000"/>
+    <path d="M 77 45 Q 80 47 83 45" stroke="#5a1a1a" stroke-width="1.2" fill="none"/>
+    <path d="M 72 18 L 80 10 L 88 18" stroke="#c8962a" stroke-width="2" fill="none"/>
+    </svg>
+  `,
+
+  'Erinyes': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Erinyes">
+    <defs>
+    <linearGradient id="ery-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2a34"/><stop offset="1" stop-color="#050508"/></linearGradient>
+    <radialGradient id="ery-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#f0d8d0"/><stop offset="1" stop-color="#9a7a78"/></radialGradient>
+    <linearGradient id="ery-armor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a4a58"/><stop offset="1" stop-color="#0e0e14"/></linearGradient>
+    <radialGradient id="ery-flame" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#ff6a1a"/><stop offset="1" stop-color="#7a0a00" stop-opacity="0"/></radialGradient>
+    <filter id="ery-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <filter id="ery-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    </defs>
+    <ellipse cx="80" cy="153" rx="46" ry="5" fill="#000" opacity="0.6" filter="url(#ery-soft)"/>
+    <!-- great black-feathered wings, spread -->
+    <path d="M 66 62 C 48 40 26 24 4 20 C 10 30 6 38 2 44 C 14 44 16 52 8 60 C 22 58 24 68 16 78 C 30 74 36 82 32 92 C 46 84 54 88 58 96 Z" fill="url(#ery-wing)" stroke="#000" stroke-width="1"/>
+    <path d="M 94 62 C 112 40 134 24 156 20 C 150 30 154 38 158 44 C 146 44 144 52 152 60 C 138 58 136 68 144 78 C 130 74 124 82 128 92 C 114 84 106 88 102 96 Z" fill="url(#ery-wing)" stroke="#000" stroke-width="1"/>
+    <g stroke="#4a4a58" stroke-width="0.7" fill="none"><path d="M 60 66 L 10 30 M 58 74 L 12 58 M 56 84 L 22 82"/><path d="M 100 66 L 150 30 M 102 74 L 148 58 M 104 84 L 138 82"/></g>
+    <!-- black armor, a long skirt of mail -->
+    <path d="M 64 62 C 60 78 62 92 66 100 L 60 150 L 100 150 L 94 100 C 98 92 100 78 96 62 C 90 58 70 58 64 62 Z" fill="url(#ery-armor)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 66 100 L 94 100" stroke="#8a2a2a" stroke-width="2"/>
+    <!-- the burning longbow, drawn -->
+    <path d="M 122 40 C 136 60 136 92 122 112" stroke="#3a2a1a" stroke-width="3" fill="none"/>
+    <path d="M 122 40 L 104 76 L 122 112" stroke="#d8d0c0" stroke-width="0.6" fill="none"/>
+    <path d="M 104 76 L 140 76" stroke="#c8b898" stroke-width="1.4"/>
+    <circle cx="142" cy="76" r="6" fill="url(#ery-flame)" filter="url(#ery-glow)"/>
+    <path d="M 96 68 C 102 72 104 74 104 76" stroke="url(#ery-skin)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M 96 70 C 110 72 118 74 128 76" stroke="url(#ery-skin)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- the coiled rope of entanglement at her hip -->
+    <g fill="none" stroke="#c8a860" stroke-width="1.6"><circle cx="62" cy="96" r="6"/><circle cx="62" cy="96" r="3.6"/></g>
+    <path d="M 64 66 C 54 76 48 86 46 96" stroke="url(#ery-skin)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- her face: beautiful, pitiless, with eyes like embers -->
+    <path d="M 70 38 C 68 26 74 20 80 20 C 86 20 92 26 90 38 C 90 48 86 54 80 54 C 74 54 70 48 70 38 Z" fill="url(#ery-skin)" stroke="#3a2422" stroke-width="1"/>
+    <path d="M 68 32 C 64 16 96 16 92 32 C 98 44 100 58 96 68 C 94 54 92 44 90 36 C 86 30 74 30 70 36 C 68 44 66 54 64 68 C 60 58 62 44 68 32 Z" fill="#0a0a0e"/>
+    <ellipse cx="76" cy="38" rx="2.2" ry="1.3" fill="#ff5a1a" filter="url(#ery-glow)"/><ellipse cx="84" cy="38" rx="2.2" ry="1.3" fill="#ff5a1a" filter="url(#ery-glow)"/>
+    <ellipse cx="76" cy="38" rx="1.3" ry="0.8" fill="#ffd0a0"/><ellipse cx="84" cy="38" rx="1.3" ry="0.8" fill="#ffd0a0"/>
+    <path d="M 77 47 L 83 47" stroke="#5a1a1a" stroke-width="1.2"/>
+    </svg>
+  `,
+
   'Manticore': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Manticore">
     <defs>
@@ -4762,6 +5601,29 @@ const MONSTER_SPRITE_SCALE = {
   'Unicorn': 1.3,
   'Frost Giant': 1.5,
   'Gold Dragon': 1.4,
+  'Giant Spider': 1.15,
+  'Stirge Swarm': 1.2,
+  'Rust Monster': 1.1,
+  'Bugbear': 1.15,
+  'Troll': 1.35,
+  'Minotaur': 1.35,
+  'Werewolf': 1.25,
+  'Gargoyle': 1.25,
+  'Harpy': 1.2,
+  'Hydra': 1.45,
+  'Medusa': 1.25,
+  'Doppelganger': 1.15,
+  'Purple Worm': 1.45,
+  'Iron Golem': 1.4,
+  'Behir': 1.4,
+  'Rakshasa': 1.2,
+  'Death Tyrant': 1.35,
+  'Demilich': 1.1,
+  'Chimera': 1.35,
+  'Pit Fiend': 1.45,
+  'Balor': 1.5,
+  'Marilith': 1.4,
+  'Erinyes': 1.3,
 };
 
 function getMonsterSprite(type) {
