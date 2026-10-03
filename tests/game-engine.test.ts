@@ -2123,7 +2123,10 @@ describe('GameEngine — anaphylaxis', () => {
     e.char.statusEffects = [{ type: 'anaphylaxis', value: e.char.playTime + 240, turns: 9999 }];
     e.pace.graceMoves = 1000;
     const lvl = e.getLevel(e.char.dungeonLevel);
-    const dir = (['N', 'E', 'S', 'W'] as const).find(d => canMove(lvl.grid, e.char.x, e.char.y, d))!;
+    const off = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] } as const;
+    const dir = (['N', 'E', 'S', 'W'] as const).find(d =>
+      canMove(lvl.grid, e.char.x, e.char.y, d) && !lvl.contents.has(`${e.char.x + off[d][0]},${e.char.y + off[d][1]}`))!;
+    e.rng.float = () => 0.99;   // no stray presence or encounter
     const state = e.tryMove(dir, '');
     expect(state.messages.join(' ')).toContain('throat is swelling shut');
     expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'anaphylaxis')).toBe(true);
@@ -2253,5 +2256,59 @@ describe('GameEngine — testing aid: Asmodeus on the level 7 map', () => {
     const full = engine.toggleMapView();
     expect(full.messages.join('\n')).toContain('A');
     expect(full.messages.some((l: string) => l.includes('A Asmodeus'))).toBe(true);
+  });
+});
+
+describe('GameEngine — the great bestiary', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+  function fight(type: Parameters<typeof createMonster>[0], level: number) {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.level = 90; e.char.hp = e.char.maxHp = 1_000_000; e.char.strength = 40; e.char.intelligence = 30;
+    e.phase = 'combat';
+    e.combat = { monster: createMonster(type, level, 'm'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    return { engine, e };
+  }
+
+  it('a Troll gets back up once, unless burned', () => {
+    const { engine, e } = fight('Troll', 30);
+    e.combat.monster.hp = 1;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 10 && !e.combat?.monster.reborn; i++) state = engine.combatAction('a');
+    expect(state.messages.join(' ')).toContain('gets back up');
+  });
+
+  it('spells slide off a Rakshasa', () => {
+    const { engine, e } = fight('Rakshasa', 50);
+    const hp = e.combat.monster.hp;
+    const state = engine.spellAction('a');
+    expect(state.messages.join(' ')).toContain('slides off like rain');
+    expect(e.combat.monster.hp).toBeGreaterThanOrEqual(hp);
+  });
+
+  it('a Balor explodes when it dies', () => {
+    const { engine, e } = fight('Balor', 60);
+    e.combat.monster.hp = 1;
+    let state = engine.combatAction('a');
+    for (let i = 0; i < 20 && state.phase === 'combat'; i++) state = engine.combatAction('a');
+    expect(state.messages.join(' ')).toContain('EXPLODES');
+  });
+
+  it('a Bugbear sometimes springs an ambush', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.hp = e.char.maxHp = 1_000_000;
+    let ambushed = false;
+    for (let i = 0; i < 40 && !ambushed; i++) {
+      e.phase = 'playing'; e.combat = null;
+      const state = e.beginCombat(createMonster('Bugbear', 10, 'b' + i));
+      ambushed = state.messages.join(' ').includes('springs out of the shadows');
+    }
+    expect(ambushed).toBe(true);
   });
 });

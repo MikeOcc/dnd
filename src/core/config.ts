@@ -327,7 +327,7 @@ export const MONSTER_SCALING = {
   // the dragons, the Sanguinid (75 on level 6, 85 on 7), the Phoenix and the Frost Giant can
   // climb as high as their own maxLevel on dungeon levels 6 and 7, rolled
   // like any other level.
-  EXTENDED_CAP_TYPES: ['Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon', 'Sanguinid', 'Phoenix', 'Frost Giant'] as string[],
+  EXTENDED_CAP_TYPES: ['Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon', 'Sanguinid', 'Phoenix', 'Frost Giant', 'Pit Fiend', 'Balor', 'Marilith'] as string[],
   EXTENDED_CAP_MIN_DEPTH: 6,
   // ...optionally a lower ceiling than maxLevel on a given depth.
   EXTENDED_CAP_BY_DEPTH: {

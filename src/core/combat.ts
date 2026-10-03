@@ -1,6 +1,7 @@
 import { RNG } from './random.js';
 import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement } from './types.js';
+import { BESTIARY, type Script, type Kit } from './bestiary.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
@@ -49,11 +50,13 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const warrior = char.charClass === 'warrior';
 
+  // A Pit Fiend's dread spoils your aim.
+  const dread = monster.type === 'Pit Fiend' ? 4 : 0;
   const hitRoll = rng.die(20) + char.level
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
     + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
     + (warrior ? WARRIOR.HIT_BONUS : 0)
-    - (opts.hitPenalty ?? 0);
+    - (opts.hitPenalty ?? 0) - dread;
   // A monster above the character's level defends only as well as one of
   // their own level, so no foe is out of reach of a blade.
   const defLevel = Math.min(monster.level, char.level);
@@ -64,15 +67,30 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
     messages.push(`You swing at the ${monster.type} but miss!${label}`);
     return 0;
   }
+  if (monster.type === 'Marilith' && rng.float() < 0.3) {
+    messages.push(`The Marilith catches your blow on two crossed blades and turns it aside!${label}`);
+    return 0;
+  }
   const strDiv = warrior ? WARRIOR.STR_DAMAGE_DIVISOR : COMBAT.DAMAGE_STR_DIVISOR;
   const baseDamage = (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT) + Math.floor(eff.strength / strDiv);
   const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
   const cry = (char.battleCryRounds ?? 0) > 0 ? WARRIOR.BATTLE_CRY_MULT : 1;
-  // The Orc King's black plate turns aside part of every blow.
-  const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR : 1;
-  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
+  // The Orc King's black plate turns aside part of every blow; stone and
+  // unholy flesh shrug off half of it; rust on your blade costs you too.
+  const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
+    : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Demilich') ? 0.5 : 1;
+  const rust = char.statusEffects.find(e => e.type === 'corroded');
+  const rustMult = rust ? 1 - rust.value / 100 : 1;
+  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * rustMult * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
   monster.hp -= damage;
-  messages.push(`You strike the ${monster.type} for ${damage} damage.${label}${plate < 1 ? ' His plate turns part of it aside.' : ''}`);
+  const aside = plate >= 1 ? '' : monster.type === 'Orc King' ? ' His plate turns part of it aside.' : ' Your weapon barely bites.';
+  messages.push(`You strike the ${monster.type} for ${damage} damage.${label}${aside}`);
+  // Striking a Balor means reaching into its flames.
+  if (monster.type === 'Balor' && char.hp > 1) {
+    const burn = Math.min(char.hp - 1, Math.max(1, Math.round(monster.level * 0.6)));
+    char.hp -= burn;
+    messages.push(`  The Balor's flames lick up your arm! (${burn} damage)`);
+  }
   return damage;
 }
 
@@ -198,6 +216,10 @@ export function playerFireball(char: Character, monster: Monster, rng: RNG): Com
     monster.burnedTurns = WENDIGO.BURN_STOPS_REGEN_TURNS;
     messages.push('The Wendigo shrieks as the flames catch. Its wounds stop knitting.');
   }
+  if ((monster.type === 'Troll' || monster.type === 'Hydra') && monster.hp > 0) {
+    monster.burnedTurns = 2;
+    messages.push(monster.type === 'Troll' ? 'The Troll screams as its flesh blackens. It will not heal that.' : 'The flames sear the Hydra\'s necks.');
+  }
 
   const monsterDied = monster.hp <= 0;
   if (monsterDied) messages.push(`The ${monster.type} is incinerated!`);
@@ -241,6 +263,10 @@ export function playerAcid(char: Character, monster: Monster, rng: RNG): CombatR
 
   monster.hp -= damage;
   messages.push(`The ${monster.type} takes ${damage} acid damage.`);
+  if (monster.type === 'Troll' && monster.hp > 0) {
+    monster.burnedTurns = 2;
+    messages.push('The acid eats into the Troll. It will not heal that.');
+  }
 
   const monsterDied = monster.hp <= 0;
   if (monsterDied) messages.push(`The ${monster.type} dissolves!`);
@@ -288,6 +314,10 @@ export function playerLightning(char: Character, monster: Monster, rng: RNG): Co
 
   monster.hp -= damage;
   messages.push(`The ${monster.type} takes ${damage} lightning damage.`);
+  if (monster.type === 'Iron Golem' && monster.hp > 0) {
+    monster.stunnedTurns = Math.max(monster.stunnedTurns ?? 0, 1);
+    messages.push('Lightning arcs through the iron. The Golem shudders and slows!');
+  }
 
   const monsterDied = monster.hp <= 0;
   if (monsterDied) messages.push(`The ${monster.type} is charred by the bolt!`);
@@ -1222,6 +1252,79 @@ function goldDragonAction(char: Character, monster: Monster, rng: RNG, messages:
   }
 }
 
+// ─── The great bestiary ──────────────────────────────────────────────────────
+
+/** Plays one turn from a monster's move table (bestiary.ts). */
+function runBestiaryTurn(
+  script: Script, char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
+  out: { acted?: boolean; ability?: string },
+): MonsterActionResult {
+  const hpBefore = char.hp;
+  let healed = 0;
+  const hit = (mult: number) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked, undefined) * mult));
+  const kit: Kit = {
+    char, monster, rng,
+    say: (...lines) => { messages.push(...lines); },
+    hit,
+    strike: (mult, text) => {
+      const dmg = hit(mult);
+      char.hp = Math.max(0, char.hp - dmg);
+      messages.push(text(dmg));
+      return dmg;
+    },
+    strikes: (n, mult, text) => {
+      let total = 0;
+      for (let i = 0; i < n && char.hp > 0; i++) {
+        const dmg = hit(mult);
+        char.hp = Math.max(0, char.hp - dmg);
+        total += dmg;
+        messages.push(text(dmg, i));
+      }
+      return total;
+    },
+    hold: (rounds, why) => holdCharacter(char, rounds, why),
+    status: effect => addStatusEffect(char, effect),
+    heal: amount => {
+      const h = Math.max(0, Math.min(monster.maxHp - monster.hp, amount));
+      monster.hp += h;
+      healed += h;
+      return h;
+    },
+    save: (dc, stats) => {
+      const eff = getEffectiveStats(char);
+      const bonus = stats.reduce((a, st) => a + Math.floor(((eff[st] as number) - 10) / 2), 0);
+      const d = rng.die(20);
+      return { ok: d + bonus >= dc, text: `d20 ${d} ${bonus >= 0 ? '+' : '-'} ${Math.abs(bonus)} = ${d + bonus}, needed ${dc}` };
+    },
+    kill: (cause, ...lines) => { char.hp = 0; out.ability = cause; messages.push(...lines); },
+    mirror: mult => {
+      const eff = getEffectiveStats(char);
+      const strDiv = char.charClass === 'warrior' ? WARRIOR.STR_DAMAGE_DIVISOR : COMBAT.DAMAGE_STR_DIVISOR;
+      const base = char.level * COMBAT.DAMAGE_LEVEL_WEIGHT + Math.floor(eff.strength / strDiv);
+      const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
+      return Math.round(base * rand * mult);
+    },
+    alive: () => char.hp > 0,
+    held: () => (char.heldRounds ?? 0) > 0,
+  };
+
+  const ended = script.before?.(kit) ?? false;
+  if (!ended && char.hp > 0 && monster.hp > 0) {
+    const options = script.moves.filter(m => !m.when || m.when(kit));
+    const pool = options.length ? options : script.moves;
+    const total = pool.reduce((a, m) => a + m.weight, 0);
+    let roll = rng.float() * total;
+    const move = pool.find(m => (roll -= m.weight) < 0) ?? pool[pool.length - 1];
+    out.ability = move.id;
+    move.run(kit);
+  }
+  const dealt = Math.max(0, hpBefore - char.hp);
+  return {
+    messages, monsterDamage: dealt, playerDied: char.hp <= 0, monsterDied: monster.hp <= 0,
+    monsterHealed: healed || undefined,
+  };
+}
+
 // ─── Scare ───────────────────────────────────────────────────────────────────
 
 /** Things with no mind to frighten. */
@@ -1309,6 +1412,11 @@ export function playerBanish(char: Character, monster: Monster, rng: RNG): Comba
 // ─── Run ─────────────────────────────────────────────────────────────────────
 
 export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  if (monster.type === 'Erinyes') {
+    const messages = ['You turn to run, but the Fury is above you, ahead of you, everywhere. There is no outrunning her.'];
+    const res = monsterAction(char, monster, rng, messages);
+    return { ...res, playerDamage: 0, monsterDied: false, runFailed: true };
+  }
   const eff = getEffectiveStats(char);
   const levelDiff = char.level - monster.level;
   const mummified = char.statusEffects.some(e => e.type === 'mummified');
@@ -1349,7 +1457,11 @@ export function abilityElement(ability: string | undefined): FxElement {
   if (ability === 'telekinetic-ray') return 'physical';
   if (ability === 'eye-of-gruumsh') return 'fire';
   if (ability === 'curse-of-gruumsh') return 'drain';
-  if (ability === 'ruby-ray' || ability === 'phoenix-flare') return 'fire';
+  if (ability === 'ruby-ray' || ability === 'phoenix-flare' || ability === 'hellfire' || ability === 'chimera-heads' || ability === 'mirror-spell') return 'fire';
+  if (ability === 'balor-sword') return 'lightning';
+  if (ability === 'poison-gas' || ability === 'spider-bite' || ability === 'tail-stinger' || ability === 'fiend-bite') return 'poison';
+  if (ability === 'stirge-drain' || ability === 'life-leech' || ability === 'soul-howl' || ability === 'demilich-curse' || ability === 'rakshasa-curse') return 'drain';
+  if (ability === 'harpy-song' || ability === 'rakshasa-illusion' || ability === 'tyrant-rays' || ability === 'stone-gaze') return 'arcane';
   if (ability === 'chill-touch' || ability === 'banshee-wail') return 'drain';
   if (ability === 'radiant-horn') return 'holy';
   if (ability === 'winters-grasp' || ability === 'shard-storm') return 'cold';
@@ -1435,6 +1547,9 @@ export function killedBy(monster: Monster, ability: string | undefined): string 
     case 'crushed':          return `Crushed to death in the coils of ${who}.`;
     case 'gilded':           return `Turned to solid gold by ${who}.`;
     case 'asphyxiated':      return `Choked to death on the gold-dust breath of ${who}.`;
+    case 'stone-gaze':       return `Turned to stone by the gaze of ${who}.`;
+    case 'soul-trapped':     return `Soul trapped forever in a gem by ${who}.`;
+    case 'tyrant-death-ray': return `Slain by the death ray of ${who}.`;
     case 'petrify-ray':      return `Turned to stone by ${who}.`;
     case 'death-ray':        return `Slain by the death ray of ${who}.`;
     case 'disintegrate-ray': return `Disintegrated by ${who}.`;
@@ -1519,6 +1634,8 @@ function monsterActionInner(
   if (monster.type === 'Unicorn') return unicornAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Frost Giant') return frostGiantAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Gold Dragon') return goldDragonAction(char, monster, rng, messages, naked, out);
+  const script = BESTIARY[monster.type];
+  if (script) return runBestiaryTurn(script, char, monster, rng, messages, naked, out);
 
   // Choose ability to use
   const abilities = monster.definition.specialAbilities;
@@ -2042,7 +2159,8 @@ const HELD_TEXT: Record<HeldCondition, string> = {
   dazed:      'You are still dazed and cannot act!',
   paralyzed:  'You are paralyzed and cannot move!',
   asleep:     'You are fast asleep!',
-  charmed:    'You gaze adoringly at the Beholder and do nothing.',
+  charmed:    'You stand entranced, gazing adoringly at your foe, and do nothing.',
+  webbed:     'You strain against what binds you, but cannot break free!',
   engulfed:   'You struggle inside the quivering jelly but cannot break free!',
   constricted: 'You strain against the coils, but they only tighten!',
   choked:     'You claw at the smoky coil around your throat, but cannot break its grip!',
@@ -2055,7 +2173,7 @@ const HELD_TEXT: Record<HeldCondition, string> = {
  * monster acts. */
 export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   // Coils can be fought: Strength gives a chance to wriggle free at once.
-  if (char.heldBy === 'constricted' || char.heldBy === 'choked') {
+  if (char.heldBy === 'constricted' || char.heldBy === 'choked' || char.heldBy === 'webbed') {
     const chance = Math.min(TITANOBOA.BREAK_FREE_MAX, getEffectiveStats(char).strength * TITANOBOA.BREAK_FREE_PER_STRENGTH);
     if (rng.float() < chance) {
       char.heldRounds = 0;

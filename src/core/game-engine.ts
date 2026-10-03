@@ -862,6 +862,14 @@ export class GameEngine {
 
     incrementPace(this.pace);
     this.lightAround();
+    // Lycanthropy: now and then the beast takes over for a while.
+    if (this.char.statusEffects.some(e => e.type === 'lycanthropy') && this.rng.float() < 1 / 70) {
+      addStatusEffect(this.char, { type: 'intelligence-reduced', value: 5, turns: 25 });
+      const heal = Math.min(this.char.maxHp - this.char.hp, Math.round(this.char.maxHp * 0.1));
+      this.char.hp += heal;
+      this.messages = [...this.messages, 'Your bones crack and fur ripples over your skin. The beast takes over!',
+        `You lope through the dark on all fours, snarling. (-5 Intelligence for a while${heal > 0 ? `, +${heal} HP` : ''})`];
+    }
     const shock = this.char.statusEffects.find(e => e.type === 'anaphylaxis');
     if (shock && this.char.playTime - this.shockWarnedAt >= 30) {
       this.shockWarnedAt = this.char.playTime;
@@ -1372,6 +1380,10 @@ export class GameEngine {
       line.replace('{LVL}', String(monster.level))
     );
     this.messages = intro;
+    // A Bugbear may have been waiting in ambush.
+    if (monster.type === 'Bugbear' && this.rng.float() < 0.4) {
+      return this.lairFirstStrike(['The Bugbear springs out of the shadows before you can react!', '']);
+    }
     return this.getState();
   }
 
@@ -1408,6 +1420,7 @@ export class GameEngine {
     const type = types[key];
     if (type && this.isHeld()) return this.combatHeld();
     if ((type === 'opal' || type === 'sapphire') && this.targetInvisible()) return this.strikeAtNothing();
+    if ((type === 'opal' || type === 'sapphire') && this.combat.monster.type === 'Rakshasa') return this.spellWashesOff();
     if (!type) {
       this.phase = 'combat';
       this.messages = ['You reconsider.'];
@@ -1556,6 +1569,7 @@ export class GameEngine {
     }
     if (this.isHeld()) return this.combatHeld();
     if (spell !== 'heal' && this.targetInvisible()) return this.strikeAtNothing();
+    if (spell !== 'heal' && isMagic(spell) && this.combat.monster.type === 'Rakshasa') return this.spellWashesOff();
     if (isMagic(spell)) {
       const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
       if (negated) return this.processCombatResult(negated);
@@ -1639,6 +1653,13 @@ export class GameEngine {
     const monster = this.combat!.monster;
     const res = monsterFirstStrike(this.char!, monster, this.rng,
       [`You strike at empty air. The ${monster.type} is invisible, and cannot be attacked!`, '']);
+    return this.processCombatResult(res);
+  }
+
+  /** A Rakshasa: magic slides off it like rain, and it gets its turn. */
+  private spellWashesOff(): GameState {
+    const res = monsterFirstStrike(this.char!, this.combat!.monster, this.rng,
+      ['Your magic washes over the Rakshasa and slides off like rain. It laughs.', '(Spells cannot touch a Rakshasa. Fight it hand to hand.)', '']);
     return this.processCombatResult(res);
   }
 
@@ -1937,8 +1958,20 @@ export class GameEngine {
       return this.getState();
     }
 
-    // A Phoenix rises once from its ashes.
+    // A monster can die on its own turn (a Hydra losing its last head).
     const m = this.combat.monster;
+    if (m.hp <= 0) result.monsterDied = true;
+
+    // A Troll gets back up once, unless fire or acid has burned it.
+    if (result.monsterDied && m.type === 'Troll' && !m.reborn && !((m.burnedTurns ?? 0) > 0)) {
+      m.reborn = true;
+      m.hp = Math.round(m.maxHp * 0.3);
+      this.messages.push('', 'The Troll crashes to the floor... and its wounds knit, and it gets back up!',
+        '(Fire or acid would have kept it down.)');
+      return this.getState();
+    }
+
+    // A Phoenix rises once from its ashes.
     if (result.monsterDied && m.type === 'Phoenix' && !m.reborn) {
       m.reborn = true;
       m.hp = Math.round(m.maxHp * PHOENIX.REBIRTH_HP);
@@ -1993,6 +2026,18 @@ export class GameEngine {
 
     // Clear naked status
     this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'naked');
+
+    // A Balor's death throes: it explodes in flame. Dexterity halves the blast.
+    if (monster.type === 'Balor') {
+      const full = Math.round(this.char.maxHp * 0.35);
+      const dodged = this.rng.float() < Math.min(0.6, getEffectiveStats(this.char).dexterity * 0.02);
+      const blast = dodged ? Math.round(full / 2) : full;
+      this.char.hp = Math.max(0, this.char.hp - blast);
+      this.fx.player = 'fire';
+      this.messages.push('', 'The Balor\'s body splits with light. It EXPLODES in a ball of demonic fire!',
+        dodged ? `You throw yourself flat and take only part of the blast. (${blast} damage)` : `The blast engulfs you! (${blast} damage)`);
+      if (this.char.hp <= 0) return this.handleDeath('Caught in the death throes of a Balor.');
+    }
 
     // Slaying a unicorn is a terrible thing.
     if (monster.type === 'Unicorn') {

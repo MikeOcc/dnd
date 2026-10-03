@@ -226,6 +226,7 @@ const BOOK_EFFECTS: BookEffect[] = ['attribute', 'healing', 'invulnerability', '
 const NEGATIVE_STATUS_TYPES: StatusEffect['type'][] = [
   'poison', 'bleeding', 'naked', 'mummified', 'paralyzed', 'feared',
   'intelligence-reduced', 'dexterity-reduced', 'strength-reduced', 'flesh-rot',
+  'corroded', 'fiend-venom', 'lycanthropy',
 ];
 const cleansable = (e: StatusEffect) => NEGATIVE_STATUS_TYPES.includes(e.type) && e.doom === undefined;
 
@@ -337,14 +338,20 @@ export interface AltarResult {
 const ALTAR_WARD_ROUNDS = 2;
 
 export function resolveAltar(char: Character, rng: RNG): AltarResult {
-  // Holy fire burns out a ghoul's rot, if it hasn't gone too far, before anything else.
+  // Holy fire burns out a ghoul's rot (if it hasn't gone too far) and a
+  // werewolf's curse, before anything else.
+  const lead: string[] = [];
   const rot = char.statusEffects.find(e => e.type === 'flesh-rot');
   if (rot && rot.doom === undefined) {
     char.statusEffects = char.statusEffects.filter(e => e !== rot);
-    const rest = resolveAltarBlessing(char, rng);
-    return { ...rest, messages: [`White fire races over your ${rot.part ?? 'wound'}, and the rot burns away to clean, pink flesh.`, '', ...rest.messages] };
+    lead.push(`White fire races over your ${rot.part ?? 'wound'}, and the rot burns away to clean, pink flesh.`);
   }
-  return resolveAltarBlessing(char, rng);
+  if (char.statusEffects.some(e => e.type === 'lycanthropy')) {
+    char.statusEffects = char.statusEffects.filter(e => e.type !== 'lycanthropy');
+    lead.push('The beast in your blood howls once, and is gone. The curse of the wolf is lifted.');
+  }
+  const rest = resolveAltarBlessing(char, rng);
+  return lead.length ? { ...rest, messages: [...lead, '', ...rest.messages] } : rest;
 }
 
 function resolveAltarBlessing(char: Character, rng: RNG): AltarResult {

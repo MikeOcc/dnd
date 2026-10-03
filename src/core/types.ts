@@ -76,7 +76,10 @@ export type StatusEffectType =
   | 'resistance-improved'
   | 'warded'    // emerald ward: value = fights left (doesn't tick with steps)
   | 'anaphylaxis'  // a Manticore's sting: value = the play-time second the character dies (doesn't tick with steps)
-  | 'flesh-rot';   // a ghoul's disease: value = damage per step; healing works at half strength while it lasts
+  | 'flesh-rot'    // a ghoul's disease: value = damage per step; healing works at half strength while it lasts
+  | 'corroded'     // a Rust Monster's touch: value = % less weapon damage, until it wears off
+  | 'lycanthropy'  // a Werewolf's bite: now and then the beast takes over (doesn't tick with steps)
+  | 'fiend-venom'; // a Pit Fiend's bite: healing works at half strength while it lasts
 
 export interface StatusEffect {
   type: StatusEffectType;
@@ -143,6 +146,29 @@ export type MonsterType =
   | 'Giant'
   | 'Owlbear'
   | 'Manticore'
+  | 'Giant Spider'
+  | 'Stirge Swarm'
+  | 'Rust Monster'
+  | 'Bugbear'
+  | 'Troll'
+  | 'Minotaur'
+  | 'Werewolf'
+  | 'Gargoyle'
+  | 'Harpy'
+  | 'Hydra'
+  | 'Medusa'
+  | 'Doppelganger'
+  | 'Purple Worm'
+  | 'Iron Golem'
+  | 'Behir'
+  | 'Rakshasa'
+  | 'Death Tyrant'
+  | 'Demilich'
+  | 'Chimera'
+  | 'Pit Fiend'
+  | 'Balor'
+  | 'Marilith'
+  | 'Erinyes'
   | 'Djinn'
   | 'Phoenix'
   | 'Banshee'
@@ -218,7 +244,10 @@ export interface Monster {
   burnedTurns?: number;
   invisibleTurns?: number;  // Banshee: turns it stays invisible (can't be attacked)
   invisCooldown?: number;   // Banshee: turns until it can vanish again
-  reborn?: boolean;         // Phoenix: has risen from its ashes this fight     // Wendigo: turns its regeneration stays stopped after fire
+  reborn?: boolean;         // Phoenix, Troll: has risen again this fight
+  heads?: number;           // Hydra: heads left (or grown)
+  lastHp?: number;          // Hydra: HP at its last turn, to spot a severed head
+  swallowHp?: number;       // Purple Worm: HP when it swallowed the character (cut out by wounding it from inside)     // Wendigo: turns its regeneration stays stopped after fire
   scareAttempts?: number;   // failed attempts to scare it off this fight: each makes the next harder
   regenerated?: boolean;     // Asmodeus has used his Infernal Regeneration this fight
   caughtOffGuard?: boolean;  // a successful charge into its lair: it can't answer the first blow
@@ -240,7 +269,7 @@ export interface Fx {
   cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
 }
 
-export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded';
+export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded' | 'webbed';
 
 /** The Beholder's eye rays, one per eyestalk. */
 export type BeholderRay =

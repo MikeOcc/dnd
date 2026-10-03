@@ -126,7 +126,7 @@ export function potionHealAmount(char: Character, rng: RNG): number {
 
 /** How well healing takes: halved while a ghoul's flesh rot lasts. */
 export function healingFactor(char: Character): number {
-  return char.statusEffects.some(e => e.type === 'flesh-rot') ? GHOUL.ROT_HEAL_FACTOR : 1;
+  return char.statusEffects.some(e => e.type === 'flesh-rot' || e.type === 'fiend-venom') ? GHOUL.ROT_HEAL_FACTOR : 1;
 }
 
 /** Drains one character level (minimum level 1). Returns the HP lost, or 0 if already at level 1. */
@@ -175,7 +175,7 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
   const remaining: StatusEffect[] = [];
   for (const eff of char.statusEffects) {
     // An emerald ward counts down by fights, not steps.
-    if (eff.type === 'warded' || eff.type === 'anaphylaxis') { remaining.push(eff); continue; }
+    if (eff.type === 'warded' || eff.type === 'anaphylaxis' || eff.type === 'lycanthropy') { remaining.push(eff); continue; }
     if (eff.type === 'poison') {
       char.hp = Math.max(1, char.hp - eff.value);
       damageTaken += eff.value;
@@ -208,6 +208,8 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       if (eff.type === 'mummified') messages.push('The mummification crumbles away.');
       if (eff.type === 'bleeding')  messages.push('The bleeding finally stops.');
       if (eff.type === 'flesh-rot') messages.push('The rot burns itself out at last. Your flesh begins to heal.');
+      if (eff.type === 'corroded')  messages.push('You have finally scoured the rust from your weapon.');
+      if (eff.type === 'fiend-venom') messages.push('The infernal venom has worked its way out of you.');
       if (eff.type === 'intelligence-reduced') messages.push('Your mind clears.');
       if (eff.type === 'dexterity-reduced')    messages.push('Your coordination returns.');
       if (eff.type === 'strength-reduced')     messages.push('Your strength returns.');
