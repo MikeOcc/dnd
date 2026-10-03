@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateLevel, deserializeLevel, floodFill } from '../src/core/dungeon.js';
-import { buildOrcKingLair, ORC_KING_LAIR } from '../src/core/lairs.js';
+import { buildOrcKingLair, ORC_KING_LAIR, centerAsmodeusLair } from '../src/core/lairs.js';
 import { mapAreas, areaAtCell } from '../src/core/regions.js';
 import { ceilingHeight } from '../src/content/area-text.js';
 import { getDefinition, pickRandomMonsterType, createMonster, randomMonsterLevel } from '../src/core/monsters.js';
@@ -66,5 +66,20 @@ describe('Sanguinid levels', () => {
     const deep = many(7);
     expect(Math.max(...deep)).toBe(85);
     expect(new Set(deep).size).toBeGreaterThan(10);
+  });
+});
+
+describe("Asmodeus's place in his chamber", () => {
+  it('sits at the centre of the room his lair is in', () => {
+    for (const seed of [5, 77, 909]) {
+      const { grid, contents } = deserializeLevel(generateLevel(7, seed));
+      centerAsmodeusLair(grid, contents);
+      const [k] = [...contents.entries()].find(([, c]) => c.monsterId === 'Asmodeus')!;
+      const [x, y] = k.split(',').map(Number);
+      const room = areaAtCell(mapAreas(grid), x, y)!;
+      expect(room.kind).toBe('room');
+      expect(Math.abs(x - (room.minX + room.maxX) / 2)).toBeLessThanOrEqual(1.5);
+      expect(Math.abs(y - (room.minY + room.maxY) / 2)).toBeLessThanOrEqual(1.5);
+    }
   });
 });

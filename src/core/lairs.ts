@@ -135,3 +135,36 @@ export function buildOrcKingLair(grid: DungeonCell[][], entrance: Pt, exit: Pt |
     contents.set(k, { type: 'trap', id: ORC_KING_LAIR.TRAP_IDS[i], trapVariant: variant });
   });
 }
+
+/** Asmodeus holds court from the very middle of his chamber: on level 7, his
+ * lair moves to the free square nearest the centre of the room it's in (or,
+ * if it lies in a passage, of the nearest room by walking distance). */
+export function centerAsmodeusLair(grid: DungeonCell[][], contents: Map<string, CellContent>): void {
+  const entry = [...contents.entries()].find(([, c]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus');
+  if (!entry) return;
+  const [key0, lair] = entry;
+  const [lx, ly] = key0.split(',').map(Number);
+  const map = mapAreas(grid);
+  let room = areaAtCell(map, lx, ly);
+  if (room && room.kind !== 'room') {
+    room = undefined;
+    for (const k of distances(grid, { x: lx, y: ly }).keys()) {   // nearest first: the walk is breadth-first
+      const [x, y] = k.split(',').map(Number);
+      const a = areaAtCell(map, x, y);
+      if (a?.kind === 'room') { room = a; break; }
+    }
+  }
+  if (!room) return;
+  const cx = (room.minX + room.maxX) / 2, cy = (room.minY + room.maxY) / 2;
+  let best = key0;
+  let bestD = Math.hypot(lx - cx, ly - cy);
+  for (let y = room.minY; y <= room.maxY; y++) for (let x = room.minX; x <= room.maxX; x++) {
+    const k = `${x},${y}`;
+    if (areaAtCell(map, x, y) !== room || (contents.has(k) && k !== key0)) continue;
+    const d = Math.hypot(x - cx, y - cy);
+    if (d < bestD - 1e-9) { bestD = d; best = k; }
+  }
+  if (best === key0) return;
+  contents.delete(key0);
+  contents.set(best, lair);
+}

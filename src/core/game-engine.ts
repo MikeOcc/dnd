@@ -22,7 +22,7 @@ import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
-import { buildOrcKingLair } from './lairs.js';
+import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
 import { placeTreasures, TREASURE_CHEST_PREFIX } from './treasures.js';
 import { treasureById } from '../content/treasures.js';
 import { getLevelIntro } from '../content/level-text.js';
@@ -2481,6 +2481,7 @@ export class GameEngine {
 
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
+    if (levelNum === 7) centerAsmodeusLair(grid, contents);
     placeTreasures(levelNum, grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
   }
