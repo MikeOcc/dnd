@@ -223,8 +223,8 @@ export const COMBAT = {
   // climbing as he's wounded (desperate). Evil magic: no saving throw, and
   // it kills however tough the character is. Only a ward already in place
   // (tome or altar) turns it aside.
-  BALL_OF_DOO_CHANCE: 0.05,           // at full health
-  BALL_OF_DOO_DESPERATE_CHANCE: 0.20, // as he nears death
+  BALL_OF_DOO_CHANCE: 0.025,          // at full health
+  BALL_OF_DOO_DESPERATE_CHANCE: 0.10, // as he nears death
 
   // Infernal Healing
   INFERNAL_HEAL_DIVISOR: 3,  // Asmodeus heals this fraction of the damage he deals
