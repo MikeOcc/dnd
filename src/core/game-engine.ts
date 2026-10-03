@@ -1675,7 +1675,7 @@ export class GameEngine {
    * clear line of sight (no wall crossed) to it, not behind them, faint at
    * the edge if it's only in the corner of their eye. It always looks empty;
    * he is met only by stepping onto it. Which side of it they see depends on
-   * where they stand; it faces the way intruders come, toward the entrance. */
+   * where they stand; it always faces south. */
   private sightAsmodeus(): GameState['sighting'] | null {
     if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return null;
     const lvl = this.getLevel(7);
@@ -1702,9 +1702,8 @@ export class GameEngine {
     if (Math.abs(ratio) > 6) return null;     // too far round to see at all
     const offset = Math.max(-1, Math.min(1, ratio / 1.2));
 
-    // Which side of the throne faces the character.
-    const ex = lvl.entrance.x - lx, ey = lvl.entrance.y - ly;
-    const throne: Direction = Math.abs(ex) > Math.abs(ey) ? (ex > 0 ? 'E' : 'W') : (ey > 0 ? 'S' : 'N');
+    // Which side of the throne faces the character. It always faces south.
+    const throne: Direction = 'S';
     const [tx, ty] = fwd[throne];
     const along = -dx * tx + -dy * ty;        // the character's position, in front of (+) or behind (-) the throne
     const side = -dx * -ty + -dy * tx;

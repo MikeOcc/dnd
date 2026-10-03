@@ -2480,3 +2480,26 @@ describe('GameEngine — the throne in the field of view', () => {
     expect(outsideSeen).toBeGreaterThan(0);
   });
 });
+
+describe('GameEngine — the throne faces south', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('shows its front from the south, its back from the north, and its sides from east and west', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    const [k] = [...lvl.contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
+    const [lx, ly] = k.split(',').map(Number);
+    const look = (x: number, y: number, facing: string) => { e.char.x = x; e.char.y = y; e.char.facing = facing; return engine.getState().sighting?.view; };
+    expect(look(lx, ly + 1, 'N')).toBe('front');
+    expect(look(lx, ly - 1, 'S')).toBe('back');
+    expect(look(lx + 1, ly, 'W')).toBe('faces-left');    // looking west, south is on your left
+    expect(look(lx - 1, ly, 'E')).toBe('faces-right');
+  });
+});
