@@ -109,6 +109,54 @@ function asmodeusStrike(ctx: PresenceContext, rng: RNG): PresenceEvent {
   return { messages, fx: 'fire' };
 }
 
+// ─── At Asmodeus's door ──────────────────────────────────────────────────────
+
+const DOOR_TAUNTS = [
+  'You are a fool to approach Asmodeus.',
+  'Closer, {name}. I can smell your fear from here.',
+  'Every step you take is one I allowed.',
+  'I have waited ten thousand years. I can wait for you to kneel.',
+  'Turn back, little one. Or do not. I would so enjoy the alternative.',
+  'Your gods cannot hear you this deep, {name}.',
+  'I know the day you were born, and the day you will die. It is today.',
+  'Come in. Come in. The door is open. It always is.',
+];
+
+function chebyshev(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+}
+
+/** Within a few squares of his lair: taunts, and hellfire with a saving roll. */
+function asmodeusAtTheDoor(ctx: PresenceContext, rng: RNG): PresenceEvent | null {
+  const { char } = ctx;
+  if (rng.float() < PRESENCE.ASMODEUS_DOOR_ATTACK_CHANCE) {
+    const bonus = Math.floor((char.wisdom - 10) / 2) + Math.floor((char.resistance - 10) / 2);
+    const d = rng.die(20);
+    const saved = d + bonus >= PRESENCE.ASMODEUS_DOOR_SAVE_DC;
+    const full = Math.max(1, Math.round(char.maxHp * PRESENCE.ASMODEUS_DOOR_DAMAGE));
+    const dealt = Math.min(saved ? Math.round(full / 2) : full, char.hp - 1);   // never fatal
+    char.hp -= dealt;
+    const messages = [
+      'The air at the threshold ignites. Asmodeus reaches out from his lair.',
+      `(Saving roll: d20 ${d} ${bonus >= 0 ? '+' : '-'} ${Math.abs(bonus)} = ${d + bonus}, needed ${PRESENCE.ASMODEUS_DOOR_SAVE_DC})`,
+      saved
+        ? `You throw up your arm and grit your teeth. The hellfire only half catches you. (${dealt} damage)`
+        : `Hellfire pours over you from nowhere! (${dealt} damage)`,
+    ];
+    if (!saved && rng.float() < PRESENCE.ASMODEUS_DOOR_CURSE_CHANCE) {
+      const stat = rng.pick(['strength-reduced', 'dexterity-reduced', 'intelligence-reduced'] as const);
+      addStatusEffect(char, { type: stat, value: 4, turns: 20 });
+      messages.push(`A curse sinks into you with the flames. Your ${stat.split('-')[0]} withers. (-4 for 20 turns)`);
+    }
+    return { messages, fx: 'fire' };
+  }
+  if (rng.float() < PRESENCE.ASMODEUS_DOOR_TAUNT_CHANCE) {
+    const line = rng.pick(DOOR_TAUNTS).replace(/\{name\}/g, char.name);
+    return { messages: ['A vast voice, very close:', `"${line}"`] };
+  }
+  return null;
+}
+
 // ─── The other uniques ───────────────────────────────────────────────────────
 
 export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
@@ -241,6 +289,12 @@ function dracolichFear(ctx: PresenceContext, rng: RNG): PresenceEvent {
 /** At most one presence event per step, or null. */
 export function rollPresence(ctx: PresenceContext, rng: RNG): PresenceEvent | null {
   const { char, level } = ctx;
+
+  if (ctx.asmodeusAlive && level === 7 && ctx.asmodeusLair
+      && chebyshev(char, ctx.asmodeusLair) <= PRESENCE.ASMODEUS_DOOR_RADIUS) {
+    const near = asmodeusAtTheDoor(ctx, rng);
+    if (near) return near;
+  }
 
   if (ctx.asmodeusAlive && level >= PRESENCE.ASMODEUS_ATTACK_MIN_LEVEL) {
     const chance = level === 7 ? PRESENCE.ASMODEUS_ATTACK_CHANCE_DEEPEST : PRESENCE.ASMODEUS_ATTACK_CHANCE;

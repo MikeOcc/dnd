@@ -47,6 +47,7 @@ describe('Asmodeus from afar', () => {
   it('a strike near his lair is debilitating but never fatal', () => {
     const lair = { x: 10, y: 10 };
     const ctx = base({ level: 7, asmodeusLair: lair });
+    ctx.char.x = 14; ctx.char.y = 10;   // close, but just outside his door-side reach
     ctx.char.hp = 5;
     const ev = rollPresence(ctx, scripted([0]))!;
     expect(ev.fx).toBe('fire');
@@ -102,5 +103,44 @@ describe('Lair presences', () => {
     const ev = rollPresence(ctx, scripted([0, 0.5]))!;
     expect(ev.messages.join(' ')).toContain('Loose stones');
     expect(ctx.char.hp).toBeLessThan(1000);
+  });
+});
+
+describe("At Asmodeus's door", () => {
+  const ctxAt = (dx: number, dy: number, wis = 10, res = 10): PresenceContext => {
+    const char = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
+    char.hp = char.maxHp = 1000; char.wisdom = wis; char.resistance = res; char.statusEffects = [];
+    char.x = 40 + dx; char.y = 30 + dy;
+    return { char, level: 7, lairs: [], asmodeusAlive: true, asmodeusLair: { x: 40, y: 30 } };
+  };
+  const roll = (ctx: PresenceContext, n: number, seed: number) => {
+    const rng = new RNG(seed);
+    const out: string[] = [];
+    for (let i = 0; i < n; i++) { ctx.char.hp = ctx.char.maxHp; const ev = rollPresence(ctx, rng); if (ev) out.push(ev.messages.join(' ')); }
+    return out;
+  };
+
+  it('within 3 squares he taunts and lashes out, often', () => {
+    const events = roll(ctxAt(3, -2), 200, 3);
+    expect(events.length).toBeGreaterThan(80);
+    expect(events.some(e => e.includes('A vast voice, very close'))).toBe(true);
+    expect(events.some(e => e.includes('Saving roll'))).toBe(true);
+  });
+
+  it('farther away, his door-side voice falls silent', () => {
+    expect(roll(ctxAt(4, 0), 200, 3).some(e => e.includes('very close'))).toBe(false);
+  });
+
+  it('his attack there is never fatal, and a good save halves it', () => {
+    const rng = new RNG(9);
+    for (let i = 0; i < 300; i++) {
+      const ctx = ctxAt(1, 1, 40, 40);
+      ctx.char.hp = 5;
+      rollPresence(ctx, rng);
+      expect(ctx.char.hp).toBeGreaterThanOrEqual(1);
+    }
+    const strong = roll(ctxAt(0, 2, 40, 40), 300, 5).filter(e => e.includes('Saving roll'));
+    expect(strong.length).toBeGreaterThan(0);
+    expect(strong.every(e => e.includes('only half catches you'))).toBe(true);
   });
 });

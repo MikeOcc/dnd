@@ -446,6 +446,15 @@ export const WARRIOR = {
 
 // Unique monsters felt before they're met (presence.ts). Chances are per step.
 export const PRESENCE = {
+  // At his very door (within this many squares, in any direction, on level 7)
+  // Asmodeus taunts and lashes out far more often. His attacks there allow a
+  // saving roll (d20 + Wisdom and Resistance bonuses) for half damage, no curse.
+  ASMODEUS_DOOR_RADIUS: 3,
+  ASMODEUS_DOOR_TAUNT_CHANCE: 0.45,
+  ASMODEUS_DOOR_ATTACK_CHANCE: 0.25,
+  ASMODEUS_DOOR_SAVE_DC: 16,
+  ASMODEUS_DOOR_DAMAGE: 0.18,             // share of max HP on a failed save (never fatal)
+  ASMODEUS_DOOR_CURSE_CHANCE: 0.5,        // on a failed save
   ASMODEUS_VOICE_CHANCE: 1 / 150,         // any level
   ASMODEUS_ATTACK_MIN_LEVEL: 4,
   ASMODEUS_ATTACK_CHANCE: 1 / 600,        // levels 4-6
