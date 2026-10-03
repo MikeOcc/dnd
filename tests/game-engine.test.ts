@@ -2425,7 +2425,7 @@ describe('GameEngine — the empty throne', () => {
   beforeEach(() => { db = createMemoryDb(); });
   afterEach(() => { db.close(); });
 
-  it('once Asmodeus is defeated, his throne is still seen, empty', () => {
+  it('his throne always looks empty, alive or defeated', () => {
     const engine = makeReadyEngine(db);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
@@ -2433,9 +2433,50 @@ describe('GameEngine — the empty throne', () => {
     e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
     const [k, c] = [...e.getLevel(7).contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
     const [lx, ly] = k.split(',').map(Number);
-    e.char.x = lx; e.char.y = ly + 2; e.char.facing = 'N';
-    expect(engine.getState().sighting?.empty).toBeUndefined();
+    // Any spot with a clear line to the throne, looking toward it.
+    const lvl = e.getLevel(7);
+    let spot: [number, number, string] | null = null;
+    for (let d = 1; d <= 6 && !spot; d++) for (const [dir, ox, oy] of [['N', 0, 1], ['S', 0, -1], ['E', -1, 0], ['W', 1, 0]] as const) {
+      e.char.x = lx + ox * d; e.char.y = ly + oy * d; e.char.facing = dir;
+      if (engine.getState().sighting) { spot = [e.char.x, e.char.y, dir]; break; }
+    }
+    expect(spot).not.toBeNull();
+    expect(engine.getState().sighting?.empty).toBe(true);
     e.dungeonState.defeatedUniqueMonsters.add(c.id);
     expect(engine.getState().sighting?.empty).toBe(true);
+  });
+});
+
+describe('GameEngine — the throne in the field of view', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('is seen from outside the room through a clear line of sight, and hidden by walls', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    const [k] = [...lvl.contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
+    const [lx, ly] = k.split(',').map(Number);
+    const areas = mapAreas(lvl.grid);
+    const room = areaAtCell(areas, lx, ly);
+    let outsideSeen = 0, blocked = 0;
+    for (let y = Math.max(0, ly - 20); y <= ly + 20; y++) for (let x = Math.max(0, lx - 20); x <= lx + 20; x++) {
+      const here = areaAtCell(areas, x, y);
+      if (!here || here === room) continue;
+      const dx = lx - x, dy = ly - y;
+      e.char.x = x; e.char.y = y;
+      e.char.facing = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
+      const clear = e.clearSight(lvl.grid, x, y, lx, ly);
+      const seen = !!engine.getState().sighting;
+      if (!clear) { expect(seen).toBe(false); blocked++; }
+      else if (seen) outsideSeen++;
+    }
+    expect(blocked).toBeGreaterThan(0);
+    expect(outsideSeen).toBeGreaterThan(0);
   });
 });

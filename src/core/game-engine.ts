@@ -1671,30 +1671,24 @@ export class GameEngine {
     return this.processCombatResult(res);
   }
 
-  /** Asmodeus on his throne, if the character can see it: from anywhere in
-   * his throne room that isn't behind them (faintly, at the edge, if it's
-   * only in the corner of their eye), or straight down a passage from a few
-   * squares away. Which side of the throne they see depends on where they
-   * stand around it; the throne faces the way intruders come, toward the
-   * level's entrance. */
+  /** Asmodeus's throne, whenever it's in the character's field of view: a
+   * clear line of sight (no wall crossed) to it, not behind them, faint at
+   * the edge if it's only in the corner of their eye. It always looks empty;
+   * he is met only by stepping onto it. Which side of it they see depends on
+   * where they stand; it faces the way intruders come, toward the entrance. */
   private sightAsmodeus(): GameState['sighting'] | null {
     if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return null;
     const lvl = this.getLevel(7);
     if (!lvl) return null;
     const lair = [...lvl.contents.entries()].find(([, c]) => c.type === 'unique-monster' && c.monsterId === 'Asmodeus');
     if (!lair) return null;
-    const empty = this.dungeonState.defeatedUniqueMonsters.has(lair[1].id);   // the throne remains
     const [lx, ly] = lair[0].split(',').map(Number);
     const { x: px, y: py, facing: f } = this.char;
     if (px === lx && py === ly) return null;
 
-    // In view? Same room (rooms are open inside), or straight ahead down a passage.
-    const areas = (lvl.areas ??= mapAreas(lvl.grid));
-    const room = areaAtCell(areas, lx, ly);
-    const sameRoom = room?.kind === 'room' && areaAtCell(areas, px, py) === room;
-    const range = PRESENCE.ASMODEUS_SIGHT_RANGE;
-    const straight = scanCorridor(lvl.grid, px, py, f, range + 1).steps.findIndex(s => s.x === lx && s.y === ly);
-    if (!sameRoom && !(straight >= 1 && straight <= range)) return null;
+    // In view? A clear line of sight to the throne (no wall crossed), not too far.
+    if (Math.hypot(lx - px, ly - py) > PRESENCE.ASMODEUS_THRONE_VIEW) return null;
+    if (!this.clearSight(lvl.grid, px, py, lx, ly)) return null;
 
     // Where he is relative to the way the character faces.
     const fwd: Record<Direction, [number, number]> = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
@@ -1702,7 +1696,7 @@ export class GameEngine {
     const dx = lx - px, dy = ly - py;
     const ahead = dx * fx + dy * fy;          // squares in front
     const across = dx * -fy + dy * fx;        // squares to the right
-    if (ahead < 0 || (ahead === 0 && Math.abs(across) > 0 && !sameRoom)) return null;   // behind you
+    if (ahead < 0) return null;               // behind you
     const ratio = ahead > 0 ? across / ahead : Math.sign(across) * 99;
     const peripheral = Math.abs(ratio) > 1.2;
     if (Math.abs(ratio) > 6) return null;     // too far round to see at all
@@ -1718,7 +1712,36 @@ export class GameEngine {
     const view = Math.abs(along) >= Math.abs(side)
       ? (along >= 0 ? 'front' : 'back')
       : (throne === rightOf[f] ? 'faces-right' : throne === f ? 'back' : rightOf[throne] === f ? 'faces-left' : 'front');
-    return { monster: 'Asmodeus', distance: Math.max(1, Math.round(Math.hypot(dx, dy))), view, offset, peripheral, ...(empty ? { empty } : {}) };
+    // The throne always looks empty, alive or dead: he is met only by stepping onto it.
+    return { monster: 'Asmodeus', distance: Math.max(1, Math.round(Math.hypot(dx, dy))), view, offset, peripheral, empty: true };
+  }
+
+  /** Whether an unbroken line runs between two squares without crossing a
+   * wall: walks the squares the line passes through (one axis at a time, so
+   * it never slips diagonally between two walls) and checks each step. */
+  private clearSight(grid: DungeonCell[][], x0: number, y0: number, x1: number, y1: number): boolean {
+    const dx = x1 - x0, dy = y1 - y0;
+    const sx = Math.sign(dx), sy = Math.sign(dy);
+    const nx = Math.abs(dx), ny = Math.abs(dy);
+    let x = x0, y = y0, ix = 0, iy = 0;
+    while (ix < nx || iy < ny) {
+      // Step whichever axis the line crosses next (through square centres).
+      const tx = (ix + 0.5) / (nx || 1e-9), ty = (iy + 0.5) / (ny || 1e-9);
+      if (ix < nx && (iy >= ny || tx < ty)) {
+        if (!canMove(grid, x, y, sx > 0 ? 'E' : 'W')) return false;
+        x += sx; ix++;
+      } else if (iy < ny && (ix >= nx || ty < tx)) {
+        if (!canMove(grid, x, y, sy > 0 ? 'S' : 'N')) return false;
+        y += sy; iy++;
+      } else {
+        // Exactly through a corner: either way round must be open.
+        const viaX = canMove(grid, x, y, sx > 0 ? 'E' : 'W') && canMove(grid, x + sx, y, sy > 0 ? 'S' : 'N');
+        const viaY = canMove(grid, x, y, sy > 0 ? 'S' : 'N') && canMove(grid, x, y + sy, sx > 0 ? 'E' : 'W');
+        if (!viaX && !viaY) return false;
+        x += sx; y += sy; ix++; iy++;
+      }
+    }
+    return true;
   }
 
   /** Queues a sound for the client to play after this action. */
