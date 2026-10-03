@@ -219,7 +219,7 @@ export const COMBAT = {
   MUMMY_DEX_REDUCTION: 3,
 
   // Asmodeus's transformation (a Clarkson College DM original): on any of his
-  // turns, this chance he turns the character into a pile of lizard shit,
+  // turns, this chance he turns the character into a pile of lizard excrement,
   // climbing as he's wounded (desperate). Evil magic: no saving throw, and
   // it kills however tough the character is. Only a ward already in place
   // (tome or altar) turns it aside.

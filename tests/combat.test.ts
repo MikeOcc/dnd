@@ -1367,11 +1367,11 @@ describe("Asmodeus's transformation", () => {
       char.heldRounds = 1; char.heldBy = 'dazed';
       const res = playerHeld(char, createMonster('Asmodeus', 100, 'a'), rng);
       turns++;
-      if (res.messages.join(' ').includes('PILE OF LIZARD SHIT')) {
+      if (res.messages.join(' ').includes('PILE OF LIZARD EXCREMENT')) {
         transformed++;
         expect(res.playerDied).toBe(true);
         expect(char.hp).toBe(0);
-        expect(res.deathCause).toBe('Turned into a pile of lizard shit by Asmodeus.');
+        expect(res.deathCause).toBe('Turned into a pile of lizard excrement by Asmodeus.');
       }
     }
     expect(transformed / turns).toBeGreaterThan(COMBAT.BALL_OF_DOO_CHANCE - 0.015);

@@ -1543,7 +1543,7 @@ export function killedBy(monster: Monster, ability: string | undefined): string 
     case '':                 return `Killed by ${who}.`;
     case 'radiation':        return `Killed by the radioactive flesh of ${who}.`;
     case 'hypnosis':         return `Hypnotized and drained dry by ${who}.`;
-    case 'ball-of-doo':      return 'Turned into a pile of lizard shit by Asmodeus.';
+    case 'ball-of-doo':      return 'Turned into a pile of lizard excrement by Asmodeus.';
     case 'crushed':          return `Crushed to death in the coils of ${who}.`;
     case 'gilded':           return `Turned to solid gold by ${who}.`;
     case 'asphyxiated':      return `Choked to death on the gold-dust breath of ${who}.`;
@@ -1728,7 +1728,7 @@ function monsterActionInner(
     messages.push('');
     messages.push('There is a loud POP and a puff of sulphurous smoke.');
     messages.push('');
-    messages.push('YOU HAVE BEEN TURNED INTO A PILE OF LIZARD SHIT.');
+    messages.push('YOU HAVE BEEN TURNED INTO A PILE OF LIZARD EXCREMENT.');
     messages.push('');
     messages.push('You are dead.');
     char.hp = 0;
@@ -1914,7 +1914,7 @@ function calculateMonsterDamage(
   return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness));
 }
 
-/** Chance Asmodeus turns the character into a pile of lizard shit this turn:
+/** Chance Asmodeus turns the character into a pile of lizard excrement this turn:
  * climbs as he's wounded. */
 export function transformationChance(monster: Monster): number {
   const wounded = 1 - Math.max(0, monster.hp) / monster.maxHp;

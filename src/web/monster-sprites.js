@@ -5360,119 +5360,113 @@ const MONSTER_SPRITES = {
   `,
 
   'Asmodeus': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus">
     <defs>
-    <radialGradient id="as-skin" cx="45%" cy="30%" r="75%">
-    <stop offset="0" stop-color="#e0503a"/>
-    <stop offset="0.55" stop-color="#9a1a12"/>
-    <stop offset="1" stop-color="#3a0404"/>
-    </radialGradient>
-    <linearGradient id="as-robe" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#06020a"/>
-    <stop offset="0.45" stop-color="#2a0e1e"/>
-    <stop offset="1" stop-color="#040106"/>
-    </linearGradient>
-    <linearGradient id="as-gold" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#ffe89a"/>
-    <stop offset="0.5" stop-color="#d0a040"/>
-    <stop offset="1" stop-color="#6a4a0a"/>
-    </linearGradient>
-    <linearGradient id="as-horn" x1="0" y1="1" x2="1" y2="0">
-    <stop offset="0" stop-color="#1a0a0a"/>
-    <stop offset="0.6" stop-color="#4a3030"/>
-    <stop offset="1" stop-color="#9a8078"/>
-    </linearGradient>
-    <linearGradient id="as-wing" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#3a0a10"/>
-    <stop offset="1" stop-color="#0a0204"/>
-    </linearGradient>
-    <radialGradient id="as-ruby" cx="40%" cy="35%" r="60%">
-    <stop offset="0" stop-color="#ffd0d8"/>
-    <stop offset="0.4" stop-color="#ff2040"/>
-    <stop offset="1" stop-color="#4a0010"/>
-    </radialGradient>
-    <radialGradient id="as-hell" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#ff6a10" stop-opacity="0.6"/>
-    <stop offset="0.5" stop-color="#a01004" stop-opacity="0.25"/>
-    <stop offset="1" stop-color="#400000" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="as-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.6"/></filter>
-    <filter id="as-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <radialGradient id="asm-skin" cx="42%" cy="28%" r="80%"><stop offset="0" stop-color="#ff6a4a"/><stop offset="0.4" stop-color="#c0200e"/><stop offset="0.8" stop-color="#5a0604"/><stop offset="1" stop-color="#1a0000"/></radialGradient>
+    <linearGradient id="asm-tail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a0604"/><stop offset="0.5" stop-color="#d0281a"/><stop offset="1" stop-color="#5a0604"/></linearGradient>
+    <linearGradient id="asm-robe" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#050104"/><stop offset="0.45" stop-color="#3a0618"/><stop offset="0.55" stop-color="#2a0412"/><stop offset="1" stop-color="#050104"/></linearGradient>
+    <linearGradient id="asm-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset="0.5" stop-color="#d9a52c"/><stop offset="1" stop-color="#5a3a06"/></linearGradient>
+    <linearGradient id="asm-horn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0a0404"/><stop offset="0.55" stop-color="#3a2826"/><stop offset="1" stop-color="#c8b4a8"/></linearGradient>
+    <linearGradient id="asm-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a0610"/><stop offset="0.6" stop-color="#1a0206"/><stop offset="1" stop-color="#050001"/></linearGradient>
+    <radialGradient id="asm-ruby" cx="38%" cy="32%" r="65%"><stop offset="0" stop-color="#ffe0e8"/><stop offset="0.35" stop-color="#ff1a3a"/><stop offset="1" stop-color="#3a0008"/></radialGradient>
+    <radialGradient id="asm-hell" cx="50%" cy="90%" r="75%"><stop offset="0" stop-color="#ffb02a" stop-opacity="0.75"/><stop offset="0.35" stop-color="#e2380c" stop-opacity="0.45"/><stop offset="0.7" stop-color="#5a0400" stop-opacity="0.2"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="asm-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fffbe0"/><stop offset="0.45" stop-color="#ffd040"/><stop offset="1" stop-color="#ff4a00"/></radialGradient>
+    <pattern id="asm-scales" width="6" height="5" patternUnits="userSpaceOnUse"><path d="M 0 5 Q 3 0 6 5" fill="none" stroke="#3a0202" stroke-width="0.5" opacity="0.55"/></pattern>
+    <filter id="asm-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="asm-haze" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="asm-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
     </defs>
-    
-    <!-- hellfire light rising from below -->
-    <ellipse cx="80" cy="160" rx="90" ry="100" fill="url(#as-hell)"/>
-    <!-- the infernal sigil burning behind him -->
-    <g fill="none" stroke="#ff4a1a" stroke-width="0.9" opacity="0.45" filter="url(#as-soft)">
-    <circle cx="80" cy="60" r="44"/><circle cx="80" cy="60" r="38"/>
-    <path d="M 80 16 L 105 96 L 38 46 L 122 46 L 55 96 Z"/>
+
+    <!-- hellfire rising behind and beneath him -->
+    <ellipse cx="100" cy="150" rx="92" ry="80" fill="url(#asm-hell)" filter="url(#asm-haze)"/>
+    <g filter="url(#asm-haze)" opacity="0.8">
+      <path class="lair-flame f1" d="M 20 200 C 10 170 26 150 30 130 C 40 150 50 170 44 200 Z" fill="#ff6a10"/>
+      <path class="lair-flame f2" d="M 160 200 C 150 168 166 150 172 128 C 182 150 190 172 184 200 Z" fill="#ff6a10"/>
     </g>
-    
-    <!-- great bat wings -->
-    <path d="M 62 54 L 30 22 L 4 30 Q 16 40 6 54 Q 20 60 12 76 Q 30 74 36 90 Q 46 78 60 80 Z" fill="url(#as-wing)" stroke="#000" stroke-width="1"/>
-    <path d="M 98 54 L 130 22 L 156 30 Q 144 40 154 54 Q 140 60 148 76 Q 130 74 124 90 Q 114 78 100 80 Z" fill="url(#as-wing)" stroke="#000" stroke-width="1"/>
-    <g stroke="#1a0206" stroke-width="1.8" fill="none" stroke-linecap="round">
-    <path d="M 62 54 L 30 22"/><path d="M 30 22 L 6 54"/><path d="M 30 22 L 12 76"/><path d="M 30 22 L 36 90"/>
-    <path d="M 98 54 L 130 22"/><path d="M 130 22 L 154 54"/><path d="M 130 22 L 148 76"/><path d="M 130 22 L 124 90"/>
+    <!-- the burning sigil of the Nine Hells -->
+    <g fill="none" stroke="#ff4a1a" stroke-width="1" opacity="0.4" filter="url(#asm-soft)">
+      <circle cx="100" cy="74" r="58"/><circle cx="100" cy="74" r="51"/>
+      <path d="M 100 16 L 134 120 L 46 56 L 154 56 L 66 120 Z"/>
     </g>
-    <g stroke="#ff5a2a" stroke-width="0.6" fill="none" opacity="0.5"><path d="M 61 53 L 30 21"/><path d="M 99 53 L 130 21"/></g>
-    
-    <!-- robes: black and blood-crimson, heavy gold embroidery -->
-    <path d="M 60 60 C 54 92 48 126 42 156 L 118 156 C 112 126 106 92 100 60 Z" fill="url(#as-robe)" stroke="#000" stroke-width="1.2"/>
-    <path d="M 74 62 L 86 62 L 92 156 L 68 156 Z" fill="#4a0612" stroke="url(#as-gold)" stroke-width="1"/>
-    <g stroke="url(#as-gold)" stroke-width="0.8" fill="none">
-    <path d="M 76 80 L 84 80 L 80 88 Z"/><path d="M 75 104 Q 80 98 85 104 Q 80 110 75 104"/>
-    <path d="M 74 126 L 86 126 M 80 120 L 80 132"/><path d="M 73 146 L 87 146"/>
-    </g>
-    <path d="M 43 150 L 117 150" stroke="url(#as-gold)" stroke-width="1.6"/>
-    <g stroke="#000" stroke-width="1.2" fill="none" opacity="0.8"><path d="M 64 90 Q 58 120 52 150"/><path d="M 96 90 Q 102 120 108 150"/></g>
-    <g stroke="#5a2a3a" stroke-width="0.7" fill="none" opacity="0.5"><path d="M 66 92 Q 60 120 55 150"/></g>
-    <!-- gold pauldrons and high collar -->
-    <path d="M 46 66 C 48 54 60 50 70 56 C 68 64 60 70 50 70 Z" fill="url(#as-gold)" stroke="#3a2404" stroke-width="0.8"/>
-    <path d="M 114 66 C 112 54 100 50 90 56 C 92 64 100 70 110 70 Z" fill="url(#as-gold)" stroke="#3a2404" stroke-width="0.8"/>
-    <path d="M 64 58 L 58 34 L 70 46 Z" fill="url(#as-robe)" stroke="url(#as-gold)" stroke-width="0.8"/>
-    <path d="M 96 58 L 102 34 L 90 46 Z" fill="url(#as-robe)" stroke="url(#as-gold)" stroke-width="0.8"/>
-    
-    <!-- left arm at rest; right hand holds the Ruby Rod -->
-    <path d="M 50 70 C 44 84 42 98 44 110 L 54 110 C 54 98 56 88 62 78 Z" fill="url(#as-robe)" stroke="#000" stroke-width="1"/>
-    <ellipse cx="49" cy="113" rx="4.6" ry="4" fill="url(#as-skin)" stroke="#2a0202" stroke-width="0.6"/>
-    <g fill="#1a0202"><path d="M 45 116 L 44 120 L 47 117 Z"/><path d="M 49 117 L 49 121 L 51 117 Z"/></g>
-    <path d="M 110 70 C 116 80 118 88 118 96 L 110 98 C 108 90 106 84 102 78 Z" fill="url(#as-robe)" stroke="#000" stroke-width="1"/>
-    <path d="M 120 154 L 118 26" stroke="url(#as-gold)" stroke-width="3" stroke-linecap="round"/>
-    <path d="M 119.2 150 L 117.6 30" stroke="#fff4c8" stroke-width="0.6" opacity="0.6"/>
-    <g fill="url(#as-gold)"><circle cx="118.5" cy="60" r="2.2"/><circle cx="119.3" cy="120" r="2"/></g>
-    <ellipse cx="116" cy="98" rx="4.6" ry="4" fill="url(#as-skin)" stroke="#2a0202" stroke-width="0.6"/>
-    <!-- the Ruby Rod's head -->
-    <path d="M 110 28 C 110 18 126 18 126 28 L 122 26 L 118 30 L 114 26 Z" fill="url(#as-gold)" stroke="#3a2404" stroke-width="0.6"/>
-    <circle cx="118" cy="18" r="11" fill="#ff2040" opacity="0.4" filter="url(#as-glow)"/>
-    <path d="M 118 8 L 125 16 L 118 28 L 111 16 Z" fill="url(#as-ruby)" stroke="#4a0010" stroke-width="0.6"/>
-    <path d="M 118 8 L 118 28 M 111 16 L 125 16" stroke="#ffc0c8" stroke-width="0.4" opacity="0.6"/>
-    <path d="M 114 14 L 116 11" stroke="#fff" stroke-width="0.8" opacity="0.9"/>
-    
-    <!-- head: regal, handsome, terrible -->
-    <!-- great ridged horns curling back and up -->
-    <path d="M 70 32 C 62 26 56 14 60 2 C 62 12 68 20 74 26 Z" fill="url(#as-horn)" stroke="#000" stroke-width="0.6"/>
-    <path d="M 90 32 C 98 26 104 14 100 2 C 98 12 92 20 86 26 Z" fill="url(#as-horn)" stroke="#000" stroke-width="0.6"/>
-    <g stroke="#6a5048" stroke-width="0.5" fill="none" opacity="0.8"><path d="M 62 12 L 65 13"/><path d="M 64 20 L 68 20"/><path d="M 98 12 L 95 13"/><path d="M 96 20 L 92 20"/></g>
-    <!-- long black hair -->
-    <path d="M 68 30 C 64 40 62 52 64 62 C 60 50 60 38 66 28 Z" fill="#0a0406"/>
-    <path d="M 92 30 C 96 40 98 52 96 62 C 100 50 100 38 94 28 Z" fill="#0a0406"/>
-    <path d="M 69 38 C 69 28 74 22 80 22 C 86 22 91 28 91 38 C 91 48 86 55 80 56 C 74 55 69 48 69 38 Z" fill="url(#as-skin)" stroke="#2a0202" stroke-width="0.9"/>
-    <path d="M 68 34 C 68 24 74 18 80 18 C 86 18 92 24 92 34 C 88 28 84 26 80 30 C 76 26 72 28 68 34 Z" fill="#0a0406"/>
-    <!-- burning eyes under a severe brow -->
-    <path d="M 71 38 L 78 40 L 77 41.5 L 71 40 Z M 89 38 L 82 40 L 83 41.5 L 89 40 Z" fill="#2a0202"/>
-    <ellipse cx="75" cy="42.5" rx="2.8" ry="1.6" fill="#ffc020" filter="url(#as-glow)"/>
-    <ellipse cx="85" cy="42.5" rx="2.8" ry="1.6" fill="#ffc020" filter="url(#as-glow)"/>
-    <ellipse cx="75" cy="42.5" rx="1.8" ry="1" fill="#fff4b0"/><ellipse cx="85" cy="42.5" rx="1.8" ry="1" fill="#fff4b0"/>
-    <path d="M 80 43 L 78.8 48 L 81.2 48 Z" fill="#6a0a08" opacity="0.8"/>
-    <!-- a thin cruel smile and a pointed beard -->
-    <path d="M 75 50.5 Q 80 52.5 85 50.5" stroke="#2a0202" stroke-width="0.8" fill="none"/>
-    <path d="M 76 53 C 77 58 79 62 80 66 C 81 62 83 58 84 53 C 82 54 78 54 76 53 Z" fill="#0a0406"/>
-    <!-- a circlet of black iron and gold -->
-    <path d="M 69 31 Q 80 27 91 31 L 91 34 Q 80 30 69 34 Z" fill="url(#as-gold)"/>
-    <circle cx="80" cy="30.5" r="1.4" fill="#ff2040"/>
-    <!-- embers -->
-    <g fill="#ffa040"><circle cx="30" cy="120" r="0.9"/><circle cx="136" cy="112" r="0.8"/><circle cx="20" cy="96" r="0.7"/><circle cx="144" cy="136" r="0.9"/></g>
+    <!-- hanging chains -->
+    <g stroke="#3a2a26" stroke-width="2.2" stroke-dasharray="5 3" fill="none"><path d="M 14 0 v 70"/><path d="M 186 0 v 60"/></g>
+
+    <!-- vast wings, torn and veined -->
+    <path d="M 74 66 C 50 40 26 14 2 8 C 10 24 6 38 0 50 C 16 50 20 62 10 76 C 28 74 32 88 22 104 C 40 98 52 106 50 124 C 60 108 70 104 78 108 Z" fill="url(#asm-wing)" stroke="#000" stroke-width="1.2"/>
+    <path d="M 126 66 C 150 40 174 14 198 8 C 190 24 194 38 200 50 C 184 50 180 62 190 76 C 172 74 168 88 178 104 C 160 98 148 106 150 124 C 140 108 130 104 122 108 Z" fill="url(#asm-wing)" stroke="#000" stroke-width="1.2"/>
+    <g stroke="#2a0206" stroke-width="2" fill="none" stroke-linecap="round"><path d="M 74 66 L 4 10"/><path d="M 72 74 L 2 50"/><path d="M 72 82 L 12 76"/><path d="M 74 92 L 24 104"/><path d="M 126 66 L 196 10"/><path d="M 128 74 L 198 50"/><path d="M 128 82 L 188 76"/><path d="M 126 92 L 176 104"/></g>
+    <g stroke="#ff4a1a" stroke-width="0.6" fill="none" opacity="0.45"><path d="M 40 40 q 6 10 2 22"/><path d="M 160 40 q -6 10 -2 22"/></g>
+    <path d="M 30 60 l 6 4 l -4 4 z M 168 64 l -6 4 l 4 4 z" fill="#000"/>
+
+    <!-- THE TAIL: long, red, curling out and around, ending in an arrowhead -->
+    <path d="M 112 150 C 150 158 182 150 190 128 C 198 104 180 88 164 96 C 150 104 158 122 172 118" fill="none" stroke="#1a0000" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 112 150 C 150 158 182 150 190 128 C 198 104 180 88 164 96 C 150 104 158 122 172 118" fill="none" stroke="url(#asm-tail)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 112 150 C 150 158 182 150 190 128 C 198 104 180 88 164 96" fill="none" stroke="#ff8a6a" stroke-width="1" opacity="0.45"/>
+    <g stroke="#3a0202" stroke-width="1"><path d="M 132 155 v -5 M 148 156 v -6 M 164 153 v -6 M 178 146 l -4 -4 M 188 134 l -5 -2 M 190 118 l -5 0"/></g>
+    <path d="M 168 112 L 186 114 L 176 126 L 174 118 Z" fill="url(#asm-skin)" stroke="#1a0000" stroke-width="1.2"/>
+    <path d="M 168 112 L 186 114 L 176 126" fill="none" stroke="#ff8a6a" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- robes of black and blood-crimson, open over the chest, heavy gold hems -->
+    <path d="M 72 76 C 64 116 58 156 52 200 L 148 200 C 142 156 136 116 128 76 Z" fill="url(#asm-robe)" stroke="#000" stroke-width="1.3"/>
+    <path d="M 56 190 L 144 190" stroke="url(#asm-gold)" stroke-width="3"/>
+    <g fill="none" stroke="url(#asm-gold)" stroke-width="1" opacity="0.75"><path d="M 64 170 q 36 10 72 0"/><path d="M 68 150 q 32 8 64 0"/><path d="M 100 112 L 100 188"/></g>
+    <g fill="#d9a52c" opacity="0.8"><path d="M 96 160 l 4 -8 l 4 8 z"/><path d="M 96 180 l 4 -8 l 4 8 z"/></g>
+
+    <!-- a broad, scaled, demonic chest between the robes -->
+    <path d="M 78 74 C 72 96 76 112 84 122 L 116 122 C 124 112 128 96 122 74 C 112 68 88 68 78 74 Z" fill="url(#asm-skin)" stroke="#1a0000" stroke-width="1.2"/>
+    <path d="M 78 74 C 72 96 76 112 84 122 L 116 122 C 124 112 128 96 122 74 C 112 68 88 68 78 74 Z" fill="url(#asm-scales)"/>
+    <g stroke="#3a0202" stroke-width="1.3" fill="none" opacity="0.8"><path d="M 86 82 Q 100 90 114 82"/><path d="M 100 86 L 100 118"/><path d="M 88 100 q 6 3 12 0 M 100 100 q 6 3 12 0"/><path d="M 90 112 q 5 2 10 0 M 100 112 q 5 2 10 0"/></g>
+    <!-- glowing veins of hellfire under the skin -->
+    <g stroke="#ffb03a" stroke-width="0.7" fill="none" opacity="0.6" filter="url(#asm-soft)"><path d="M 84 90 l 6 6 l -2 8"/><path d="M 116 92 l -5 6 l 2 9"/></g>
+    <!-- the ruby amulet of the Lord of the Nine -->
+    <path d="M 84 74 Q 100 88 116 74" stroke="url(#asm-gold)" stroke-width="1.8" fill="none"/>
+    <circle cx="100" cy="86" r="6" fill="#ff1a3a" filter="url(#asm-glow)"/>
+    <path d="M 100 79 L 106 86 L 100 93 L 94 86 Z" fill="url(#asm-ruby)" stroke="url(#asm-gold)" stroke-width="1"/>
+
+    <!-- great shoulder plates of black iron and gold -->
+    <path d="M 60 70 C 62 56 76 52 90 58 C 88 70 80 78 66 82 Z" fill="#14080a" stroke="url(#asm-gold)" stroke-width="1.4"/>
+    <path d="M 140 70 C 138 56 124 52 110 58 C 112 70 120 78 134 82 Z" fill="#14080a" stroke="url(#asm-gold)" stroke-width="1.4"/>
+    <g fill="url(#asm-horn)" stroke="#000" stroke-width="0.6"><path d="M 66 60 L 56 44 L 72 56 Z"/><path d="M 134 60 L 144 44 L 128 56 Z"/></g>
+
+    <!-- one arm holds the ruby rod; the other reaches, clawed, for you -->
+    <path d="M 132 80 C 146 92 150 108 146 124" fill="none" stroke="#1a0000" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 132 80 C 146 92 150 108 146 124" fill="none" stroke="url(#asm-skin)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 146 124 L 162 40" stroke="url(#asm-gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 146 124 L 162 40" stroke="#5a3a06" stroke-width="1" opacity="0.6"/>
+    <circle cx="163" cy="36" r="9" fill="#ff1a3a" filter="url(#asm-glow)" opacity="0.7"/>
+    <path d="M 163 26 L 171 36 L 163 46 L 155 36 Z" fill="url(#asm-ruby)" stroke="url(#asm-gold)" stroke-width="1.4"/>
+    <circle cx="146" cy="124" r="7" fill="url(#asm-skin)" stroke="#1a0000" stroke-width="1"/>
+    <path d="M 68 80 C 52 92 42 108 36 124" fill="none" stroke="#1a0000" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 68 80 C 52 92 42 108 36 124" fill="none" stroke="url(#asm-skin)" stroke-width="12" stroke-linecap="round"/>
+    <g fill="none" stroke="url(#asm-skin)" stroke-width="4.4" stroke-linecap="round"><path d="M 36 124 L 24 130"/><path d="M 36 124 L 26 138"/><path d="M 36 124 L 34 142"/><path d="M 36 124 L 44 140"/></g>
+    <g fill="#120404" stroke="#000" stroke-width="0.5"><path d="M 24 130 l -6 1 l 5 2 z"/><path d="M 26 138 l -5 4 l 6 -1 z"/><path d="M 34 142 l -2 6 l 4 -5 z"/><path d="M 44 140 l 2 6 l 0 -6 z"/></g>
+    <g fill="#ff6a1a" opacity="0.7" filter="url(#asm-soft)"><circle cx="22" cy="134" r="3"/><circle cx="30" cy="146" r="2"/></g>
+
+    <!-- the head: a long, gaunt devil's face, cruel and amused -->
+    <path d="M 82 44 C 80 26 90 16 100 16 C 110 16 120 26 118 44 C 118 56 112 66 104 70 L 100 72 L 96 70 C 88 66 82 56 82 44 Z" fill="url(#asm-skin)" stroke="#1a0000" stroke-width="1.3"/>
+    <path d="M 84 40 C 80 46 82 54 86 60 M 116 40 C 120 46 118 54 114 60" stroke="#3a0202" stroke-width="1.2" fill="none"/>
+    <!-- pointed ears -->
+    <path d="M 82 38 L 70 30 L 80 46 Z M 118 38 L 130 30 L 120 46 Z" fill="url(#asm-skin)" stroke="#1a0000" stroke-width="0.9"/>
+    <!-- a crown of great ram's horns, curling, plus a ring of lesser spikes -->
+    <path d="M 86 24 C 72 8 50 6 40 18 C 32 30 40 44 52 42 C 46 34 48 24 58 22 C 70 20 78 28 84 34 Z" fill="url(#asm-horn)" stroke="#000" stroke-width="1"/>
+    <path d="M 114 24 C 128 8 150 6 160 18 C 168 30 160 44 148 42 C 154 34 152 24 142 22 C 130 20 122 28 116 34 Z" fill="url(#asm-horn)" stroke="#000" stroke-width="1"/>
+    <g stroke="#0a0404" stroke-width="0.8" fill="none" opacity="0.7"><path d="M 74 14 q -4 4 -2 8 M 64 12 q -4 6 0 10 M 54 14 q -4 6 0 10"/><path d="M 126 14 q 4 4 2 8 M 136 12 q 4 6 0 10 M 146 14 q 4 6 0 10"/></g>
+    <g fill="url(#asm-gold)" stroke="#3a2402" stroke-width="0.5"><path d="M 90 18 L 92 6 L 96 16 Z"/><path d="M 97 16 L 100 2 L 103 16 Z"/><path d="M 104 16 L 108 6 L 110 18 Z"/></g>
+    <!-- heavy brow, burning slit eyes -->
+    <path d="M 86 36 L 97 41 M 114 36 L 103 41" stroke="#1a0000" stroke-width="2.6" stroke-linecap="round"/>
+    <ellipse cx="92" cy="42" rx="4.4" ry="2.4" fill="#ffd040" filter="url(#asm-glow)"/>
+    <ellipse cx="108" cy="42" rx="4.4" ry="2.4" fill="#ffd040" filter="url(#asm-glow)"/>
+    <ellipse cx="92" cy="42" rx="3.4" ry="1.8" fill="url(#asm-eye)"/><ellipse cx="108" cy="42" rx="3.4" ry="1.8" fill="url(#asm-eye)"/>
+    <ellipse cx="92" cy="42" rx="0.7" ry="1.7" fill="#1a0000"/><ellipse cx="108" cy="42" rx="0.7" ry="1.7" fill="#1a0000"/>
+    <!-- a hooked nose and a wide, fanged smile -->
+    <path d="M 100 44 L 97 52 L 100 54 L 103 52 Z" fill="#7a0a06" stroke="#1a0000" stroke-width="0.6"/>
+    <path d="M 88 58 Q 100 68 112 58 Q 100 63 88 58 Z" fill="#1a0000"/>
+    <path d="M 89 58.4 L 91 62 L 93 59.4 L 95 63.5 L 97 60 L 99 64 L 101 60 L 103 64 L 105 60 L 107 63.5 L 109 59.4 L 111 58.4" fill="none" stroke="#f4ecd8" stroke-width="1"/>
+    <path d="M 90 58 l 1.6 7 l 1.6 -6 M 110 58 l -1.6 7 l -1.6 -6" fill="#f4ecd8"/>
+    <!-- a pointed black goatee -->
+    <path d="M 94 66 L 100 84 L 106 66 Q 100 70 94 66 Z" fill="#0a0202"/>
+    <!-- smoke curling from the horns -->
+    <g fill="#3a2a28" opacity="0.45" filter="url(#asm-haze)"><circle cx="44" cy="12" r="6"/><circle cx="156" cy="12" r="6"/><circle cx="100" cy="0" r="7"/></g>
     </svg>
   `,
 
@@ -5589,6 +5583,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Asmodeus': 2.2,
   'Giant': 1.35,
   'Orc King': 1.25,
   'Manticore': 1.35,
