@@ -64,7 +64,10 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const monsterDef = COMBAT.MONSTER_BASE_DEFENSE + defLevel + Math.floor(defLevel / 4);
   const label = opts.label ? ` (${opts.label})` : '';
 
-  if (hitRoll < monsterDef) {
+  // A stunned Asmodeus can't defend himself: nearly every blow lands.
+  const stunnedLord = monster.type === 'Asmodeus' && (monster.stunnedTurns ?? 0) > 0;
+  const misses = stunnedLord ? rng.float() >= COMBAT.ASMODEUS_STUNNED_HIT_CHANCE : hitRoll < monsterDef;
+  if (misses) {
     messages.push(`You swing at the ${monster.type} but miss!${label}`);
     return 0;
   }

@@ -243,6 +243,8 @@ export const COMBAT = {
   // The Banish spell does the same, a little weaker.
   ASMODEUS_BANISH_STUN_TURNS: 2,
   ASMODEUS_BANISH_PHYSICAL_TURNS: 1,
+  // While he's stunned, a weapon blow lands this often, whatever the roll.
+  ASMODEUS_STUNNED_HIT_CHANCE: 0.95,
 
   // Monster speed effect on run chance
   SPEED_RUN_MODIFIER: 0.1,    // per speed point above 1.0

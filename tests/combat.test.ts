@@ -1943,3 +1943,22 @@ describe('The Banish spell against Asmodeus', () => {
     expect(playerAttack(char, m, rng).ballOfDooFired).toBe(true);
   });
 });
+
+describe('Striking a stunned Asmodeus', () => {
+  it('weapon blows land 95% of the time while he is stunned, even for a weak arm', () => {
+    const char = makeChar({ level: 1, strength: 3, dexterity: 3 });
+    char.hp = char.maxHp = 1e6;
+    const rng = new RNG(4);
+    let hits = 0, n = 2000, unstunnedHits = 0;
+    for (let i = 0; i < n; i++) {
+      const m = createMonster('Asmodeus', 100, 'a' + i); m.hp = m.maxHp = 1e7;
+      m.stunnedTurns = 5;
+      if (!playerAttack(char, m, rng).messages[0].includes('miss')) hits++;
+      const m2 = createMonster('Asmodeus', 100, 'b' + i); m2.hp = m2.maxHp = 1e7;
+      if (!playerAttack(char, m2, rng).messages[0].includes('miss')) unstunnedHits++;
+    }
+    expect(hits / n).toBeGreaterThan(0.92);
+    expect(hits / n).toBeLessThan(0.98);
+    expect(unstunnedHits / n).toBeLessThan(hits / n);
+  });
+});
