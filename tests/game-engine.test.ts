@@ -2504,3 +2504,23 @@ describe('GameEngine — the throne faces south', () => {
     expect(look(lx - 1, ly, 'E')).toBe('faces-right');
   });
 });
+
+describe('Saves holding more than 3 opals or emeralds', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('are trimmed to 3 when loaded', () => {
+    const repo = new Repository(db);
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.inventory.gems.opal = 9; e.char.inventory.gems.emerald = 5; e.char.inventory.gems.ruby = 10;
+    repo.saveCharacter(e.char);
+    const loaded = repo.loadCharacter(e.char.id)!;
+    expect(loaded.inventory.gems.opal).toBe(3);
+    expect(loaded.inventory.gems.emerald).toBe(3);
+    expect(loaded.inventory.gems.ruby).toBe(10);
+  });
+});

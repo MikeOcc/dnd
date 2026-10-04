@@ -732,11 +732,20 @@ export const GEMS = {
   MAGIC_INT_THRESHOLD: 13,
 
   // Opal: (charLevel*2 + WIS/2) * randomFactor, same shape as the spells,
-  // but wildly uneven: anywhere from a fizzle to 8× its old best (1.6).
+  // but wildly uneven: anywhere from a fizzle to 6× its old best (1.6).
+  // (Was 0.5-12.8; toned down by a quarter.)
   OPAL_LEVEL_MULT: 2,
   OPAL_WIS_DIVISOR: 2,
-  OPAL_RAND_MIN: 0.5,
-  OPAL_RAND_MAX: 12.8,
+  OPAL_RAND_MIN: 0.375,
+  OPAL_RAND_MAX: 9.6,
+
+  // A character never carries more than this many of these gems. While
+  // they have the most they can carry, chests mysteriously never hold more.
+  CARRY_CAP: { opal: 3, emerald: 3 } as Partial<Record<'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald', number>>,
+  // Opals are semi-common: a chest holds one this often, on top of the
+  // general gem find (where they're also weighted up).
+  OPAL_CHEST_CHANCE: 0.05,
+  OPAL_GEM_WEIGHT: 2,     // vs 1 each for ruby, sapphire, diamond
 
   OPAL_CONFUSE_TURNS: 2,
   CONFUSION_FAIL_CHANCE: 0.5, // per confused turn, chance the monster's action is wasted

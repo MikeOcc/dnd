@@ -130,6 +130,17 @@ const GEM_NAMES: Record<GemType, string> = {
   ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal', emerald: 'emerald',
 };
 
+function findGem(char: Character, type: GemType): ChestResult {
+  char.inventory.gems[type]++;
+  return {
+    messages: [
+      `A single flawless ${GEM_NAMES[type]} glints among the debris! Worth ${GEMS.VALUES[type]} gold.`,
+      `(${char.inventory.gems[type]} total)`,
+    ],
+    gemGained: type,
+  };
+}
+
 export function resolveChest(char: Character, rng: RNG): ChestResult {
   // The first level stocks extra potions for new adventurers.
   if (char.dungeonLevel === 1 && rng.float() < FIRST_LEVEL.CHEST_EXTRA_POTION_CHANCE) {
@@ -142,6 +153,10 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
   }
 
   const roll = rng.float();
+  const canHold = (t: GemType) => char.inventory.gems[t] < (GEMS.CARRY_CAP[t] ?? Infinity);
+
+  // Opals are semi-common, unless the character already has all they can carry.
+  if (roll < GEMS.OPAL_CHEST_CHANCE && canHold('opal')) return findGem(char, 'opal');
 
   if (roll < 0.352) {
     const gold = rng.int(TREASURE.GOLD_MIN, TREASURE.GOLD_MAX) * char.dungeonLevel
@@ -168,16 +183,11 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
 
   if (roll < 0.725) {
     // Emeralds are rarer, and turn up more the deeper you go.
+    // Opals and emeralds a character can't carry more of are never found.
     const emeraldShare = Math.min(0.4, GEMS.EMERALD_FIND_BASE + GEMS.EMERALD_FIND_PER_LEVEL * char.dungeonLevel);
-    const type: GemType = rng.float() < emeraldShare ? 'emerald' : rng.pick(GEM_TYPES);
-    char.inventory.gems[type]++;
-    return {
-      messages: [
-        `A single flawless ${GEM_NAMES[type]} glints among the debris! Worth ${GEMS.VALUES[type]} gold.`,
-        `(${char.inventory.gems[type]} total)`,
-      ],
-      gemGained: type,
-    };
+    const pool = GEM_TYPES.filter(canHold).flatMap(t => Array<GemType>(t === 'opal' ? GEMS.OPAL_GEM_WEIGHT : 1).fill(t));
+    const type: GemType = canHold('emerald') && rng.float() < emeraldShare ? 'emerald' : rng.pick(pool);
+    return findGem(char, type);
   }
 
   if (roll < 0.835) {

@@ -6,7 +6,7 @@ import {
   resolveFountain, resolveChest, applyDeath, readBook,
   chestTrapFor, chestTrapDisarmChance, chestTrapDetectChance, springChestTrap, resolveTrapDisarm, resolveAltar, trapDisarmChance,
 } from '../src/core/encounters.js';
-import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS, MONSTER_SCALING, TRAPS } from '../src/core/config.js';
+import { ENCOUNTER, FOUNTAIN, DEATH, CONTENT_PER_LEVEL, GAMEPLAY, MAGIC_BOOK, CHEST_TRAPS, MONSTER_SCALING, TRAPS, GEMS } from '../src/core/config.js';
 import { playerFireball } from '../src/core/combat.js';
 import { createMonster } from '../src/core/monsters.js';
 import { randomMonsterLevel } from '../src/core/monsters.js';
@@ -622,5 +622,38 @@ describe('The first level looks after new adventurers', () => {
     const byLevel = [1, 2, 4, 9, 10, 20].map(avg);
     for (let i = 1; i < byLevel.length; i++) expect(byLevel[i]).toBeGreaterThanOrEqual(byLevel[i - 1] - 0.5);
     expect(byLevel[0]).toBeGreaterThan(20);
+  });
+});
+
+describe('Opals and emeralds: never more than 3', () => {
+  it('opals are semi-common in chests (about 1 in 13)', () => {
+    const rng = new RNG(99);
+    let opals = 0; const n = 20000;
+    for (let i = 0; i < n; i++) {
+      const char = makeChar(); char.dungeonLevel = 4;
+      resolveChest(char, rng);
+      if (char.inventory.gems.opal > 0) opals++;
+    }
+    expect(opals / n).toBeGreaterThan(0.06);
+    expect(opals / n).toBeLessThan(0.10);
+  });
+
+  it('once the character has 3, chests never hold another', () => {
+    const rng = new RNG(7);
+    for (let i = 0; i < 5000; i++) {
+      const char = makeChar(); char.dungeonLevel = 7;
+      char.inventory.gems.opal = 3; char.inventory.gems.emerald = 3;
+      resolveChest(char, rng);
+      expect(char.inventory.gems.opal).toBe(3);
+      expect(char.inventory.gems.emerald).toBe(3);
+    }
+  });
+
+  it('chests keep giving them up to the cap', () => {
+    const rng = new RNG(8);
+    const char = makeChar(); char.dungeonLevel = 7;
+    for (let i = 0; i < 3000; i++) resolveChest(char, rng);
+    expect(char.inventory.gems.opal).toBe(GEMS.CARRY_CAP.opal);
+    expect(char.inventory.gems.emerald).toBe(GEMS.CARRY_CAP.emerald);
   });
 });

@@ -1084,7 +1084,7 @@ describe('Opal (gem)', () => {
     expect(monster.confusedTurns).toBeGreaterThan(0);
   });
 
-  it('its damage ranges widely, up to 8× its old best', () => {
+  it('its damage ranges widely, up to 6× its old best', () => {
     const char = makeChar({ level: 20, wisdom: 18 });
     const base = 20 * GEMS.OPAL_LEVEL_MULT + Math.floor(18 / GEMS.OPAL_WIS_DIVISOR);
     const rng = new RNG(3);
@@ -1093,9 +1093,9 @@ describe('Opal (gem)', () => {
       const m = createMonster('Giant', 10, `opr${i}`); m.hp = m.maxHp = 1e6;
       hits.push(playerOpal({ ...char }, m, rng).playerDamage);
     }
-    expect(Math.min(...hits)).toBeGreaterThanOrEqual(Math.round(base * 0.5));
-    expect(Math.max(...hits)).toBeLessThanOrEqual(Math.round(base * 1.6 * 8));
-    expect(Math.max(...hits)).toBeGreaterThan(base * 1.6 * 6);
+    expect(Math.min(...hits)).toBeGreaterThanOrEqual(Math.round(base * 0.375));
+    expect(Math.max(...hits)).toBeLessThanOrEqual(Math.round(base * 1.6 * 6));
+    expect(Math.max(...hits)).toBeGreaterThan(base * 1.6 * 4.5);
     expect(Math.min(...hits)).toBeLessThan(base * 1.6);
   });
 

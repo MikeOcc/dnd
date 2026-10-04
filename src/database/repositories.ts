@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Character, SerializedDungeon, DungeonState, CharacterSummary } from '../core/types.js';
-import { CHARACTER } from '../core/config.js';
+import { CHARACTER, GEMS } from '../core/config.js';
 
 // ─── Repository class ────────────────────────────────────────────────────────
 
@@ -119,6 +119,10 @@ export class Repository {
     if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0 };
     if (inventory.gems.emerald === undefined) inventory.gems.emerald = 0;
     if (!inventory.books) inventory.books = 0;
+    // Opals and emeralds are capped (GEMS.CARRY_CAP): older saves may hold more.
+    for (const [t, cap] of Object.entries(GEMS.CARRY_CAP) as [keyof typeof inventory.gems, number][]) {
+      inventory.gems[t] = Math.min(inventory.gems[t] ?? 0, cap);
+    }
 
     return {
       id:                     row['id'] as string,
