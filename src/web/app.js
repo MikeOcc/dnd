@@ -9,6 +9,7 @@ let characterId = null;
 let spellMenuOpen = false;
 let gemMenuOpen = false;
 let ringMenuOpen = false;
+let amuletMenuOpen = false;
 const MAP_ZOOM_STEPS = [1, 1.4, 1.8, 2.4, 3];
 let mapZoom = (() => {
   try { return Math.min(MAP_ZOOM_STEPS.length - 1, Math.max(0, +localStorage.getItem('sevenLevelsMapZoom') || 0)); }
@@ -79,6 +80,7 @@ function applyState(state) {
   spellMenuOpen = false;
   gemMenuOpen = false;
   ringMenuOpen = false;
+  amuletMenuOpen = false;
   saveListChars = null;
   saveListAction = null;
   deletePendingChar = null;
@@ -731,6 +733,27 @@ function openRingMenu() {
   document.getElementById('messages').textContent = 'Choose a ring:';
 }
 
+/** The amulet menu (A while exploring), from the engine's amuletChoices. */
+function openAmuletMenu() {
+  const amulets = currentState.amuletChoices || [];
+  if (amulets.length === 0) {
+    document.getElementById('messages').textContent = 'You carry no amulets.';
+    return;
+  }
+  amuletMenuOpen = true;
+  const area = document.getElementById('choices-area');
+  area.innerHTML = '';
+  for (const a of amulets) {
+    const btn = makeChoiceBtn(a.key.toUpperCase(), a.text);
+    btn.onclick = () => {
+      amuletMenuOpen = false;
+      apiAction('amulet', { choice: a.key });
+    };
+    area.appendChild(btn);
+  }
+  document.getElementById('messages').textContent = 'Choose an amulet (one can be worn at a time):';
+}
+
 /** Asmodeus banished: he shrinks to a spark and the rift swallows him. Plays
  * once on reaching the victory screen, then holds on its last frame. */
 function showBanishment(phase, prevPhase) {
@@ -851,7 +874,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -1067,7 +1090,13 @@ document.addEventListener('keydown', (e) => {
       apiAction('ring', { choice: (currentState.ringChoices || []).some(c => c.key === key) ? key : '-' });
       return;
     }
+    if (amuletMenuOpen) {
+      amuletMenuOpen = false;
+      apiAction('amulet', { choice: (currentState.amuletChoices || []).some(c => c.key === key) ? key : '-' });
+      return;
+    }
     if (key === 'j') { openRingMenu(); return; }
+    if (key === 'a') { openAmuletMenu(); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  apiAction('turn-left');
@@ -1224,6 +1253,7 @@ document.getElementById('btn-book')      ?.addEventListener('click', () => apiAc
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
 document.getElementById('btn-rings')     ?.addEventListener('click', () => { if (currentState.phase === 'playing') openRingMenu(); });
+document.getElementById('btn-amulets')   ?.addEventListener('click', () => { if (currentState.phase === 'playing') openAmuletMenu(); });
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));

@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
 import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL } from './config.js';
-import type { Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
+import type { Amulet, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
   const r = rng.roll(3, 6);
@@ -164,7 +164,39 @@ export function getEffectiveStats(char: Character): Character {
     if (eff.type === 'strength-reduced')     c.strength     = Math.max(1, c.strength     - eff.value);
     if (eff.type === 'resistance-improved')  c.resistance   = c.resistance + eff.value;
   }
+  const amulet = wornAmulet(char);
+  if (amulet) c[amulet.stat] = Math.max(1, c[amulet.stat] + amuletDelta(amulet));
   return c;
+}
+
+/** The amulet worn, if any. */
+export function wornAmulet(char: Character): Amulet | undefined {
+  return char.inventory?.amulets?.find(a => a.worn);
+}
+
+/** What an amulet does to its attribute: up, or down if cursed. */
+export function amuletDelta(a: Amulet): number {
+  return a.cursed ? -a.bonus : a.bonus;
+}
+
+/** "jade amulet of Wisdom", with "(+2)" or "(-2, cursed)" once it's known. */
+export function amuletName(a: Amulet, withBonus = true): string {
+  const stat = a.stat[0].toUpperCase() + a.stat.slice(1);
+  const base = `${a.look} amulet of ${stat}`;
+  if (!withBonus) return base;
+  return base + (a.known ? ` (${a.cursed ? `-${a.bonus}, cursed` : `+${a.bonus}`})` : ' (unknown)');
+}
+
+/** A fountain, an altar or an emerald breaks a worn amulet's curse: it
+ * crumbles away. Returns the lines saying so, or [] if nothing was cursed. */
+export function breakAmuletCurse(char: Character, how: string): string[] {
+  const a = wornAmulet(char);
+  if (!a?.cursed) return [];
+  char.inventory.amulets = char.inventory.amulets!.filter(x => x !== a);
+  return [
+    `${how} The cursed ${amuletName(a, false)} cracks, smokes, and falls from your neck,`,
+    `crumbling to black dust. The curse is broken. (${a.stat[0].toUpperCase() + a.stat.slice(1)} restored)`,
+  ];
 }
 
 export function tickStatusEffects(char: Character): { messages: string[]; damageTaken: number; fatal?: string } {

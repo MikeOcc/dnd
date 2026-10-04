@@ -102,6 +102,21 @@ export interface Inventory {
   starRings?: number;     // star sapphire rings carried
   starCharges?: number;   // uses left on the star sapphire ring in use (fresh ones hold RINGS.STAR_CHARGES)
   activeRing?: RingId;    // the one ring in use: many can be worn, only one is used at a time
+  amulets?: Amulet[];     // magic amulets carried; at most one worn
+}
+
+export type AmuletStat = 'strength' | 'intelligence' | 'dexterity' | 'constitution' | 'wisdom';
+
+/** A magic amulet: raises one attribute by 1-3 while worn, or, if cursed,
+ * lowers it by as much and won't come off until a fountain, an altar or an
+ * emerald breaks the curse. Its strength and curse are unknown until worn. */
+export interface Amulet {
+  stat: AmuletStat;
+  bonus: number;      // 1-3
+  cursed: boolean;
+  look: string;       // 'jade', 'bone'... (flavour)
+  known?: boolean;    // worn at least once: its bonus and curse are known
+  worn?: boolean;
 }
 
 /** The magic rings. fire, cold, evil and undead ward while in use; backfire
@@ -358,6 +373,7 @@ export interface GameState {
   mapShowWhole?: boolean;      // map phase only: showing the whole revealed level, not just the explored squares
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
   ringChoices?: Choice[];      // playing/combat, when any ring is worn: the ring menu (rings lettered in order, then Cancel)
+  amuletChoices?: Choice[];    // playing, when any amulet is carried: the amulet menu (lettered in order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
   /** A great lord seen from afar (playing only): how far, which side of his

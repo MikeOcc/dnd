@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -148,6 +148,7 @@ export class GameEngine {
     }
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
     if ((this.phase === 'combat' || this.phase === 'playing') && this.ringsWorn().length > 0) state.ringChoices = this.ringChoices();
+    if (this.phase === 'playing' && (this.char?.inventory.amulets?.length ?? 0) > 0) state.amuletChoices = this.amuletChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
@@ -325,6 +326,7 @@ export class GameEngine {
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
+      ...(wornAmulet(c) ? [`Amulet worn: ${amuletName(wornAmulet(c)!)}`] : []),
       ...(c.inventory.activeRing ? [`Ring in use: ${RINGS_INFO[c.inventory.activeRing].name} (${RINGS_INFO[c.inventory.activeRing].power})`] : []),
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
@@ -356,6 +358,7 @@ export class GameEngine {
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
       ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
+      ...(c.inventory.amulets ?? []).map(a => ({ name: `${amuletName(a, false)}${a.worn ? ' (worn)' : ''}`, type: a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown', qty: 'x1' })),
       ...this.ringsWorn().map(r => {
         const info = RINGS_INFO[r];
         const name = `${info.name[0].toUpperCase()}${info.name.slice(1)}${c.inventory.activeRing === r ? ' (in use)' : ''}`;
@@ -1508,6 +1511,12 @@ export class GameEngine {
   private useEmerald(): GameState {
     if (!this.char) return this.getState();
     this.char.inventory.gems.emerald--;
+    // A cursed amulet takes all the emerald's power: the curse breaks, no ward.
+    const uncursed = breakAmuletCurse(this.char, 'The emerald flares green, and its light closes on the curse at your throat.');
+    if (uncursed.length) {
+      this.messages = [...uncursed, '(The emerald spent itself on the curse: no ward this time.)'];
+      return this.getState();
+    }
     const added = this.rng.int(GEMS.EMERALD_FIGHTS_MIN, GEMS.EMERALD_FIGHTS_MAX);
     const fights = Math.min(GEMS.EMERALD_MAX_FIGHTS, wardFights(this.char) + added);
     addStatusEffect(this.char, { type: 'warded', value: fights, turns: 9999 });
@@ -1574,6 +1583,66 @@ export class GameEngine {
     this.char!.inventory.gems.opal--;
     const result = playerOpal(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
+  }
+
+  // ─── Amulets ───────────────────────────────────────────────────────────
+
+  /** The amulet menu: each amulet carried (take off the one worn, put on
+   * another), lettered in order, then Cancel. */
+  private amuletChoices(): Choice[] {
+    const amulets = this.char!.inventory.amulets ?? [];
+    const choices = amulets.map((a, i) => ({
+      key: String.fromCharCode(97 + i),
+      text: a.worn ? `Take off: ${amuletName(a)} [WORN]` : `Put on: ${amuletName(a)}`,
+    }));
+    choices.push({ key: String.fromCharCode(97 + amulets.length), text: 'Cancel' });
+    return choices;
+  }
+
+  /** A choice from the amulet menu (while exploring). One is worn at a time:
+   * putting one on takes off the other, unless that one is cursed. */
+  amuletAction(key: string): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+    const amulets = this.char.inventory.amulets ?? [];
+    const chosen = amulets[key.charCodeAt(0) - 97];
+    if (!chosen) {
+      this.messages = ['You leave your amulets as they are.'];
+      return this.getState();
+    }
+    const worn = wornAmulet(this.char);
+    const stuck = [
+      `The ${amuletName(worn ?? chosen, false)} won't come off! It clings to your neck like a cold hand.`,
+      '(A fountain, an altar, or an emerald can break the curse.)',
+    ];
+    if (chosen.worn) {
+      if (chosen.cursed) { this.messages = stuck; return this.getState(); }
+      chosen.worn = false;
+      this.messages = [`You take off the ${amuletName(chosen, false)}.`];
+      return this.getState();
+    }
+    if (worn?.cursed) { this.messages = stuck; return this.getState(); }
+
+    const lines: string[] = [];
+    if (worn) { worn.worn = false; lines.push(`You take off the ${amuletName(worn, false)}.`); }
+    chosen.worn = true;
+    chosen.known = true;
+    const stat = chosen.stat[0].toUpperCase() + chosen.stat.slice(1);
+    const feel: Record<string, [string, string]> = {
+      strength: ['stronger', 'weaker'], intelligence: ['sharper', 'duller'], dexterity: ['quicker', 'clumsier'],
+      constitution: ['hardier', 'frailer'], wisdom: ['wiser', 'more foolish'],
+    };
+    lines.push(`You fasten the ${amuletName(chosen, false)} around your neck.`);
+    if (chosen.cursed) {
+      lines.push(
+        `It tightens like a cold hand. You feel ${feel[chosen.stat][1]}. CURSED! (${amuletDelta(chosen)} ${stat})`,
+        'It will not come off. A fountain, an altar, or an emerald can break the curse.',
+      );
+    } else {
+      lines.push(`It warms against your skin. You feel ${feel[chosen.stat][0]}. (+${chosen.bonus} ${stat})`);
+      this.cue('gem-emerald');
+    }
+    this.messages = lines;
+    return this.getState();
   }
 
   // ─── Rings ─────────────────────────────────────────────────────────────
@@ -2544,7 +2613,8 @@ export class GameEngine {
 
     this.dungeonState.usedAltars.add(id);
     const result = resolveAltar(this.char, this.rng);
-    this.messages = [...result.messages, ...this.levelUp()];
+    const uncursed = breakAmuletCurse(this.char, 'Light pours from the altar and finds the curse at your throat.');
+    this.messages = [...result.messages, ...(uncursed.length ? ['', ...uncursed] : []), ...this.levelUp()];
 
     return this.closeInteractionWithSave();
   }
@@ -2558,7 +2628,8 @@ export class GameEngine {
 
     this.dungeonState.usedFountains.add(id);
     const result = resolveFountain(this.char, this.rng);
-    this.messages = [...result.messages, ...this.levelUp()];
+    const uncursed = breakAmuletCurse(this.char, 'The water runs over the amulet at your throat and hisses like acid on iron.');
+    this.messages = [...result.messages, ...(uncursed.length ? ['', ...uncursed] : []), ...this.levelUp()];
 
     return this.closeInteractionWithSave();
   }

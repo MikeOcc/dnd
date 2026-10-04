@@ -1,7 +1,7 @@
-import type { Character, Monster, StatusEffect, GemType, ChestTrapType } from './types.js';
+import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL } from './config.js';
-import { addStatusEffect, xpForLevel, applyLevelDrain } from './character.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS } from './config.js';
+import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
 
@@ -157,6 +157,23 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
 
   // Opals are semi-common, unless the character already has all they can carry.
   if (roll < GEMS.OPAL_CHEST_CHANCE && canHold('opal')) return findGem(char, 'opal');
+
+  // Now and then, a magic amulet (unless the pack already holds plenty).
+  if (roll >= GEMS.OPAL_CHEST_CHANCE && roll < GEMS.OPAL_CHEST_CHANCE + AMULETS.CHEST_CHANCE
+      && (char.inventory.amulets?.length ?? 0) < AMULETS.MAX_CARRIED) {
+    const stats: AmuletStat[] = ['strength', 'intelligence', 'dexterity', 'constitution', 'wisdom'];
+    const amulet: Amulet = {
+      stat: rng.pick(stats),
+      bonus: rng.int(AMULETS.BONUS_MIN, AMULETS.BONUS_MAX),
+      cursed: rng.float() < AMULETS.CURSE_CHANCE,
+      look: rng.pick([...AMULETS.LOOKS]),
+    };
+    char.inventory.amulets = [...(char.inventory.amulets ?? []), amulet];
+    return { messages: [
+      `Coiled at the bottom of the chest lies a ${amuletName(amulet, false)}.`,
+      'Its power is a mystery until you wear it. (A: Amulets)',
+    ] };
+  }
 
   if (roll < 0.352) {
     const gold = rng.int(TREASURE.GOLD_MIN, TREASURE.GOLD_MAX) * char.dungeonLevel

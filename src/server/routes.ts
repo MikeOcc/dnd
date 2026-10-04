@@ -180,6 +180,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'ring':
           state = engine.ringAction(payload?.choice ?? '');
           break;
+        case 'amulet':
+          state = engine.amuletAction(payload?.choice ?? '');
+          break;
         case 'interact':
           state = engine.interactionChoice(payload?.choice ?? '');
           break;

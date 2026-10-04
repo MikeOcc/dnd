@@ -690,6 +690,18 @@ export const CHEST_TRAPS = {
   DEPTH_DAMAGE_SCALE: 0.35,  // trap damage grows by this fraction per dungeon level below the first
 } as const;
 
+// Magic amulets: one worn at a time, +1 to +3 to one attribute, or as much
+// off it if cursed (and then it won't come off until a fountain, an altar or
+// an emerald breaks the curse; the amulet crumbles as it does).
+export const AMULETS = {
+  CHEST_CHANCE: 0.04,     // a chest holds one this often
+  CURSE_CHANCE: 0.25,
+  BONUS_MIN: 1,
+  BONUS_MAX: 3,
+  MAX_CARRIED: 5,         // with this many, chests hold no more
+  LOOKS: ['jade', 'bone', 'silver', 'obsidian', 'amber', 'moonstone', 'bronze', 'ivory', 'garnet', 'jet'],
+} as const;
+
 // Magic rings (content/rings.ts). Many can be worn, only one used at a time.
 // A warding ring works while it's the one in use; changing rings mid-fight
 // costs the turn (free while exploring).
