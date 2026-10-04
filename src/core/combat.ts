@@ -185,6 +185,44 @@ export function playerWhirlwind(char: Character, monster: Monster, rng: RNG): Co
   return r;
 }
 
+// ─── Backfire ───────────────────────────────────────────────────────────────
+
+/** A spell or gem turned on its caster: they take the damage, the monster
+ * none, and it still gets its turn. */
+function backfire(char: Character, monster: Monster, rng: RNG, damage: number, lead: string[]): CombatRoundResult {
+  const messages = [...lead];
+  char.hp = Math.max(0, char.hp - damage);
+  messages.push(`You suffer ${damage} damage from your own magic!`);
+  if (char.hp <= 0) {
+    return { messages, playerDamage: 0, monsterDamage: damage, playerDied: true, monsterDied: false, deathCause: 'Killed by your own magic, turned back on you.', killingBlow: lead };
+  }
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDamage: res.monsterDamage + damage, monsterDied: false };
+}
+
+/** Chance an offensive spell backfires: nothing at BACKFIRE_INT_BELOW
+ * Intelligence or more, rising with each point short. */
+export function spellBackfireChance(char: Character): number {
+  const short = SPELLS.BACKFIRE_INT_BELOW - getEffectiveStats(char).intelligence;
+  return short <= 0 ? 0 : Math.min(SPELLS.BACKFIRE_MAX, short * SPELLS.BACKFIRE_PER_POINT);
+}
+
+const SPELL_NAMES: Record<string, string> = { fireball: 'Fireball', poison: 'Poison Spray', acid: 'Acid Spray', frost: 'Frost Bolt', lightning: 'Lightning' };
+
+/** An offensive spell the caster lost control of: about what it would have
+ * dealt the monster, dealt to them instead. */
+export function playerSpellBackfire(char: Character, monster: Monster, rng: RNG, spell: string): CombatRoundResult {
+  const eff = getEffectiveStats(char);
+  const base = Math.max(char.level * COMBAT.FIREBALL_LEVEL_MULT, COMBAT.FIREBALL_MIN_LEVEL_POWER) + Math.floor(eff.intelligence / COMBAT.FIREBALL_INT_DIVISOR);
+  const power = char.charClass === 'warrior' ? WARRIOR.SPELL_POWER : 1;
+  const damage = Math.max(1, Math.round(base * (0.8 + rng.float() * 0.6) * power));
+  const name = SPELL_NAMES[spell] ?? 'the spell';
+  return backfire(char, monster, rng, damage, [
+    `You cast ${name}, but the words tangle on your tongue...`,
+    `The spell BACKFIRES! (Intelligence ${eff.intelligence}: too little to hold it)`,
+  ]);
+}
+
 // ─── Fireball ────────────────────────────────────────────────────────────────
 
 export function playerFireball(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
@@ -385,6 +423,13 @@ export function playerOpal(char: Character, monster: Monster, rng: RNG): CombatR
   const base = char.level * GEMS.OPAL_LEVEL_MULT + Math.floor(eff.wisdom / GEMS.OPAL_WIS_DIVISOR);
   const rand = GEMS.OPAL_RAND_MIN + rng.float() * (GEMS.OPAL_RAND_MAX - GEMS.OPAL_RAND_MIN);
   const damage = Math.max(1, Math.round(base * rand));
+
+  if (rng.float() < GEMS.OPAL_BACKFIRE_CHANCE) {
+    return backfire(char, monster, rng, damage, [
+      'The opal erupts in a blinding chiaroscuro of light and shadow...',
+      'and it BACKFIRES! The blast turns inward, on you!',
+    ]);
+  }
 
   const messages: string[] = ['The opal erupts in a blinding chiaroscuro of light and shadow!'];
   monster.hp -= damage;

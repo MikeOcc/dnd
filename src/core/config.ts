@@ -407,6 +407,12 @@ export const SPELLS = {
     lightning: 35,
     banish: 40,
   },
+  // A caster without the wits for it can lose control of an offensive spell
+  // (Fireball, Poison Spray, Acid, Frost, Lightning): it turns on them.
+  // Below this Intelligence, each point short adds to the chance, up to the max.
+  BACKFIRE_INT_BELOW: 12,
+  BACKFIRE_PER_POINT: 0.05,
+  BACKFIRE_MAX: 0.5,
   WARRIOR_UNLOCK_LEVEL: {
     'power-attack': 1,
     'shield-bash': 8,
@@ -748,6 +754,7 @@ export const GEMS = {
   OPAL_GEM_WEIGHT: 2,     // vs 1 each for ruby, sapphire, diamond
 
   OPAL_CONFUSE_TURNS: 2,
+  OPAL_BACKFIRE_CHANCE: 0.02,   // the blast turns on the one who loosed it
   CONFUSION_FAIL_CHANCE: 0.5, // per confused turn, chance the monster's action is wasted
 } as const;
 

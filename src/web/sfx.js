@@ -260,6 +260,22 @@ const SFX = (() => {
       }
     },
 
+    /** Asmodeus banished: a rumble and his howl falling away as he shrinks,
+     * the rift sucking in, a boom as it snaps shut, then a dark chord. Timed
+     * to the victory screen's animation (about 6 seconds). */
+    banish() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.05;
+      noise(t, { dur: 5.0, freq: 120, q: 0.7, type: 'lowpass', gain: 0.35, attack: 0.6 });         // the rumble
+      tone(t + 0.2, { type: 'sawtooth', freq: 180, freqTo: 1800, dur: 4.4, gain: 0.07, attack: 0.3, filter: 2400 }); // the howl, rising as he shrinks
+      tone(t + 0.2, { type: 'sawtooth', freq: 120, freqTo: 1300, dur: 4.4, gain: 0.05, attack: 0.3, filter: 1800 });
+      noise(t + 3.2, { dur: 1.6, freq: 400, q: 2, gain: 0.3, attack: 1.2, sweepTo: 4000 });       // the rift drawing in
+      thump(t + 5.05, { freq: 55, dur: 1.2, gain: 0.7 });                                         // it snaps shut
+      noise(t + 5.05, { dur: 0.6, freq: 800, q: 0.8, gain: 0.4, attack: 0.005 });
+      [55, 65.4, 77.8].forEach(f => tone(t + 5.4, { type: 'triangle', freq: f, dur: 3.5, gain: 0.12, attack: 0.4 }));  // a dark chord
+      for (let i = 0; i < 6; i++) tone(t + 5.5 + i * 0.09, { type: 'sine', freq: 900 + Math.random() * 900, dur: 0.25, gain: 0.03 });
+    },
+
     /** Five fanfares, from a short nod to a full triumph for a unique lord. */
     victory(tier) {
       if (!audio()) return;

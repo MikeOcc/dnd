@@ -206,7 +206,8 @@ function applyState(state) {
   updateHelpLine(phase);
 
   // Awaiting any key
-  awaitingAnyKey = ['title', 'level-intro', 'victory'].includes(phase);
+  awaitingAnyKey = ['title', 'level-intro'].includes(phase);
+  showBanishment(phase, prev.phase);
   // status uses X key, death uses C/Q, not any-key
 
   // Name input focus
@@ -629,7 +630,15 @@ function renderChoices(choices, phase, state) {
     return;
   }
 
-  if (phase === 'level-intro' || phase === 'victory') {
+  if (phase === 'victory') {
+    // The banishment stays on screen until the player chooses to leave.
+    const btn = makeChoiceBtn('M', 'Return to Main Menu');
+    btn.onclick = () => apiAction('main-menu');
+    area.appendChild(btn);
+    return;
+  }
+
+  if (phase === 'level-intro') {
     const btn = makeChoiceBtn('Any key', 'Continue');
     btn.onclick = handleAnyKey;
     area.appendChild(btn);
@@ -720,6 +729,30 @@ function openRingMenu() {
     area.appendChild(btn);
   }
   document.getElementById('messages').textContent = 'Choose a ring:';
+}
+
+/** Asmodeus banished: he shrinks to a spark and the rift swallows him. Plays
+ * once on reaching the victory screen, then holds on its last frame. */
+function showBanishment(phase, prevPhase) {
+  const el = document.getElementById('banish-scene');
+  if (phase !== 'victory') {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  if (prevPhase === 'victory' && el.innerHTML) return;
+  const sparks = Array.from({ length: 18 }, (_, i) =>
+    `<i style="--a:${i * 20}deg;--d:${(i % 6) * 0.35}s;--r:${90 + (i * 37) % 80}px"></i>`).join('');
+  el.innerHTML = `
+    <div class="rift"></div>
+    <div class="rift-ring"></div>
+    <div class="embers">${sparks}</div>
+    <div class="shrinking-lord">${getMonsterSprite('Asmodeus') || ''}</div>
+    <div class="banish-flash"></div>
+    <div class="banish-title">BANISHED</div>
+    <div class="banish-sub">to the Nine Hells, for a thousand years</div>`;
+  el.classList.remove('hidden');
+  if (typeof SFX !== 'undefined' && SFX.banish) SFX.banish();
 }
 
 function makeChoiceBtn(key, text) {
@@ -840,7 +873,7 @@ function updateHelpLine(phase) {
     case 'resting':
       hint.textContent = 'Resting... press any key to stop'; break;
     case 'victory':
-      hint.textContent = 'PRESS ANY KEY TO CONTINUE'; break;
+      hint.textContent = 'M: Return to Main Menu'; break;
     default:
       hint.textContent = '';
   }
@@ -852,7 +885,6 @@ function handleAnyKey() {
   const phase = currentState.phase;
   if (phase === 'title')       { apiAction('main-menu'); return; }
   if (phase === 'level-intro') { apiAction('dismiss-intro'); return; }
-  if (phase === 'victory')     { apiAction('main-menu'); return; }
 }
 
 function handleChoiceKey(key, phase) {
@@ -997,6 +1029,11 @@ document.addEventListener('keydown', (e) => {
   }
 
   const key = e.key.toLowerCase();
+
+  if (phase === 'victory') {
+    if (key === 'm') apiAction('main-menu');
+    return;
+  }
 
   if (phase === 'main-menu') {
     if (deletePendingChar) {

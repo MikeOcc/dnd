@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import type { RingId } from './types.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, beholderAntimagic, calculateXPReward,
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, beholderAntimagic, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
@@ -258,6 +258,9 @@ export class GameEngine {
     }
     if (this.phase === 'resting') {
       return [{ key: 'x', text: 'Stop Resting' }];
+    }
+    if (this.phase === 'victory') {
+      return [{ key: 'm', text: 'Return to Main Menu' }];
     }
     if (this.phase === 'lair-warning') {
       return [
@@ -1695,6 +1698,11 @@ export class GameEngine {
       this.fx.monster = 'physical';
       return this.processCombatResult(fn(this.char!, this.combat!.monster, this.rng));
     };
+    // Too little Intelligence, and an offensive spell can turn on its caster.
+    if (['fireball', 'poison', 'acid', 'frost', 'lightning'].includes(spell) && this.rng.float() < spellBackfireChance(this.char)) {
+      this.fx.player = 'arcane';
+      return this.processCombatResult(playerSpellBackfire(this.char, this.combat.monster, this.rng, spell));
+    }
     switch (spell) {
       case 'power-attack': return warriorMove(playerPowerAttack);
       case 'shield-bash':  return warriorMove(playerShieldBash);
@@ -2321,11 +2329,17 @@ export class GameEngine {
     const scoreLines = formatScore(score);
 
     this.phase = 'victory';
+    // No mortal can kill the Lord of the Nine Hells: beaten, he is banished.
     this.messages = [
-      'Asmodeus gives one final howl and collapses',
-      'into a heap of smoking ash.',
+      'Your final blow lands, and Asmodeus does not fall.',
+      'He SHRINKS: howling, smaller and smaller, a giant,',
+      'a man, a cat, a spark of hellfire in the dark,',
+      'and the rift he came from swallows him whole.',
       '',
-      'ASMODEUS MET A BITTER END.',
+      'ASMODEUS IS BANISHED TO THE NINE HELLS.',
+      '',
+      'No mortal hand can kill him. But it will be',
+      'a thousand years before he climbs back.',
       '',
       'The Seven Levels have been conquered.',
       '',

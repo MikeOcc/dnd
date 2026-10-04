@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
 import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus, playerBanish } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus, playerBanish, spellBackfireChance, playerSpellBackfire } from '../src/core/combat.js';
 import { GEMS, COMBAT, MANTICORE, GHOUL, PHOENIX, BANSHEE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -1078,7 +1078,10 @@ describe('Opal (gem)', () => {
     monster.hp = 1000;
     monster.maxHp = 1000;
 
-    const result = playerOpal({ ...char }, monster, new RNG(42));
+    const rng = new RNG(42);
+    const roll = rng.float.bind(rng);
+    rng.float = () => Math.max(roll(), GEMS.OPAL_BACKFIRE_CHANCE);   // no backfire this time
+    const result = playerOpal({ ...char }, monster, rng);
     expect(result.playerDamage).toBeGreaterThan(0);
     expect(monster.hp).toBeLessThan(1000);
     expect(monster.confusedTurns).toBeGreaterThan(0);
@@ -1091,7 +1094,8 @@ describe('Opal (gem)', () => {
     const hits: number[] = [];
     for (let i = 0; i < 400; i++) {
       const m = createMonster('Giant', 10, `opr${i}`); m.hp = m.maxHp = 1e6;
-      hits.push(playerOpal({ ...char }, m, rng).playerDamage);
+      const dmg = playerOpal({ ...char }, m, rng).playerDamage;
+      if (dmg > 0) hits.push(dmg);   // (a backfire deals the monster nothing)
     }
     expect(Math.min(...hits)).toBeGreaterThanOrEqual(Math.round(base * 0.375));
     expect(Math.max(...hits)).toBeLessThanOrEqual(Math.round(base * 1.6 * 6));
@@ -1960,5 +1964,40 @@ describe('Striking a stunned Asmodeus', () => {
     expect(hits / n).toBeGreaterThan(0.92);
     expect(hits / n).toBeLessThan(0.98);
     expect(unstunnedHits / n).toBeLessThan(hits / n);
+  });
+});
+
+describe('Backfires', () => {
+  it('an opal backfires about 2% of the time: the caster takes the blast, the monster nothing', () => {
+    const rng = new RNG(21);
+    let backfires = 0; const n = 6000;
+    for (let i = 0; i < n; i++) {
+      const char = makeChar({ level: 30, wisdom: 16 }); char.hp = char.maxHp = 1e6;
+      const m = createMonster('Giant', 10, 'g' + i); m.hp = m.maxHp = 1e6;
+      const r = playerOpal(char, m, rng);
+      if (r.messages.some(l => l.includes('BACKFIRES'))) {
+        backfires++;
+        expect(m.hp).toBe(1e6);
+        expect(m.confusedTurns ?? 0).toBe(0);
+        expect(r.messages.some(l => l.includes('from your own magic'))).toBe(true);
+      }
+    }
+    expect(backfires / n).toBeGreaterThan(0.012);
+    expect(backfires / n).toBeLessThan(0.03);
+  });
+
+  it('offensive spells backfire only below 12 Intelligence, more the duller the caster', () => {
+    expect(spellBackfireChance(makeChar({ intelligence: 12 }))).toBe(0);
+    expect(spellBackfireChance(makeChar({ intelligence: 18 }))).toBe(0);
+    expect(spellBackfireChance(makeChar({ intelligence: 10 }))).toBeCloseTo(0.10);
+    expect(spellBackfireChance(makeChar({ intelligence: 4 }))).toBeCloseTo(0.40);
+    expect(spellBackfireChance(makeChar({ intelligence: 1 }))).toBe(0.5);
+  });
+
+  it('a backfired spell can kill its caster, and says so', () => {
+    const char = makeChar({ level: 20, intelligence: 5 }); char.hp = 1;
+    const r = playerSpellBackfire(char, createMonster('Goblin', 3, 'g'), new RNG(1), 'fireball');
+    expect(r.playerDied).toBe(true);
+    expect(r.deathCause).toContain('your own magic');
   });
 });

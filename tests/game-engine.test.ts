@@ -32,6 +32,11 @@ function makeReadyEngine(db: any): GameEngine {
   engine.startNameEntry();
   engine.submitName('DeathTestHero');
   engine.acceptCharacter();
+  // Rolled characters vary; at least 12 Intelligence keeps their offensive
+  // spells from backfiring at random (still short of the 13 gems need).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = (engine as any).char;
+  c.intelligence = Math.max(c.intelligence, 12);
   return engine;
 }
 
@@ -1329,6 +1334,7 @@ describe('GameEngine — hit-effect hints', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.char.hp = e.char.maxHp = 100000;
+    e.char.intelligence = 16;   // sharp enough that the spell can't backfire
     e.phase = 'combat';
     e.combat = { monster: createMonster('Orc', 5, 'o1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
     e.combat.monster.hp = e.combat.monster.maxHp = 100000;
@@ -2522,5 +2528,35 @@ describe('Saves holding more than 3 opals or emeralds', () => {
     expect(loaded.inventory.gems.opal).toBe(3);
     expect(loaded.inventory.gems.emerald).toBe(3);
     expect(loaded.inventory.gems.ruby).toBe(10);
+  });
+});
+
+describe('Spell backfire in play', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  const casts = (intelligence: number) => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.charClass = 'wizard'; e.char.intelligence = intelligence; e.char.statusEffects = [];
+    let backfires = 0;
+    for (let i = 0; i < 300; i++) {
+      e.char.hp = e.char.maxHp = 1e6;
+      const m = createMonster('Giant', 5, 'g' + i); m.hp = m.maxHp = 1e9;
+      e.beginCombat(m); e.phase = 'combat'; e.char.heldRounds = 0;
+      const s = engine.spellAction('a');   // Fireball
+      if (s.messages.some(l => l.includes('BACKFIRES'))) backfires++;
+      e.endCombat(false); e.combat = null;
+    }
+    return backfires;
+  };
+
+  it('a dull caster’s fireballs sometimes turn on them; a sharp one’s never do', () => {
+    expect(casts(4)).toBeGreaterThan(60);
+    expect(casts(16)).toBe(0);
   });
 });
