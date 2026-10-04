@@ -276,6 +276,23 @@ const SFX = (() => {
       for (let i = 0; i < 6; i++) tone(t + 5.5 + i * 0.09, { type: 'sine', freq: 900 + Math.random() * 900, dur: 0.25, gain: 0.03 });
     },
 
+    /** Asmodeus triumphant: hellfire roaring up, a doom chord, and his
+     * laughter, a run of deep falling "HA"s, over the top. */
+    triumph() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.05;
+      noise(t, { dur: 3.5, freq: 300, q: 0.6, type: 'lowpass', gain: 0.3, attack: 1.5, sweepTo: 1200 });   // the fire climbing
+      [41.2, 49, 58.3, 61.7].forEach(f => tone(t + 0.4, { type: 'sawtooth', freq: f, dur: 4.5, gain: 0.06, attack: 1.2, filter: 500 }));
+      thump(t + 3.1, { freq: 50, dur: 1.4, gain: 0.7 });
+      for (let i = 0; i < 7; i++) {   // HA. HA. HA...
+        const at = t + 3.2 + i * 0.36;
+        const f = 150 - i * 9;
+        tone(at, { type: 'sawtooth', freq: f, freqTo: f * 0.75, dur: 0.24, gain: 0.16, attack: 0.02, filter: 900 });
+        tone(at, { type: 'square', freq: f * 0.5, freqTo: f * 0.37, dur: 0.24, gain: 0.07, attack: 0.02, filter: 600 });
+        noise(at, { dur: 0.2, freq: 700, q: 1.5, gain: 0.12, attack: 0.02 });
+      }
+    },
+
     /** Five fanfares, from a short nod to a full triumph for a unique lord. */
     victory(tier) {
       if (!audio()) return;

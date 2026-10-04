@@ -183,6 +183,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'amulet':
           state = engine.amuletAction(payload?.choice ?? '');
           break;
+        case 'continue-scene':
+          state = engine.continueLordScene();
+          break;
         case 'interact':
           state = engine.interactionChoice(payload?.choice ?? '');
           break;

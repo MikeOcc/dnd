@@ -689,3 +689,67 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   #banish-scene * { animation-duration: 0.01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }
+
+/* ── Asmodeus triumphant (before the death screen) ──────────────────────────
+   Out of the dark he rises over you, huge, glowing, shaking with laughter,
+   while hellfire climbs from below; YOU HAVE FALLEN burns in. It holds on
+   the last frame, still laughing, until the player continues. */
+#banish-scene.scene-triumph {
+  background: radial-gradient(ellipse at 50% 100%, #4a0802 0%, #160201 50%, #000 80%);
+}
+#banish-scene .hell-glow {
+  width: 100%; height: 100%; left: 0; top: 0; translate: none;
+  background: radial-gradient(ellipse at 50% 85%, rgba(255, 70, 10, 0.55) 0%, rgba(120, 0, 0, 0.25) 40%, transparent 70%);
+  opacity: 0;
+  animation: glow-in 3s ease-in forwards, glow-throb 1.8s ease-in-out 3s infinite;
+}
+@keyframes glow-in { to { opacity: 1; } }
+@keyframes glow-throb { 50% { opacity: 0.7; } }
+
+#banish-scene .rising-lord {
+  height: 100%; aspect-ratio: 1; left: 50%; top: 0; translate: -50% 0;
+  transform-origin: 50% 100%;
+  animation: lord-rise 3.2s cubic-bezier(.2,.7,.3,1) forwards;
+}
+#banish-scene .rising-lord svg { width: 100%; height: 100%; }
+@keyframes lord-rise {
+  0%   { scale: 0.35; translate: -50% 60%; opacity: 0; filter: brightness(0.2); }
+  35%  { opacity: 1; }
+  100% { scale: 1;    translate: -50% 3%;  opacity: 1; filter: brightness(1.15) drop-shadow(0 0 22px #ff2a00); }
+}
+/* His laughter: a heaving shake that never stops. */
+#banish-scene .laugh { width: 100%; height: 100%; animation: laugh 0.42s ease-in-out 3.2s infinite; }
+@keyframes laugh {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-1.5%) rotate(-0.6deg); }
+  50% { transform: translateY(0.6%) rotate(0.4deg); }
+  75% { transform: translateY(-1%) rotate(0.6deg); }
+}
+
+#banish-scene .hellfire { width: 100%; height: 100%; left: 0; top: 0; translate: none; }
+#banish-scene .hellfire i {
+  position: absolute; bottom: -10%; left: var(--x); width: 18%; height: var(--h);
+  translate: -50% 0; transform-origin: 50% 100%;
+  background: radial-gradient(ellipse at 50% 100%, #fff3b0 0%, #ffb020 18%, #ff4a0a 42%, rgba(160, 10, 0, 0.6) 65%, transparent 75%);
+  filter: blur(3px);
+  mix-blend-mode: screen;
+  scale: 1 0;
+  animation: flame-climb 2.6s ease-out var(--d) forwards, flame-flicker 0.5s ease-in-out calc(var(--d) + 2.6s) infinite alternate;
+}
+@keyframes flame-climb { to { scale: 1 1; } }
+@keyframes flame-flicker { from { scale: 1 0.9; } to { scale: 1.05 1.12; } }
+
+#banish-scene .triumph-title, #banish-scene .triumph-sub {
+  translate: -50% -50%; white-space: nowrap; text-align: center; opacity: 0; font-family: inherit;
+}
+#banish-scene .triumph-title {
+  top: 78%; font-size: clamp(24px, 6vw, 54px); letter-spacing: 0.3em; font-weight: bold; color: #ffd0a0;
+  text-shadow: 0 0 10px #ff2a00, 0 0 28px #a00, 0 2px 0 #300;
+  animation: title-in 1.4s ease-out 3.4s forwards, title-burn 2.4s ease-in-out 4.8s infinite;
+}
+#banish-scene .triumph-sub {
+  top: 91%; font-size: clamp(11px, 1.8vw, 15px); letter-spacing: 0.12em; color: #ffe2c8; font-style: italic;
+  background: rgba(0, 0, 0, 0.72); padding: 3px 12px; border-radius: 3px;
+  text-shadow: 0 0 6px #000;
+  animation: title-in 1.4s ease-out 4.4s forwards;
+}

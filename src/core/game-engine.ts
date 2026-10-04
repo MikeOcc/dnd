@@ -104,6 +104,8 @@ export class GameEngine {
   private shockWarnedAt = -Infinity;  // play time of the last anaphylaxis warning while walking  // guards checkAnaphylaxis against re-entry through handleDeath's getState
   private stepFrom: { x: number; y: number } | null = null;  // where the last step started
   private lair: { content: CellContent; monster: MonsterType; from: { x: number; y: number } } | null = null;  // lair-warning: whose, and the way back
+  /** asmodeus-scene: which ending is showing, and the screen it leads to. */
+  private lordScene: { scene: 'banished' | 'triumph'; then: 'victory' | 'death'; messages: string[] } | null = null;
   private mapAreaLines: string[] = [];     // map mode: the description of the area just walked into, shown under the legend  // "level:areaId" the character was last described in
   private presenceFelt = false;   // a unique monster made itself felt on this step
   private pendingRoll: CharacterRoll | null = null;
@@ -150,6 +152,7 @@ export class GameEngine {
     if ((this.phase === 'combat' || this.phase === 'playing') && this.ringsWorn().length > 0) state.ringChoices = this.ringChoices();
     if (this.phase === 'playing' && (this.char?.inventory.amulets?.length ?? 0) > 0) state.amuletChoices = this.amuletChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
+    if (this.phase === 'asmodeus-scene' && this.lordScene) state.lordScene = this.lordScene.scene;
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
       if (seen) state.sighting = seen;
@@ -262,6 +265,9 @@ export class GameEngine {
     }
     if (this.phase === 'victory') {
       return [{ key: 'm', text: 'Return to Main Menu' }];
+    }
+    if (this.phase === 'asmodeus-scene') {
+      return [{ key: 'c', text: 'Continue' }];
     }
     if (this.phase === 'lair-warning') {
       return [
@@ -2369,6 +2375,31 @@ export class GameEngine {
     this.pace.atDeathRespawn = true;
     this.pace.movesSinceCombat = 0;
 
+    // Fallen to Asmodeus himself: his triumph plays before the death screen.
+    if (killer === 'Asmodeus') {
+      this.lordScene = { scene: 'triumph', then: 'death', messages: this.messages };
+      this.phase = 'asmodeus-scene';
+      this.messages = [
+        'You fall to your knees on the dais of skulls.',
+        'Asmodeus rises over you, vast, and his laughter shakes the Seventh Level.',
+        '',
+        '"KNEEL, LITTLE MORTAL. YOU ALWAYS WOULD HAVE."',
+        '',
+        'The hellfire closes over you.',
+      ];
+    }
+
+    return this.getState();
+  }
+
+  /** Leaves Asmodeus's scene for the screen it leads to: the victory
+   * screen and its score, or the death screen. */
+  continueLordScene(): GameState {
+    if (this.phase !== 'asmodeus-scene' || !this.lordScene) return this.getState();
+    const { then, messages } = this.lordScene;
+    this.lordScene = null;
+    this.phase = then;
+    this.messages = messages;
     return this.getState();
   }
 
@@ -2416,8 +2447,9 @@ export class GameEngine {
     const score = calculateScore(this.char, playSeconds);
     const scoreLines = formatScore(score);
 
-    this.phase = 'victory';
     // No mortal can kill the Lord of the Nine Hells: beaten, he is banished.
+    // His banishment plays first; the victory screen and score follow.
+    this.phase = 'asmodeus-scene';
     this.messages = [
       'Your final blow lands, and Asmodeus does not fall.',
       'He SHRINKS: howling, smaller and smaller, a giant,',
@@ -2425,14 +2457,15 @@ export class GameEngine {
       'and the rift he came from swallows him whole.',
       '',
       'ASMODEUS IS BANISHED TO THE NINE HELLS.',
-      '',
-      'No mortal hand can kill him. But it will be',
+    ];
+    this.lordScene = { scene: 'banished', then: 'victory', messages: [
+      'No mortal hand can kill Asmodeus. But it will be',
       'a thousand years before he climbs back.',
       '',
       'The Seven Levels have been conquered.',
       '',
       ...scoreLines,
-    ];
+    ] };
 
     // Attach score to state
     const state = this.getState();

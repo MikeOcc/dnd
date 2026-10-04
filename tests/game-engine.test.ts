@@ -2233,6 +2233,8 @@ describe('GameEngine — death at the hands of Asmodeus', () => {
     e.rng.float = () => 0.99;
     let state = engine.combatAction('a');
     for (let i = 0; i < 20 && state.phase === 'combat'; i++) { e.char.hp = 1; state = engine.combatAction('a'); }
+    expect(state.phase).toBe('asmodeus-scene');   // his triumph first
+    state = engine.continueLordScene();
     expect(state.phase).toBe('death');
     expect(state.messages.join(' ')).toContain('Asmodeus is not done with you');
     expect(e.char.level).toBe(59);
@@ -2558,5 +2560,55 @@ describe('Spell backfire in play', () => {
   it('a dull caster’s fireballs sometimes turn on them; a sharp one’s never do', () => {
     expect(casts(4)).toBeGreaterThan(60);
     expect(casts(16)).toBe(0);
+  });
+});
+
+describe("Asmodeus's endings", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('beaten, he is banished on a scene of his own; Continue leads to the victory screen and score', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const m = createMonster('Asmodeus', 90, 'unique-asmodeus');
+    e.beginCombat(m); e.phase = 'combat';
+    m.hp = 0;
+    const s = e.processCombatResult({ messages: ['You strike.'], playerDamage: 999, monsterDamage: 0, playerDied: false, monsterDied: true });
+    expect(s.phase).toBe('asmodeus-scene');
+    expect(s.lordScene).toBe('banished');
+    expect(s.choices).toEqual([{ key: 'c', text: 'Continue' }]);
+    expect(s.messages.join(' ')).toContain('BANISHED');
+    const v = engine.continueLordScene();
+    expect(v.phase).toBe('victory');
+    expect(v.lordScene).toBeUndefined();
+    expect(v.messages.join(' ')).toContain('conquered');
+    expect(v.choices).toEqual([{ key: 'm', text: 'Return to Main Menu' }]);
+  });
+
+  it('killed by him, his triumph plays first; Continue leads to the death screen and its choices', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const s = e.handleDeath('Killed by a Level 90 Asmodeus.', ['The Asmodeus strikes you.'], 'Asmodeus');
+    expect(s.phase).toBe('asmodeus-scene');
+    expect(s.lordScene).toBe('triumph');
+    expect(s.messages.join(' ')).toContain('KNEEL');
+    const d = engine.continueLordScene();
+    expect(d.phase).toBe('death');
+    expect(d.messages[0]).toBe('Killed by a Level 90 Asmodeus.');
+    expect(engine.reviveAfterDeath().phase).toBe('playing');
+  });
+
+  it('killed by anything else, straight to the death screen', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    expect(e.handleDeath('Killed by a Level 3 Kobold.', [], 'Kobold').phase).toBe('death');
   });
 });

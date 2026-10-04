@@ -321,7 +321,8 @@ export type GamePhase =
   | 'map'
   | 'inventory'
   | 'resting'
-  | 'lair-warning';
+  | 'lair-warning'
+  | 'asmodeus-scene';   // Asmodeus banished, or triumphant: shown before the victory or death screen
 
 export interface Choice {
   key: string;
@@ -376,6 +377,7 @@ export interface GameState {
   amuletChoices?: Choice[];    // playing, when any amulet is carried: the amulet menu (lettered in order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
+  lordScene?: 'banished' | 'triumph';  // asmodeus-scene only: which ending to play
   /** A great lord seen from afar (playing only): how far, which side of his
    * throne you see, where across the view he is (-1 left edge .. 1 right
    * edge), and whether only out of the corner of your eye. */

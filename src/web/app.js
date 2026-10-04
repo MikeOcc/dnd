@@ -33,7 +33,7 @@ let deletePendingChar = null; // character awaiting Y/N delete confirmation, or 
 // resume the same character instead of dropping back to the title screen.
 
 const CHAR_ID_KEY = 'sevenLevelsCharacterId';
-const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'resting', 'lair-warning'];
+const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'status', 'map', 'inventory', 'death', 'victory', 'resting', 'lair-warning', 'asmodeus-scene'];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
@@ -209,7 +209,7 @@ function applyState(state) {
 
   // Awaiting any key
   awaitingAnyKey = ['title', 'level-intro'].includes(phase);
-  showBanishment(phase, prev.phase);
+  showLordScene(state, prev);
   // status uses X key, death uses C/Q, not any-key
 
   // Name input focus
@@ -632,8 +632,16 @@ function renderChoices(choices, phase, state) {
     return;
   }
 
+  if (phase === 'asmodeus-scene') {
+    // Asmodeus's ending stays on screen until the player continues.
+    const btn = makeChoiceBtn('C', 'Continue');
+    btn.onclick = () => apiAction('continue-scene');
+    area.appendChild(btn);
+    return;
+  }
+
   if (phase === 'victory') {
-    // The banishment stays on screen until the player chooses to leave.
+    // The victory screen stays until the player chooses to leave.
     const btn = makeChoiceBtn('M', 'Return to Main Menu');
     btn.onclick = () => apiAction('main-menu');
     area.appendChild(btn);
@@ -754,28 +762,47 @@ function openAmuletMenu() {
   document.getElementById('messages').textContent = 'Choose an amulet (one can be worn at a time):';
 }
 
-/** Asmodeus banished: he shrinks to a spark and the rift swallows him. Plays
- * once on reaching the victory screen, then holds on its last frame. */
-function showBanishment(phase, prevPhase) {
+/** Asmodeus's endings, shown before the victory or death screen. Banished:
+ * he shrinks to a spark and the rift swallows him. Triumph: he rises over
+ * the fallen hero, laughing, as hellfire closes in. Each plays once, then
+ * holds on its last frame until the player continues. */
+function showLordScene(state, prev) {
   const el = document.getElementById('banish-scene');
-  if (phase !== 'victory') {
+  const scene = state.phase === 'asmodeus-scene' ? state.lordScene : null;
+  if (!scene) {
     el.classList.add('hidden');
     el.innerHTML = '';
+    el.dataset.scene = '';
     return;
   }
-  if (prevPhase === 'victory' && el.innerHTML) return;
-  const sparks = Array.from({ length: 18 }, (_, i) =>
-    `<i style="--a:${i * 20}deg;--d:${(i % 6) * 0.35}s;--r:${90 + (i * 37) % 80}px"></i>`).join('');
-  el.innerHTML = `
-    <div class="rift"></div>
-    <div class="rift-ring"></div>
-    <div class="embers">${sparks}</div>
-    <div class="shrinking-lord">${getMonsterSprite('Asmodeus') || ''}</div>
-    <div class="banish-flash"></div>
-    <div class="banish-title">BANISHED</div>
-    <div class="banish-sub">to the Nine Hells, for a thousand years</div>`;
+  if (el.dataset.scene === scene && el.innerHTML) return;
+  el.dataset.scene = scene;
+  el.className = `scene-${scene}`;
+  const lord = getMonsterSprite('Asmodeus') || '';
+  if (scene === 'banished') {
+    const sparks = Array.from({ length: 18 }, (_, i) =>
+      `<i style="--a:${i * 20}deg;--d:${(i % 6) * 0.35}s;--r:${90 + (i * 37) % 80}px"></i>`).join('');
+    el.innerHTML = `
+      <div class="rift"></div>
+      <div class="rift-ring"></div>
+      <div class="embers">${sparks}</div>
+      <div class="shrinking-lord">${lord}</div>
+      <div class="banish-flash"></div>
+      <div class="banish-title">BANISHED</div>
+      <div class="banish-sub">to the Nine Hells, for a thousand years</div>`;
+    if (typeof SFX !== 'undefined' && SFX.banish) SFX.banish();
+  } else {
+    const flames = Array.from({ length: 14 }, (_, i) =>
+      `<i style="--x:${(i * 7.3) % 100}%;--d:${(i % 5) * 0.27}s;--h:${55 + (i * 23) % 40}%"></i>`).join('');
+    el.innerHTML = `
+      <div class="hell-glow"></div>
+      <div class="rising-lord"><div class="laugh">${lord}</div></div>
+      <div class="hellfire">${flames}</div>
+      <div class="triumph-title">YOU HAVE FALLEN</div>
+      <div class="triumph-sub">"Kneel, little mortal. You always would have."</div>`;
+    if (typeof SFX !== 'undefined' && SFX.triumph) SFX.triumph();
+  }
   el.classList.remove('hidden');
-  if (typeof SFX !== 'undefined' && SFX.banish) SFX.banish();
 }
 
 function makeChoiceBtn(key, text) {
@@ -897,6 +924,8 @@ function updateHelpLine(phase) {
       hint.textContent = 'Resting... press any key to stop'; break;
     case 'victory':
       hint.textContent = 'M: Return to Main Menu'; break;
+    case 'asmodeus-scene':
+      hint.textContent = 'C: Continue'; break;
     default:
       hint.textContent = '';
   }
@@ -1055,6 +1084,10 @@ document.addEventListener('keydown', (e) => {
 
   if (phase === 'victory') {
     if (key === 'm') apiAction('main-menu');
+    return;
+  }
+  if (phase === 'asmodeus-scene') {
+    if (key === 'c') apiAction('continue-scene');
     return;
   }
 
