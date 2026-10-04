@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { RNG } from '../src/core/random.js';
-import { rollCharacter, createCharacter, getEffectiveStats } from '../src/core/character.js';
+import { rollCharacter, createCharacter, getEffectiveStats, wearCursedAmulet } from '../src/core/character.js';
 import { resolveChest } from '../src/core/encounters.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
@@ -107,5 +107,70 @@ describe('Amulets in play', () => {
     e.useEmeraldExploring();
     expect(e.char.statusEffects.some((s: { type: string }) => s.type === 'warded')).toBe(false);
     expect(e.char.inventory.gems.emerald).toBe(0);
+  });
+});
+
+describe('Dropping amulets, and cursed ones that snap', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function ready(amulets: Amulet[]) {
+    const engine = new GameEngine(new Repository(db));
+    engine.startNameEntry(); engine.submitName('AmuletHero'); engine.acceptCharacter();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro(); e.phase = 'playing';
+    e.char.inventory.amulets = amulets;
+    return { engine, e };
+  }
+
+  it('an ordinary amulet can be dropped, worn or not', () => {
+    const { engine, e } = ready([amulet({ worn: true, known: true }), amulet({ stat: 'dexterity' })]);
+    expect(engine.getState().amuletChoices?.some(c => c.key === '2' && c.text.startsWith('Drop'))).toBe(true);
+    engine.amuletAction('1');
+    expect(e.char.inventory.amulets.length).toBe(1);
+    engine.amuletAction('1');
+    expect(e.char.inventory.amulets.length).toBe(0);
+  });
+
+  it("a cursed amulet can't be dropped, worn or carried, and trying gives it away", () => {
+    const { engine, e } = ready([amulet({ cursed: true }), amulet({ cursed: true, worn: true, known: true })]);
+    const s = engine.amuletAction('1');
+    expect(s.messages.join(' ')).toContain('CURSED');
+    expect(e.char.inventory.amulets[0].known).toBe(true);
+    engine.amuletAction('2');
+    expect(e.char.inventory.amulets.length).toBe(2);
+  });
+
+  it('a fountain cleanses every cursed amulet carried, worn or not', () => {
+    const { e } = ready([amulet({ cursed: true }), amulet({ stat: 'dexterity' })]);
+    e.interaction = { type: 'fountain', contentId: 'f1', choices: [] }; e.phase = 'interaction';
+    const s = e.resolveFountainChoice('a', 'f1');
+    expect(s.messages.join(' ')).toContain('crumble');
+    expect(e.char.inventory.amulets).toEqual([amulet({ stat: 'dexterity' })]);
+  });
+
+  it('a worn cursed amulet snaps about 1% of turns; other amulets never do', () => {
+    const rng = new RNG(5);
+    let snaps = 0; const n = 20000;
+    for (let i = 0; i < n; i++) {
+      const c = createCharacter('h', 'Hero', rollCharacter(new RNG(1)));
+      c.inventory.amulets = [amulet({ cursed: true, worn: true })];
+      if (wearCursedAmulet(c, rng).length) { snaps++; expect(c.inventory.amulets.length).toBe(0); }
+    }
+    expect(snaps / n).toBeGreaterThan(0.007); expect(snaps / n).toBeLessThan(0.013);
+    const c = createCharacter('h', 'Hero', rollCharacter(new RNG(1)));
+    c.inventory.amulets = [amulet({ worn: true }), amulet({ cursed: true })];
+    for (let i = 0; i < 2000; i++) expect(wearCursedAmulet(c, rng)).toEqual([]);
+  });
+
+  it('walking with a cursed amulet on, it eventually snaps', () => {
+    const { engine, e } = ready([amulet({ cursed: true, worn: true, known: true })]);
+    e.rng.float = () => 0.001;   // the snap, for certain
+    e.encounterCheck = () => null;
+    for (let i = 0; i < 4 && e.char.inventory.amulets.length; i++) { engine.turnLeft(); engine.moveForward(); e.phase = 'playing'; e.combat = null; }
+    expect(e.char.inventory.amulets.length).toBe(0);
   });
 });

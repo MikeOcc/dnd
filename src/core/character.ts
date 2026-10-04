@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL } from './config.js';
+import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL, AMULETS } from './config.js';
 import type { Amulet, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
@@ -190,13 +190,28 @@ export function amuletName(a: Amulet, withBonus = true): string {
 /** A fountain, an altar or an emerald breaks a worn amulet's curse: it
  * crumbles away. Returns the lines saying so, or [] if nothing was cursed. */
 export function breakAmuletCurse(char: Character, how: string): string[] {
+  const cursed = (char.inventory?.amulets ?? []).filter(x => x.cursed);
+  if (cursed.length === 0) return [];
+  const a = cursed.find(x => x.worn);
+  const others = cursed.filter(x => x !== a);
+  char.inventory.amulets = char.inventory.amulets!.filter(x => !x.cursed);
+  const lines = a
+    ? [`${how} The cursed ${amuletName(a, false)} cracks, smokes, and falls from your neck,`,
+       `crumbling to black dust. The curse is broken. (${a.stat[0].toUpperCase() + a.stat.slice(1)} restored)`]
+    : [];
+  if (others.length) {
+    lines.push(`${a ? '' : `${how} `}In your pack, ${others.length === 1 ? 'an amulet' : `${others.length} amulets`} smoke${others.length === 1 ? 's' : ''} and crumble${others.length === 1 ? 's' : ''} to dust: ${others.length === 1 ? 'it was' : 'they were'} cursed.`);
+  }
+  return lines;
+}
+
+/** Each turn a cursed amulet is worn, it may snap of its own accord and
+ * fall away. Returns the lines saying so, or []. */
+export function wearCursedAmulet(char: Character, rng: RNG): string[] {
   const a = wornAmulet(char);
-  if (!a?.cursed) return [];
+  if (!a?.cursed || rng.float() >= AMULETS.CURSED_BREAK_CHANCE) return [];
   char.inventory.amulets = char.inventory.amulets!.filter(x => x !== a);
-  return [
-    `${how} The cursed ${amuletName(a, false)} cracks, smokes, and falls from your neck,`,
-    `crumbling to black dust. The curse is broken. (${a.stat[0].toUpperCase() + a.stat.slice(1)} restored)`,
-  ];
+  return [`The cursed ${amuletName(a, false)} snaps! It slithers from your neck and crumbles to dust. Free at last.`];
 }
 
 export function tickStatusEffects(char: Character): { messages: string[]; damageTaken: number; fatal?: string } {

@@ -699,6 +699,7 @@ export const AMULETS = {
   BONUS_MIN: 1,
   BONUS_MAX: 3,
   MAX_CARRIED: 5,         // with this many, chests hold no more
+  CURSED_BREAK_CHANCE: 0.01,   // per turn worn (a step, or a round of a fight), a cursed amulet may snap
   LOOKS: ['jade', 'bone', 'silver', 'obsidian', 'amber', 'moonstone', 'bronze', 'ivory', 'garnet', 'jet'],
 } as const;
 

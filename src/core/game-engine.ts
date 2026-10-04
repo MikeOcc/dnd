@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -871,7 +871,7 @@ export class GameEngine {
     // Tick status effects
     const dot = this.char.statusEffects.find(e => e.type === 'poison' || e.type === 'mummified' || e.type === 'bleeding' || e.type === 'flesh-rot');
     const { messages: statusMsgs, damageTaken, fatal } = tickStatusEffects(this.char);
-    this.messages = statusMsgs;
+    this.messages = [...statusMsgs, ...wearCursedAmulet(this.char, this.rng)];
     if (fatal) return this.handleDeath(fatal);
     if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' || dot?.type === 'flesh-rot' ? 'drain' : 'physical';
 
@@ -1595,8 +1595,26 @@ export class GameEngine {
       key: String.fromCharCode(97 + i),
       text: a.worn ? `Take off: ${amuletName(a)} [WORN]` : `Put on: ${amuletName(a)}`,
     }));
+    amulets.forEach((a, i) => choices.push({ key: String(i + 1), text: `Drop: ${amuletName(a)}` }));
     choices.push({ key: String.fromCharCode(97 + amulets.length), text: 'Cancel' });
     return choices;
+  }
+
+  /** Drops an amulet, unless it's cursed: a cursed one won't leave you
+   * (and trying shows it for what it is) until the curse is broken or it snaps. */
+  private dropAmulet(a: import('./types.js').Amulet): GameState {
+    const inv = this.char!.inventory;
+    if (a.cursed) {
+      a.known = true;
+      this.messages = [
+        `You try to drop the ${amuletName(a, false)}, but it clings to ${a.worn ? 'your neck' : 'your fingers'}. It is CURSED!`,
+        '(A fountain, an altar, or an emerald can break the curse; worn, it may also snap on its own.)',
+      ];
+      return this.getState();
+    }
+    inv.amulets = inv.amulets!.filter(x => x !== a);
+    this.messages = [`You drop the ${amuletName(a, false)}${a.worn ? ' from your neck' : ''}. It clatters away into the dark.`];
+    return this.getState();
   }
 
   /** A choice from the amulet menu (while exploring). One is worn at a time:
@@ -1604,6 +1622,7 @@ export class GameEngine {
   amuletAction(key: string): GameState {
     if (!this.char || this.phase !== 'playing') return this.getState();
     const amulets = this.char.inventory.amulets ?? [];
+    if (/^[1-9]$/.test(key) && amulets[Number(key) - 1]) return this.dropAmulet(amulets[Number(key) - 1]);
     const chosen = amulets[key.charCodeAt(0) - 97];
     if (!chosen) {
       this.messages = ['You leave your amulets as they are.'];
@@ -2194,7 +2213,7 @@ export class GameEngine {
     if (!this.char || !this.combat) return this.getState();
     this.noteMonsterTurn(result);
 
-    this.messages = result.messages;
+    this.messages = [...result.messages, ...wearCursedAmulet(this.char, this.rng)];
     this.combat.round++;
 
     if (result.playerTeleported) {
