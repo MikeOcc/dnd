@@ -682,6 +682,26 @@ export const CHEST_TRAPS = {
   DEPTH_DAMAGE_SCALE: 0.35,  // trap damage grows by this fraction per dungeon level below the first
 } as const;
 
+// Magic rings (content/rings.ts). Many can be worn, only one used at a time.
+// A warding ring works while it's the one in use; changing rings mid-fight
+// costs the turn (free while exploring).
+export const RINGS = {
+  FIRE_WARD: 0.75,      // ruby: this much of any fire damage is turned aside
+  COLD_WARD: 0.75,      // aquamarine: likewise for cold
+  EVIL_WARD: 0.5,       // onyx: this much of the damage evil creatures deal, and their fear and charms fail
+  UNDEAD_WARD: 0.5,     // rose quartz: this much of the damage undead deal, and their level drain fails
+  BACKFIRE_FRACTION: 0.5,   // green diamond: the monster takes this share of what its backfired attack would have done
+  STAR_CHARGES: 3,      // star sapphire: teleports per ring before it crumbles
+  // Who counts as evil, for the onyx ring.
+  EVIL_MONSTERS: [
+    'Asmodeus', 'Tiamat', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes', 'Rakshasa',
+    'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
+    'Beholder', 'Death Tyrant', 'Mind Flayer', 'Aboleth', 'Elder Oblex', 'Nightwalker',
+    'Lich', 'Demilich', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
+    'Orc King', 'Wendigo', 'Banshee',
+  ] as string[],
+} as const;
+
 export const GEMS = {
   // Flavor "worth" shown when a gem is found — there's no shop to sell them
   // to, so this doesn't feed gold or score, just tells the player how rare

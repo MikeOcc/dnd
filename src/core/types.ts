@@ -32,7 +32,7 @@ export interface CellContent {
   monsterId?: string;   // for fixed/unique monsters
   descriptionId?: string;
   trapVariant?: string;
-  treasure?: string;    // a Zork treasure chest: which treasure (content/treasures.ts)
+  treasure?: string;    // a Zork treasure chest: which treasure (content/treasures.ts), or a ring chest: which ring (content/rings.ts)
 }
 
 export interface SerializedDungeon {
@@ -98,7 +98,16 @@ export interface Inventory {
   books: number;
   gems: Record<GemType, number>;
   treasures?: string[];   // Zork treasures found (content/treasures.ts)
+  rings?: RingId[];       // magic rings worn (content/rings.ts); one of each, except star sapphires, counted below
+  starRings?: number;     // star sapphire rings carried
+  starCharges?: number;   // uses left on the star sapphire ring in use (fresh ones hold RINGS.STAR_CHARGES)
+  activeRing?: RingId;    // the one ring in use: many can be worn, only one is used at a time
 }
+
+/** The magic rings. fire, cold, evil and undead ward while in use; backfire
+ * turns a monster's next attack back on it; escape (star sapphire) teleports
+ * you out of a fight. */
+export type RingId = 'fire' | 'cold' | 'evil' | 'undead' | 'backfire' | 'escape';
 
 export interface Character {
   id: string;
@@ -243,6 +252,8 @@ export interface Monster {
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
   petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
+  backfireUsed?: boolean;    // green diamond ring: already used this fight
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
   burnedTurns?: number;
   invisibleTurns?: number;  // Banshee: turns it stays invisible (can't be attacked)
@@ -346,6 +357,7 @@ export interface GameState {
   mapRevealed?: boolean;       // map phase only: this level has been revealed, so the whole-level/explored toggle applies
   mapShowWhole?: boolean;      // map phase only: showing the whole revealed level, not just the explored squares
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)
+  ringChoices?: Choice[];      // playing/combat, when any ring is worn: the ring menu (rings lettered in order, then Cancel)
   fx?: Fx;                     // hit-effect hints for this action only
   lair?: { monster: MonsterType };  // lair-warning only: whose lair, for the client's art
   /** A great lord seen from afar (playing only): how far, which side of his

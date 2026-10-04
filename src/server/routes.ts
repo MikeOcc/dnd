@@ -177,6 +177,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'gem':
           state = engine.gemAction(payload?.choice ?? '');
           break;
+        case 'ring':
+          state = engine.ringAction(payload?.choice ?? '');
+          break;
         case 'interact':
           state = engine.interactionChoice(payload?.choice ?? '');
           break;

@@ -9,7 +9,8 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, beholderAntimagic, calculateXPReward,
+import type { RingId } from './types.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, beholderAntimagic, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
@@ -20,11 +21,12 @@ import {
 } from './encounters.js';
 import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
-import { placeTreasures, TREASURE_CHEST_PREFIX } from './treasures.js';
+import { placeTreasures, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
 import { treasureById } from '../content/treasures.js';
+import { RINGS_INFO, RING_ORDER, ringChestById } from '../content/rings.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
@@ -145,6 +147,7 @@ export class GameEngine {
       state.mapShowWhole = state.mapRevealed && this.mapShowWhole;
     }
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
+    if ((this.phase === 'combat' || this.phase === 'playing') && this.ringsWorn().length > 0) state.ringChoices = this.ringChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
@@ -276,6 +279,7 @@ export class GameEngine {
         { key: 'f', text: 'Scare' },
         { key: 'e', text: 'Use Gem' },
         { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
+        ...(this.ringsWorn().length > 0 ? [{ key: 'r', text: 'Use Ring' }] : []),
         ...(this.combat.monster.type === 'Unicorn' ? [{ key: 'h', text: 'Offer Your Hand' }] : []),
       ];
     }
@@ -318,6 +322,7 @@ export class GameEngine {
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
+      ...(c.inventory.activeRing ? [`Ring in use: ${RINGS_INFO[c.inventory.activeRing].name} (${RINGS_INFO[c.inventory.activeRing].power})`] : []),
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
       `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
@@ -348,6 +353,12 @@ export class GameEngine {
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
       ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
+      ...this.ringsWorn().map(r => {
+        const info = RINGS_INFO[r];
+        const name = `${info.name[0].toUpperCase()}${info.name.slice(1)}${c.inventory.activeRing === r ? ' (in use)' : ''}`;
+        const qty = r === 'escape' ? `x${c.inventory.starRings} (${c.inventory.starCharges} use${c.inventory.starCharges === 1 ? '' : 's'} left)` : 'x1';
+        return { name, type: `Ring: ${info.power}`, qty };
+      }),
     ];
     const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
     const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
@@ -1562,6 +1573,101 @@ export class GameEngine {
     return this.processCombatResult(result);
   }
 
+  // ─── Rings ─────────────────────────────────────────────────────────────
+
+  /** The rings worn, in menu order. */
+  private ringsWorn(): RingId[] {
+    const inv = this.char?.inventory;
+    if (!inv) return [];
+    return RING_ORDER.filter(r => r === 'escape' ? (inv.starRings ?? 0) > 0 : !!inv.rings?.includes(r));
+  }
+
+  /** The ring menu: each ring worn, lettered in order, then Cancel. */
+  private ringChoices(): Choice[] {
+    const inv = this.char!.inventory;
+    const worn = this.ringsWorn();
+    const choices = worn.map((r, i) => {
+      const info = RINGS_INFO[r];
+      let text = `${info.name[0].toUpperCase()}${info.name.slice(1)}: ${info.power}`;
+      if (r === 'escape') {
+        const spare = (inv.starRings ?? 0) - 1;
+        text += ` (${inv.starCharges} use${inv.starCharges === 1 ? '' : 's'} left${spare > 0 ? `, +${spare} spare ring${spare === 1 ? '' : 's'}` : ''})`;
+      }
+      if (r === 'backfire' && this.combat?.monster.backfireUsed) text += ' (spent this fight)';
+      if (inv.activeRing === r) text += ' [IN USE]';
+      return { key: String.fromCharCode(97 + i), text };
+    });
+    choices.push({ key: String.fromCharCode(97 + worn.length), text: 'Cancel' });
+    return choices;
+  }
+
+  /** A choice from the ring menu. Mid-fight, changing rings costs the turn;
+   * while exploring it's free. The star sapphire and green diamond only
+   * work in a fight. */
+  ringAction(key: string): GameState {
+    if (!this.char) return this.getState();
+    const inCombat = this.phase === 'combat' && !!this.combat;
+    if (!inCombat && this.phase !== 'playing') return this.getState();
+    const ring = this.ringsWorn()[key.charCodeAt(0) - 97];
+    if (!ring) {
+      this.messages = ['You leave your rings as they are.'];
+      return this.getState();
+    }
+    const inv = this.char.inventory;
+    const info = RINGS_INFO[ring];
+
+    if (inCombat) {
+      if (this.isHeld()) return this.combatHeld();
+      if (ring === 'escape') return this.useStarSapphire();
+      if (ring === 'backfire') {
+        if (this.combat!.monster.backfireUsed) {
+          this.messages = ['The green diamond is dark and cold. Its mirrors are spent for this fight.'];
+          return this.getState();
+        }
+        return this.processCombatResult(playerBackfireRing(this.char, this.combat!.monster, this.rng));
+      }
+      if (inv.activeRing === ring) {
+        this.messages = [`The ${info.name} is already the ring in use.`];
+        return this.getState();
+      }
+      return this.processCombatResult(playerChangeRing(this.char, this.combat!.monster, this.rng, ring));
+    }
+
+    if (ring === 'escape') {
+      this.messages = ["The star sapphire's star lies still. Its power is for escaping a fight."];
+      return this.getState();
+    }
+    inv.activeRing = ring;
+    this.messages = ring === 'backfire'
+      ? ['You turn the green diamond ring to the front. In a fight, use it to make the next attack backfire.', '(None of your warding rings is in use now.)']
+      : [`You turn the ${info.name} on your finger, and it wakes. (${info.power})`];
+    return this.getState();
+  }
+
+  /** The star sapphire: away from the fight, like a ruby. Each ring holds a
+   * few uses, then crumbles, and the next one (if any) takes its place. */
+  private useStarSapphire(): GameState {
+    const inv = this.char!.inventory;
+    inv.starCharges = Math.max(0, (inv.starCharges ?? RINGS.STAR_CHARGES) - 1);
+    this.cue('gem-ruby');
+    this.messages = ['You turn the star sapphire ring. Its six-rayed star blazes, and the fight falls away behind you!'];
+    this.teleportPlayer();
+    this.endCombat(false);
+    this.messages.push('You find yourself somewhere else in the dungeon.');
+    if (inv.starCharges > 0) {
+      this.messages.push(`(${inv.starCharges} use${inv.starCharges === 1 ? '' : 's'} left on this star sapphire.)`);
+    } else {
+      inv.starRings = Math.max(0, (inv.starRings ?? 1) - 1);
+      if (inv.starRings > 0) {
+        inv.starCharges = RINGS.STAR_CHARGES;
+        this.messages.push('The star sapphire cracks and crumbles to blue dust. You turn the next one to the front.');
+      } else {
+        this.messages.push('The star sapphire cracks and crumbles to blue dust. It was your last.');
+      }
+    }
+    return this.getState();
+  }
+
   /** Keys come from spellMenu(): the character's known spells, lettered in
    * unlock order. Anything else (Cancel, or an unlearned spell) backs out. */
   spellAction(key: string): GameState {
@@ -2328,6 +2434,32 @@ export class GameEngine {
       this.fx.player = CHEST_TRAP_ELEMENT[trap];
       messages.push(...sprung.messages, '');
       alarm = !!sprung.triggerMonster;
+    }
+
+    // A ring chest holds its ring and nothing else.
+    const ringChest = id.startsWith(RING_CHEST_PREFIX) ? ringChestById(id.slice(RING_CHEST_PREFIX.length)) : undefined;
+    if (ringChest) {
+      const inv = this.char.inventory;
+      const ring = ringChest.ring;
+      const info = RINGS_INFO[ring];
+      messages.push(...info.found, '');
+      if (ring === 'escape') {
+        inv.starRings = (inv.starRings ?? 0) + 1;
+        if (!inv.starCharges) inv.starCharges = RINGS.STAR_CHARGES;
+        messages.push(`You slip the star sapphire ring onto your finger. (${info.power}: ${RINGS.STAR_CHARGES} uses, in a fight)`);
+      } else {
+        if (!inv.rings?.includes(ring)) inv.rings = [...(inv.rings ?? []), ring];
+        messages.push(`You slip the ${info.name} onto your finger. (${info.power})`);
+        if (!inv.activeRing && ring !== 'backfire') {
+          inv.activeRing = ring;
+          messages.push('It is the ring in use. Many rings can be worn, but only one used at a time.');
+        }
+      }
+      messages.push('(J: choose the ring in use. R in a fight.)');
+      this.cue('victory-3');
+      this.messages = messages;
+      if (alarm) { this.closeInteraction(); return this.startRandomEncounter(); }
+      return this.closeInteractionWithSave();
     }
 
     // A Zork treasure chest holds its treasure and nothing else.

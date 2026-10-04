@@ -2326,7 +2326,7 @@ describe('GameEngine — the Zork treasures', () => {
     const e = engine as any;
     for (const [level, id] of [[1, 'zorkmid'], [2, 'nest'], [4, 'zork-ring'], [6, 'flathead-crown']] as const) {
       e.loadLevelIntoCache(level);
-      const chests = [...e.getLevel(level).contents.values()].filter((c: { treasure?: string }) => c.treasure);
+      const chests = [...e.getLevel(level).contents.values()].filter((c: { id: string }) => c.id.startsWith('treasure-'));
       expect(chests.map((c: { treasure: string }) => c.treasure)).toEqual([id]);
     }
   });
@@ -2469,15 +2469,16 @@ describe('GameEngine — the throne in the field of view', () => {
       const here = areaAtCell(areas, x, y);
       if (!here || here === room) continue;
       const dx = lx - x, dy = ly - y;
+      if (Math.hypot(dx, dy) > 25) continue;   // beyond PRESENCE.ASMODEUS_THRONE_VIEW
       e.char.x = x; e.char.y = y;
       e.char.facing = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
       const clear = e.clearSight(lvl.grid, x, y, lx, ly);
       const seen = !!engine.getState().sighting;
-      if (!clear) { expect(seen).toBe(false); blocked++; }
-      else if (seen) outsideSeen++;
+      // Facing it squarely, a clear line means it's seen, a blocked one that it isn't.
+      expect(seen).toBe(clear);
+      if (clear) outsideSeen++; else blocked++;
     }
     expect(blocked).toBeGreaterThan(0);
-    expect(outsideSeen).toBeGreaterThan(0);
   });
 });
 

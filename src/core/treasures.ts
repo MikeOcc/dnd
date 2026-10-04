@@ -1,4 +1,5 @@
-// Places the Zork treasure chests (content/treasures.ts) as a level loads,
+// Places the Zork treasure chests (content/treasures.ts) and the magic ring
+// chests (content/rings.ts) as a level loads,
 // so saves made before they existed get them too. Each goes in the most
 // out-of-the-way room on its level: the one with the fewest ways in,
 // farthest from the entrance. The same steps on every load give the same
@@ -8,14 +9,19 @@ import type { CellContent, DungeonCell, Direction } from './types.js';
 import { canMove } from './dungeon.js';
 import { mapAreas, areaAtCell } from './regions.js';
 import { TREASURES } from '../content/treasures.js';
+import { RING_CHESTS } from '../content/rings.js';
 
 export const TREASURE_CHEST_PREFIX = 'treasure-';
+export const RING_CHEST_PREFIX = 'ring-';
 
 export function placeTreasures(
   levelNum: number, grid: DungeonCell[][], entrance: { x: number; y: number }, exit: { x: number; y: number } | null,
   contents: Map<string, CellContent>,
 ): void {
-  const here = TREASURES.filter(t => t.level === levelNum);
+  const here = [
+    ...TREASURES.filter(t => t.level === levelNum).map(t => ({ chest: TREASURE_CHEST_PREFIX + t.id, treasure: t.id })),
+    ...RING_CHESTS.filter(r => r.level === levelNum).map(r => ({ chest: RING_CHEST_PREFIX + r.id, treasure: r.id })),
+  ];
   if (here.length === 0) return;
   const map = mapAreas(grid);
 
@@ -37,7 +43,7 @@ export function placeTreasures(
 
   const used = new Set<string>();
   for (const t of here) {
-    const id = TREASURE_CHEST_PREFIX + t.id;
+    const id = t.chest;
     if ([...contents.values()].some(c => c.id === id)) continue;
     let best: string | null = null;
     let bestScore = -Infinity;
@@ -53,6 +59,6 @@ export function placeTreasures(
     }
     if (!best) continue;
     used.add(best);
-    contents.set(best, { type: 'chest', id, treasure: t.id });
+    contents.set(best, { type: 'chest', id, treasure: t.treasure });
   }
 }

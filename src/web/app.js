@@ -8,6 +8,7 @@ let currentState = { phase: 'title', messages: [] };
 let characterId = null;
 let spellMenuOpen = false;
 let gemMenuOpen = false;
+let ringMenuOpen = false;
 const MAP_ZOOM_STEPS = [1, 1.4, 1.8, 2.4, 3];
 let mapZoom = (() => {
   try { return Math.min(MAP_ZOOM_STEPS.length - 1, Math.max(0, +localStorage.getItem('sevenLevelsMapZoom') || 0)); }
@@ -77,6 +78,7 @@ function applyState(state) {
   currentState = state;
   spellMenuOpen = false;
   gemMenuOpen = false;
+  ringMenuOpen = false;
   saveListChars = null;
   saveListAction = null;
   deletePendingChar = null;
@@ -699,6 +701,27 @@ function renderMainMenuChoices(area, state) {
   area.appendChild(delBtn);
 }
 
+/** The ring menu (R in a fight, J while exploring), from the engine's ringChoices. */
+function openRingMenu() {
+  const rings = currentState.ringChoices || [];
+  if (rings.length === 0) {
+    document.getElementById('messages').textContent = 'You wear no magic rings.';
+    return;
+  }
+  ringMenuOpen = true;
+  const area = document.getElementById('choices-area');
+  area.innerHTML = '';
+  for (const ring of rings) {
+    const btn = makeChoiceBtn(ring.key.toUpperCase(), ring.text);
+    btn.onclick = () => {
+      ringMenuOpen = false;
+      apiAction('ring', { choice: ring.key });
+    };
+    area.appendChild(btn);
+  }
+  document.getElementById('messages').textContent = 'Choose a ring:';
+}
+
 function makeChoiceBtn(key, text) {
   const btn = document.createElement('button');
   btn.className = 'choice-btn';
@@ -795,7 +818,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -868,6 +891,12 @@ function handleChoiceKey(key, phase) {
       apiAction('gem', { choice: key });
       return;
     }
+    if (ringMenuOpen) {
+      ringMenuOpen = false;
+      apiAction('ring', { choice: key });
+      return;
+    }
+    if (key === 'r') { openRingMenu(); return; }
     if (key === 'b') {
       // Show spell submenu
       spellMenuOpen = true;
@@ -995,6 +1024,13 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'playing') {
+    if (ringMenuOpen) {
+      // A ring's letter picks it; anything else puts the menu away.
+      ringMenuOpen = false;
+      apiAction('ring', { choice: (currentState.ringChoices || []).some(c => c.key === key) ? key : '-' });
+      return;
+    }
+    if (key === 'j') { openRingMenu(); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  apiAction('turn-left');
@@ -1071,6 +1107,14 @@ document.addEventListener('keydown', (e) => {
       }
       return;
     }
+    if (ringMenuOpen) {
+      if ((currentState.ringChoices || []).some(c => c.key === key)) {
+        ringMenuOpen = false;
+        apiAction('ring', { choice: key });
+      }
+      return;
+    }
+    if (key === 'r') { openRingMenu(); return; }
     if (key === 'b') {
       // Trigger spell submenu via button click
       const spellBtn = [...document.querySelectorAll('.choice-btn')]
@@ -1142,6 +1186,7 @@ document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAc
 document.getElementById('btn-book')      ?.addEventListener('click', () => apiAction('use-book'));
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
+document.getElementById('btn-rings')     ?.addEventListener('click', () => { if (currentState.phase === 'playing') openRingMenu(); });
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
