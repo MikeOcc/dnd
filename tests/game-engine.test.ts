@@ -11,7 +11,7 @@ import { abilityElement } from '../src/core/combat.js';
 import { MENU_LORE } from '../src/content/menu-lore.js';
 import { canMove, floodFill } from '../src/core/dungeon.js';
 import { mapAreas, areaAtCell } from '../src/core/regions.js';
-import { DUNGEON } from '../src/core/config.js';
+import { DUNGEON, GEMS } from '../src/core/config.js';
 import type { DungeonCell } from '../src/core/types.js';
 
 function openGrid(w: number, h: number): DungeonCell[][] {
@@ -622,6 +622,8 @@ describe('GameEngine — gems', () => {
     const engine = makeReadyEngine(db);
     const e = setupGemUser(engine, 'Kobold');
     const hpBefore = e.combat.monster.hp;
+    const roll = e.rng.float.bind(e.rng);
+    e.rng.float = () => Math.max(roll(), GEMS.OPAL_BACKFIRE_CHANCE);   // no backfire (2%) this time
 
     const state = engine.gemAction('d');
     expect(e.char.inventory.gems.opal).toBe(0);
