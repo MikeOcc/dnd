@@ -11,6 +11,12 @@ const __dirname  = dirname(__filename);
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 const app = express();
+// The game moved from its temporary ngrok address to playsevenlevels.com:
+// old links (already shared on social media) send people to the new home.
+app.use((req, res, next) => {
+  if ((req.headers.host ?? '').endsWith('.ngrok-free.dev')) return res.redirect(301, `https://playsevenlevels.com${req.originalUrl}`);
+  next();
+});
 app.use(express.json());
 
 // Serve static web files — no caching so changes are always picked up
