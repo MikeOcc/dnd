@@ -2,21 +2,45 @@ import type { Express, Request, Response } from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { Repository } from '../database/repositories.js';
 import { GameEngine } from '../core/game-engine.js';
+import { ACCESS, visitorOf, canUse, canDelete, allowRequest, type Visitor } from './access.js';
 
-// One engine per character session (keyed by characterId)
-const sessions = new Map<string, GameEngine>();
-
-function getOrCreateEngine(repo: Repository, characterId?: string): GameEngine {
-  const key = characterId ?? '__new__';
-  if (!sessions.has(key)) {
-    sessions.set(key, new GameEngine(repo));
-  }
-  return sessions.get(key)!;
-}
+// One engine per character being played (keyed by characterId), held by the
+// visitor playing it. A character being made is keyed 'pending:<visitor>'.
+interface Session { engine: GameEngine; holder: string; lastSeen: number }
+const sessions = new Map<string, Session>();
 
 function freshEngine(repo: Repository): GameEngine {
-  const engine = new GameEngine(repo);
-  return engine;
+  return new GameEngine(repo);
+}
+
+/** Someone else is at this character, and recently. */
+function heldByAnother(key: string, v: Visitor): boolean {
+  const s = sessions.get(key);
+  if (!s || s.holder === v.id || v.owner) return false;
+  return Date.now() - s.lastSeen < ACCESS.LOCK_MINUTES * 60_000;
+}
+
+function hold(key: string, engine: GameEngine, v: Visitor): void {
+  engine.debugAids = v.owner;   // testing aids are the owner's alone
+  sessions.set(key, { engine, holder: v.id, lastSeen: Date.now() });
+}
+
+/** Drops games idle for hours (and, if there are too many, the stalest). */
+function sweepSessions(): void {
+  const now = Date.now();
+  for (const [k, s] of sessions) if (now - s.lastSeen > ACCESS.SESSION_IDLE_HOURS * 3_600_000) sessions.delete(k);
+  if (sessions.size > ACCESS.MAX_SESSIONS) {
+    const oldest = [...sessions.entries()].sort((a, b) => a[1].lastSeen - b[1].lastSeen);
+    for (const [k] of oldest.slice(0, sessions.size - ACCESS.MAX_SESSIONS)) sessions.delete(k);
+  }
+}
+setInterval(sweepSessions, 10 * 60_000).unref();
+
+/** The main menu with a message, for a request that can't go ahead. */
+function refused(repo: Repository, ...lines: string[]) {
+  const state = freshEngine(repo).showMainMenu();
+  state.messages = [...lines, '', ...state.messages];
+  return { state, characterId: null };
 }
 
 export function setupRoutes(app: Express, db: DatabaseSync): void {
@@ -24,9 +48,10 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
 
   // ─── Character management ─────────────────────────────────────────────────
 
-  app.get('/api/characters', (_req: Request, res: Response) => {
+  app.get('/api/characters', (req: Request, res: Response) => {
     try {
-      const list = repo.listCharacters();
+      const v = visitorOf(req, res);
+      const list = repo.listCharacters(owner => canUse(v, owner));
       res.json({ characters: list });
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -35,6 +60,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
 
   app.delete('/api/characters/:id', (req: Request, res: Response) => {
     try {
+      const v = visitorOf(req, res);
+      if (!canDelete(v, repo.getOwner(req.params.id))) return res.status(403).json({ error: 'You can only delete characters you made.' });
+      if (heldByAnother(req.params.id, v)) return res.status(409).json({ error: 'Someone is playing that character right now.' });
       repo.deleteCharacter(req.params.id);
       sessions.delete(req.params.id);
       res.json({ ok: true });
@@ -76,55 +104,68 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         payload?: Record<string, string>;
       };
 
+      const v = visitorOf(req, res);
+      if (!allowRequest(v)) return res.status(429).json({ error: 'Slow down a little.' });
       let engine: GameEngine;
 
       // A page reload picks the live game back up, unsaved progress and all
       // (the game only writes to disk when the player saves). Falls back to
       // the last save if the server no longer has that game in memory.
-      if (action === 'resume' && payload?.characterId) {
-        const live = sessions.get(payload.characterId);
-        if (live && live.getCharacter()?.id === payload.characterId) {
-          return res.json({ state: live.getState(), characterId: payload.characterId });
+      if ((action === 'resume' || action === 'load') && payload?.characterId) {
+        const id = payload.characterId;
+        if (!canUse(v, repo.getOwner(id))) return res.json(refused(repo, 'That character is not available.'));
+        if (heldByAnother(id, v)) return res.json(refused(repo, 'Someone else is playing that character right now. Try another, or come back later.'));
+        const live = sessions.get(id);
+        if (action === 'resume' && live && live.engine.getCharacter()?.id === id) {
+          hold(id, live.engine, v);
+          return res.json({ state: live.engine.getState(), characterId: id });
         }
         engine = freshEngine(repo);
-        sessions.set(payload.characterId, engine);
-        const state = engine.loadCharacter(payload.characterId);
-        return res.json({ state, characterId: payload.characterId });
+        hold(id, engine, v);
+        const state = engine.loadCharacter(id);
+        return res.json({ state, characterId: id });
       }
 
-      if (action === 'load' && payload?.characterId) {
-        // Always create fresh engine for load
-        engine = freshEngine(repo);
-        sessions.set(payload.characterId, engine);
-        const state = engine.loadCharacter(payload.characterId);
-        return res.json({ state, characterId: payload.characterId });
-      }
-
+      const pendingKey = `pending:${v.id}`;
       if (action === 'new-character-start') {
+        if (!v.owner && repo.countOwnedBy(v.id) >= ACCESS.MAX_CHARACTERS_PER_GUEST) {
+          return res.json(refused(repo, `You already have ${ACCESS.MAX_CHARACTERS_PER_GUEST} characters. Delete one to make another.`));
+        }
         engine = freshEngine(repo);
-        sessions.set('__pending__', engine);
+        hold(pendingKey, engine, v);
         const state = engine.startNameEntry();
         return res.json({ state, characterId: '__pending__' });
+      }
+
+      const key = !characterId || characterId === '__pending__' ? pendingKey : characterId;
+      if (key !== pendingKey) {
+        if (!canUse(v, repo.getOwner(key))) return res.json(refused(repo, 'That character is not available.'));
+        if (heldByAnother(key, v)) return res.json(refused(repo, 'Someone else has picked up this character. Your game here has ended.'));
       }
 
       // The server lost this game (it restarted while the page stayed open):
       // pick the character back up from their last save rather than handing
       // the action to a blank engine, which would dump them at the title.
-      if (characterId && characterId !== '__pending__' && !sessions.has(characterId)) {
+      if (key !== pendingKey && !sessions.has(key)) {
         const revived = freshEngine(repo);
-        const state = revived.loadCharacter(characterId);
+        const state = revived.loadCharacter(key);
         if (revived.getCharacter()) {
-          sessions.set(characterId, revived);
+          hold(key, revived, v);
           state.messages = [
             'The dungeon shimmers and settles. (The game server restarted, so you are back at your last save.)',
             '',
             ...state.messages,
           ];
-          return res.json({ state, characterId });
+          return res.json({ state, characterId: key });
         }
       }
 
-      engine = getOrCreateEngine(repo, characterId ?? '__pending__');
+      const session = sessions.get(key);
+      if (!session) return res.json(refused(repo));
+      session.lastSeen = Date.now();
+      session.holder = v.id;
+      session.engine.debugAids = v.owner;
+      engine = session.engine;
 
       let state;
       switch (action) {
@@ -138,15 +179,19 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
           state = engine.acceptCharacter(payload?.charClass === 'warrior' ? 'warrior' : 'wizard');
           const char = engine.getCharacter();
           if (char) {
-            sessions.set(char.id, engine);
-            sessions.delete('__pending__');
+            // The owner's new characters are the owner's; a guest's are theirs alone.
+            repo.setOwner(char.id, v.owner ? 'owner' : v.id);
+            hold(char.id, engine, v);
+            sessions.delete(pendingKey);
             return res.json({ state, characterId: char.id });
           }
           break;
         }
         case 'main-menu':
+          // Back at the menu, the character is free for someone else.
           state = engine.showMainMenu();
-          break;
+          sessions.delete(key);
+          return res.json({ state, characterId: null });
         case 'save':
           state = engine.saveGame();
           break;
@@ -274,12 +319,13 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
   // Initial state
   app.get('/api/state', (req: Request, res: Response) => {
     const { characterId } = req.query as { characterId?: string };
-    if (!characterId || !sessions.has(characterId)) {
+    const v = visitorOf(req, res);
+    const s = characterId ? sessions.get(characterId) : undefined;
+    if (!characterId || !s || s.holder !== v.id) {
       const engine = freshEngine(repo);
       const state = engine.showMainMenu();
       return res.json({ state });
     }
-    const engine = sessions.get(characterId)!;
-    res.json({ state: engine.getState(), characterId });
+    res.json({ state: s.engine.getState(), characterId });
   });
 }

@@ -54,6 +54,12 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE dungeon_state ADD COLUMN revealed_levels TEXT NOT NULL DEFAULT '[]'`);
   } catch { /* column already exists */ }
+  // Who a character belongs to, for guests playing over the internet:
+  // NULL = a shared test character anyone may play; 'owner' = the house
+  // owner's alone; anything else = the guest (browser) that made it.
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN owner TEXT`);
+  } catch { /* column already exists */ }
 }
 
 export function createMemoryDb(): DatabaseSync {

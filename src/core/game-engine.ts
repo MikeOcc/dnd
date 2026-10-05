@@ -104,6 +104,8 @@ export class GameEngine {
   private shockWarnedAt = -Infinity;  // play time of the last anaphylaxis warning while walking  // guards checkAnaphylaxis against re-entry through handleDeath's getState
   private stepFrom: { x: number; y: number } | null = null;  // where the last step started
   private lair: { content: CellContent; monster: MonsterType; from: { x: number; y: number } } | null = null;  // lair-warning: whose, and the way back
+  /** Testing aids (DEBUG) show only for the house owner, not guests online. */
+  debugAids = true;
   /** Where a revive puts the character: this level's entrance, or (killed by
    * Asmodeus) a random spot on Level 6. */
   private reviveOnLevel6 = false;
@@ -457,7 +459,7 @@ export class GameEngine {
 
     // Testing: on level 7, mark Asmodeus's lair (and keep it in the full view).
     let asmodeusAt: { x: number; y: number } | null = null;
-    if (DEBUG.SHOW_ASMODEUS_ON_MAP && level === 7) {
+    if (DEBUG.SHOW_ASMODEUS_ON_MAP && this.debugAids && level === 7) {
       for (const [k, c] of lvl.contents) {
         if (c.type !== 'unique-monster' || c.monsterId !== 'Asmodeus' || ds.defeatedUniqueMonsters.has(c.id)) continue;
         const [ax, ay] = k.split(',').map(Number);
@@ -698,7 +700,8 @@ export class GameEngine {
   }
 
   submitName(name: string): GameState {
-    this.pendingName = name.trim().slice(0, 24) || 'Unknown';
+    // eslint-disable-next-line no-control-regex
+    this.pendingName = name.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 24) || 'Unknown';
     return this.doRoll(0);
   }
 

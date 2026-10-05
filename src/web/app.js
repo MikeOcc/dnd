@@ -54,7 +54,8 @@ async function apiAction(action, payload) {
   }
 
   const data = await res.json();
-  if (data.characterId) characterId = data.characterId;
+  // null means the server let the character go (main menu, or it wasn't ours to play).
+  if (data.characterId !== undefined) characterId = data.characterId;
   lastAction = action;
   lastActionWalked = action === 'move-forward' || action === 'move-backward'
     || (action === 'map-move' && (payload?.dir === 'forward' || payload?.dir === 'backward'));

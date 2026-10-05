@@ -93,10 +93,27 @@ export class Repository {
     return this.rowToCharacter(row);
   }
 
-  listCharacters(): CharacterSummary[] {
-    const rows = this.db.prepare(
-      'SELECT id, name, level, dungeon_level, monsters_defeated, asmodeus_defeated, xp, char_class FROM characters ORDER BY last_saved DESC'
+  /** Who a character belongs to (see the owner column in initDb): null for a
+   * shared test character, 'owner' for the house owner's, or a guest's id. */
+  getOwner(id: string): string | null | undefined {
+    const row = this.db.prepare('SELECT owner FROM characters WHERE id = ?').get(id) as { owner: string | null } | undefined;
+    return row ? row.owner : undefined;
+  }
+
+  setOwner(id: string, owner: string | null): void {
+    this.db.prepare('UPDATE characters SET owner = ? WHERE id = ?').run(owner, id);
+  }
+
+  countOwnedBy(owner: string): number {
+    return (this.db.prepare('SELECT COUNT(*) AS n FROM characters WHERE owner = ?').get(owner) as { n: number }).n;
+  }
+
+  /** Every character, or (given `canSee`) just those a viewer may see. */
+  listCharacters(canSee?: (owner: string | null) => boolean): CharacterSummary[] {
+    const all = this.db.prepare(
+      'SELECT id, name, level, dungeon_level, monsters_defeated, asmodeus_defeated, xp, char_class, owner FROM characters ORDER BY last_saved DESC'
     ).all() as Record<string, unknown>[];
+    const rows = canSee ? all.filter(r => canSee((r['owner'] as string | null) ?? null)) : all;
 
     return rows.map(row => ({
       id:                 row['id'] as string,

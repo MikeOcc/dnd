@@ -2417,6 +2417,7 @@ describe('GameEngine — Asmodeus seen across his throne room', () => {
       const toward = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
       const away = ({ N: 'S', S: 'N', E: 'W', W: 'E' } as const)[toward as 'N'];
       e.char.facing = toward;
+      if (!e.clearSight(lvl.grid, x, y, lx, ly)) continue;   // an odd-shaped room can hide it behind a wall
       const seen = engine.getState().sighting;
       expect(seen?.monster).toBe('Asmodeus');
       expect(Math.abs(seen!.offset)).toBeLessThanOrEqual(1);

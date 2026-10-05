@@ -26,7 +26,9 @@ initDb(db);
 // API routes
 setupRoutes(app, db);
 
-app.listen(PORT, () => {
+// Only this Mac can connect directly; friends come in through the tunnel,
+// which connects from here too.
+app.listen(PORT, '127.0.0.1', () => {
   console.log(`THE SEVEN LEVELS server running at http://localhost:${PORT}`);
   console.log('Open the URL above in your browser to play.');
 });
