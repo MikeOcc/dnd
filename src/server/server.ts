@@ -2,7 +2,7 @@ import express from 'express';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { DatabaseSync } from 'node:sqlite';
-import { getDb, initDb } from '../database/database.js';
+import { getDb, initDb, setDbPath } from '../database/database.js';
 import { setupRoutes } from './routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +30,8 @@ app.use(express.static(webDir, {
   setHeaders: (res) => res.setHeader('Cache-Control', 'no-store'),
 }));
 
-// Initialize DB
+// Initialize DB (hosted, the database lives outside the code: DB_PATH)
+if (process.env.DB_PATH) setDbPath(process.env.DB_PATH);
 const db = getDb();
 initDb(db);
 

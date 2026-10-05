@@ -6,7 +6,7 @@
 // link from being abused.
 
 import type { Request, Response } from 'express';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 
 export const ACCESS = {
   COOKIE: 'sl_visitor',
@@ -20,8 +20,39 @@ export const ACCESS = {
 
 export interface Visitor { id: string; owner: boolean }
 
-/** The house owner: a request made on this machine, not relayed by the tunnel. */
+// ─── The owner's key ─────────────────────────────────────────────────────────
+// Hosted in the cloud, everyone arrives through the tunnel, so the owner signs
+// in once by visiting /owner?key=<OWNER_KEY> (the key lives in the server's
+// environment). That leaves a cookie holding a token derived from the key.
+
+const OWNER_COOKIE = 'sl_owner';
+const ownerKey = (): string => process.env.OWNER_KEY ?? '';
+const ownerToken = (): string => createHmac('sha256', ownerKey()).update('seven-levels-owner').digest('hex');
+
+function sameSecret(a: string, b: string): boolean {
+  const x = Buffer.from(a), y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** GET /owner?key=...: a correct key makes this browser the owner's. */
+export function ownerSignIn(req: Request, res: Response): void {
+  const key = String(req.query.key ?? '');
+  if (ownerKey().length < 16 || !sameSecret(key, ownerKey())) { res.status(404).send('Not found'); return; }
+  res.setHeader('Set-Cookie', `${OWNER_COOKIE}=${ownerToken()}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax; Secure`);
+  res.redirect(302, '/');
+}
+
+/** GET /owner/sign-out: this browser goes back to being a guest. */
+export function ownerSignOut(_req: Request, res: Response): void {
+  res.setHeader('Set-Cookie', `${OWNER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure`);
+  res.redirect(302, '/');
+}
+
+/** The house owner: a browser signed in with the owner's key, or a request
+ * made on this machine and not relayed by a tunnel. */
 function isOwner(req: Request): boolean {
+  const cookie = readCookie(req, OWNER_COOKIE);
+  if (cookie && ownerKey().length >= 16 && sameSecret(cookie, ownerToken())) return true;
   const addr = req.socket.remoteAddress ?? '';
   const local = addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
   // Tunnels (ngrok, Cloudflare) mark what they relay; any such mark means a guest.

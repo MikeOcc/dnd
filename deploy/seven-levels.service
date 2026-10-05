@@ -1,0 +1,23 @@
+# systemd unit: the game server, kept running and restarted if it falls over.
+# Installed to /etc/systemd/system/seven-levels.service by deploy/setup-server.sh.
+[Unit]
+Description=The Seven Levels game server
+After=network.target
+
+[Service]
+User=seven
+WorkingDirectory=/srv/seven-levels/app
+EnvironmentFile=/srv/seven-levels/env
+Environment=NODE_ENV=production PORT=3000 DB_PATH=/srv/seven-levels/data/seven-levels.db NODE_NO_WARNINGS=1
+ExecStart=/srv/seven-levels/app/node_modules/.bin/tsx src/server/server.ts
+Restart=always
+RestartSec=3
+# A little hardening: it only needs its own folders.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/seven-levels/data
+
+[Install]
+WantedBy=multi-user.target

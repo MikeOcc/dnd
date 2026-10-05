@@ -12,6 +12,7 @@ import { setupRoutes } from '../src/server/routes.js';
 let db: any, server: Server, base = '', repo: Repository;
 
 beforeAll(async () => {
+  process.env.OWNER_KEY = 'test-owner-key-0123456789abcdef';
   db = createMemoryDb();
   repo = new Repository(db);
   const app = express();
@@ -139,5 +140,30 @@ describe('Through a Cloudflare tunnel', () => {
   it('a request carrying Cloudflare headers is a guest, even from this machine', async () => {
     const r = await fetch(`${base}/api/characters`, { headers: { 'CF-Connecting-IP': '198.51.100.9', 'CF-Ray': 'abc' } });
     expect(r.headers.get('set-cookie')).toMatch(/^sl_visitor=g-/);
+  });
+});
+
+describe("The owner's key, for hosting where everyone is remote", () => {
+  const remote = { 'X-Forwarded-For': '203.0.113.9' };
+  it('the right key signs a browser in as the owner; a wrong one is a plain 404', async () => {
+    const bad = await fetch(`${base}/owner?key=nope`, { headers: remote, redirect: 'manual' });
+    expect(bad.status).toBe(404);
+    const ok = await fetch(`${base}/owner?key=test-owner-key-0123456789abcdef`, { headers: remote, redirect: 'manual' });
+    expect(ok.status).toBe(302);
+    const cookie = ok.headers.get('set-cookie')!.split(';')[0];
+    expect(cookie).toMatch(/^sl_owner=[a-f0-9]{64}$/);
+
+    // Signed in through the tunnel, the owner sees the owner's characters.
+    const owner = client(false);
+    const mine = await owner.create('OwnerOnly');
+    const asOwner = await (await fetch(`${base}/api/characters`, { headers: { ...remote, Cookie: cookie } })).json();
+    expect(asOwner.characters.map((c: { id: string }) => c.id)).toContain(mine);
+    const asGuest = await (await fetch(`${base}/api/characters`, { headers: { ...remote, Cookie: 'sl_owner=' + 'f'.repeat(64) } })).json();
+    expect(asGuest.characters.map((c: { id: string }) => c.id)).not.toContain(mine);
+  });
+
+  it('signing out clears the cookie', async () => {
+    const r = await fetch(`${base}/owner/sign-out`, { headers: remote, redirect: 'manual' });
+    expect(r.headers.get('set-cookie')).toMatch(/^sl_owner=;.*Max-Age=0/);
   });
 });

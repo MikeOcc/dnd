@@ -2,7 +2,7 @@ import type { Express, Request, Response } from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { Repository } from '../database/repositories.js';
 import { GameEngine } from '../core/game-engine.js';
-import { ACCESS, visitorOf, canUse, canDelete, allowRequest, type Visitor } from './access.js';
+import { ACCESS, visitorOf, canUse, canDelete, allowRequest, ownerSignIn, ownerSignOut, type Visitor } from './access.js';
 
 // One engine per character being played (keyed by characterId), held by the
 // visitor playing it. A character being made is keyed 'pending:<visitor>'.
@@ -45,6 +45,10 @@ function refused(repo: Repository, ...lines: string[]) {
 
 export function setupRoutes(app: Express, db: DatabaseSync): void {
   const repo = new Repository(db);
+
+  // ─── The owner signing in (needed when hosted, where everyone is remote) ──
+  app.get('/owner', ownerSignIn);
+  app.get('/owner/sign-out', ownerSignOut);
 
   // ─── Character management ─────────────────────────────────────────────────
 
