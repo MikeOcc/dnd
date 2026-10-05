@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { RNG } from '../src/core/random.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
@@ -2586,7 +2587,7 @@ describe("Asmodeus's endings", () => {
     expect(v.phase).toBe('victory');
     expect(v.lordScene).toBeUndefined();
     expect(v.messages.join(' ')).toContain('conquered');
-    expect(v.choices).toEqual([{ key: 'm', text: 'Return to Main Menu' }]);
+    expect(v.choices).toEqual([{ key: 'c', text: 'Continue Playing (Level 1)' }, { key: 'm', text: 'Return to Main Menu' }]);
   });
 
   it('killed by him, his triumph plays first; Continue leads to the death screen and its choices', () => {
@@ -2686,5 +2687,70 @@ describe('Asmodeus always comes back', () => {
     expect(engine.getState().choices?.[0].text).toBe('Revive at the Entrance');
     engine.reviveAfterDeath();
     expect(e.char.dungeonLevel).toBe(6);
+  });
+});
+
+describe('After banishing Asmodeus, the dungeon grows', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function winAt7(engine: GameEngine) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7);
+    const m = createMonster('Asmodeus', 90, 'unique-asmodeus');
+    e.beginCombat(m); e.phase = 'combat'; m.hp = 0;
+    e.processCombatResult({ messages: [], playerDamage: 1, monsterDamage: 0, playerDied: false, monsterDied: true });
+    return e;
+  }
+
+  it('playing on puts you at the start of Level 1, and the save says so too', () => {
+    const engine = makeReadyEngine(db);
+    const e = winAt7(engine);
+    engine.continueLordScene();
+    const s = engine.continueAfterVictory();
+    expect(s.phase).toBe('playing');
+    expect(e.char.dungeonLevel).toBe(1);
+    const lvl1 = e.getLevel(1);
+    expect([e.char.x, e.char.y]).toEqual([lvl1.entrance.x, lvl1.entrance.y]);
+    expect(s.messages.join(' ')).toContain('+20 levels');
+    const saved = new Repository(db).loadCharacter(e.char.id)!;
+    expect(saved.dungeonLevel).toBe(1);
+  });
+
+  it('every other monster is 20 levels higher per victory, past its usual cap; Asmodeus keeps his own climb', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const levels = (victories: number) => {
+      e.char.asmodeusVictories = victories;
+      const out: number[] = [];
+      e.rng = new RNG(9);
+      for (let i = 0; i < 30; i++) {
+        e.phase = 'playing'; e.combat = null; e.char.hp = e.char.maxHp = 1e9;   // survives any first strike
+        let seen = 0;
+        const begin = e.beginCombat.bind(e);
+        e.beginCombat = (m: { level: number }) => { seen = m.level; return begin(m); };
+        e.startRandomEncounter();
+        e.beginCombat = begin;
+        out.push(seen);
+      }
+      return out;
+    };
+    const base = levels(0), once = levels(1), twice = levels(2);
+    base.forEach((l, i) => { expect(once[i]).toBe(l + 20); expect(twice[i]).toBe(l + 40); });
+
+    e.char.asmodeusVictories = 1;
+    e.phase = 'playing'; e.combat = null; e.char.hp = e.char.maxHp = 1e9;
+    e.startFixedEncounter({ type: 'unique-monster', id: 'unique-orc-king', monsterId: 'Orc King' }, 'Orc King');
+    expect(e.combat.monster.level).toBeGreaterThanOrEqual(100);   // 80-90, +20
+    e.phase = 'playing'; e.combat = null; e.char.hp = e.char.maxHp = 1e9;
+    e.startFixedEncounter({ type: 'unique-monster', id: 'unique-asmodeus', monsterId: 'Asmodeus' }, 'Asmodeus');
+    const a = e.combat.monster.level - asmodeusReturnBonus(e.char.id, 1);
+    expect(a).toBeGreaterThanOrEqual(80); expect(a).toBeLessThanOrEqual(100);
   });
 });

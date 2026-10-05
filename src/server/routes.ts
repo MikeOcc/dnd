@@ -186,6 +186,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'continue-scene':
           state = engine.continueLordScene();
           break;
+        case 'continue-after-victory':
+          state = engine.continueAfterVictory();
+          break;
         case 'interact':
           state = engine.interactionChoice(payload?.choice ?? '');
           break;

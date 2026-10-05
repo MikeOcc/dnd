@@ -267,7 +267,7 @@ export class GameEngine {
       return [{ key: 'x', text: 'Stop Resting' }];
     }
     if (this.phase === 'victory') {
-      return [{ key: 'm', text: 'Return to Main Menu' }];
+      return [{ key: 'c', text: 'Continue Playing (Level 1)' }, { key: 'm', text: 'Return to Main Menu' }];
     }
     if (this.phase === 'asmodeus-scene') {
       return [{ key: 'c', text: 'Continue' }];
@@ -1377,11 +1377,13 @@ export class GameEngine {
     // random encounters.
     // Asmodeus comes back 10-20 levels stronger each time this character beats him.
     const returned = monsterType === 'Asmodeus' ? asmodeusReturnBonus(this.char.id, this.char.asmodeusVictories ?? 0) : 0;
-    const lvl = content.type === 'unique-monster'
+    // Every other monster is stronger for each time this character has banished him.
+    const boost = monsterType === 'Asmodeus' ? 0 : this.worldBoost();
+    const lvl = (content.type === 'unique-monster'
       ? this.rng.int(def.minLevel, def.maxLevel) + returned
-      : Math.min(def.maxLevel, randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, monsterType));
+      : Math.min(def.maxLevel, randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, monsterType))) + boost;
 
-    const monster = createMonster(monsterType, lvl, content.id, returned > 0);
+    const monster = createMonster(monsterType, lvl, content.id, returned + boost > 0);
     return this.beginCombat(monster);
   }
 
@@ -1392,10 +1394,17 @@ export class GameEngine {
     const def = getDefinition(type);
     const lvl = randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, type);
     const clampedLvl = Math.max(def.minLevel, Math.min(def.maxLevel, Math.max(1, lvl)));
+    const boost = this.worldBoost();
 
     const monsterId = `rand-${Date.now()}-${this.rng.int(100, 999)}`;
-    const monster = createMonster(type, clampedLvl, monsterId);
+    const monster = createMonster(type, clampedLvl + boost, monsterId, boost > 0);
     return this.beginCombat(monster);
+  }
+
+  /** Levels added to every monster (but Asmodeus, who has his own) for each
+   * time this character has banished Asmodeus. */
+  private worldBoost(): number {
+    return (this.char?.asmodeusVictories ?? 0) * DEATH.WORLD_BOOST_PER_VICTORY;
   }
 
   private beginCombat(monster: Monster): GameState {
@@ -2403,6 +2412,21 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** After the victory screen: play on from the top of Level 1. */
+  continueAfterVictory(): GameState {
+    if (!this.char || this.phase !== 'victory') return this.getState();
+    this.phase = 'playing';
+    this.lightAround();
+    this.lastArea = null;
+    this.messages = [
+      'You climb back into the light at the top of the First Level.',
+      `Behind you, the Seven Levels stir. Everything down there is stronger now. (+${this.worldBoost()} levels)`,
+      '',
+      ...this.enterArea(),
+    ];
+    return this.getState();
+  }
+
   /** Leaves Asmodeus's scene for the screen it leads to: the victory
    * screen and its score, or the death screen. */
   continueLordScene(): GameState {
@@ -2466,7 +2490,14 @@ export class GameEngine {
     this.bankPlayTime();
     const playSeconds = this.char.playTime;
 
+    // Playing on starts over from the top of Level 1, against a stronger dungeon.
+    this.endCombat(true);
+    this.char.dungeonLevel = 1;
+    this.loadLevelIntoCache(1);
+    const start = this.getLevel(1)!.entrance;
+    this.char.x = start.x; this.char.y = start.y; this.char.facing = 'N';
     this.repo.saveCharacter(this.char);
+    if (this.dungeonState) this.repo.saveDungeonState(this.char.id, this.dungeonState);
 
     const score = calculateScore(this.char, playSeconds);
     const scoreLines = formatScore(score);
@@ -2490,6 +2521,9 @@ export class GameEngine {
       'The Seven Levels have been conquered.',
       '',
       ...scoreLines,
+      '',
+      `Play on, and you start again at the top of Level 1, where every monster is now`,
+      `${this.worldBoost()} levels stronger than before.`,
     ] };
 
     // Attach score to state

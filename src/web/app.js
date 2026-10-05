@@ -641,7 +641,10 @@ function renderChoices(choices, phase, state) {
   }
 
   if (phase === 'victory') {
-    // The victory screen stays until the player chooses to leave.
+    // The victory screen stays until the player chooses: play on, or leave.
+    const on = makeChoiceBtn('C', 'Continue Playing (Level 1)');
+    on.onclick = () => apiAction('continue-after-victory');
+    area.appendChild(on);
     const btn = makeChoiceBtn('M', 'Return to Main Menu');
     btn.onclick = () => apiAction('main-menu');
     area.appendChild(btn);
@@ -923,7 +926,7 @@ function updateHelpLine(phase) {
     case 'resting':
       hint.textContent = 'Resting... press any key to stop'; break;
     case 'victory':
-      hint.textContent = 'M: Return to Main Menu'; break;
+      hint.textContent = 'C: Continue Playing  |  M: Return to Main Menu'; break;
     case 'asmodeus-scene':
       hint.textContent = 'C: Continue'; break;
     default:
@@ -1083,6 +1086,7 @@ document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
 
   if (phase === 'victory') {
+    if (key === 'c') apiAction('continue-after-victory');
     if (key === 'm') apiAction('main-menu');
     return;
   }
