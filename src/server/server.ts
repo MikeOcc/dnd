@@ -13,8 +13,13 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 const app = express();
 // The game moved from its temporary ngrok address to playsevenlevels.com:
 // old links (already shared on social media) send people to the new home.
+// Any other spelling of the address (a trailing dot from a copied link, or
+// www.) goes to the one true address too.
 app.use((req, res, next) => {
-  if ((req.headers.host ?? '').endsWith('.ngrok-free.dev')) return res.redirect(301, `https://playsevenlevels.com${req.originalUrl}`);
+  const host = (req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
+  const offsite = host.endsWith('.ngrok-free.dev') || host.endsWith('.')
+    || (host.endsWith('playsevenlevels.com') && host !== 'playsevenlevels.com');
+  if (offsite) return res.redirect(301, `https://playsevenlevels.com${req.originalUrl}`);
   next();
 });
 app.use(express.json());
