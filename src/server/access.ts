@@ -24,7 +24,9 @@ export interface Visitor { id: string; owner: boolean }
 function isOwner(req: Request): boolean {
   const addr = req.socket.remoteAddress ?? '';
   const local = addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
-  const relayed = !!(req.headers['x-forwarded-for'] || req.headers['ngrok-skip-browser-warning'] || req.headers['x-forwarded-host']);
+  // Tunnels (ngrok, Cloudflare) mark what they relay; any such mark means a guest.
+  const h = req.headers;
+  const relayed = !!(h['x-forwarded-for'] || h['ngrok-skip-browser-warning'] || h['x-forwarded-host'] || h['cf-connecting-ip'] || h['cf-ray']);
   return local && !relayed;
 }
 

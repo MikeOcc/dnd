@@ -134,3 +134,10 @@ describe('Playing over the internet', () => {
     expect(r.state.character.name).not.toMatch(/[<>]/);
   });
 });
+
+describe('Through a Cloudflare tunnel', () => {
+  it('a request carrying Cloudflare headers is a guest, even from this machine', async () => {
+    const r = await fetch(`${base}/api/characters`, { headers: { 'CF-Connecting-IP': '198.51.100.9', 'CF-Ray': 'abc' } });
+    expect(r.headers.get('set-cookie')).toMatch(/^sl_visitor=g-/);
+  });
+});
