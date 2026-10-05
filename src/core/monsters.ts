@@ -843,9 +843,9 @@ export function allDefinitions(): MonsterDefinition[] {
   return Object.values(DEFINITIONS);
 }
 
-export function createMonster(type: MonsterType, level: number, id: string): Monster {
+export function createMonster(type: MonsterType, level: number, id: string, beyondMax = false): Monster {
   const def = DEFINITIONS[type];
-  const clampedLevel = Math.max(def.minLevel, Math.min(def.maxLevel, level));
+  const clampedLevel = Math.max(def.minLevel, beyondMax ? level : Math.min(def.maxLevel, level));
   const hp = Math.round(def.baseHpPerLevel * clampedLevel);
 
   return {
@@ -957,3 +957,16 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon',
 ];
+
+/** How much stronger Asmodeus comes back for a character who has beaten
+ * him `victories` times: 10-20 levels per defeat. Each step is fixed per
+ * character (from their id), so it stays the same across saves and loads. */
+export function asmodeusReturnBonus(charId: string, victories: number): number {
+  let bonus = 0;
+  for (let i = 0; i < victories; i++) {
+    let h = 2166136261;
+    for (const ch of `${charId}:${i}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+    bonus += 10 + (h % 11);
+  }
+  return bonus;
+}

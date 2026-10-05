@@ -789,7 +789,7 @@ function showLordScene(state, prev) {
       <div class="shrinking-lord">${lord}</div>
       <div class="banish-flash"></div>
       <div class="banish-title">BANISHED</div>
-      <div class="banish-sub">to the Nine Hells, for a thousand years</div>`;
+      <div class="banish-sub">to the Nine Hells... for now</div>`;
     if (typeof SFX !== 'undefined' && SFX.banish) SFX.banish();
   } else {
     const flames = Array.from({ length: 14 }, (_, i) =>

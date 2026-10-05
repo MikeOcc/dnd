@@ -72,7 +72,8 @@ export class Repository {
       steps_taken: char.stepsTaken,
       monsters_defeated: char.monstersDefeated,
       unique_monsters_defeated: char.uniqueMonstersDefeated,
-      asmodeus_defeated: char.asmodeusDefeated ? 1 : 0,
+      // How many times this character has beaten him (once was all there used to be).
+      asmodeus_defeated: char.asmodeusVictories ?? (char.asmodeusDefeated ? 1 : 0),
       status_effects: JSON.stringify(char.statusEffects),
       intros_seen: JSON.stringify(char.introsSeen),
       reroll_used: CHARACTER.MAX_REROLLS - char.rerollsRemaining,
@@ -148,6 +149,7 @@ export class Repository {
       monstersDefeated:       row['monsters_defeated'] as number,
       uniqueMonstersDefeated: row['unique_monsters_defeated'] as number,
       asmodeusDefeated:       Boolean(row['asmodeus_defeated']),
+      asmodeusVictories:      Number(row['asmodeus_defeated'] ?? 0),
       statusEffects:          JSON.parse(row['status_effects'] as string || '[]'),
       introsSeen:             JSON.parse(row['intros_seen'] as string || '[]'),
       rerollsRemaining:       Math.max(0, CHARACTER.MAX_REROLLS - (row['reroll_used'] as number ?? 0)),

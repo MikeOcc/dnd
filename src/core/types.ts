@@ -148,6 +148,7 @@ export interface Character {
   monstersDefeated: number;
   uniqueMonstersDefeated: number;
   asmodeusDefeated: boolean;
+  asmodeusVictories?: number;  // times this character has beaten him: each time he comes back stronger
   statusEffects: StatusEffect[];
   invulnerableTurns?: number; // from reading a magic book — blocks the monster's next N combat rounds entirely
   heldRounds?: number;        // combat rounds the character loses (paralyzed, asleep, cowering...) — in-memory, cleared when combat ends

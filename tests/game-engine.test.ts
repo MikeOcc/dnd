@@ -3,7 +3,7 @@ import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
 import { calculateScore } from '../src/core/scoring.js';
-import { createMonster } from '../src/core/monsters.js';
+import { createMonster, asmodeusReturnBonus } from '../src/core/monsters.js';
 import { chestTrapFor } from '../src/core/encounters.js';
 import { xpForLevel } from '../src/core/character.js';
 import { abilityElement } from '../src/core/combat.js';
@@ -2610,5 +2610,81 @@ describe("Asmodeus's endings", () => {
     const e = engine as any;
     e.dismissLevelIntro();
     expect(e.handleDeath('Killed by a Level 3 Kobold.', [], 'Kobold').phase).toBe('death');
+  });
+});
+
+describe('Asmodeus always comes back', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('each defeat adds 10-20 levels, fixed per character', () => {
+    expect(asmodeusReturnBonus('c1', 0)).toBe(0);
+    let prev = 0;
+    for (let n = 1; n <= 6; n++) {
+      const b = asmodeusReturnBonus('c1', n);
+      expect(b - prev).toBeGreaterThanOrEqual(10);
+      expect(b - prev).toBeLessThanOrEqual(20);
+      expect(asmodeusReturnBonus('c1', n)).toBe(b);
+      prev = b;
+    }
+  });
+
+  it('beaten, he is counted, his throne is waiting again, and next time he is stronger, even past level 100', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const m = createMonster('Asmodeus', 90, 'unique-asmodeus');
+    e.beginCombat(m); e.phase = 'combat'; m.hp = 0;
+    e.processCombatResult({ messages: [], playerDamage: 1, monsterDamage: 0, playerDied: false, monsterDied: true });
+    expect(e.char.asmodeusVictories).toBe(1);
+    expect(e.dungeonState.defeatedUniqueMonsters.has('unique-asmodeus')).toBe(false);
+
+    e.char.asmodeusVictories = 3;
+    const bonus = asmodeusReturnBonus(e.char.id, 3);
+    for (let i = 0; i < 20; i++) {
+      e.phase = 'playing'; e.combat = null;
+      e.startFixedEncounter({ type: 'unique-monster', id: 'unique-asmodeus', monsterId: 'Asmodeus' }, 'Asmodeus');
+      const lvl = e.combat.monster.level;
+      expect(lvl).toBeGreaterThanOrEqual(80 + bonus);
+      expect(lvl).toBeLessThanOrEqual(100 + bonus);
+      expect(lvl).toBeGreaterThan(100);
+    }
+  });
+
+  it('the count survives a save and load', () => {
+    const repo = new Repository(db);
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.asmodeusDefeated = true; e.char.asmodeusVictories = 4;
+    repo.saveCharacter(e.char);
+    const loaded = repo.loadCharacter(e.char.id)!;
+    expect(loaded.asmodeusVictories).toBe(4);
+    expect(loaded.asmodeusDefeated).toBe(true);
+  });
+
+  it('revived after he kills you, you wake somewhere on Level 6; other deaths revive at the entrance', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7);
+    e.handleDeath('Killed by a Level 90 Asmodeus.', [], 'Asmodeus');
+    const d = engine.continueLordScene();
+    expect(d.choices?.[0].text).toContain('Level 6');
+    const s = engine.reviveAfterDeath();
+    expect(s.phase).toBe('playing');
+    expect(e.char.dungeonLevel).toBe(6);
+    const lvl6 = e.getLevel(6);
+    expect(e.char.x === lvl6.entrance.x && e.char.y === lvl6.entrance.y).toBe(false);
+    expect(floodFill(lvl6.grid, lvl6.entrance.x, lvl6.entrance.y).has(`${e.char.x},${e.char.y}`)).toBe(true);
+
+    e.handleDeath('Killed by a Level 3 Kobold.', [], 'Kobold');
+    expect(engine.getState().choices?.[0].text).toBe('Revive at the Entrance');
+    engine.reviveAfterDeath();
+    expect(e.char.dungeonLevel).toBe(6);
   });
 });

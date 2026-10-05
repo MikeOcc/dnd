@@ -19,9 +19,9 @@ import {
   chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
-import { createMonster, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
+import { createMonster, asmodeusReturnBonus, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
 import { placeTreasures, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -104,6 +104,9 @@ export class GameEngine {
   private shockWarnedAt = -Infinity;  // play time of the last anaphylaxis warning while walking  // guards checkAnaphylaxis against re-entry through handleDeath's getState
   private stepFrom: { x: number; y: number } | null = null;  // where the last step started
   private lair: { content: CellContent; monster: MonsterType; from: { x: number; y: number } } | null = null;  // lair-warning: whose, and the way back
+  /** Where a revive puts the character: this level's entrance, or (killed by
+   * Asmodeus) a random spot on Level 6. */
+  private reviveOnLevel6 = false;
   /** asmodeus-scene: which ending is showing, and the screen it leads to. */
   private lordScene: { scene: 'banished' | 'triumph'; then: 'victory' | 'death'; messages: string[] } | null = null;
   private mapAreaLines: string[] = [];     // map mode: the description of the area just walked into, shown under the legend  // "level:areaId" the character was last described in
@@ -255,7 +258,7 @@ export class GameEngine {
     }
     if (this.phase === 'death') {
       return [
-        { key: 'a', text: 'Revive at the Entrance' },
+        { key: 'a', text: this.reviveOnLevel6 ? `Revive Somewhere on Level ${DEATH.ASMODEUS_REVIVE_LEVEL}` : 'Revive at the Entrance' },
         { key: 'c', text: 'Restore Last Save' },
         { key: 'q', text: 'Quit to Main Menu' },
       ];
@@ -956,7 +959,7 @@ export class GameEngine {
     const tiamatBelow = level === 6 ? lairsOn(7).filter(l => l.type === 'Tiamat') : [];
     const deepest = lairsOn(7);
     const asmodeus = deepest.find(l => l.type === 'Asmodeus');
-    const asmodeusAlive = !this.char.asmodeusDefeated && !!asmodeus;
+    const asmodeusAlive = !!asmodeus;   // banished or not, he always comes back
 
     const ev = rollPresence({
       char: this.char,
@@ -1372,11 +1375,13 @@ export class GameEngine {
     // (80-100) and the Orc King (80-90) have a real spread. Ordinary fixed
     // monsters use the same dungeon-depth/character-level scaled range as
     // random encounters.
+    // Asmodeus comes back 10-20 levels stronger each time this character beats him.
+    const returned = monsterType === 'Asmodeus' ? asmodeusReturnBonus(this.char.id, this.char.asmodeusVictories ?? 0) : 0;
     const lvl = content.type === 'unique-monster'
-      ? this.rng.int(def.minLevel, def.maxLevel)
+      ? this.rng.int(def.minLevel, def.maxLevel) + returned
       : Math.min(def.maxLevel, randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, monsterType));
 
-    const monster = createMonster(monsterType, lvl, content.id);
+    const monster = createMonster(monsterType, lvl, content.id, returned > 0);
     return this.beginCombat(monster);
   }
 
@@ -2340,6 +2345,9 @@ export class GameEngine {
     // Victory?
     if (monster.type === 'Asmodeus') {
       this.char.asmodeusDefeated = true;
+      this.char.asmodeusVictories = (this.char.asmodeusVictories ?? 0) + 1;
+      // He can't be killed, only banished: his throne waits for him again.
+      this.dungeonState.defeatedUniqueMonsters.delete(monster.id);
       return this.handleVictory();
     }
 
@@ -2368,10 +2376,13 @@ export class GameEngine {
       ...(killingBlow.length ? [...killingBlow, ''] : []),
       ...toll.messages.slice(2),
       '',
-      'Revive here, or restore your last save: the place, health and pack you had then.',
+      killer === 'Asmodeus'
+        ? `Revive somewhere on Level ${DEATH.ASMODEUS_REVIVE_LEVEL}, or restore your last save: the place, health and pack you had then.`
+        : 'Revive here, or restore your last save: the place, health and pack you had then.',
     ];
 
     this.phase = 'death';
+    this.reviveOnLevel6 = killer === 'Asmodeus';
     this.pace.atDeathRespawn = true;
     this.pace.movesSinceCombat = 0;
 
@@ -2406,6 +2417,19 @@ export class GameEngine {
   /** After death: carry on from the entrance, poorer and wiser. */
   reviveAfterDeath(): GameState {
     if (!this.char || this.phase !== 'death') return this.getState();
+    if (this.reviveOnLevel6) {
+      // Flung out of Asmodeus's hall: somewhere on Level 6, at random.
+      this.reviveOnLevel6 = false;
+      this.char.dungeonLevel = DEATH.ASMODEUS_REVIVE_LEVEL;
+      this.loadLevelIntoCache(DEATH.ASMODEUS_REVIVE_LEVEL);
+      const lvl = this.getLevel(DEATH.ASMODEUS_REVIVE_LEVEL)!;
+      this.char.x = lvl.entrance.x; this.char.y = lvl.entrance.y;
+      if (!this.char.introsSeen.includes(DEATH.ASMODEUS_REVIVE_LEVEL)) this.char.introsSeen.push(DEATH.ASMODEUS_REVIVE_LEVEL);
+      this.teleportPlayer();
+      this.phase = 'playing';
+      this.messages = [`You come to on cold stone, somewhere on Level ${DEATH.ASMODEUS_REVIVE_LEVEL}. Far below, something is laughing.`, '', ...this.enterArea()];
+      return this.getState();
+    }
     this.phase = 'playing';
     this.lightAround();
     this.lastArea = null;
@@ -2459,8 +2483,9 @@ export class GameEngine {
       'ASMODEUS IS BANISHED TO THE NINE HELLS.',
     ];
     this.lordScene = { scene: 'banished', then: 'victory', messages: [
-      'No mortal hand can kill Asmodeus. But it will be',
-      'a thousand years before he climbs back.',
+      'No mortal hand can kill Asmodeus. He will claw his way',
+      'back out of the Nine Hells, stronger than before,',
+      'and be waiting on his throne.',
       '',
       'The Seven Levels have been conquered.',
       '',

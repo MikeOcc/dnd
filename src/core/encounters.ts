@@ -104,7 +104,7 @@ export function applyAsmodeusDeath(char: Character, entranceX: number, entranceY
     messages: [
       'YOU HAVE DIED.',
       '',
-      'Asmodeus is not done with you. You wake at the entrance to Level 7, gasping.',
+      'Asmodeus is not done with you. He flings what is left of you up out of his hall, into the level above.',
       newLevel < before ? `Something was taken from you in the dark. YOU HAVE BEEN DRAINED. You are now Level ${newLevel}.` : 'You have nothing more he can take.',
       goldLost > 0 ? `Some of your gold is missing. (Lost ${goldLost} gold)` : 'You clutch your remaining gold tightly.',
     ],

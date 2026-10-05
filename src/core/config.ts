@@ -773,6 +773,7 @@ export const GEMS = {
 
 export const DEATH = {
   GOLD_LOSS_FRACTION: 0.15,
+  ASMODEUS_REVIVE_LEVEL: 6,            // revived after Asmodeus kills you: somewhere on this dungeon level
   ASMODEUS_GOLD_LOSS_FRACTION: 0.05,   // killed by Asmodeus: less gold, but a level drained instead of XP
   XP_LOSS_FRACTION: 0.10,   // of total XP, but never below the current level's threshold
 } as const;
