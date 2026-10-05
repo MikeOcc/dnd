@@ -50,7 +50,7 @@ export function ownerSignOut(_req: Request, res: Response): void {
 
 /** The house owner: a browser signed in with the owner's key, or a request
  * made on this machine and not relayed by a tunnel. */
-function isOwner(req: Request): boolean {
+export function isOwner(req: Request): boolean {
   const cookie = readCookie(req, OWNER_COOKIE);
   if (cookie && ownerKey().length >= 16 && sameSecret(cookie, ownerToken())) return true;
   const addr = req.socket.remoteAddress ?? '';

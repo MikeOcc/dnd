@@ -5,7 +5,7 @@ import { computeFrames } from './corridor-geometry.js';
 import { drawFrame, fillWallTexture, fillDoorAhead, drawEntities, ceilingClips, CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
 import type { EntityMarker } from './corridor-render.js';
 export type { EntityMarker } from './corridor-render.js';
-export { CONTENT_PATTERNS, spatialHash } from './corridor-render.js';
+export { CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-render.js';
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 //

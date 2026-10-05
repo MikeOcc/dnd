@@ -7,9 +7,9 @@ import type {
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
-import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash } from './corridor-view.js';
+import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import type { RingId } from './types.js';
+import type { RingId, SceneData, SceneObject } from './types.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, beholderAntimagic, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
@@ -142,6 +142,7 @@ export class GameEngine {
       const lvl = this.getLevel(this.char.dungeonLevel);
       if (lvl) {
         state.view = this.renderView();
+        state.scene = this.buildScene(lvl);
       }
     }
 
@@ -188,6 +189,52 @@ export class GameEngine {
       return area ? ceilingHeight(level, area) : 0;
     };
     return renderCorridorView(lvl.grid, this.char.x, this.char.y, this.char.facing, { level, ceiling }, undefined, entities);
+  }
+
+  /** The map within SCENE_RADIUS squares of the character, for the 3D views
+   * the browser draws (see SceneData). Landmarks are listed the same way the
+   * corridor view shows them: used fountains and altars, opened chests and
+   * read books are gone. */
+  private buildScene(lvl: LevelCache): SceneData | undefined {
+    if (!this.char || !this.dungeonState) return undefined;
+    const R = 9;
+    const { x: px, y: py } = this.char;
+    const level = this.char.dungeonLevel;
+    const ds = this.dungeonState;
+    const areas = (lvl.areas ??= mapAreas(lvl.grid));
+    const dirs: Direction[] = ['N', 'E', 'S', 'W'];
+    const mat: Record<string, string> = { stone: 's', brick: 'b', wood: 'w', rough: 'r' };
+    const cells: SceneData['cells'] = [];
+    const objects: SceneObject[] = [];
+    for (let y = py - R; y <= py + R; y++) {
+      const row = lvl.grid[y];
+      if (!row) continue;
+      for (let x = px - R; x <= px + R; x++) {
+        const cell = row[x];
+        if (!cell || isSolidRock(cell)) continue;
+        let walls = 0, torches = 0, carvings = 0, mats = '';
+        dirs.forEach((d, i) => {
+          if (cell.walls[d]) {
+            walls |= 1 << i;
+            mats += mat[edgeMaterial(level, x, y, d)] ?? 's';
+            if (edgeTorch(x, y, d)) torches |= 1 << i;
+            if (edgeCarved(level, x, y, d)) carvings |= 1 << i;
+          } else mats += '-';
+        });
+        const area = areaAtCell(areas, x, y);
+        cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings]);
+
+        const c = lvl.contents.get(`${x},${y}`);
+        if (!c) continue;
+        if (c.type === 'fountain' && !ds.usedFountains.has(c.id)) objects.push({ x, y, kind: spatialHash(x, y, 29) % 2 === 0 ? 'well' : 'fountain' });
+        else if (c.type === 'altar' && !ds.usedAltars.has(c.id)) objects.push({ x, y, kind: 'altar' });
+        else if (c.type === 'chest' && !ds.openedChests.has(c.id)) objects.push({ x, y, kind: 'chest' });
+        else if (c.type === 'book' && !ds.readBooks.has(c.id)) objects.push({ x, y, kind: 'book' });
+        else if (c.type === 'ladder-up' || c.type === 'ladder-down') objects.push({ x, y, kind: c.type });
+        else if (c.type === 'unique-monster' && (c.monsterId === 'Asmodeus' || c.monsterId === 'Orc King')) objects.push({ x, y, kind: 'throne', variant: c.monsterId });
+      }
+    }
+    return { x: px, y: py, facing: this.char.facing, level, radius: R, cells, objects };
   }
 
   /** Scans the same visible depth the corridor renderer will draw and marks

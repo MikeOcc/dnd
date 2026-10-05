@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import type { DatabaseSync } from 'node:sqlite';
 import { getDb, initDb, setDbPath } from '../database/database.js';
 import { setupRoutes } from './routes.js';
+import { isOwner } from './access.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
@@ -23,6 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
+
+// Development pages (e.g. the 3D view test scene) are for the owner only.
+app.use('/dev', (req, res, next) => (isOwner(req) ? next() : res.status(404).send('Not found')));
 
 // Serve static web files — no caching so changes are always picked up
 const webDir = join(__dirname, '../../src/web');

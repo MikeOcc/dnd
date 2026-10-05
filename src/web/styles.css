@@ -775,3 +775,12 @@ html, body {
 }
 #tooltip[hidden] { display: none; }
 @keyframes tip-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* The 3D views (view3d.js): a canvas laid exactly over the classic view's box. */
+#view3d {
+  position: absolute; z-index: 1; pointer-events: none;
+  box-sizing: border-box; border: 1px solid var(--terminal-green-dim); background: #000;
+}
+#view3d.hidden { display: none; }
+#dungeon-view.under-3d { visibility: hidden; }
+#view-container.lair-mode #view3d { opacity: 0.12; transition: opacity 600ms ease; }

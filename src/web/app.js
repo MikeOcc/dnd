@@ -120,7 +120,8 @@ function applyState(state) {
 
   // Asmodeus on his throne, seen from a few squares away
   const sightEl = document.getElementById('sighting');
-  const sight = phase === 'playing' ? state.sighting : null;
+  // (In the 3D views the throne is drawn in place, so this overlay is the classic view's.)
+  const sight = phase === 'playing' && viewMode === 'classic' ? state.sighting : null;
   if (sight && getLairArt(sight.monster) && getMonsterSprite(sight.monster)) {
     const key = `${sight.monster}:${sight.distance}:${sight.view}:${sight.empty ? 'empty' : 'seated'}`;
     if (sightEl.dataset.key !== key) {
@@ -201,6 +202,9 @@ function applyState(state) {
   if (phase === 'map') centerMapOnPlayer();
   else scrollMessagesToEnd();
   updatePannable();
+
+  // The 3D views, if chosen, draw over the classic one.
+  draw3D(state);
 
   // Choices
   renderChoices(state.choices || [], phase, state);
@@ -309,7 +313,62 @@ const ROLLS_KEY = 'sevenLevels.showRolls';
 let showRolls = (() => { try { return localStorage.getItem(ROLLS_KEY) !== '0'; } catch { return true; } })();
 let settingsOpen = false;
 
+// ─── The dungeon view: Classic (the server's ASCII corridor), or the 3D
+// views drawn here from the scene the server sends (view3d.js).
+const VIEW_KEY = 'sevenLevels.viewMode';
+const VIEW_MODES = ['classic', 'ascii3d', 'painted'];
+const VIEW_NAMES = { classic: 'CLASSIC', ascii3d: 'ASCII 3D', painted: 'PAINTED' };
+let viewMode = (() => {
+  try { const v = localStorage.getItem(VIEW_KEY); return VIEW_MODES.includes(v) ? v : 'classic'; } catch { return 'classic'; }
+})();
+let view3dTimer = null;
+
+function cycleViewMode() {
+  viewMode = VIEW_MODES[(VIEW_MODES.indexOf(viewMode) + 1) % VIEW_MODES.length];
+  try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* per-viewer nicety only */ }
+  applyState(currentState);
+}
+
+/** Draws the 3D view over the classic one (or puts the classic one back). */
+function draw3D(state) {
+  const canvas = document.getElementById('view3d');
+  const pre = document.getElementById('dungeon-view');
+  const container = document.getElementById('view-container');
+  const on = viewMode !== 'classic' && !!state?.scene && !!state.view && !container.classList.contains('hidden')
+    && typeof View3D !== 'undefined';
+  canvas.classList.toggle('hidden', !on);
+  pre.classList.toggle('under-3d', on);
+  if (!on) { clearTimeout(view3dTimer); view3dTimer = null; return; }
+
+  // Cover the classic view's box exactly, so everything around stays put.
+  canvas.style.left = `${pre.offsetLeft}px`;
+  canvas.style.top = `${pre.offsetTop}px`;
+  canvas.style.width = `${pre.offsetWidth}px`;
+  canvas.style.height = `${pre.offsetHeight}px`;
+  const crisp = viewMode === 'ascii3d' ? Math.min(2, window.devicePixelRatio || 1) : 1;
+  const w = Math.max(100, Math.round((pre.offsetWidth - 2) * crisp)), h = Math.max(60, Math.round((pre.offsetHeight - 2) * crisp));
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
+  const t = performance.now() / 1000;
+  if (viewMode === 'painted') {
+    View3D.renderPainted(canvas, state.scene, { sprites: SceneSprites, t });
+  } else {
+    const ctx = canvas.getContext('2d');
+    const px = Math.round(13 * crisp);
+    const font = `${px}px ${getComputedStyle(pre).fontFamily}`;
+    ctx.font = font;
+    View3D.renderAscii(canvas, state.scene, { sprites: SceneSprites, t, font, cellW: ctx.measureText('M').width, cellH: Math.round(px * 1.15) });
+  }
+  // Keep water and flames moving (gently), unless motion is reduced.
+  clearTimeout(view3dTimer);
+  const lively = !View3D.prefersReducedMotion() && (viewMode === 'painted' || SceneSprites.animates(state.scene.objects));
+  if (lively) view3dTimer = setTimeout(() => requestAnimationFrame(() => { if (currentState === state) draw3D(state); }), 110);
+}
+if (typeof SceneSprites !== 'undefined') SceneSprites.onReady(() => draw3D(currentState));
+window.addEventListener('resize', () => draw3D(currentState));
+
 const SETTINGS = [
+  { key: 'd', label: 'Dungeon view (L)', get: () => viewMode !== 'classic', value: () => VIEW_NAMES[viewMode], toggle: () => cycleViewMode() },
   { key: 'a', label: 'On-screen arrows',  get: () => arrowsShown,   toggle: () => toggleArrows() },
   { key: 'b', label: 'Show saving rolls', get: () => showRolls,     toggle: () => {
       showRolls = !showRolls;
@@ -326,7 +385,7 @@ function renderSettings() {
     const btn = makeChoiceBtn(s.key.toUpperCase(), s.label);
     const val = document.createElement('span');
     val.className = s.get() ? 'val-on' : 'val-off';
-    val.textContent = s.get() ? 'ON' : 'OFF';
+    val.textContent = s.value ? s.value() : s.get() ? 'ON' : 'OFF';
     btn.appendChild(val);
     btn.onclick = () => { s.toggle(); renderSettings(); };
     rows.appendChild(btn);
@@ -934,7 +993,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -1164,6 +1223,7 @@ document.addEventListener('keydown', (e) => {
     }
     if (key === 'j') { openRingMenu(); return; }
     if (key === 'a') { openAmuletMenu(); return; }
+    if (key === 'l') { cycleViewMode(); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  apiAction('turn-left');

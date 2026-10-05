@@ -358,11 +358,35 @@ export type ChestTrapType = 'needle' | 'blade' | 'gas' | 'fire-glyph' | 'alarm';
 
 export type DisplayGrid = string[];
 
+/** The map around the character, for the 3D views drawn in the browser
+ * (src/web/view3d.js). Only what the renderer needs: no monsters, traps or
+ * secrets. Cells are [x, y, walls, ceiling, materials, torches, carvings]:
+ * walls is a bitmask (N=1, E=2, S=4, W=8); ceiling 0 normal, 1 high, 2 vast;
+ * materials is four letters for the N, E, S, W walls (s stone, b brick,
+ * w wood, r rough, - none); torches and carvings are bitmasks like walls. */
+export interface SceneData {
+  x: number;
+  y: number;
+  facing: Direction;
+  level: number;
+  radius: number;
+  cells: [number, number, number, number, string, number, number][];
+  objects: SceneObject[];
+}
+
+export interface SceneObject {
+  x: number;
+  y: number;
+  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne';
+  variant?: string;   // throne: whose ('Asmodeus', 'Orc King')
+}
+
 export interface GameState {
   phase: GamePhase;
   character?: Character;
   currentRoll?: CharacterRoll;
   view?: DisplayGrid;
+  scene?: SceneData;           // the surrounding map, for the browser's 3D views
   messages: string[];
   choices?: Choice[];
   combat?: CombatState;

@@ -167,3 +167,18 @@ describe("The owner's key, for hosting where everyone is remote", () => {
     expect(r.headers.get('set-cookie')).toMatch(/^sl_owner=;.*Max-Age=0/);
   });
 });
+
+describe('Development pages', () => {
+  it('are hidden from guests', async () => {
+    const express2 = (await import('express')).default;
+    const { isOwner } = await import('../src/server/access.js');
+    const app = express2();
+    app.use('/dev', (req, res, next) => (isOwner(req) ? next() : res.status(404).send('Not found')));
+    app.get('/dev/x', (_req, res) => { res.send('secret'); });
+    const srv = await new Promise<Server>(r => { const s = app.listen(0, '127.0.0.1', () => r(s)); });
+    const a = srv.address(); const port = typeof a === 'object' && a ? a.port : 0;
+    expect((await fetch(`http://127.0.0.1:${port}/dev/x`, { headers: { 'X-Forwarded-For': '1.2.3.4' } })).status).toBe(404);
+    expect((await fetch(`http://127.0.0.1:${port}/dev/x`)).status).toBe(200);
+    srv.close();
+  });
+});

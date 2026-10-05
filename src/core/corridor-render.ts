@@ -212,6 +212,21 @@ export function wallMaterial(style: WallStyle, x: number, y: number, side: 'left
   return 'stone';
 }
 
+/** A wall's material by absolute direction (the same choice the corridor view makes). */
+export function edgeMaterial(level: number, x: number, y: number, dir: Direction): WallMaterial {
+  return wallMaterial({ level, facing: dir }, x, y, 'front');
+}
+
+/** Whether a wall bears a carving (the same choice the corridor view makes). */
+export function edgeCarved(level: number, x: number, y: number, dir: Direction): boolean {
+  return wallCarving({ level, facing: dir }, x, y, 'front') !== null;
+}
+
+/** Whether a wall carries a torch: about one wall in six, fixed per physical wall. */
+export function edgeTorch(x: number, y: number, dir: Direction): boolean {
+  return edgeHash(x, y, dir, 11) % TORCH_CHANCE_DENOM === 0;
+}
+
 type Carving = { kind: 'symbol'; glyph: string[] } | { kind: 'band'; pattern: string } | null;
 
 /** About one wall in nine bears a carving: mostly symbols, sometimes a band. */

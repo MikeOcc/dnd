@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Seven Levels — Play My D&amp;D Adventure">
   <meta name="twitter:image" content="https://playsevenlevels.com/og-image.jpg">
-  <link rel="stylesheet" href="styles.css?v=46">
+  <link rel="stylesheet" href="styles.css?v=47">
 </head>
 <body>
   <div id="terminal">
@@ -47,6 +47,8 @@
     <!-- 5×5 dungeon view -->
     <div id="view-container" class="hidden">
       <pre id="dungeon-view"></pre>
+      <!-- The 3D views (ASCII 3D / Painted, see view3d.js), drawn over the classic view's box -->
+      <canvas id="view3d" class="hidden" role="img" aria-label="The dungeon ahead"></canvas>
       <!-- Monster portrait (shown only during combat), overlaid on the corridor -->
       <div id="monster-portrait" class="hidden"></div>
       <!-- A great lord seen from afar (Asmodeus on his throne), drawn over the corridor -->
@@ -140,7 +142,9 @@
 
   <script src="monster-sprites.js?v=12"></script>
   <script src="lair-art.js?v=4"></script>
+  <script src="view3d.js?v=1"></script>
+  <script src="view-sprites.js?v=1"></script>
   <script src="sfx.js?v=6"></script>
-  <script src="app.js?v=61"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>

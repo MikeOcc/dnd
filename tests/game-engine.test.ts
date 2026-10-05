@@ -2755,3 +2755,37 @@ describe('After banishing Asmodeus, the dungeon grows', () => {
     expect(a).toBeGreaterThanOrEqual(80); expect(a).toBeLessThanOrEqual(100);
   });
 });
+
+describe('The scene sent for the 3D views', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('describes the map around the character, with landmarks, and leaves out what is used up', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const s = engine.getState().scene!;
+    expect(s).toBeDefined();
+    expect([s.x, s.y, s.facing]).toEqual([e.char.x, e.char.y, e.char.facing]);
+    const here = s.cells.find(c => c[0] === s.x && c[1] === s.y)!;
+    const cell = e.getLevel(1).grid[s.y][s.x];
+    const mask = (cell.walls.N ? 1 : 0) | (cell.walls.E ? 2 : 0) | (cell.walls.S ? 4 : 0) | (cell.walls.W ? 8 : 0);
+    expect(here[2]).toBe(mask);
+    expect(here[4]).toHaveLength(4);
+    expect(s.cells.every(c => Math.abs(c[0] - s.x) <= s.radius && Math.abs(c[1] - s.y) <= s.radius)).toBe(true);
+
+    // A fountain next to the character shows; once used, it's gone.
+    const lvl = e.getLevel(1);
+    const k = `${s.x},${s.y + 1}`;
+    lvl.contents.set(k, { type: 'fountain', id: 'f-test' });
+    expect(engine.getState().scene!.objects.some(o => o.x === s.x && o.y === s.y + 1 && (o.kind === 'fountain' || o.kind === 'well'))).toBe(true);
+    e.dungeonState.usedFountains.add('f-test');
+    expect(engine.getState().scene!.objects.some(o => o.x === s.x && o.y === s.y + 1)).toBe(false);
+    // Monsters and traps are never in it.
+    lvl.contents.set(k, { type: 'trap', id: 't-test', trapVariant: 'pit' });
+    expect(engine.getState().scene!.objects.some(o => o.x === s.x && o.y === s.y + 1)).toBe(false);
+  });
+});
