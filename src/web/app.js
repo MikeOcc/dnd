@@ -570,7 +570,36 @@ window.addEventListener('resize', updatePannable);
   window.addEventListener('pointercancel', end);
 })();
 
-const COMPASS = { N: '▲ N', E: '▶ E', S: '▼ S', W: '◀ W' };
+// The compass in the status bar: a dial whose needle swings to the way the
+// character faces, always turning the short way round.
+const FACING_ANGLE = { N: 0, E: 90, S: 180, W: 270 };
+const FACING_NAME = { N: 'North', E: 'East', S: 'South', W: 'West' };
+let compassAngle = null;
+
+function compassSvg() {
+  const ticks = Array.from({ length: 8 }, (_, i) => {
+    const a = (i * 45 * Math.PI) / 180, major = i % 2 === 0;
+    const r1 = major ? 13 : 14.5, r2 = 16.5;
+    return `<line x1="${(18 + r1 * Math.sin(a)).toFixed(2)}" y1="${(18 - r1 * Math.cos(a)).toFixed(2)}" x2="${(18 + r2 * Math.sin(a)).toFixed(2)}" y2="${(18 - r2 * Math.cos(a)).toFixed(2)}" class="${major ? 'major' : 'minor'}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 36 36" aria-hidden="true">
+    <circle cx="18" cy="18" r="17" class="bezel"/>${ticks}
+    <text x="18" y="9.3" class="north">N</text>
+    <g class="needle"><polygon points="18,4.5 21.2,18 14.8,18" class="tip"/><polygon points="18,31.5 21.2,18 14.8,18" class="tail"/></g>
+    <circle cx="18" cy="18" r="1.8" class="hub"/>
+  </svg>`;
+}
+
+function updateCompass(facing) {
+  const el = document.getElementById('compass-display');
+  if (!el.firstElementChild) el.innerHTML = compassSvg();
+  const target = FACING_ANGLE[facing] ?? 0;
+  if (compassAngle === null) compassAngle = target;
+  else compassAngle += ((target - compassAngle) % 360 + 540) % 360 - 180;   // the short way round
+  el.querySelector('.needle').style.transform = `rotate(${compassAngle}deg)`;
+  el.title = `Facing ${FACING_NAME[facing] ?? ''}`;
+  el.setAttribute('aria-label', el.title);
+}
 
 function updateStatusBar(char) {
   document.getElementById('char-name').textContent = char.name;
@@ -614,7 +643,7 @@ function updateStatusBar(char) {
   const hasGems = gems.ruby || gems.sapphire || gems.diamond || gems.opal || gems.emerald;
   gemEl.className = hasGems ? 'has-potions' : '';
 
-  document.getElementById('compass-display').textContent = COMPASS[char.facing] ?? '';
+  updateCompass(char.facing);
 }
 
 function renderChoices(choices, phase, state) {
@@ -1331,4 +1360,45 @@ updateSoundButton();
     ],
   });
   awaitingAnyKey = true;
+})();
+
+// ─── Hover help for the control panel ────────────────────────────────────────
+// Rest the pointer on a control for a second and a short note says what it
+// does. Any click or key press, or moving away, puts it away.
+(() => {
+  const TIP_DELAY_MS = 1000;
+  const tip = document.createElement('div');
+  tip.id = 'tooltip';
+  tip.setAttribute('role', 'tooltip');
+  tip.hidden = true;
+  document.body.appendChild(tip);
+  let timer = null;
+  let over = null;
+
+  const hide = () => { clearTimeout(timer); timer = null; tip.hidden = true; };
+  const show = (el) => {
+    tip.textContent = el.dataset.tip;
+    tip.hidden = false;
+    const r = el.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const margin = 8;
+    let left = r.left + r.width / 2 - t.width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - t.width - margin));
+    let top = r.top - t.height - 8;                         // above the control...
+    if (top < margin) top = r.bottom + 8;                    // ...or below, if there's no room
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  };
+
+  document.addEventListener('mouseover', (e) => {
+    const el = e.target.closest?.('[data-tip]');
+    if (el === over) return;
+    over = el;
+    hide();
+    if (el) timer = setTimeout(() => show(el), TIP_DELAY_MS);
+  });
+  document.addEventListener('mousedown', hide);
+  document.addEventListener('keydown', hide);
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('blur', hide);
 })();

@@ -2,7 +2,10 @@
 # Deploys the current code to the server and restarts the game.
 # Run on the Mac, from the project folder:  ./deploy/deploy.sh
 # (Live games in memory are lost on restart; saved games are untouched.)
+# For changes to the web page only (src/web), use --web: it copies the files
+# without restarting, so nobody's game is interrupted.
 set -euo pipefail
+WEB_ONLY=false; [ "${1:-}" = "--web" ] && WEB_ONLY=true
 SERVER=root@5.161.241.215
 cd "$(dirname "$0")/.."
 
@@ -11,6 +14,10 @@ rsync -az --delete \
   --exclude node_modules --exclude '*.db' --exclude '*.db-*' --exclude scratch --exclude mikefiles \
   --exclude .git --exclude .DS_Store --exclude dist \
   ./ "$SERVER:/srv/seven-levels/app/"
+if $WEB_ONLY; then
+  ssh "$SERVER" 'chown -R seven:seven /srv/seven-levels/app && echo "web files updated (no restart)"'
+  exit 0
+fi
 ssh "$SERVER" 'set -e
   chown -R seven:seven /srv/seven-levels/app
   cd /srv/seven-levels/app && sudo -u seven npm ci --no-audit --no-fund --loglevel=error

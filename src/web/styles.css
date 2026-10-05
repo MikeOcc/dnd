@@ -65,10 +65,12 @@ html, body {
 
 /* Status bar */
 #status-bar {
+  position: relative;
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 4px 0;
+  padding: 4px 46px 4px 0;   /* room on the right for the compass */
+  min-height: 38px;
   border-bottom: 1px solid var(--terminal-green-dim);
   font-size: 13px;
 }
@@ -93,7 +95,16 @@ html, body {
 #potions-display.has-potions { color: var(--terminal-amber); }
 #gems-display     { color: var(--terminal-green-dim); }
 #gems-display.has-potions { color: var(--terminal-amber); }
-#compass-display  { color: var(--terminal-green-bright); font-weight: bold; margin-left: auto; }
+#compass-display  { position: absolute; right: 2px; top: 4px; width: 36px; height: 36px; }
+#compass-display svg { width: 100%; height: 100%; display: block; overflow: visible; }
+#compass-display .bezel { fill: rgba(0, 40, 0, 0.55); stroke: var(--terminal-green-dim); stroke-width: 1.2; }
+#compass-display .major { stroke: var(--terminal-green-bright); stroke-width: 1.4; }
+#compass-display .minor { stroke: var(--terminal-green-dim); stroke-width: 0.9; }
+#compass-display .north { fill: var(--terminal-green-bright); font: bold 6.5px monospace; text-anchor: middle; }
+#compass-display .needle { transform-origin: 18px 18px; transition: transform 380ms cubic-bezier(.3,1.4,.5,1); }
+#compass-display .tip  { fill: #ff4a2a; stroke: #ffb59e; stroke-width: 0.4; filter: drop-shadow(0 0 1.5px rgba(255, 70, 30, 0.8)); }
+#compass-display .tail { fill: #d8e8d8; opacity: 0.75; }
+#compass-display .hub  { fill: #0a1a0a; stroke: var(--terminal-green-bright); stroke-width: 0.8; }
 
 /* Dungeon view, monster portrait, and messages are all the same "panel"
    primitive — same border weight/color, same padding — so they read as
@@ -753,3 +764,14 @@ html, body {
   text-shadow: 0 0 6px #000;
   animation: title-in 1.4s ease-out 4.4s forwards;
 }
+
+/* Hover help for the control panel (shown after a second's hover). */
+#tooltip {
+  position: fixed; z-index: 1000; max-width: 280px; pointer-events: none;
+  padding: 7px 10px; border: 1px solid var(--terminal-green-dim, #2a6b2a); border-radius: 3px;
+  background: rgba(4, 16, 4, 0.96); color: #c8f5c8; font-size: 12px; line-height: 1.4;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 8px rgba(80, 255, 80, 0.12);
+  animation: tip-in 140ms ease-out;
+}
+#tooltip[hidden] { display: none; }
+@keyframes tip-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
