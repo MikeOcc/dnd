@@ -621,5 +621,5 @@ export const CONTENT_PATTERNS = {
   altar: ['+-+', '|+|', '+-+'],
   fountain: ['~~~', '[=]'],
   well: ['+-+', '|~|', '+-+'],
-  shop: ['/$\\', '[_]'],
+  shop: ['/-\\', '|=|'],   // an awning over a counter
 } as const;
