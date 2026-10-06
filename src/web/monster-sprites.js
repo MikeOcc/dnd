@@ -1812,20 +1812,28 @@ const MONSTER_SPRITES = {
     <filter id="med-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
     </defs>
     <ellipse cx="80" cy="153" rx="56" ry="5" fill="#000" opacity="0.6" filter="url(#med-soft)"/>
-    <!-- a statue of a victim, behind her -->
-    <g fill="#8a8a86" stroke="#3a3a38" stroke-width="0.8" opacity="0.85"><circle cx="134" cy="92" r="7"/><path d="M 126 100 L 142 100 L 144 140 L 124 140 Z"/><path d="M 126 104 L 116 90 M 142 104 L 150 116" stroke-width="4" stroke="#8a8a86"/></g>
+    <!-- a victim behind her, turned to stone shielding its eyes, a moment too late -->
+    <g opacity="0.6">
+      <path d="M 138 104 L 150 104 L 152 134 L 136 134 Z" fill="#7a7a76" stroke="#3a3a38" stroke-width="0.8"/>
+      <circle cx="144" cy="96" r="5.5" fill="#7a7a76" stroke="#3a3a38" stroke-width="0.8"/>
+      <path d="M 138 106 L 140 96 M 150 106 L 148 96" stroke="#7a7a76" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M 139 95 L 149 95" stroke="#5a5a56" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 141 112 l 3 6 l -2 6 M 147 118 l 2 7" stroke="#3a3a38" stroke-width="0.6" fill="none"/>
+    </g>
     <!-- serpent's tail coiling below -->
     <path d="M 70 104 C 58 120 60 140 80 146 C 104 152 128 146 132 132 C 120 140 100 140 92 132 C 84 124 92 114 90 104 Z" fill="url(#med-tail)" stroke="#0e1a0a" stroke-width="1.2"/>
     <g stroke="#0e1a0a" stroke-width="0.8" fill="none" opacity="0.6"><path d="M 66 124 q 10 4 20 0"/><path d="M 70 136 q 14 4 28 0"/><path d="M 100 142 q 10 2 20 -2"/></g>
     <!-- torso, bronze breastplate -->
     <path d="M 64 66 C 62 82 64 96 70 106 L 90 106 C 96 96 98 82 96 66 C 90 60 70 60 64 66 Z" fill="url(#med-skin)" stroke="#1e3418" stroke-width="1.1"/>
     <path d="M 66 70 Q 80 78 94 70 L 94 82 Q 80 90 66 82 Z" fill="#a87a2a" stroke="#4a3006" stroke-width="0.8"/>
-    <!-- arms: one drawing a bow -->
+    <!-- arms: drawing her bow. One holds it out; the other pulls the string back to her chest -->
     <path d="M 66 70 C 52 74 42 80 34 86" fill="none" stroke="url(#med-skin)" stroke-width="7" stroke-linecap="round"/>
-    <path d="M 94 70 C 106 74 112 80 114 86" fill="none" stroke="url(#med-skin)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 94 70 C 102 74 100 82 92 84" fill="none" stroke="url(#med-skin)" stroke-width="7" stroke-linecap="round"/>
     <path d="M 30 60 C 20 76 20 96 30 112" stroke="#5a3a1a" stroke-width="2.6" fill="none"/>
-    <path d="M 30 60 L 34 86 L 30 112" stroke="#d8d0c0" stroke-width="0.6" fill="none"/>
-    <path d="M 34 86 L 64 86" stroke="#c8b898" stroke-width="1.2"/>
+    <path d="M 30 60 L 90 84 L 30 112" stroke="#d8d0c0" stroke-width="0.6" fill="none"/>
+    <path d="M 12 85 L 90 84" stroke="#c8b898" stroke-width="1.3"/>
+    <path d="M 12 85 l 6 -3 l 0 6 Z" fill="#9a9a90"/>
+    <path d="M 84 84 l 5 -3 M 84 84 l 5 3" stroke="#a83a2a" stroke-width="1.2"/>
     <!-- her face, and the eyes you must not meet -->
     <path d="M 68 40 C 66 28 72 22 80 22 C 88 22 94 28 92 40 C 92 50 86 58 80 58 C 74 58 68 50 68 40 Z" fill="url(#med-skin)" stroke="#1e3418" stroke-width="1.1"/>
     <ellipse cx="75" cy="40" rx="3.2" ry="2" fill="#d8ff6a" filter="url(#med-glow)"/><ellipse cx="85" cy="40" rx="3.2" ry="2" fill="#d8ff6a" filter="url(#med-glow)"/>
