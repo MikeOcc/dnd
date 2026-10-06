@@ -850,3 +850,13 @@ html, body {
 
 /* Planar Step's countdown */
 .planar-clock { margin-top: 8px; color: #b9c8ff; letter-spacing: 0.05em; }
+
+/* Shared characters in the save list: anyone may play them. */
+.shared-tag { margin-left: 8px; padding: 0 5px; font-size: 10px; letter-spacing: 0.08em; color: #000; background: #6fd3ff; border-radius: 2px; vertical-align: middle; }
+
+/* iPhone/iPad: no double-tap zoom when tapping buttons quickly (pinch zoom
+   still works), no text enlarging when the phone turns sideways, and text
+   boxes at 16px so Safari doesn't zoom in when one is tapped. */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
+#account-body input { font-size: 16px; }

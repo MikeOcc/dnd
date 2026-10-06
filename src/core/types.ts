@@ -452,6 +452,7 @@ export interface CharacterSummary {
   asmodeusDefeated: boolean;
   xp: number;
   charClass: CharacterClass;
+  shared?: boolean;        // anyone may play it (no owner)
 }
 
 export interface ScoreResult {

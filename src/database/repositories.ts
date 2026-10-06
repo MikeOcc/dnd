@@ -124,6 +124,7 @@ export class Repository {
       asmodeusDefeated:   Boolean(row['asmodeus_defeated']),
       xp:                 row['xp'] as number,
       charClass:          (row['char_class'] as CharacterSummary['charClass']) || 'wizard',
+      shared:             row['owner'] == null,
     }));
   }
 

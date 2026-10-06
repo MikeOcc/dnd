@@ -524,6 +524,16 @@ function closeSettings() {
   document.getElementById('settings-panel').classList.add('hidden');
 }
 
+// Clicking (or tapping) anywhere off the settings panel closes it. Each
+// setting is already saved when it's toggled. The click goes no further, so
+// it can't also press a game button underneath.
+document.addEventListener('click', (e) => {
+  if (!settingsOpen || document.getElementById('settings-panel').contains(e.target)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  closeSettings();
+}, true);
+
 // ─── Message log ─────────────────────────────────────────────────────────────
 
 const LOG_PHASES = ['playing', 'combat'];
@@ -1258,8 +1268,11 @@ function makeChoiceBtn(key, text) {
   return btn;
 }
 
+const SHARED_TIP = 'A shared character: free for anyone to play and mess around with. One player at a time; your progress stays with the character for the next person.';
+
 async function showSaveList(action) {
-  const chars = await loadCharacters();
+  // Shared characters can't be deleted except by the owner, so they're left off that list.
+  const chars = (await loadCharacters()).filter(c => action !== 'delete' || !c.shared || account.owner);
   if (!chars.length) {
     const msgEl = document.getElementById('messages');
     msgEl.textContent = 'No saved characters found.';
@@ -1279,13 +1292,21 @@ async function showSaveList(action) {
       const letter = String.fromCharCode(65 + i);
       const vic = c.asmodeusDefeated ? ' [VICTOR]' : '';
       const cls = c.charClass === 'warrior' ? 'Warrior' : 'Wizard ';
-      return `[${letter}]  ${c.name.padEnd(20)} ${cls} Lv ${c.level}  Dungeon Lv ${c.dungeonLevel}  Monsters: ${c.monstersDefeated}${vic}`;
+      return `[${letter}]  ${c.name.padEnd(20)} ${cls} Lv ${c.level}  Dungeon Lv ${c.dungeonLevel}  Monsters: ${c.monstersDefeated}${vic}${c.shared ? '  [SHARED: free to play]' : ''}`;
     }).join('\n');
 
   chars.forEach((char, i) => {
     const letter = String.fromCharCode(65 + i);
     const btn = makeChoiceBtn(letter, char.name + (char.asmodeusDefeated ? ' ★' : ''));
     btn.onclick = () => selectSaveListChar(i);
+    if (char.shared) {
+      const tag = document.createElement('span');
+      tag.className = 'shared-tag';
+      tag.textContent = 'SHARED';
+      btn.appendChild(tag);
+      btn.dataset.tip = SHARED_TIP;
+      btn.setAttribute('aria-label', `${char.name}. ${SHARED_TIP}`);
+    }
     area.appendChild(btn);
   });
 
