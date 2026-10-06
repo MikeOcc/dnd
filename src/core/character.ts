@@ -184,18 +184,23 @@ export function weaponPower(char: Character, w: Weapon): number {
   return dmg * (1 + w.bonus * GEAR.DAMAGE_PER_PLUS) + (k.hit + w.bonus * GEAR.HIT_PER_PLUS) * 0.015;
 }
 
-/** The weapon you fight with: the best you can use, if any. */
+/** The weapon you fight with: the one you chose, or else the best you can use. */
 export function bestWeapon(char: Character): Weapon | undefined {
-  return (char.inventory?.weapons ?? []).filter(w => canUseGear(char, w.kind))
-    .reduce<Weapon | undefined>((b, w) => (!b || weaponPower(char, w) > weaponPower(char, b) ? w : b), undefined);
+  const usable = (char.inventory?.weapons ?? []).filter(w => canUseGear(char, w.kind));
+  return usable.find(w => w.equipped)
+    ?? usable.reduce<Weapon | undefined>((b, w) => (!b || weaponPower(char, w) > weaponPower(char, b) ? w : b), undefined);
 }
 
 const armorCut = (a: Armor) => GEAR.ARMOR[a.kind].cut + a.bonus * (a.kind === 'shield' ? GEAR.SHIELD_PER_PLUS : GEAR.ARMOR_PER_PLUS);
 
+/** Share of a blow a piece of armour turns aside on its own. */
+export const armorShare = (a: Armor) => armorCut(a);
+
 /** The armour and shield you wear: the best of each you can use. */
 export function wornArmor(char: Character): { body?: Armor; shield?: Armor } {
   const usable = (char.inventory?.armor ?? []).filter(a => canUseGear(char, a.kind));
-  const best = (list: Armor[]) => list.reduce<Armor | undefined>((b, a) => (!b || armorCut(a) > armorCut(b) ? a : b), undefined);
+  // The piece you chose for each place, or else the best.
+  const best = (list: Armor[]) => list.find(a => a.equipped) ?? list.reduce<Armor | undefined>((b, a) => (!b || armorCut(a) > armorCut(b) ? a : b), undefined);
   return { body: best(usable.filter(a => a.kind !== 'shield')), shield: best(usable.filter(a => a.kind === 'shield')) };
 }
 

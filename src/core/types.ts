@@ -111,8 +111,9 @@ export interface Inventory {
 /** Weapons and armour, +0 to +3. Wizards can use only daggers and leather. */
 export type WeaponKind = 'dagger' | 'sword' | 'axe' | 'mace';
 export type ArmorKind = 'leather' | 'chain' | 'plate' | 'shield';
-export interface Weapon { kind: WeaponKind; bonus: number; name: string }
-export interface Armor { kind: ArmorKind; bonus: number; name: string }
+/** `equipped`: chosen by hand (otherwise the best is used automatically). */
+export interface Weapon { kind: WeaponKind; bonus: number; name: string; equipped?: boolean }
+export interface Armor { kind: ArmorKind; bonus: number; name: string; equipped?: boolean }
 
 export type AmuletStat = 'strength' | 'intelligence' | 'dexterity' | 'constitution' | 'wisdom';
 
@@ -358,7 +359,8 @@ export type InteractionType =
   | 'fountain'
   | 'trap'
   | 'trap-choice'
-  | 'shop';
+  | 'shop'
+  | 'gear';
 
 export interface InteractionState {
   type: InteractionType;
@@ -367,6 +369,7 @@ export interface InteractionState {
   chestSearched?: boolean;     // chest: already checked for traps (no second look)
   chestTrapSpotted?: boolean;  // chest: the search found its trap, so disarming is on offer
   shop?: ShopState;            // shop: who's trading, which list is showing, what's for sale
+  gear?: { mode: 'list' | 'item'; index?: number };   // gear: the list, or one item's options
 }
 
 /** A shop visit: the Trading Post (level 1) or the wandering Peddler (deep levels). */

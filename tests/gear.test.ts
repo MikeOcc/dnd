@@ -6,6 +6,7 @@ import { createMonster } from '../src/core/monsters.js';
 import { playerAttack, monsterFirstStrike } from '../src/core/combat.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
+import { GameEngine } from '../src/core/game-engine.js';
 import { GEAR } from '../src/core/config.js';
 import type { Character, Weapon, Armor } from '../src/core/types.js';
 
@@ -128,5 +129,70 @@ describe('Gear, saved', () => {
     expect(back.inventory.armor).toEqual([a('plate', 1)]);
     expect(back.inventory.weapons).toEqual([w('sword', 2), { kind: 'dagger', bonus: 3, name: 'Dawnfang' }]);
     expect((back.inventory as unknown as { daggers?: unknown }).daggers).toBeUndefined();
+  });
+});
+
+describe('Choosing gear by hand', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function ready(cls: 'wizard' | 'warrior') {
+    const engine = new GameEngine(new Repository(db));
+    engine.startNameEntry(); engine.submitName('Kit'); engine.acceptCharacter(cls);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro(); e.phase = 'playing';
+    return { engine, e };
+  }
+
+  it('a chosen weapon and armour are used instead of the best; Automatic goes back to the best', () => {
+    const { engine, e } = ready('warrior');
+    e.char.inventory.weapons = [w('sword', 3), w('mace', 0)];
+    e.char.inventory.armor = [a('plate', 2), a('leather', 0), a('shield', 0)];
+    expect(bestWeapon(e.char)!.kind).toBe('sword');
+    let s = engine.openGear();
+    expect(s.phase).toBe('interaction');
+    engine.interactionChoice('b');                         // the mace
+    s = engine.interactionChoice('a');                     // fight with it
+    expect(bestWeapon(e.char)!.kind).toBe('mace');
+    expect(s.messages.join(' ')).toContain('You take up the mace');
+    engine.interactionChoice('d');                         // the leather
+    engine.interactionChoice('a');                         // wear it
+    expect(wornArmor(e.char).body!.kind).toBe('leather');
+    expect(wornArmor(e.char).shield!.kind).toBe('shield'); // the shield stays on
+    engine.interactionChoice('f');                         // Automatic (5 items: a-e, then f)
+    expect(bestWeapon(e.char)!.kind).toBe('sword');
+    expect(wornArmor(e.char).body!.kind).toBe('plate');
+    s = engine.interactionChoice('g');                     // Done
+    expect(s.phase).toBe('playing');
+  });
+
+  it('gear can be dropped', () => {
+    const { engine, e } = ready('warrior');
+    e.char.inventory.weapons = [w('sword'), w('axe')];
+    e.char.inventory.armor = [];
+    engine.openGear();
+    engine.interactionChoice('a');
+    const s = engine.interactionChoice('b');               // drop the sword
+    expect(e.char.inventory.weapons.map((x: Weapon) => x.kind)).toEqual(['axe']);
+    expect(s.messages.join(' ')).toContain('You leave the sword behind');
+  });
+
+  it("a wizard can't take up what only warriors use, and the choice is saved", () => {
+    const { engine, e } = ready('wizard');
+    e.char.inventory.weapons = [w('sword', 3), w('dagger', 0), w('dagger', 1)];
+    e.char.inventory.armor = [];
+    engine.openGear();
+    const s = engine.interactionChoice('a');               // the sword
+    expect(s.choices!.map((c: { text: string }) => c.text)).not.toContain('Fight with this');
+    engine.interactionChoice('a');                         // (no such option: back to the list)
+    expect(bestWeapon(e.char)!.kind).toBe('dagger');
+    engine.interactionChoice('b'); engine.interactionChoice('a');   // the +0 dagger: fight with it
+    expect(bestWeapon(e.char)!.bonus).toBe(0);
+    const repo = new Repository(db);
+    repo.saveCharacter(e.char);
+    expect(bestWeapon(repo.loadCharacter(e.char.id)!)!.bonus).toBe(0);
   });
 });

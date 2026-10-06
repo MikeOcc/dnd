@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear, weaponPower, armorShare } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -1683,6 +1683,104 @@ export class GameEngine {
     return this.processCombatResult(result);
   }
 
+  // ─── Gear ──────────────────────────────────────────────────────────────
+
+  /** Every weapon and piece of armour carried, weapons first. */
+  private gearList(): { kind: 'weapon' | 'armor'; item: import('./types.js').Weapon | import('./types.js').Armor }[] {
+    const inv = this.char!.inventory;
+    return [
+      ...(inv.weapons ?? []).map(item => ({ kind: 'weapon' as const, item })),
+      ...(inv.armor ?? []).map(item => ({ kind: 'armor' as const, item })),
+    ];
+  }
+
+  /** K while exploring: choose your weapon and armour by hand, or drop gear. */
+  openGear(): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+    if (this.gearList().length === 0) {
+      this.messages = ['You carry no weapons or armour. (Chests, fallen monsters and shops have them.)'];
+      return this.getState();
+    }
+    this.interaction = { type: 'gear', contentId: 'gear', choices: [], gear: { mode: 'list' } };
+    this.phase = 'interaction';
+    return this.showGear();
+  }
+
+  private showGear(lead: string[] = []): GameState {
+    const g = this.interaction?.gear;
+    const c = this.char;
+    if (!c || !g) return this.getState();
+    const list = this.gearList();
+    const letter = (i: number) => String.fromCharCode(97 + i);
+    const weapon = bestWeapon(c), worn = wornArmor(c);
+    const describe = (e: (typeof list)[number]) => {
+      const it = e.item;
+      const usable = canUseGear(c, it.kind);
+      const using = it === weapon || it === worn.body || it === worn.shield;
+      const what = e.kind === 'weapon'
+        ? `${it.kind}, hits ${Math.round(weaponPower(c, it as import('./types.js').Weapon) * 100)}%`
+        : `${it.kind}, turns aside ${Math.round(armorShare(it as import('./types.js').Armor) * 100)}%`;
+      return `${gearName(it)} (${what})${using ? (e.kind === 'weapon' ? ' [WIELDED]' : ' [WORN]') : ''}${usable ? '' : ' (warriors only)'}${it.equipped ? ' (your choice)' : ''}`;
+    };
+    if (g.mode === 'item' && g.index !== undefined && list[g.index]) {
+      const e = list[g.index];
+      const usable = canUseGear(c, e.item.kind);
+      this.messages = ['══ GEAR ══', ...lead, '', describe(e)];
+      this.interaction!.choices = [
+        ...(usable ? [{ key: 'a', text: e.kind === 'weapon' ? 'Fight with this' : 'Wear this' }] : []),
+        { key: 'b', text: 'Drop it' },
+        { key: 'c', text: 'Back' },
+      ];
+      return this.getState();
+    }
+    g.mode = 'list';
+    const chosen = list.some(e => e.item.equipped);
+    this.messages = ['══ GEAR ══', ...lead, '',
+      `Fighting with: ${weapon ? gearName(weapon) : 'nothing in hand'}`,
+      `Wearing: ${[worn.body, worn.shield].filter(Boolean).map(a => gearName(a!)).join(' and ') || 'no armour'} (turns aside ${Math.round(armorProtection(c) * 100)}% of a blow)`,
+      chosen ? '(Chosen by hand. "Automatic" lets the game pick the best again.)' : '(The game picks your best automatically. Choose an item to pick by hand.)',
+      '', ...list.map((e, i) => `  ${letter(i)}) ${describe(e)}`)];
+    this.interaction!.choices = [
+      ...list.map((e, i) => ({ key: letter(i), text: gearName(e.item) })),
+      { key: letter(list.length), text: 'Automatic (the best)' },
+      { key: letter(list.length + 1), text: 'Done' },
+    ];
+    return this.getState();
+  }
+
+  private resolveGearChoice(key: string): GameState {
+    const g = this.interaction?.gear;
+    const c = this.char;
+    if (!c || !g) return this.closeInteraction();
+    const list = this.gearList();
+    const i = key.charCodeAt(0) - 97;
+    if (g.mode === 'list') {
+      if (i >= 0 && i < list.length) { g.mode = 'item'; g.index = i; return this.showGear(); }
+      if (i === list.length) {
+        for (const e of list) delete e.item.equipped;
+        return this.showGear(['You let instinct choose: the best you carry.']);
+      }
+      return this.closeInteraction('You settle your gear.');
+    }
+    const e = list[g.index ?? -1];
+    g.mode = 'list';
+    if (!e) return this.showGear();
+    if (key === 'a' && canUseGear(c, e.item.kind)) {
+      // One weapon in hand; one suit of armour, and one shield.
+      const sameSlot = (o: (typeof list)[number]) => o.kind === e.kind && (e.kind === 'weapon' || (o.item.kind === 'shield') === (e.item.kind === 'shield'));
+      for (const o of list) if (sameSlot(o)) delete o.item.equipped;
+      e.item.equipped = true;
+      return this.showGear([e.kind === 'weapon' ? `You take up the ${gearName(e.item)}.` : `You put on the ${gearName(e.item)}.`]);
+    }
+    if (key === 'b') {
+      if (e.kind === 'weapon') c.inventory.weapons = c.inventory.weapons!.filter(w => w !== e.item);
+      else c.inventory.armor = c.inventory.armor!.filter(a => a !== e.item);
+      if (this.gearList().length === 0) return this.closeInteraction(`You leave the ${gearName(e.item)} behind. You carry no gear now.`);
+      return this.showGear([`You leave the ${gearName(e.item)} behind.`]);
+    }
+    return this.showGear();
+  }
+
   // ─── Shops ─────────────────────────────────────────────────────────────
 
   private static readonly SHOP_NAMES = { post: 'THE TRADING POST', outpost: 'THE OUTPOST', peddler: 'A CLOAKED PEDDLER' } as const;
@@ -2715,6 +2813,8 @@ export class GameEngine {
         return this.resolveTrapChoice(key, contentId);
       case 'shop':
         return this.resolveShopChoice(key);
+      case 'gear':
+        return this.resolveGearChoice(key);
       default:
         return this.closeInteraction();
     }

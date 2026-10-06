@@ -1099,7 +1099,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  K: Gear  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -1330,6 +1330,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'j') { openRingMenu(); return; }
     if (key === 'a') { openAmuletMenu(); return; }
     if (key === 'l') { cycleViewMode(); return; }
+    if (key === 'k') { apiAction('open-gear'); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  apiAction('turn-left');
@@ -1486,6 +1487,7 @@ document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAc
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
 document.getElementById('btn-rings')     ?.addEventListener('click', () => { if (currentState.phase === 'playing') openRingMenu(); });
 document.getElementById('btn-amulets')   ?.addEventListener('click', () => { if (currentState.phase === 'playing') openAmuletMenu(); });
+document.getElementById('btn-gear')      ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('open-gear'); });
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
 document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
