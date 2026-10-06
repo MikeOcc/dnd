@@ -1,7 +1,7 @@
-import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat, MagicDagger } from './types.js';
+import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat, Weapon, Armor, WeaponKind, ArmorKind } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS, DAGGERS } from './config.js';
-import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName, bestDagger, daggerName } from './character.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS, GEAR } from './config.js';
+import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName, bestWeapon, wornArmor, gearName, armorProtection } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
 
@@ -141,6 +141,39 @@ function findGem(char: Character, type: GemType): ChestResult {
   };
 }
 
+/** A weapon or armour the character can use, at a plus suited to the
+ * depth, added to their pack. Returns the lines describing it, or null if
+ * their pack has no room for it. Used by chests and fallen monsters. */
+export function rollGear(char: Character, rng: RNG, where: 'chest' | 'monster'): string[] | null {
+  const wizard = char.charClass !== 'warrior';
+  const isWeapon = rng.float() < 0.55;
+  const kinds = isWeapon
+    ? (Object.keys(GEAR.WEAPONS) as WeaponKind[]).filter(k => !wizard || GEAR.WEAPONS[k].wizard)
+    : (Object.keys(GEAR.ARMOR) as ArmorKind[]).filter(k => !wizard || GEAR.ARMOR[k].wizard);
+  const carried = isWeapon ? char.inventory.weapons?.length ?? 0 : char.inventory.armor?.length ?? 0;
+  if (carried >= (isWeapon ? GEAR.MAX_WEAPONS : GEAR.MAX_ARMOR)) return null;
+  const odds = [...GEAR.PLUS_ODDS].reverse().find(([from]) => char.dungeonLevel >= from)![1];
+  let pick = rng.float() * odds.reduce((a, b) => a + b, 0), bonus = 0;
+  for (let i = 0; i < odds.length; i++) { if (pick < odds[i]) { bonus = i; break; } pick -= odds[i]; }
+  const kind = rng.pick(kinds as string[]);
+  const base = rng.pick([...GEAR.NAMES[kind]]);
+  const name = bonus > 0 ? `${rng.pick([...GEAR.MAKERS[bonus]])} ${base}` : base;
+  const item = { kind, bonus, name: name[0].toUpperCase() + name.slice(1) };
+  const lines = [where === 'chest' ? `Inside lies ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.` : `Among its remains you find ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.`];
+  if (isWeapon) {
+    char.inventory.weapons = [...(char.inventory.weapons ?? []), item as Weapon];
+    lines.push(bestWeapon(char) === item ? 'It is the best weapon you carry: you will fight with it now.' : 'You already carry a better weapon. You keep it anyway.');
+    if (bonus === 3) lines.push('Its edge hums faintly. A blade like this could wound even a Rakshasa.');
+  } else {
+    char.inventory.armor = [...(char.inventory.armor ?? []), item as Armor];
+    const worn = wornArmor(char);
+    lines.push(worn.body === item || worn.shield === item
+      ? `You put it on. (Your armour now turns aside ${Math.round(armorProtection(char) * 100)}% of a blow.)`
+      : 'You already wear better. You keep it anyway.');
+  }
+  return lines;
+}
+
 export function resolveChest(char: Character, rng: RNG): ChestResult {
   // The first level stocks extra potions for new adventurers.
   if (char.dungeonLevel === 1 && rng.float() < FIRST_LEVEL.CHEST_EXTRA_POTION_CHANCE) {
@@ -158,20 +191,11 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
   // Opals are semi-common, unless the character already has all they can carry.
   if (roll < GEMS.OPAL_CHEST_CHANCE && canHold('opal')) return findGem(char, 'opal');
 
-  // Now and then, a magic dagger (unless the pack already holds plenty).
-  const daggerFrom = GEMS.OPAL_CHEST_CHANCE + AMULETS.CHEST_CHANCE;
-  if (roll >= daggerFrom && roll < daggerFrom + DAGGERS.CHEST_CHANCE && (char.inventory.daggers?.length ?? 0) < DAGGERS.MAX_CARRIED) {
-    const odds = [...DAGGERS.ODDS].reverse().find(([from]) => char.dungeonLevel >= from)![1];
-    let pick = rng.float() * odds.reduce((a, b) => a + b, 0), bonus = 1;
-    for (let i = 0; i < odds.length; i++) { if (pick < odds[i]) { bonus = i + 1; break; } pick -= odds[i]; }
-    const dagger: MagicDagger = { bonus, name: rng.pick([...DAGGERS.NAMES[bonus]]) };
-    char.inventory.daggers = [...(char.inventory.daggers ?? []), dagger];
-    const best = bestDagger(char) === dagger;
-    return { messages: [
-      `Wrapped in oilcloth lies a magic dagger: the ${daggerName(dagger)}.`,
-      bonus === 3 ? 'Its edge hums faintly. A blade like this could wound even a Rakshasa.' : 'It is light, and wickedly sharp.',
-      best ? 'It is the finest blade you carry: you will fight with it now.' : 'You already carry a finer blade.',
-    ] };
+  // Now and then, a weapon or a piece of armour.
+  const gearFrom = GEMS.OPAL_CHEST_CHANCE + AMULETS.CHEST_CHANCE;
+  if (roll >= gearFrom && roll < gearFrom + GEAR.CHEST_CHANCE) {
+    const found = rollGear(char, rng, 'chest');
+    if (found) return { messages: found };
   }
 
   // Now and then, a magic amulet (unless the pack already holds plenty).

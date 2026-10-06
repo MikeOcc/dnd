@@ -1,9 +1,9 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, DAGGERS, CHOIR } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, GEAR, CHOIR } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, HeldCondition, FxElement, RingId, ChoirMask, ChoirPower } from './types.js';
 import { RINGS_INFO } from '../content/rings.js';
 import { BESTIARY, type Script, type Kit } from './bestiary.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot, bestDagger } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot, bestWeapon, armorProtection } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -51,10 +51,12 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const warrior = char.charClass === 'warrior';
 
-  // A Pit Fiend's dread spoils your aim. A magic dagger steadies it.
+  // A Pit Fiend's dread spoils your aim. Your weapon (and its magic) steadies it.
   const dread = monster.type === 'Pit Fiend' ? 4 : 0;
-  const plus = bestDagger(char)?.bonus ?? 0;
-  const hitRoll = rng.die(20) + char.level + plus * DAGGERS.HIT_PER_PLUS
+  const weapon = bestWeapon(char);
+  const kind = weapon ? GEAR.WEAPONS[weapon.kind] : undefined;
+  const plus = weapon?.bonus ?? 0;
+  const hitRoll = rng.die(20) + char.level + plus * GEAR.HIT_PER_PLUS + (kind?.hit ?? 0)
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
     + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
     + (warrior ? WARRIOR.HIT_BONUS : 0)
@@ -86,11 +88,14 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
     : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Demilich') && plus === 0 ? 0.5 : 1;
   // A Rakshasa is truly harmed only by a +3 weapon.
-  const rakshasa = monster.type === 'Rakshasa' ? DAGGERS.RAKSHASA_BY_PLUS[Math.min(3, plus)] : 1;
-  const magic = 1 + plus * DAGGERS.DAMAGE_PER_PLUS;
+  const rakshasa = monster.type === 'Rakshasa' ? GEAR.RAKSHASA_BY_PLUS[Math.min(3, plus)] : 1;
+  const magic = 1 + plus * GEAR.DAMAGE_PER_PLUS;
+  // The weapon itself: a sword or axe hits harder than none; a mace crushes undead, golems and stone.
+  const crushable = monster.definition.isUndead || /Golem|Gargoyle|Skeleton/.test(monster.type);
+  const heft = kind ? (warrior && kind.warriorDamage ? kind.warriorDamage : kind.damage) * (kind.crushes && crushable ? kind.crushes : 1) : 1;
   const rust = char.statusEffects.find(e => e.type === 'corroded');
   const rustMult = rust ? 1 - rust.value / 100 : 1;
-  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * rustMult * magic * rakshasa * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
+  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * rustMult * magic * heft * rakshasa * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
   monster.hp -= damage;
   const aside = rakshasa < 1
     ? (plus === 0 ? ' Ordinary steel barely marks its hide: only a +3 weapon can truly wound a Rakshasa.' : ` Your +${plus} blade bites, but not deeply: only a +3 can truly wound a Rakshasa.`)
@@ -2088,7 +2093,10 @@ function calculateMonsterDamage(
 
   const defenseMultiplier = Math.max(0.2, 1 - defense / 80) * (naked ? (1 / COMBAT.NAKED_DEFENSE_MULT) : 1);
   const toughness = char.charClass === 'warrior' ? WARRIOR.DAMAGE_TAKEN_MULT : 1;
-  return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness));
+  // Armour turns aside part of a blow; against magic and breath, half as much. (Not when stripped bare.)
+  const physical = !ability || abilityElement(ability) === 'physical';
+  const armor = naked ? 1 : 1 - armorProtection(char) * (physical ? 1 : GEAR.MAGIC_SHARE);
+  return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness * armor));
 }
 
 /** Chance Asmodeus turns the character into a pile of lizard excrement this turn:

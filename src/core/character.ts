@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
-import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL, AMULETS } from './config.js';
-import type { Amulet, MagicDagger, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
+import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL, AMULETS, GEAR } from './config.js';
+import type { Amulet, Weapon, Armor, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
   const r = rng.roll(3, 6);
@@ -166,16 +166,47 @@ export function getEffectiveStats(char: Character): Character {
   }
   const amulet = wornAmulet(char);
   if (amulet) c[amulet.stat] = Math.max(1, c[amulet.stat] + amuletDelta(amulet));
+  const { body } = wornArmor(char);                      // heavy armour slows you
+  if (body && GEAR.ARMOR[body.kind].dex) c.dexterity = Math.max(1, c.dexterity - GEAR.ARMOR[body.kind].dex);
   return c;
 }
 
-/** The best magic dagger carried (the one you fight with), if any. */
-export function bestDagger(char: Character): MagicDagger | undefined {
-  return (char.inventory?.daggers ?? []).reduce<MagicDagger | undefined>((b, d) => (!b || d.bonus > b.bonus ? d : b), undefined);
+/** Whether this character can use a weapon or armour of this kind. */
+export function canUseGear(char: Character, kind: string): boolean {
+  if (char.charClass === 'warrior') return true;
+  return !!(GEAR.WEAPONS[kind]?.wizard || GEAR.ARMOR[kind]?.wizard);
 }
 
-/** "Moonsilver dagger (+2)" */
-export const daggerName = (d: MagicDagger) => `${d.name} (+${d.bonus})`;
+/** How hard a weapon hits for this character (relative to none). */
+export function weaponPower(char: Character, w: Weapon): number {
+  const k = GEAR.WEAPONS[w.kind];
+  const dmg = char.charClass === 'warrior' && k.warriorDamage ? k.warriorDamage : k.damage;
+  return dmg * (1 + w.bonus * GEAR.DAMAGE_PER_PLUS) + (k.hit + w.bonus * GEAR.HIT_PER_PLUS) * 0.015;
+}
+
+/** The weapon you fight with: the best you can use, if any. */
+export function bestWeapon(char: Character): Weapon | undefined {
+  return (char.inventory?.weapons ?? []).filter(w => canUseGear(char, w.kind))
+    .reduce<Weapon | undefined>((b, w) => (!b || weaponPower(char, w) > weaponPower(char, b) ? w : b), undefined);
+}
+
+const armorCut = (a: Armor) => GEAR.ARMOR[a.kind].cut + a.bonus * (a.kind === 'shield' ? GEAR.SHIELD_PER_PLUS : GEAR.ARMOR_PER_PLUS);
+
+/** The armour and shield you wear: the best of each you can use. */
+export function wornArmor(char: Character): { body?: Armor; shield?: Armor } {
+  const usable = (char.inventory?.armor ?? []).filter(a => canUseGear(char, a.kind));
+  const best = (list: Armor[]) => list.reduce<Armor | undefined>((b, a) => (!b || armorCut(a) > armorCut(b) ? a : b), undefined);
+  return { body: best(usable.filter(a => a.kind !== 'shield')), shield: best(usable.filter(a => a.kind === 'shield')) };
+}
+
+/** Share of a monster's blow your armour turns aside (before magic halves it). */
+export function armorProtection(char: Character): number {
+  const { body, shield } = wornArmor(char);
+  return Math.min(GEAR.MAX_CUT, (body ? armorCut(body) : 0) + (shield ? armorCut(shield) : 0));
+}
+
+/** "Moonsilver longsword +2" (plain gear has no plus). */
+export const gearName = (g: Weapon | Armor) => `${g.name}${g.bonus > 0 ? ` +${g.bonus}` : ''}`;
 
 /** The amulet worn, if any. */
 export function wornAmulet(char: Character): Amulet | undefined {

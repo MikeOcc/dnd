@@ -684,23 +684,50 @@ export const CHOIR = {
   JOY_HEAL_SHARE: 0.8,          // ...and the Choir regains this share of it
 } as const;
 
-// Magic daggers, found in chests: +1 to +3. The best one carried is the one
-// you fight with (wizards above all, but anyone can use one).
-export const DAGGERS = {
-  CHEST_CHANCE: 0.04,
-  MAX_CARRIED: 4,
-  // Odds of +1 / +2 / +3 by dungeon level (deeper, better).
-  ODDS: [[1, [80, 18, 2]], [3, [62, 30, 8]], [5, [45, 38, 17]]] as [number, number[]][],
-  HIT_PER_PLUS: 2,          // added to the attack roll per plus
-  DAMAGE_PER_PLUS: 0.15,    // extra damage per plus (+15%, +30%, +45%)
-  // Rakshasas: share of a blow's damage that lands, by the weapon's plus.
-  // Only a +3 blade strikes one fully.
+// Weapons and armour, +0 to +3, found in chests and on fallen monsters.
+// You automatically fight with the best weapon for your class, and wear the
+// best armour and shield. Wizards: daggers and leather only.
+export const GEAR = {
+  CHEST_CHANCE: 0.05,          // a chest holds a weapon or armour this often
+  DROP_CHANCE: 0.06,           // a fallen monster leaves one this often...
+  DROP_CHANCE_TOUGH: 0.12,     // ...or this often if it's a tough one (tier 6+)
+  MAX_WEAPONS: 6,
+  MAX_ARMOR: 6,
+  // Odds of +0 / +1 / +2 / +3 by dungeon level (deeper, better).
+  PLUS_ODDS: [[1, [50, 35, 12, 3]], [3, [35, 35, 22, 8]], [5, [22, 33, 30, 15]]] as [number, number[]][],
+  HIT_PER_PLUS: 2,             // added to the attack roll per plus
+  DAMAGE_PER_PLUS: 0.15,       // extra damage per plus
+  // Rakshasas: share of a blow that lands, by the weapon's plus. Only a +3 strikes fully.
   RAKSHASA_BY_PLUS: [0.25, 0.5, 0.75, 1],
+  // Weapon kinds: damage (against fighting without one), to-hit, who can use them.
+  WEAPONS: {
+    dagger: { damage: 1.0, warriorDamage: 0.85, hit: 1, wizard: true },
+    sword:  { damage: 1.12, hit: 0 },
+    axe:    { damage: 1.25, hit: -2 },
+    mace:   { damage: 1.06, hit: 0, crushes: 1.35 },   // crushes undead, golems and stone
+  } as Record<string, { damage: number; warriorDamage?: number; hit: number; wizard?: boolean; crushes?: number }>,
+  // Armour: share of a monster's blow turned aside (half of that against magic and breath), and Dexterity lost.
+  ARMOR: {
+    leather: { cut: 0.07, dex: 0, wizard: true },
+    chain:   { cut: 0.13, dex: 1 },
+    plate:   { cut: 0.2, dex: 2 },
+    shield:  { cut: 0.05, dex: 0 },
+  } as Record<string, { cut: number; dex: number; wizard?: boolean }>,
+  ARMOR_PER_PLUS: 0.03,
+  SHIELD_PER_PLUS: 0.02,
+  MAX_CUT: 0.45,
+  MAGIC_SHARE: 0.5,            // against spells and breath, armour does half as much
   NAMES: {
-    1: ['Silvered dagger', 'Runed dirk', 'Glimmering knife', 'Keen stiletto'],
-    2: ['Moonsilver dagger', 'Whisperblade', 'Ember-edged dirk', 'Starsteel knife'],
-    3: ['Saint\'s kris', 'Dawnfang', 'Wardbreaker', 'The Unmaker\'s dagger'],
-  } as Record<number, string[]>,
+    dagger: ['dagger', 'dirk', 'stiletto', 'kris'],
+    sword: ['longsword', 'broadsword', 'bastard sword', 'sabre'],
+    axe: ['battleaxe', 'greataxe', 'bearded axe'],
+    mace: ['flanged mace', 'morningstar', 'warhammer'],
+    leather: ['leather armour', 'studded leather', 'hide armour'],
+    chain: ['chain mail', 'ring mail', 'scale mail'],
+    plate: ['plate armour', 'half-plate', 'banded mail'],
+    shield: ['round shield', 'kite shield', 'tower shield'],
+  } as Record<string, string[]>,
+  MAKERS: { 1: ['runed', 'silvered', 'keen'], 2: ['moonsilver', 'dwarf-forged', 'starsteel'], 3: ['saint-blessed', 'elder-forged', 'wardbreaking'] } as Record<number, string[]>,
 } as const;
 
 // Magic amulets: one worn at a time, +1 to +3 to one attribute, or as much

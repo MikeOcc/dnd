@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestDagger, daggerName } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -17,11 +17,11 @@ import {
   initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
   applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain,
   chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
-  resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
+  resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear,
 } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
 import { placeTreasures, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -384,7 +384,8 @@ export class GameEngine {
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
-      ...(bestDagger(c) ? [`Weapon: ${daggerName(bestDagger(c)!)}`] : []),
+      ...(bestWeapon(c) ? [`Weapon: ${gearName(bestWeapon(c)!)}`] : []),
+      ...(wornArmor(c).body || wornArmor(c).shield ? [`Armour: ${[wornArmor(c).body, wornArmor(c).shield].filter(Boolean).map(a => gearName(a!)).join(' and ')} (turns aside ${Math.round(armorProtection(c) * 100)}% of a blow)`] : []),
       ...(wornAmulet(c) ? [`Amulet worn: ${amuletName(wornAmulet(c)!)}`] : []),
       ...(c.inventory.activeRing ? [`Ring in use: ${RINGS_INFO[c.inventory.activeRing].name} (${RINGS_INFO[c.inventory.activeRing].power})`] : []),
       ``,
@@ -417,7 +418,8 @@ export class GameEngine {
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
       ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
-      ...(c.inventory.daggers ?? []).map(d => ({ name: `${daggerName(d)}${bestDagger(c) === d ? ' (wielded)' : ''}`, type: `Magic dagger: +${d.bonus} to hit and damage`, qty: 'x1' })),
+      ...(c.inventory.weapons ?? []).map(w => ({ name: `${gearName(w)}${bestWeapon(c) === w ? ' (wielded)' : ''}`, type: `Weapon: ${w.kind}${w.bonus ? `, +${w.bonus} to hit and damage` : ''}${canUseGear(c, w.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
+      ...(c.inventory.armor ?? []).map(a => ({ name: `${gearName(a)}${wornArmor(c).body === a || wornArmor(c).shield === a ? ' (worn)' : ''}`, type: `Armour: ${a.kind}${a.bonus ? ` +${a.bonus}` : ''}${canUseGear(c, a.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
       ...(c.inventory.amulets ?? []).map(a => ({ name: `${amuletName(a, false)}${a.worn ? ' (worn)' : ''}`, type: a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown', qty: 'x1' })),
       ...this.ringsWorn().map(r => {
         const info = RINGS_INFO[r];
@@ -2348,6 +2350,11 @@ export class GameEngine {
     const def = monster.definition;
     if (monster.type === 'Hollow Choir') {
       this.messages.push('', 'The masks fall and crumble. The darkness between them vanishes.', 'For the first time, the chamber is silent.');
+    }
+    // Now and then a fallen monster leaves a weapon or armour (tough ones more often).
+    if (this.rng.float() < (def.naturalTier >= 6 ? GEAR.DROP_CHANCE_TOUGH : GEAR.DROP_CHANCE)) {
+      const found = rollGear(this.char, this.rng, 'monster');
+      if (found) this.messages.push('', ...found);
     }
     const xpGained = calculateXPReward(this.char.level, monster.level, def.isUnique, def.naturalTier);
 

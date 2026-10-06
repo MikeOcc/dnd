@@ -137,6 +137,12 @@ export class Repository {
     if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0 };
     if (inventory.gems.emerald === undefined) inventory.gems.emerald = 0;
     if (!inventory.books) inventory.books = 0;
+    // Saves from before weapons and armour carried magic daggers: they're weapons now.
+    const legacy = (inventory as unknown as { daggers?: { bonus: number; name: string }[] }).daggers;
+    if (legacy) {
+      inventory.weapons = [...(inventory.weapons ?? []), ...legacy.map(d => ({ kind: 'dagger' as const, bonus: d.bonus, name: d.name }))];
+      delete (inventory as unknown as { daggers?: unknown }).daggers;
+    }
     // Opals and emeralds are capped (GEMS.CARRY_CAP): older saves may hold more.
     for (const [t, cap] of Object.entries(GEMS.CARRY_CAP) as [keyof typeof inventory.gems, number][]) {
       inventory.gems[t] = Math.min(inventory.gems[t] ?? 0, cap);
