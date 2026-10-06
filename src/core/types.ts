@@ -228,6 +228,8 @@ export type MonsterType =
   | 'Lich'
   | 'Wizard'
   | 'Hollow Choir'
+  | 'Giant Leech'
+  | 'Giant Shrew'
   | 'Cerebrovore'
   | 'Elder Oblex'
   | 'Sanguinid'
@@ -309,7 +311,7 @@ export interface Fx {
   cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
 }
 
-export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded' | 'webbed';
+export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded' | 'webbed' | 'latched';
 
 /** The Hollow Choir's five masks, and the three powers they hold. */
 export type ChoirMask = 'grief' | 'rage' | 'delight' | 'dread' | 'blank';

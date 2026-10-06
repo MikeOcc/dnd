@@ -4163,6 +4163,69 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Giant Leech': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant Leech">
+    <defs>
+    <linearGradient id="gl-body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1c1a10"/><stop offset="0.45" stop-color="#4a4424"/><stop offset="0.7" stop-color="#3a3519"/><stop offset="1" stop-color="#14120a"/></linearGradient>
+    <radialGradient id="gl-mouth" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#2a0306"/><stop offset="0.7" stop-color="#6e1a1c"/><stop offset="1" stop-color="#3a2a14"/></radialGradient>
+    </defs>
+    <ellipse cx="82" cy="150" rx="46" ry="8" fill="#0b120c" opacity="0.6"/>
+    <!-- the coiled tail on the ground -->
+    <path d="M36 146 Q20 138 30 126 Q46 116 70 124 Q96 132 108 146 Z" fill="url(#gl-body)" stroke="#0a0905" stroke-width="2"/>
+    <!-- the rearing body -->
+    <path d="M58 146 Q48 104 56 74 Q62 44 80 30 Q100 18 112 34 Q118 52 108 80 Q98 110 106 146 Z" fill="url(#gl-body)" stroke="#0a0905" stroke-width="2.5"/>
+    <g fill="none" stroke="#14120a" stroke-width="1.6" opacity="0.85">
+      <path d="M56 132 Q80 126 104 132"/><path d="M53 116 Q80 110 102 116"/><path d="M53 100 Q80 94 104 100"/>
+      <path d="M56 84 Q82 78 108 84"/><path d="M62 68 Q86 62 110 68"/><path d="M70 52 Q90 46 112 52"/>
+    </g>
+    <path d="M70 60 Q66 90 70 136" stroke="#9a9a68" stroke-width="2.5" fill="none" opacity="0.35" stroke-linecap="round"/>
+    <!-- the mouth, ringed with teeth -->
+    <ellipse cx="96" cy="32" rx="18" ry="13" transform="rotate(-18 96 32)" fill="url(#gl-mouth)" stroke="#0a0905" stroke-width="2"/>
+    <ellipse cx="96" cy="32" rx="8" ry="5.5" transform="rotate(-18 96 32)" fill="#0a0102"/>
+    <g fill="#e8e0c8" stroke="#3a2a14" stroke-width="0.6">
+      <path d="M84 30 l3 -2 l0 4 Z"/><path d="M88 24 l3 1 l-3 3 Z"/><path d="M95 21 l3 2 l-4 2 Z"/><path d="M103 22 l2 3 l-4 0 Z"/>
+      <path d="M108 28 l1 3 l-4 -1 Z"/><path d="M107 36 l-2 3 l-1 -4 Z"/><path d="M100 41 l-3 2 l0 -4 Z"/><path d="M92 40 l-3 1 l2 -3 Z"/>
+    </g>
+    <!-- slime -->
+    <path d="M62 120 q-2 8 0 12" stroke="#7a8a50" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M104 96 q3 7 1 12" stroke="#7a8a50" stroke-width="2" fill="none" opacity="0.6"/>
+    <circle cx="105" cy="110" r="1.8" fill="#7a8a50" opacity="0.6"/>
+    </svg>
+  `,
+  'Giant Shrew': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant Shrew">
+    <defs>
+    <linearGradient id="gs-fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e6458"/><stop offset="1" stop-color="#3a332b"/></linearGradient>
+    </defs>
+    <ellipse cx="80" cy="146" rx="58" ry="7" fill="#000" opacity="0.4"/>
+    <!-- tail -->
+    <path d="M30 108 Q8 104 6 86 Q6 76 12 72" fill="none" stroke="#5a4e44" stroke-width="5" stroke-linecap="round"/>
+    <!-- body, hunched -->
+    <path d="M24 112 Q20 76 52 66 Q82 58 104 72 Q118 82 116 104 Q112 128 80 132 Q40 134 24 112 Z" fill="url(#gs-fur)" stroke="#16120e" stroke-width="2"/>
+    <!-- bristling fur along the back -->
+    <g stroke="#2a241e" stroke-width="1.6" stroke-linecap="round">
+      <path d="M36 74 l-3 -8 M46 68 l-2 -9 M56 64 l0 -9 M66 62 l2 -9 M76 62 l3 -8 M86 64 l4 -8 M96 68 l5 -7"/>
+    </g>
+    <!-- legs and claws -->
+    <g fill="#3a332b" stroke="#16120e" stroke-width="1.5">
+      <path d="M40 124 l-4 18 h10 l2 -16 Z"/><path d="M90 126 l2 16 h10 l-2 -18 Z"/>
+    </g>
+    <g stroke="#d8d0c0" stroke-width="1.2" stroke-linecap="round"><path d="M36 142 l-3 3 M40 142 l-1 4 M44 142 l1 4"/><path d="M94 142 l-1 4 M98 142 l1 4 M102 142 l3 3"/></g>
+    <!-- head and long snout -->
+    <path d="M100 70 Q124 60 140 78 Q152 90 156 96 Q146 100 132 100 Q114 102 104 96 Z" fill="url(#gs-fur)" stroke="#16120e" stroke-width="2"/>
+    <ellipse cx="155" cy="96" rx="4" ry="3" fill="#2a1a1a"/>
+    <path d="M126 64 Q130 54 138 60 Q136 66 130 68 Z" fill="#5a4e44" stroke="#16120e" stroke-width="1.2"/>
+    <!-- small red eye -->
+    <circle cx="128" cy="78" r="3.4" fill="#2a0404"/><circle cx="128" cy="78" r="1.6" fill="#ff3a2a"/>
+    <!-- bared teeth -->
+    <path d="M118 98 Q134 104 152 99" fill="none" stroke="#16120e" stroke-width="1.5"/>
+    <g fill="#f0e8d8" stroke="#3a2a1a" stroke-width="0.6">
+      <path d="M140 99 l2 7 l2 -6 Z"/><path d="M146 98 l1.5 6 l2 -5.5 Z"/><path d="M132 100 l1 4 l2 -4 Z"/><path d="M126 100 l1 3.5 l2 -3.5 Z"/>
+    </g>
+    <!-- whiskers -->
+    <g stroke="#c8c0b0" stroke-width="0.7" opacity="0.7"><path d="M148 92 l12 -6 M148 94 l12 -2 M147 96 l12 2"/></g>
+    </svg>
+  `,
   'Hollow Choir': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Hollow Choir: five cracked stone masks around a void">
     <defs>
@@ -5313,6 +5376,8 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Giant Leech': 1.1,
+  'Giant Shrew': 1.0,
   'Hollow Choir': 1.2,
   'Asmodeus': 2.2,
   'Giant': 1.35,

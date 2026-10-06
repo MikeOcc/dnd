@@ -55,6 +55,45 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
 
   // ── Shallow levels ─────────────────────────────────────────────────────────
 
+  'Giant Leech': { moves: [
+    // Fastened on, it drinks: you bleed, it swells. Strength tears it free.
+    { id: 'leech-drain', weight: 100, when: k => k.char.heldBy === 'latched' && k.held(), run: k => {
+      const dealt = k.strike(0.7, d => `The leech drinks deep. You suffer ${d} damage.`);
+      const healed = k.heal(Math.round(dealt * 0.6));
+      if (healed > 0) k.say(`It swells, ridged body darkening with your blood. (+${healed} HP)`);
+      if (k.alive() && k.rng.float() < 0.25 && !has(k.char, 'strength-reduced')) {
+        k.status({ type: 'strength-reduced', value: 2, turns: 6 });
+        k.say('You are growing faint from the loss of blood. (-2 Strength for a while)');
+      }
+    } },
+    { id: 'leech-latch', weight: 55, when: k => !k.held(), run: k => {
+      k.strike(0.6, d => `The leech surges and its mouth clamps onto you! (${d} damage)`);
+      if (k.alive()) { k.hold(2, 'latched'); k.status({ type: 'bleeding', value: 2, turns: 4 }); k.say('It has fastened on. You are bleeding!'); }
+    } },
+    { id: 'leech-slam', weight: 45, when: k => !k.held(), run: k => {
+      k.strike(1.0, d => `The leech rears and slams its slick weight down on you. You suffer ${d} damage.`);
+    } },
+  ] },
+
+  'Giant Shrew': { moves: [
+    { id: 'shrew-bite', weight: 50, run: k => {
+      k.strike(1.0, d => `The shrew darts in and bites! You suffer ${d} damage.`);
+      if (k.alive() && k.rng.float() < 0.25 && !has(k.char, 'poison')) {
+        k.status({ type: 'poison', value: 2, turns: 5 });
+        k.say('Its spit burns in the wound. You are poisoned!');
+      }
+    } },
+    { id: 'shrew-frenzy', weight: 32, run: k => {
+      const n = k.rng.int(2, 3);
+      k.say('The shrew is a blur of teeth!');
+      k.strikes(n, 0.45, d => `  It bites. (${d} damage)`);
+    } },
+    { id: 'shrew-shriek', weight: 18, run: k => {
+      k.say('The shrew shrieks, and answering shrieks come out of the dark.');
+      k.strike(0.6, d => `Another shrew darts in from the shadows, bites, and is gone. (${d} damage)`);
+    } },
+  ] },
+
   'Giant Spider': { moves: [
     { id: 'spider-bite', weight: 65, run: k => {
       k.strike(1.0, d => `The spider sinks its fangs into you! You suffer ${d} damage.`);

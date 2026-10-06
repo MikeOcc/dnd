@@ -1699,6 +1699,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'gold-wallop': 'sack of gold', 'gold-claws': 'claws', 'gold-dust-breath': 'gold-dust breath', 'gilding': 'gilding spell',
   'ice-axe': 'ice axe', 'ice-boulder': 'hurled boulder', 'shard-storm': 'ice shards', 'frost-stomp': 'stomp', 'winters-grasp': "winter's grasp",
   'titan-bite': 'bite',
+  'leech-drain': 'drinking mouth', 'leech-latch': 'clamping mouth', 'leech-slam': 'slick weight', 'shrew-bite': 'teeth', 'shrew-frenzy': 'teeth', 'shrew-shriek': 'pack',
   'lament': 'Lament', 'false-joy': 'False Joy', 'rage-strike': 'raging mask', 'mask-whisper': 'whispering mask',
   'tail-slam': 'tail',
   'frostbite-claws': 'frostbitten claws',
@@ -2263,18 +2264,23 @@ const HELD_TEXT: Record<HeldCondition, string> = {
   frozen:     'You are frozen solid in a shell of ice and cannot move!',
   gilded:     'Your gilded limbs are heavy as ingots and will not move!',
   petrifying: 'Your stone legs will not obey you!',
+  latched:    'You tear at the slick body fastened to you, but it will not let go!',
 };
 
 /** A round the character loses to being held: they do nothing and the
  * monster acts. */
 export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   // Coils can be fought: Strength gives a chance to wriggle free at once.
-  if (char.heldBy === 'constricted' || char.heldBy === 'choked' || char.heldBy === 'webbed') {
+  if (char.heldBy === 'constricted' || char.heldBy === 'choked' || char.heldBy === 'webbed' || char.heldBy === 'latched') {
     const chance = Math.min(TITANOBOA.BREAK_FREE_MAX, getEffectiveStats(char).strength * TITANOBOA.BREAK_FREE_PER_STRENGTH);
     if (rng.float() < chance) {
+      const freed = {
+        latched: 'You get your fingers under its rim and wrench the leech off you!',
+        webbed: 'With a desperate heave you tear through the web and pull yourself free!',
+      }[char.heldBy as string] ?? 'With a desperate heave you force the coils apart and tear yourself free!';
       char.heldRounds = 0;
       char.heldBy = undefined;
-      const messages = ['With a desperate heave you force the coils apart and tear yourself free!'];
+      const messages = [freed];
       const res = monsterAction(char, monster, rng, messages);
       return { ...res, playerDamage: 0, monsterDied: false };
     }

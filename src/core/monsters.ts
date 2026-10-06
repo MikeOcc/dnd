@@ -167,6 +167,37 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     specialAbilities: ['ice-axe', 'ice-boulder', 'shard-storm', 'frost-stomp', 'winters-grasp'],
   },
   // ─── The great bestiary: these fight by move tables in bestiary.ts ─────────
+  // From the swamps of the old pictures: a leech as long as a man, that
+  // fastens on and drinks.
+  'Giant Leech': {
+    type: 'Giant Leech', isUndead: false, isUnique: false,
+    minLevel: 1, maxLevel: 12, naturalTier: 3, minDungeonLevel: 1, speed: 0.7,
+    baseHpPerLevel: 8, baseAttackPerLevel: 2.4, baseDefensePerLevel: 1.2,
+    fireballResistance: 1.4, coldResistance: 0.6,
+    encounterIntro: [
+      'Something slides out of the black water at your feet: glistening, ridged,',
+      'as long as a man. A round mouth ringed with teeth opens and tastes the air.',
+      '',
+      'You have encountered a Level {LVL} Giant Leech!',
+    ],
+    specialAbilities: [],
+  },
+  // A starving shrew the size of a hound: never still, all teeth, and
+  // its bite carries a poison in the spit.
+  'Giant Shrew': {
+    type: 'Giant Shrew', isUndead: false, isUnique: false,
+    minLevel: 1, maxLevel: 12, naturalTier: 3, minDungeonLevel: 1, speed: 1.6,
+    baseHpPerLevel: 6, baseAttackPerLevel: 2.6, baseDefensePerLevel: 1.4,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'A shrill chittering, very fast, from somewhere close.',
+      'A shrew the size of a wolfhound bursts into the light, ribs showing, teeth bared.',
+      'It is starving. It is always starving.',
+      '',
+      'You have encountered a Level {LVL} Giant Shrew!',
+    ],
+    specialAbilities: [],
+  },
   "Giant Spider": {
     type: "Giant Spider", isUndead: false, isUnique: false,
     minLevel: 2, maxLevel: 16, naturalTier: 2, minDungeonLevel: 1, speed: 1.2,
