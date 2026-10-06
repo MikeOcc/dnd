@@ -254,8 +254,46 @@
     },
   };
 
+  // ─── Monsters standing in the scene (the portrait art, as a figure) ─────
+
+  const monsterImages = {};
+  function monsterImage(type) {
+    if (monsterImages[type]) return monsterImages[type];
+    const svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
+    const img = new Image();
+    img.onload = () => onReady();
+    if (svg) img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'));
+    return (monsterImages[type] = img);
+  }
+
+  /** A monster figure: breathes slowly (unless motion is reduced), flashes
+   * the colour of a blow when struck, and all but vanishes when invisible. */
+  function monsterArt(obj) {
+    return {
+      draw(ctx, x, y, w, h, t) {
+        const img = monsterImage(obj.type);
+        if (!img.complete || !img.naturalWidth) return;
+        const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
+        const hh = h * (1 + breathe), ww = w * (1 - breathe * 0.5);
+        ctx.save();
+        if (obj.alpha !== undefined) ctx.globalAlpha = obj.alpha;
+        ctx.drawImage(img, x + (w - ww) / 2, y + (h - hh), ww, hh);
+        ctx.restore();
+        if (obj.flash) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.globalAlpha = obj.flash.alpha;
+          ctx.fillStyle = obj.flash.color;
+          ctx.fillRect(x - 4, y + (h - hh) - 4, w + 8, hh + 8);
+          ctx.restore();
+        }
+      },
+    };
+  }
+
   /** The artwork for one landmark: draws it into the box (x, y, w, h). */
   function art(obj) {
+    if (obj.kind === 'monster') return monsterArt(obj);
     const anim = ANIMATE[obj.kind];
     return {
       draw(ctx, x, y, w, h, t, sprite) {
@@ -272,10 +310,10 @@
     };
   }
 
-  const sizeOf = (obj, view) => SIZES[kindOf(obj, view)] || { w: 0.6, h: 0.6 };
+  const sizeOf = (obj, view) => (obj.kind === 'monster' ? obj.size : SIZES[kindOf(obj, view)] || { w: 0.6, h: 0.6 });
 
   /** Whether anything in a scene is animated (so the view needs redrawing over time). */
-  const animates = (objects) => objects.some(o => ANIMATE[o.kind]) && !still();
+  const animates = (objects) => objects.some(o => ANIMATE[o.kind] || o.kind === 'monster') && !still();
 
   // Start loading everything now, so the first view isn't missing anything.
   Object.keys(SVG).forEach(load);

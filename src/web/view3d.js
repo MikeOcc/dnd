@@ -83,12 +83,24 @@
 
   // ─── The camera ─────────────────────────────────────────────────────────
 
-  /** The camera at the centre of the character's square, looking their way.
-   * `right` is the unit vector to their right; distances are measured along
-   * `dir` (perpendicular distance, so walls don't bow). */
+  const FACING_ANGLE = { N: -Math.PI / 2, E: 0, S: Math.PI / 2, W: Math.PI };
+
+  /** A camera anywhere, looking at `angle` (radians; 0 = east, map y runs
+   * south). `right` is the unit vector to its right; distances are measured
+   * along `dir` (perpendicular distance, so walls don't bow). Smooth
+   * movement uses positions and angles between squares and facings. */
+  function cameraAt(px, py, angle) {
+    const dx = Math.cos(angle), dy = Math.sin(angle);
+    return { x: px, y: py, dir: [dx, dy], right: [-dy, dx], cellX: Math.floor(px), cellY: Math.floor(py), angle };
+  }
+
+  /** The camera at the centre of square (x,y), looking the character's way. */
   function cameraFor(x, y, facing) {
+    const cam = cameraAt(x + 0.5, y + 0.5, FACING_ANGLE[facing]);
+    // Exact axis vectors (no floating-point dust) for the usual case.
     const [dx, dy] = FORWARD[facing];
-    return { x: x + 0.5, y: y + 0.5, dir: [dx, dy], right: [-dy, dx], cellX: x, cellY: y };
+    cam.dir = [dx, dy]; cam.right = [-dy, dx];
+    return cam;
   }
 
   /** Pixels per world unit at distance 1, for a view `width` pixels wide. */
@@ -183,8 +195,8 @@
 
   /** Where an object (on square ox,oy) appears: its distance along the view,
    * the screen x of its centre, and the screen y of its base on the floor. */
-  function projectObject(cam, ox, oy, width, height) {
-    const rx = ox + 0.5 - cam.x, ry = oy + 0.5 - cam.y;
+  function projectObject(cam, ox, oy, width, height, exact) {
+    const rx = (exact ? ox : ox + 0.5) - cam.x, ry = (exact ? oy : oy + 0.5) - cam.y;
     const depth = rx * cam.dir[0] + ry * cam.dir[1];
     const lateral = rx * cam.right[0] + ry * cam.right[1];
     const f = focalFor(width);
@@ -204,9 +216,9 @@
   function placeObjects(world, cam, width, height, sizeOf) {
     const placed = [];
     for (const o of world.objects) {
-      const p = projectObject(cam, o.x, o.y, width, height);
+      const p = o.at ? projectObject(cam, o.at[0], o.at[1], width, height, true) : projectObject(cam, o.x, o.y, width, height);
       if (p.depth < NEAR || p.depth > MAX_DIST) continue;
-      const view = sideSeen(cam, o);
+      const view = o.at ? 'front' : sideSeen(cam, o);
       const size = sizeOf(o, view);
       const w = size.w * p.scale, h = size.h * p.scale;
       const left = p.screenX - w / 2;
@@ -224,6 +236,7 @@
     const colW = width / n;
     const first = Math.max(0, Math.floor(sprite.left / colW));
     const last = Math.min(n - 1, Math.floor((sprite.left + sprite.width) / colW));
+    if (sprite.obj.noClip) return last >= first ? [{ from: first, to: last, clipTop: -Infinity }] : [];   // (the monster you're fighting)
     const runs = [];
     let run = null;
     for (let c = first; c <= last; c++) {
@@ -306,7 +319,8 @@
     const width = canvas.width, height = canvas.height;
     const cols = Math.max(20, Math.floor(width / cellW)), rows = Math.max(10, Math.floor(height / cellH));
     const world = buildWorld(scene);
-    const cam = cameraFor(scene.x, scene.y, scene.facing);
+    if (opts.extraObjects) world.objects = [...world.objects, ...opts.extraObjects];
+    const cam = opts.camera || cameraFor(scene.x, scene.y, scene.facing);
     const cast = castColumns(world, cam, cols, width, height);
     const { f, horizon } = cast;
 
@@ -539,7 +553,8 @@
     const { t = 0, sprites } = opts;
     const width = canvas.width, height = canvas.height;
     const world = buildWorld(scene);
-    const cam = cameraFor(scene.x, scene.y, scene.facing);
+    if (opts.extraObjects) world.objects = [...world.objects, ...opts.extraObjects];
+    const cam = opts.camera || cameraFor(scene.x, scene.y, scene.facing);
     const cols = width;                          // one ray per pixel column: full sharpness
     const cast = castColumns(world, cam, cols, width, height);
     const { f, horizon } = cast;
@@ -672,7 +687,7 @@
   }
 
   const api = {
-    buildWorld, wallBetween, cameraFor, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
+    buildWorld, wallBetween, cameraFor, cameraAt, FACING_ANGLE, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
     renderAscii, renderPainted, prefersReducedMotion,
     FOV, EYE, MAX_DIST, NEAR, CEILING_HEIGHTS,
   };

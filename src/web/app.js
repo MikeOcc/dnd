@@ -158,6 +158,10 @@ function applyState(state) {
     portraitEl.innerHTML = lairArt;
     portraitEl.style.removeProperty('--sprite-scale');
     portraitEl.classList.remove('hidden');
+  } else if (monster && monsterShownInScene(state)) {
+    // The monster stands in the 3D scene itself (draw3D), not over it.
+    portraitEl.classList.add('hidden');
+    portraitEl.innerHTML = '';
   } else if (monster) {
     const sprite = getMonsterSprite(monster.type);
     portraitEl.innerHTML = sprite || '';
@@ -271,6 +275,12 @@ function fxNumber(text, kind, where, element, big) {
 }
 
 function fxMonster(cls, element) {
+  if (monsterShownInScene(currentState)) {
+    // In the scene: the figure itself recoils (flashing the blow's colour) or lunges.
+    monsterFx = { kind: cls === 'fx-lunge' ? 'lunge' : 'recoil', color: FX_COLOR[element] || '#ffffff', t0: performance.now() };
+    draw3D(currentState);
+    return;
+  }
   const portrait = document.getElementById('monster-portrait');
   if (portrait.classList.contains('hidden')) return;
   portrait.style.setProperty('--fx', FX_COLOR[element] || '#ffffff');
@@ -329,6 +339,69 @@ function cycleViewMode() {
   applyState(currentState);
 }
 
+// How monsters appear in the 3D views: the portrait overlay, or standing in the scene.
+const MONSTER_KEY = 'sevenLevels.monsterDisplay';
+let monsterInScene = (() => { try { return localStorage.getItem(MONSTER_KEY) === 'scene'; } catch { return false; } })();
+// Smooth movement in the 3D views: steps glide and turns swivel.
+const SMOOTH_KEY = 'sevenLevels.smoothMove';
+let smoothMove = (() => { try { return localStorage.getItem(SMOOTH_KEY) !== '0'; } catch { return true; } })();
+const STEP_MS = 190, TURN_MS = 170;
+
+/** Whether the monster is drawn standing in the 3D scene right now. */
+const monsterShownInScene = (state) => monsterInScene && viewMode !== 'classic' && state?.phase === 'combat' && !!state.combat?.monster;
+
+let shownPose = null;      // the camera pose on screen: { x, y, angle, level, id }
+let poseAnim = null;       // { from, to, t0, dur } while gliding or swivelling
+let monsterFx = null;      // { kind: 'recoil' | 'lunge', color, t0 } for the in-scene monster
+
+function poseNow(now) {
+  if (!poseAnim) return shownPose;
+  const p = Math.min(1, (now - poseAnim.t0) / poseAnim.dur);
+  const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;   // ease in-out
+  const { from, to } = poseAnim;
+  const turn = ((to.angle - from.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;   // the short way round
+  return { ...to, x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, angle: from.angle + turn * e, done: p >= 1 };
+}
+
+/** Where the camera should be for this state, gliding there if it moved a step or turned. */
+function cameraFor3D(state, now) {
+  const s = state.scene;
+  const target = { x: s.x + 0.5, y: s.y + 0.5, angle: View3D.FACING_ANGLE[s.facing], level: s.level, id: state.character?.id };
+  const cur = poseNow(now);
+  const same = (a, b) => a && Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6 && Math.abs(((a.angle - b.angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)) < 1e-6;
+  const goal = poseAnim ? poseAnim.to : shownPose;
+  if (!same(goal, target)) {
+    const jump = !cur || cur.level !== target.level || cur.id !== target.id || Math.hypot(cur.x - target.x, cur.y - target.y) > 1.5;
+    if (jump || !smoothMove || View3D.prefersReducedMotion()) { shownPose = target; poseAnim = null; }
+    else {
+      const moved = Math.hypot(cur.x - target.x, cur.y - target.y) > 0.01;
+      poseAnim = { from: { ...cur }, to: target, t0: now, dur: moved ? STEP_MS : TURN_MS };
+    }
+  }
+  const pose = poseNow(now) || target;
+  if (poseAnim && pose.done) { shownPose = poseAnim.to; poseAnim = null; }
+  return View3D.cameraAt(pose.x, pose.y, pose.angle);
+}
+
+/** The monster standing a step ahead in the scene, recoiling or lunging with the blows. */
+function monsterObject(state, cam, now) {
+  const m = state.combat.monster;
+  let depth = 1.6;   // in your square with you: a steady distance (feet on the floor in view), drawn over any wall close behind it
+  let flash;
+  if (monsterFx) {
+    const p = (now - monsterFx.t0) / (monsterFx.kind === 'lunge' ? 320 : 300);
+    if (p >= 1) monsterFx = null;
+    else if (monsterFx.kind === 'lunge') depth = Math.max(0.45, depth - 0.45 * Math.sin(Math.PI * p));
+    else { depth += 0.3 * Math.sin(Math.PI * p); flash = { color: monsterFx.color, alpha: 0.6 * (1 - p) }; }
+  }
+  const h = Math.min(2.6, 0.85 * (typeof getMonsterSpriteScale === 'function' ? getMonsterSpriteScale(m.type) : 1));
+  return {
+    kind: 'monster', type: m.type, size: { w: h, h }, noClip: true,
+    at: [cam.x + cam.dir[0] * depth, cam.y + cam.dir[1] * depth],
+    alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : undefined, flash,
+  };
+}
+
 /** Draws the 3D view over the classic one (or puts the classic one back). */
 function draw3D(state) {
   const canvas = document.getElementById('view3d');
@@ -338,7 +411,7 @@ function draw3D(state) {
     && typeof View3D !== 'undefined';
   canvas.classList.toggle('hidden', !on);
   pre.classList.toggle('under-3d', on);
-  if (!on) { clearTimeout(view3dTimer); view3dTimer = null; return; }
+  if (!on) { clearTimeout(view3dTimer); view3dTimer = null; shownPose = null; poseAnim = null; return; }
 
   // Cover the classic view's box exactly, so everything around stays put.
   canvas.style.left = `${pre.offsetLeft}px`;
@@ -349,26 +422,44 @@ function draw3D(state) {
   const w = Math.max(100, Math.round((pre.offsetWidth - 2) * crisp)), h = Math.max(60, Math.round((pre.offsetHeight - 2) * crisp));
   if (canvas.width !== w) canvas.width = w;
   if (canvas.height !== h) canvas.height = h;
-  const t = performance.now() / 1000;
+
+  const now = performance.now();
+  const t = now / 1000;
+  const camera = cameraFor3D(state, now);
+  const extraObjects = monsterShownInScene(state) ? [monsterObject(state, camera, now)] : [];
+  const opts = { sprites: SceneSprites, t, camera, extraObjects };
   if (viewMode === 'painted') {
-    View3D.renderPainted(canvas, state.scene, { sprites: SceneSprites, t });
+    View3D.renderPainted(canvas, state.scene, opts);
   } else {
     const ctx = canvas.getContext('2d');
     const px = Math.round(13 * crisp);
     const font = `${px}px ${getComputedStyle(pre).fontFamily}`;
     ctx.font = font;
-    View3D.renderAscii(canvas, state.scene, { sprites: SceneSprites, t, font, cellW: ctx.measureText('M').width, cellH: Math.round(px * 1.15) });
+    View3D.renderAscii(canvas, state.scene, { ...opts, font, cellW: ctx.measureText('M').width, cellH: Math.round(px * 1.15) });
   }
-  // Keep water and flames moving (gently), unless motion is reduced.
+
+  // Keep going: every frame while gliding or a blow lands, gently otherwise
+  // (water, flames, breathing), and not at all when motion is reduced.
   clearTimeout(view3dTimer);
-  const lively = !View3D.prefersReducedMotion() && (viewMode === 'painted' || SceneSprites.animates(state.scene.objects));
-  if (lively) view3dTimer = setTimeout(() => requestAnimationFrame(() => { if (currentState === state) draw3D(state); }), 110);
+  const again = () => { if (currentState === state) draw3D(state); };
+  if (poseAnim || monsterFx) { view3dTimer = setTimeout(again, 16); return; }   // ~60 frames a second
+  const lively = !View3D.prefersReducedMotion() && (viewMode === 'painted' || SceneSprites.animates([...state.scene.objects, ...extraObjects]));
+  if (lively) view3dTimer = setTimeout(again, 110);
 }
 if (typeof SceneSprites !== 'undefined') SceneSprites.onReady(() => draw3D(currentState));
 window.addEventListener('resize', () => draw3D(currentState));
 
 const SETTINGS = [
   { key: 'd', label: 'Dungeon view (L)', get: () => viewMode !== 'classic', value: () => VIEW_NAMES[viewMode], toggle: () => cycleViewMode() },
+  { key: 'e', label: 'Monsters (3D views)', get: () => monsterInScene, value: () => (monsterInScene ? 'IN SCENE' : 'PORTRAIT'), toggle: () => {
+      monsterInScene = !monsterInScene;
+      try { localStorage.setItem(MONSTER_KEY, monsterInScene ? 'scene' : 'portrait'); } catch { /* per-viewer nicety only */ }
+      applyState(currentState);
+    } },
+  { key: 'f', label: 'Smooth movement (3D views)', get: () => smoothMove, toggle: () => {
+      smoothMove = !smoothMove;
+      try { localStorage.setItem(SMOOTH_KEY, smoothMove ? '1' : '0'); } catch { /* per-viewer nicety only */ }
+    } },
   { key: 'a', label: 'On-screen arrows',  get: () => arrowsShown,   toggle: () => toggleArrows() },
   { key: 'b', label: 'Show saving rolls', get: () => showRolls,     toggle: () => {
       showRolls = !showRolls;

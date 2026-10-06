@@ -150,3 +150,33 @@ describe('3D view: a south-facing throne is seen from the right side', () => {
     expect(V.sideSeen(V.cameraFor(8, 7, 'W'), o)).toBe('faces-left');
   });
 });
+
+describe('3D view: smooth movement and the monster in the scene', () => {
+  it('a camera between squares and facings sees the same walls as the square camera at the ends', () => {
+    const scene = testScene(5, 12, 'N');
+    const world = V.buildWorld(scene);
+    const exact = V.castRay(world, V.cameraFor(5, 12, 'E'), 0).hit;
+    const free = V.castRay(world, V.cameraAt(5.5, 12.5, V.FACING_ANGLE.E), 0).hit;
+    expect(free.dir).toBe(exact.dir);
+    expect(free.dist).toBeCloseTo(exact.dist, 6);
+    // Halfway through a turn, it looks diagonally: further to the wall than straight across.
+    const mid = V.castRay(world, V.cameraAt(5.5, 12.5, (V.FACING_ANGLE.N + V.FACING_ANGLE.E) / 2), 0).hit;
+    expect(mid.dist).toBeGreaterThan(exact.dist);
+    // Halfway through a step north, the camera is half a square further on.
+    const half = V.castRay(world, V.cameraAt(5.5, 12, V.FACING_ANGLE.E), 0).hit;
+    expect(half.dist).toBeCloseTo(0.5, 6);
+  });
+
+  it('the monster you are fighting stands at an exact spot and is drawn even with a wall close behind', () => {
+    const scene = testScene(5, 12, 'E');           // facing the corridor wall, half a square away
+    const world = V.buildWorld(scene);
+    const cam = V.cameraFor(5, 12, 'E');
+    world.objects = [{ kind: 'monster', at: [cam.x + 1.6, cam.y], noClip: true }];
+    const cast = V.castColumns(world, cam, COLS, W_PX, H_PX);
+    const [m] = V.placeObjects(world, cam, W_PX, H_PX, () => ({ w: 1, h: 1 }));
+    expect(m.depth).toBeCloseTo(1.6, 6);
+    expect(m.screenX).toBeCloseTo(W_PX / 2, 6);
+    const runs = V.visibleRuns(cast, m, W_PX);
+    expect(runs).toHaveLength(1);                   // the whole figure, though the wall is nearer
+  });
+});
