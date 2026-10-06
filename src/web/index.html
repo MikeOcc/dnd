@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Seven Levels — Play My D&amp;D Adventure">
   <meta name="twitter:image" content="https://playsevenlevels.com/og-image.jpg">
-  <link rel="stylesheet" href="styles.css?v=58">
+  <link rel="stylesheet" href="styles.css?v=59">
 </head>
 <body>
   <div id="terminal">
@@ -57,6 +57,12 @@
       <div id="fx-layer"></div>
     </div>
 
+    <!-- Under the view while exploring: which way the ways out lie, and the essential keys -->
+    <div id="view-strip" class="hidden">
+      <span id="ways-out"></span>
+      <span id="move-hint">↑ forward · ↓ back · ← → turn · <b>M</b> map · <b>S</b> save · <b>H</b> help</span>
+    </div>
+
     <!-- Asmodeus banished (victory screen only) -->
     <div id="banish-scene" class="hidden"></div>
 
@@ -90,42 +96,53 @@
       </div>
       <div class="command-bar">
         <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-climb-up"   data-tip="Climb up to the level above. Works only when you stand on a ladder going up. (U)" aria-label="Climb up to the level above. Works only when you stand on a ladder going up. (U)">Up [U]</button>
-          <button class="ctrl-btn" id="btn-climb-down" data-tip="Climb down to the next, deeper level. Works only when you stand on a ladder going down. (D)" aria-label="Climb down to the next, deeper level. Works only when you stand on a ladder going down. (D)">Dn [D]</button>
+          <button class="ctrl-btn" id="btn-climb-up" data-tip="Climb up to the level above. Works only when you stand on a ladder going up. (U)" aria-label="Climb up to the level above. Works only when you stand on a ladder going up. (U)">Stairs Up <span class="key">[U]</span></button>
+          <button class="ctrl-btn" id="btn-climb-down" data-tip="Climb down to the next, deeper level. Works only when you stand on a ladder going down. (D)" aria-label="Climb down to the next, deeper level. Works only when you stand on a ladder going down. (D)">Stairs Down <span class="key">[D]</span></button>
         </span>
         <span class="bar-sep" aria-hidden="true"></span>
         <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-wait"       data-tip="Sit and rest to win back health over time. Press any key to stop. Something may find you while you rest. (W)" aria-label="Sit and rest to win back health over time. Press any key to stop. Something may find you while you rest. (W)">Rest [W]</button>
-          <button class="ctrl-btn" id="btn-map"        data-tip="Open the map of this level: the squares you have explored, or the whole level after a Diamond. (M)" aria-label="Open the map of this level: the squares you have explored, or the whole level after a Diamond. (M)">Mp [M]</button>
-          <button class="ctrl-btn" id="btn-settings"   data-tip="Settings: sound, the on-screen arrows, and how much of the dice rolling to show. (O)" aria-label="Settings: sound, the on-screen arrows, and how much of the dice rolling to show. (O)">Set [O]</button>
+          <button class="ctrl-btn" id="btn-map" data-tip="Open the map of this level: the squares you have explored, or the whole level after a Diamond. (M)" aria-label="Open the map of this level: the squares you have explored, or the whole level after a Diamond. (M)">Map <span class="key">[M]</span></button>
+          <button class="ctrl-btn" id="btn-wait" data-tip="Sit and rest to win back health over time. Press any key to stop. Something may find you while you rest. (W)" aria-label="Sit and rest to win back health over time. Press any key to stop. Something may find you while you rest. (W)">Rest <span class="key">[W]</span></button>
+          <button class="ctrl-btn" id="btn-potion" data-tip="Drink a healing potion to win back health. (P)" aria-label="Drink a healing potion to win back health. (P)">Potion <span class="key">[P]</span></button>
         </span>
         <span class="bar-sep" aria-hidden="true"></span>
         <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-potion"     data-tip="Drink a healing potion to win back health. (P)" aria-label="Drink a healing potion to win back health. (P)">Pt [P]</button>
-          <button class="ctrl-btn" id="btn-book"       data-tip="Read a magic tome. It may raise one of your attributes, or cure what ails you. (B)" aria-label="Read a magic tome. It may raise one of your attributes, or cure what ails you. (B)">Tm [B]</button>
-          <button class="ctrl-btn" id="btn-diamond"    data-tip="Use a Diamond to reveal the whole of this level's map. (G)" aria-label="Use a Diamond to reveal the whole of this level's map. (G)">Dm [G]</button>
-          <button class="ctrl-btn" id="btn-emerald"    data-tip="Use an Emerald: a green ward that turns most blows aside for the next few fights. It also breaks a cursed amulet. (E)" aria-label="Use an Emerald: a green ward that turns most blows aside for the next few fights. It also breaks a cursed amulet. (E)">Em [E]</button>
-          <button class="ctrl-btn" id="btn-planar"     data-tip="Planar Step: go to any level you have visited (wizards from level 60, or anyone with a Moonstone, which it uses up). Not in a fight. (Y)" aria-label="Planar Step: go to any level you have visited (wizards from level 60, or anyone with a Moonstone, which it uses up). Not in a fight. (Y)">Ps [Y]</button>
-          <button class="ctrl-btn" id="btn-rings"      data-tip="Your magic rings: choose which one is in use. You can wear many, but use only one at a time. (J)" aria-label="Your magic rings: choose which one is in use. You can wear many, but use only one at a time. (J)">Rg [J]</button>
-          <button class="ctrl-btn" id="btn-amulets"    data-tip="Your amulets: put one on or take it off. Only one can be worn, and a cursed one won't come off. (A)" aria-label="Your amulets: put one on or take it off. Only one can be worn, and a cursed one won't come off. (A)">Am [A]</button>
-          <button class="ctrl-btn" id="btn-gear"       data-tip="Your weapons and armour: choose what to fight with and wear, or drop what you don't need. (K)" aria-label="Gear">Gr [K]</button>
+          <button class="ctrl-btn" id="btn-status" data-tip="Your character: level, attributes, health, and anything affecting you. (T)" aria-label="Your character: level, attributes, health, and anything affecting you. (T)">Status <span class="key">[T]</span></button>
+          <button class="ctrl-btn" id="btn-inventory" data-tip="Everything you carry: potions, gems, rings, amulets and treasures. (I)" aria-label="Everything you carry: potions, gems, rings, amulets and treasures. (I)">Inventory <span class="key">[I]</span></button>
         </span>
         <span class="bar-sep" aria-hidden="true"></span>
         <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-status"     data-tip="Your character: level, attributes, health, and anything affecting you. (T)" aria-label="Your character: level, attributes, health, and anything affecting you. (T)">St [T]</button>
-          <button class="ctrl-btn" id="btn-inventory"  data-tip="Everything you carry: potions, gems, rings, amulets and treasures. (I)" aria-label="Everything you carry: potions, gems, rings, amulets and treasures. (I)">Inv [I]</button>
-        </span>
-        <span class="bar-sep" aria-hidden="true"></span>
-        <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-save"       data-tip="Save your game. Progress is kept only when you save! (S)" aria-label="Save your game. Progress is kept only when you save! (S)">Sv [S]</button>
-          <button class="ctrl-btn" id="btn-restore"    data-tip="Go back to your last save, undoing everything since. (R)" aria-label="Go back to your last save, undoing everything since. (R)">Rt [R]</button>
-        </span>
-        <span class="bar-sep" aria-hidden="true"></span>
-        <span class="cmd-group">
-          <button class="ctrl-btn" id="btn-sound"      data-tip="Turn the sound effects on or off. (N)" aria-label="Turn the sound effects on or off. (N)">Snd On [N]</button>
-          <button class="ctrl-btn" id="btn-arrows"     data-tip="Show or hide these on-screen arrow buttons. The arrow keys always work. (V)" aria-label="Show or hide these on-screen arrow buttons. The arrow keys always work. (V)">Arrows [V]</button>
+          <button class="ctrl-btn" id="btn-save" data-tip="Save your game. While you play, the game remembers where you are, even if you close the tab; but if you quit to the menu, sit idle for 3 hours, or the game is updated, anything since your last save is lost. (S)" aria-label="Save your game. While you play, the game remembers where you are, even if you close the tab; but if you quit to the menu, sit idle for 3 hours, or the game is updated, anything since your last save is lost. (S)">Save <span class="key">[S]</span></button>
+          <button class="ctrl-btn" id="btn-view" data-tip="Switch how the dungeon is drawn: Classic, ASCII 3D or Painted 3D. Your place in the game doesn't change. (L)" aria-label="Switch how the dungeon is drawn: Classic, ASCII 3D or Painted 3D. Your place in the game doesn't change. (L)">View: <span id="view-name">Classic</span> <span class="key">[L]</span></button>
+          <button class="ctrl-btn" id="btn-more" aria-expanded="false" aria-controls="more-actions" data-tip="Everything else: magic, gems, rings, amulets, gear, sound, settings, help. (X)" aria-label="Everything else: magic, gems, rings, amulets, gear, sound, settings, help. (X)">More ▾ <span class="key">[X]</span></button>
         </span>
       </div>
+      <!-- Less-used actions, behind More -->
+      <div id="more-actions" class="hidden">
+        <div class="more-group"><span class="more-label">Magic &amp; gear</span>
+          <button class="ctrl-btn" id="btn-book" data-tip="Read a magic tome. It may raise one of your attributes, or cure what ails you. (B)" aria-label="Read a magic tome. It may raise one of your attributes, or cure what ails you. (B)">Tome <span class="key">[B]</span></button>
+          <button class="ctrl-btn" id="btn-diamond" data-tip="Use a Diamond to reveal the whole of this level's map. (G)" aria-label="Use a Diamond to reveal the whole of this level's map. (G)">Diamond <span class="key">[G]</span></button>
+          <button class="ctrl-btn" id="btn-emerald" data-tip="Use an Emerald: a green ward that turns most blows aside for the next few fights. It also breaks a cursed amulet. (E)" aria-label="Use an Emerald: a green ward that turns most blows aside for the next few fights. It also breaks a cursed amulet. (E)">Emerald <span class="key">[E]</span></button>
+          <button class="ctrl-btn" id="btn-planar" data-tip="Planar Step: go to any level you have visited (wizards from level 60, or anyone with a Moonstone, which it uses up). Not in a fight. (Y)" aria-label="Planar Step: go to any level you have visited (wizards from level 60, or anyone with a Moonstone, which it uses up). Not in a fight. (Y)">Planar Step <span class="key">[Y]</span></button>
+          <button class="ctrl-btn" id="btn-rings" data-tip="Your magic rings: choose which one is in use. You can wear many, but use only one at a time. (J)" aria-label="Your magic rings: choose which one is in use. You can wear many, but use only one at a time. (J)">Rings <span class="key">[J]</span></button>
+          <button class="ctrl-btn" id="btn-amulets" data-tip="Your amulets: put one on or take it off. Only one can be worn, and a cursed one won't come off. (A)" aria-label="Your amulets: put one on or take it off. Only one can be worn, and a cursed one won't come off. (A)">Amulets <span class="key">[A]</span></button>
+          <button class="ctrl-btn" id="btn-gear" data-tip="Your weapons and armour: choose what to fight with and wear, or drop what you don't need. (K)" aria-label="Your weapons and armour: choose what to fight with and wear, or drop what you don't need. (K)">Gear <span class="key">[K]</span></button>
+        </div>
+        <div class="more-group"><span class="more-label">Game</span>
+          <button class="ctrl-btn" id="btn-restore" data-tip="Go back to your last save, undoing everything since. (R)" aria-label="Go back to your last save, undoing everything since. (R)">Restore <span class="key">[R]</span></button>
+          <button class="ctrl-btn" id="btn-sound" data-tip="Turn the sound effects on or off. (N)" aria-label="Turn the sound effects on or off. (N)">Sound On <span class="key">[N]</span></button>
+          <button class="ctrl-btn" id="btn-arrows" data-tip="Show or hide these on-screen arrow buttons. The arrow keys always work. (V)" aria-label="Show or hide these on-screen arrow buttons. The arrow keys always work. (V)">Arrows <span class="key">[V]</span></button>
+          <button class="ctrl-btn" id="btn-settings" data-tip="Settings: sound, the on-screen arrows, and how much of the dice rolling to show. (O)" aria-label="Settings: sound, the on-screen arrows, and how much of the dice rolling to show. (O)">Settings <span class="key">[O]</span></button>
+          <button class="ctrl-btn" id="btn-help" data-tip="How to play: the keys, the map, and how saving works. (H)" aria-label="How to play: the keys, the map, and how saving works. (H)">Help <span class="key">[H]</span></button>
+          <button class="ctrl-btn" id="btn-quit" data-tip="Back to the main menu. (Q)" aria-label="Back to the main menu. (Q)">Quit <span class="key">[Q]</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to play: shown once on a first visit, and any time with H -->
+    <div id="help-panel" class="hidden" role="dialog" aria-labelledby="help-title">
+      <div id="help-title">══ HOW TO PLAY ══</div>
+      <div id="help-body"></div>
     </div>
 
     <!-- Settings: per-browser options, opened with O or the Set button -->
@@ -157,6 +174,6 @@
   <script src="view3d.js?v=5"></script>
   <script src="view-sprites.js?v=6"></script>
   <script src="sfx.js?v=6"></script>
-  <script src="app.js?v=81"></script>
+  <script src="app.js?v=82"></script>
 </body>
 </html>

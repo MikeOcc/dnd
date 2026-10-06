@@ -88,6 +88,7 @@ function facingState(state, f) {
   if (!tv) return null;
   const next = { ...state, character: { ...state.character, facing: f }, view: tv.view };
   if (tv.sighting) next.sighting = tv.sighting; else delete next.sighting;
+  if (tv.waysOut) next.waysOut = tv.waysOut;
   if (state.scene) next.scene = { ...state.scene, facing: f };
   return next;
 }
@@ -133,6 +134,9 @@ async function sendAction(action, payload) {
   if (action === 'face' && facesPending <= 1) localFacing = null;   // this was the last one: the server agrees now
   if (localFacing && (facesPending > (action === 'face' ? 1 : 0))) state = facingState(state, localFacing) || state;
   if (action === 'face') { if (state) applyState(state); return; }  // (already drawn: no sounds again)
+  if (action === 'save' && /saved/i.test((state?.messages || []).join(' '))) { unsaved = false; flashSaved(); }
+  else if (action === 'load' || action === 'restore' || action === 'main-menu') unsaved = false;
+  else if (!NOT_PROGRESS.has(action) && ['playing', 'combat', 'interaction', 'resting', 'lair-warning'].includes(state?.phase)) unsaved = true;
   lastAction = action;
   lastActionWalked = action === 'move-forward' || action === 'move-backward'
     || (action === 'map-move' && (payload?.dir === 'forward' || payload?.dir === 'backward'));
@@ -321,6 +325,15 @@ function applyState(state) {
   // Choices
   renderChoices(state.choices || [], phase, state);
   planarStepClock(state);
+  updateViewStrip(state);
+  updateViewButton();
+  if (phase !== 'playing' && moreOpen) setMore(false);
+  // A first visit: the short how-to-play, once, when the dungeon first appears.
+  if (phase === 'playing' && !helpOpen) {
+    let seen = true;
+    try { seen = localStorage.getItem(INTRO_KEY) === '1'; } catch { /* treat as seen */ }
+    if (!seen) openHelp();
+  }
 
   // Help line
   updateHelpLine(phase);
@@ -445,7 +458,99 @@ let view3dTimer = null;
 function cycleViewMode() {
   viewMode = VIEW_MODES[(VIEW_MODES.indexOf(viewMode) + 1) % VIEW_MODES.length];
   try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* per-viewer nicety only */ }
+  updateViewButton();
   applyState(currentState);
+}
+
+/** The View button names the view you're in. */
+function updateViewButton() {
+  const el = document.getElementById('view-name');
+  if (el) el.textContent = { classic: 'Classic', ascii3d: 'ASCII 3D', painted: 'Painted 3D' }[viewMode] || viewMode;
+}
+
+// ─── More, Help, the strip under the view ────────────────────────────────────
+
+let moreOpen = false;
+function setMore(open) {
+  moreOpen = open;
+  document.getElementById('more-actions').classList.toggle('hidden', !open);
+  document.getElementById('btn-more').setAttribute('aria-expanded', String(open));
+}
+
+const INTRO_KEY = 'sevenLevels.introSeen';
+let helpOpen = false;
+/** How to play: the essential keys, how saving works, and the full list. */
+async function openHelp() {
+  helpOpen = true;
+  setMore(false);
+  await accountReady.catch(() => {});   // (the saving note depends on whether you're signed in)
+  if (!helpOpen) return;
+  const guest = !account.user && !account.owner;
+  const row = (keys, what) => `<div class="help-row"><span class="help-keys">${keys}</span><span>${what}</span></div>`;
+  document.getElementById('help-body').innerHTML = `
+    ${row('<b>↑</b> / <b>↓</b>', 'Step forward / step back')}
+    ${row('<b>←</b> / <b>→</b>', 'Turn left / right, on the spot')}
+    ${row('<b>M</b>', 'Map of everywhere you\u2019ve been')}
+    ${row('<b>U</b> / <b>D</b>', 'Climb the stairs up / down, when you\u2019re on them')}
+    ${row('<b>P</b>', 'Drink a healing potion')}
+    ${row('<b>S</b>', 'Save your game')}
+    ${row('<b>L</b>', 'Switch the view: Classic, ASCII 3D or Painted 3D')}
+    ${row('<b>X</b>', 'More: magic, gems, rings, gear, sound, settings')}
+    ${row('<b>H</b>', 'This help, any time')}
+    <p class="help-note">Under the view, <b>Ways out</b> shows which way you can leave the room you're in.</p>
+    <p class="help-note"><b>Saving.</b> The game keeps your place while you play, even if you close the tab and come back later.
+      But anything since your last save is lost if you quit to the menu, stay away for 3 hours, or the game is updated, so press <b>S</b> now and then.
+      ${guest ? 'You\u2019re playing as a guest: your characters belong to this browser. Sign up from the main menu to keep them on any device.' : 'Your characters are kept with your account, on any device.'}</p>
+    <details><summary>All the keys</summary><p class="help-all">Arrows: move &amp; turn · U/D: stairs · W: rest · P: potion · B: tome · G: diamond · E: emerald · Y: Planar Step · J: rings · A: amulets · K: gear · L: view · M: map · T: status · I: inventory · S: save · R: restore last save · N: sound · V: on-screen arrows · O: settings · X: more · H: help · Q: quit</p>
+      <p class="help-all">In a fight, the choices are listed under the messages (attack, spells, run and so on).</p></details>
+    <div class="help-done"></div>`;
+  const done = makeChoiceBtn('Enter', 'Got it');
+  done.onclick = closeHelp;
+  document.querySelector('#help-body .help-done').appendChild(done);
+  document.getElementById('help-panel').classList.remove('hidden');
+}
+function closeHelp() {
+  helpOpen = false;
+  document.getElementById('help-panel').classList.add('hidden');
+  try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* shown again next time: harmless */ }
+}
+
+/** The strip under the view: which way the ways out lie. */
+function updateViewStrip(state) {
+  const strip = document.getElementById('view-strip');
+  const show = state.phase === 'playing' && !!state.character;
+  strip.classList.toggle('hidden', !show);
+  if (!show) return;
+  const ways = state.waysOut || [];
+  const ARROW = { ahead: '↑ ahead', left: '← left', right: '→ right', behind: '↓ behind' };
+  const el = document.getElementById('ways-out');
+  el.textContent = ways.length ? `Ways out: ${ways.map(w => ARROW[w]).join('  ')}` : 'Ways out: none you can see';
+  el.title = 'Which way you can leave the room you\u2019re in (in a corridor: which way you can step), from where you stand and face.';
+}
+
+// Unsaved progress: warn before quitting to the menu without saving.
+let unsaved = false, quitArmedUntil = 0;
+const NOT_PROGRESS = new Set(['save', 'restore', 'load', 'main-menu', 'show-map', 'show-status', 'show-inventory', 'dismiss-status', 'dismiss-inventory', 'dismiss-intro', 'open-gear']);
+function quitToMenu() {
+  if (unsaved && Date.now() > quitArmedUntil) {
+    quitArmedUntil = Date.now() + 6000;
+    updateMessageLog(['You have unsaved progress.', 'Press S to save first, or Q again to leave without saving.'], true);
+    renderMessageLog(document.getElementById('messages'));
+    return;
+  }
+  quitArmedUntil = 0;
+  characterId = null;
+  apiAction('main-menu');
+}
+
+/** A moment's "Saved" by the Save button and under the view. */
+function flashSaved() {
+  const hint = document.getElementById('move-hint');
+  const btn = document.getElementById('btn-save');
+  hint.classList.add('saved-flash'); btn.classList.add('saved-flash');
+  const was = hint.innerHTML;
+  hint.textContent = '✓ Game saved';
+  setTimeout(() => { hint.innerHTML = was; hint.classList.remove('saved-flash'); btn.classList.remove('saved-flash'); }, 2200);
 }
 
 // How monsters appear in the 3D views: the portrait overlay, or standing in the scene.
@@ -717,7 +822,7 @@ function toggleSound() {
 
 function updateSoundButton() {
   const btn = document.getElementById('btn-sound');
-  if (btn) btn.textContent = SFX.muted ? 'Snd Off [N]' : 'Snd On [N]';
+  if (btn) btn.innerHTML = `Sound ${SFX.muted ? 'Off' : 'On'} <span class="key">[N]</span>`;
 }
 
 function playHitEffects(prev, state) {
@@ -1043,6 +1148,7 @@ function renderChoices(choices, phase, state) {
 // account (change password, log out, delete), and the admin's player list.
 
 let account = { user: null, owner: false, guest: true };
+let accountReady = Promise.resolve();   // settles once the page knows who's playing
 let accountOpen = false;
 
 async function refreshAccount() {
@@ -1486,7 +1592,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  Y: Planar Step  |  J: Rings  |  A: Amulets  |  K: Gear  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: move & turn  |  M: Map  |  S: Save  |  L: View  |  X: More  |  H: Help (all the keys)  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -1631,6 +1737,12 @@ function submitName() {
 document.addEventListener('keydown', (e) => {
   const phase = currentState.phase;
 
+  // The help panel: Enter, Esc, H or Space puts it away.
+  if (helpOpen) {
+    if (['Enter', 'Escape', ' ', 'h', 'H', 'x', 'X'].includes(e.key)) { e.preventDefault(); closeHelp(); }
+    return;
+  }
+
   // The account panel takes the keyboard (its fields need typing).
   if (accountOpen) {
     if (e.key === 'Escape') { e.preventDefault(); closeAccount(); }
@@ -1728,6 +1840,9 @@ document.addEventListener('keydown', (e) => {
     if (key === 'l') { cycleViewMode(); return; }
     if (key === 'k') { apiAction('open-gear'); return; }
     if (key === 'y') { apiAction('planar-step'); return; }
+    if (key === 'x') { setMore(!moreOpen); return; }
+    if (key === 'h' || e.key === '?') { openHelp(); return; }
+    if (e.key === 'Escape' && moreOpen) { setMore(false); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  turnNow('left');
@@ -1747,7 +1862,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
     if (key === 'o') openSettings();
-    if (key === 'q') { characterId = null; apiAction('main-menu'); }
+    if (key === 'q') quitToMenu();
     return;
   }
 
@@ -1852,7 +1967,7 @@ let arrowsShown = (() => {
 function applyArrows() {
   document.getElementById('dpad')?.classList.toggle('hidden', !arrowsShown);
   const btn = document.getElementById('btn-arrows');
-  if (btn) btn.textContent = arrowsShown ? 'Arrows On [V]' : 'Arrows Off [V]';
+  if (btn) btn.innerHTML = `Arrows ${arrowsShown ? 'On' : 'Off'} <span class="key">[V]</span>`;
 }
 function toggleArrows() {
   arrowsShown = !arrowsShown;
@@ -1884,6 +1999,21 @@ document.getElementById('btn-book')      ?.addEventListener('click', () => apiAc
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
 document.getElementById('btn-planar')    ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('planar-step'); });
+document.getElementById('btn-view')      ?.addEventListener('click', () => cycleViewMode());
+document.getElementById('btn-more')      ?.addEventListener('click', () => setMore(!moreOpen));
+document.getElementById('btn-help')      ?.addEventListener('click', () => openHelp());
+document.getElementById('btn-quit')      ?.addEventListener('click', () => quitToMenu());
+// Using something from More puts the panel away (switches like sound and arrows leave it open).
+document.getElementById('more-actions')  ?.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b && !['btn-sound', 'btn-arrows', 'btn-help', 'btn-quit'].includes(b.id)) setMore(false);
+});
+// Clicking off the help panel puts it away, like the settings.
+document.addEventListener('click', (e) => {
+  if (!helpOpen || document.getElementById('help-panel').contains(e.target) || e.target.closest('#btn-help')) return;
+  e.preventDefault(); e.stopPropagation(); closeHelp();
+}, true);
+updateViewButton();
 document.getElementById('btn-rings')     ?.addEventListener('click', () => { if (currentState.phase === 'playing') openRingMenu(); });
 document.getElementById('btn-amulets')   ?.addEventListener('click', () => { if (currentState.phase === 'playing') openAmuletMenu(); });
 document.getElementById('btn-gear')      ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('open-gear'); });
@@ -1897,7 +2027,7 @@ updateSoundButton();
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 (async () => {
-  refreshAccount();
+  accountReady = refreshAccount();
   const savedCharacterId = localStorage.getItem(CHAR_ID_KEY);
   if (savedCharacterId) {
     // Resume where we left off. If the character no longer exists,

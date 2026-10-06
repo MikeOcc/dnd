@@ -112,8 +112,12 @@ describe('Warrior in the engine', () => {
   }
 
   it('offers the class choice when accepting a roll', () => {
-    const { roll } = newCharacter();
-    expect(roll.choices!.map(c => c.text).slice(0, 2)).toEqual(['Accept as Wizard', 'Accept as Warrior']);
+    const { roll, engine, e } = newCharacter();
+    const hp = e.char.maxHp;
+    // Each choice shows the HP the character will really start with.
+    expect(roll.choices!.map(c => c.text).slice(0, 2)).toEqual([`Accept as Wizard (${hp} HP)`, `Accept as Warrior (${hp + 8} HP)`]);
+    engine.acceptCharacter('warrior');
+    expect(e.char.maxHp).toBe(hp + 8);
   });
 
   it('a warrior starts tougher, and the class is saved', () => {

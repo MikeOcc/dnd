@@ -879,3 +879,52 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) { .obj-sparkle, .obj-smoke, .obj-burst { animation: none; } }
 
 #human-check { margin-top: 12px; min-height: 0; }
+
+/* Under the view while exploring: the ways out, and the essential keys. */
+#view-strip {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 3px 6px; font-size: 12px; color: var(--terminal-green-dim);
+  border: 1px solid var(--terminal-green-dim); border-top: none;
+}
+#view-strip.hidden { display: none; }
+#ways-out { color: var(--terminal-green-bright); letter-spacing: 0.03em; white-space: pre; }
+#move-hint b { color: var(--terminal-green-bright); font-weight: normal; }
+#move-hint.saved-flash { color: var(--terminal-green-bright); }
+.ctrl-btn.saved-flash { border-color: var(--terminal-green-bright); box-shadow: 0 0 8px rgba(0, 255, 0, 0.5); }
+
+/* Button labels: the word, then its key, dimmer. */
+.ctrl-btn .key { color: var(--terminal-green-dim); }
+
+/* More: the less-used actions, in labelled groups. */
+#more-actions {
+  margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--terminal-green-dim);
+  display: flex; flex-direction: column; gap: 6px;
+}
+#more-actions.hidden { display: none; }
+.more-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.more-label { color: var(--terminal-green-dim); font-size: 11px; min-width: 92px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* How to play */
+#help-panel {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--terminal-green);
+  box-shadow: 0 0 24px rgba(0, 255, 0, 0.15), 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  padding: 14px 18px; z-index: 55; font-size: 14px;
+}
+#help-panel.hidden { display: none; }
+#help-title { color: var(--terminal-green-bright); margin-bottom: 10px; letter-spacing: 0.1em; }
+.help-row { display: flex; gap: 12px; padding: 2px 0; }
+.help-keys { min-width: 82px; color: var(--terminal-green-dim); }
+.help-keys b { color: var(--terminal-green-bright); font-weight: normal; }
+.help-note { margin: 10px 0 0; line-height: 1.45; color: var(--terminal-green); }
+#help-panel details { margin-top: 10px; color: var(--terminal-green-dim); }
+#help-panel summary { cursor: pointer; color: var(--terminal-green); }
+.help-all { font-size: 12px; line-height: 1.6; }
+.help-done { margin-top: 12px; }
+
+@media (max-width: 560px) {
+  .more-label { min-width: 100%; }
+  #view-strip { font-size: 11px; }
+  .help-keys { min-width: 64px; }
+}

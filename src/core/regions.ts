@@ -92,3 +92,48 @@ export function areaAtCell(map: AreaMap, x: number, y: number): Area | undefined
   const i = map.areaAt[y * map.width + x];
   return i >= 0 ? map.areas[i] : undefined;
 }
+
+export type Bearing = 'ahead' | 'left' | 'right' | 'behind';
+const BEARING_ORDER: Bearing[] = ['ahead', 'left', 'right', 'behind'];
+
+/** Where the ways out of the area you're in lie, relative to the way you
+ * face: in a room, its openings into other areas (several may lie the same
+ * way); in a corridor, the ways you can step from this square. */
+export function waysOut(grid: DungeonCell[][], map: AreaMap, x: number, y: number, facing: 'N' | 'E' | 'S' | 'W'): Bearing[] {
+  const here = map.areaAt[y * map.width + x];
+  if (here < 0) return [];
+  // Turn a world offset into the character's frame: forward, and to the right.
+  const fwd = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] }[facing];
+  const bearingOf = (dx: number, dy: number): Bearing => {
+    const ahead = dx * fwd[0] + dy * fwd[1];
+    const right = dx * -fwd[1] + dy * fwd[0];
+    if (Math.abs(ahead) >= Math.abs(right)) return ahead >= 0 ? 'ahead' : 'behind';
+    return right > 0 ? 'right' : 'left';
+  };
+  const found: Bearing[] = [];
+  if (map.areas[here].kind === 'corridor') {
+    for (const [dir, dx, dy] of STEPS) if (canMove(grid, x, y, dir)) found.push(bearingOf(dx, dy));
+  } else {
+    const a = map.areas[here];
+    for (let cy = a.minY; cy <= a.maxY; cy++) for (let cx = a.minX; cx <= a.maxX; cx++) {
+      if (map.areaAt[cy * map.width + cx] !== here) continue;
+      for (const [dir, dx, dy] of STEPS) {
+        if (!canMove(grid, cx, cy, dir)) continue;
+        const b = map.areaAt[(cy + dy) * map.width + cx + dx];
+        // Measured to the middle of the opening, so a doorway beside you reads as beside you.
+        if (b !== -1 && b !== here) found.push(bearingOf(cx + dx / 2 - x, cy + dy / 2 - y));
+      }
+    }
+  }
+  return found.sort((p, q) => BEARING_ORDER.indexOf(p) - BEARING_ORDER.indexOf(q));
+}
+
+/** "ahead", "two ahead and one to your left", "to your left and behind you"... */
+export function bearingsPhrase(bearings: Bearing[]): string {
+  const say: Record<Bearing, string> = { ahead: 'ahead', left: 'to your left', right: 'to your right', behind: 'behind you' };
+  const num = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+  const counts = BEARING_ORDER.map(b => [b, bearings.filter(x => x === b).length] as const).filter(([, n]) => n > 0);
+  const many = counts.some(([, n]) => n > 1);
+  const parts = counts.map(([b, n]) => (many ? `${num[n] ?? n} ${say[b]}` : say[b]));
+  return parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}

@@ -380,5 +380,6 @@ export function formatRoll(roll: CharacterRoll): string[] {
     fmt('Resistance:',   roll.resistance),
     '',
     `HP: 10 + ${roll.constitution.total} + ${roll.hpBonus} (1d8) = ${10 + roll.constitution.total + roll.hpBonus}`,
+    `    A Warrior adds ${WARRIOR.HP_BONUS_START} for a fighter's toughness: ${10 + roll.constitution.total + roll.hpBonus + WARRIOR.HP_BONUS_START} HP. A Wizard starts with ${10 + roll.constitution.total + roll.hpBonus}.`,
   ];
 }

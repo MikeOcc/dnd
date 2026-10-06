@@ -446,7 +446,9 @@ export interface GameState {
   /** While exploring: the corridor view (and any sighting) for each way the
    * character could face, so the browser can turn at once, without waiting
    * for the server. */
-  turnViews?: Partial<Record<Direction, { view: string[]; sighting?: GameState['sighting'] }>>;
+  turnViews?: Partial<Record<Direction, { view: string[]; sighting?: GameState['sighting']; waysOut?: ('ahead' | 'left' | 'right' | 'behind')[] }>>;
+  /** While exploring: which way the ways out of this room (or this corridor square) lie, relative to facing. */
+  waysOut?: ('ahead' | 'left' | 'right' | 'behind')[];
 }
 
 export interface CharacterSummary {

@@ -33,7 +33,7 @@ import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import { describeArea, ceilingHeight } from '../content/area-text.js';
-import { mapAreas, areaAtCell, type AreaMap } from './regions.js';
+import { mapAreas, areaAtCell, type AreaMap, waysOut, bearingsPhrase } from './regions.js';
 import type { Repository } from '../database/repositories.js';
 
 // ─── In-memory session state ─────────────────────────────────────────────────
@@ -163,6 +163,9 @@ export class GameEngine {
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
       if (seen) state.sighting = seen;
+      // Which way the ways out lie, for the indicator by the compass.
+      const lvlNow = this.getLevel(this.char!.dungeonLevel);
+      if (lvlNow) { lvlNow.areas ??= mapAreas(lvlNow.grid); state.waysOut = [...new Set(waysOut(lvlNow.grid, lvlNow.areas, this.char!.x, this.char!.y, this.char!.facing))]; }
       // Every facing's view, so turning needs no wait for the server.
       if (this.char && state.view) {
         const facing = this.char.facing;
@@ -170,7 +173,9 @@ export class GameEngine {
         for (const f of ['N', 'E', 'S', 'W'] as Direction[]) {
           this.char.facing = f;
           const sight = this.sightAsmodeus();
-          state.turnViews[f] = { view: f === facing ? state.view : this.renderView(), ...(sight ? { sighting: sight } : {}) };
+          const lvlF = this.getLevel(this.char.dungeonLevel);
+          const ways = lvlF?.areas ? [...new Set(waysOut(lvlF.grid, lvlF.areas, this.char.x, this.char.y, f))] : undefined;
+          state.turnViews[f] = { view: f === facing ? state.view : this.renderView(), ...(sight ? { sighting: sight } : {}), ...(ways ? { waysOut: ways } : {}) };
         }
         this.char.facing = facing;
       }
@@ -310,8 +315,8 @@ export class GameEngine {
     if (this.phase === 'char-roll') {
       const rem = this.char?.rerollsRemaining ?? 0;
       return [
-        { key: 'a', text: 'Accept as Wizard' },
-        { key: 'b', text: 'Accept as Warrior' },
+        { key: 'a', text: `Accept as Wizard (${this.char?.maxHp ?? 0} HP)` },
+        { key: 'b', text: `Accept as Warrior (${(this.char?.maxHp ?? 0) + WARRIOR.HP_BONUS_START} HP)` },
         ...(rem > 0 ? [{ key: 'c', text: `Reroll Character (${rem} reroll${rem === 1 ? '' : 's'} remaining)` }] : []),
       ];
     }
@@ -1329,6 +1334,12 @@ export class GameEngine {
     const first = !this.dungeonState.visitedDescriptions.has(seenKey);
     this.dungeonState.visitedDescriptions.add(seenKey);
     const lines = describeArea(this.char.dungeonLevel, area, first);
+    // Say which way the ways out lie: "There are three ways out: two ahead and one behind you."
+    const last = lines.length - 1;
+    if (area.kind === 'room' && last >= 0 && /way(s)? out\.$/.test(lines[last]) && area.exits > 0) {
+      const ways = waysOut(lvl.grid, lvl.areas, this.char.x, this.char.y, this.char.facing);
+      if (ways.length) lines[last] = lines[last].replace(/\.$/, `: ${bearingsPhrase(ways)}.`);
+    }
     this.mapAreaLines = lines;
     return lines;
   }
