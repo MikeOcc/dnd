@@ -260,11 +260,13 @@ function applyState(state) {
     portraitEl.innerHTML = '';
   } else if (monster) {
     // (If its art is somehow missing, a dark silhouette with its name rather than nothing.)
-    const sprite = getMonsterSprite(monster.type) || `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${monster.type}"><ellipse cx="80" cy="96" rx="44" ry="52" fill="#120c0c" stroke="#3a1a1a" stroke-width="3"/><circle cx="66" cy="84" r="4" fill="#c33"/><circle cx="94" cy="84" r="4" fill="#c33"/><text x="80" y="156" text-anchor="middle" font-family="monospace" font-size="11" fill="#a99">${monster.type}</text></svg>`;
+    const sprite = (typeof getMonsterPortrait === 'function' ? getMonsterPortrait(monster) : getMonsterSprite(monster.type)) || `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${monster.type}"><ellipse cx="80" cy="96" rx="44" ry="52" fill="#120c0c" stroke="#3a1a1a" stroke-width="3"/><circle cx="66" cy="84" r="4" fill="#c33"/><circle cx="94" cy="84" r="4" fill="#c33"/><text x="80" y="156" text-anchor="middle" font-family="monospace" font-size="11" fill="#a99">${monster.type}</text></svg>`;
     // Only redraw for a new monster, so slow animations (the Choir's drift) carry on.
-    if (portraitEl.dataset.monster !== monster.type || !portraitEl.innerHTML) {
+    // Only redraw for a new monster (or a new look as it's hurt), so slow animations carry on.
+    if (portraitEl.dataset.monster !== monster.type || portraitEl._sprite !== sprite || !portraitEl.innerHTML) {
       portraitEl.innerHTML = sprite || '';
       portraitEl.dataset.monster = monster.type;
+      portraitEl._sprite = sprite;
     }
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
@@ -627,7 +629,11 @@ function cameraFor3D(state, now) {
 /** The monster standing a step ahead in the scene, recoiling or lunging with the blows. */
 function monsterObject(state, cam, now) {
   const m = state.combat.monster;
-  let depth = 1.6;   // in your square with you: a steady distance (feet on the floor in view), drawn over any wall close behind it
+  const h = Math.min(2.6, 0.85 * (typeof getMonsterSpriteScale === 'function' ? getMonsterSpriteScale(m.type) : 1));
+  // A steady distance, feet on the floor in view, drawn over any wall close
+  // behind it. A towering one (Asmodeus, a Balor) stands farther back, so all
+  // of it fits in view, head and horns included.
+  let depth = Math.max(1.6, h * 2.1);
   let flash;
   if (monsterFx) {
     const p = (now - monsterFx.t0) / (monsterFx.kind === 'lunge' ? 320 : 300);
@@ -635,9 +641,8 @@ function monsterObject(state, cam, now) {
     else if (monsterFx.kind === 'lunge') depth = Math.max(0.45, depth - 0.45 * Math.sin(Math.PI * p));
     else { depth += 0.3 * Math.sin(Math.PI * p); flash = { color: monsterFx.color, alpha: 0.6 * (1 - p) }; }
   }
-  const h = Math.min(2.6, 0.85 * (typeof getMonsterSpriteScale === 'function' ? getMonsterSpriteScale(m.type) : 1));
   return {
-    kind: 'monster', type: m.type, size: { w: h, h }, noClip: true, hide: m.choirBroken || [],
+    kind: 'monster', type: m.type, size: { w: h, h }, noClip: true, hide: m.choirBroken || [], monster: m,
     at: [cam.x + cam.dir[0] * depth, cam.y + cam.dir[1] * depth],
     alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : m.burrowed ? 0.45 : undefined, flash,
   };

@@ -275,10 +275,12 @@
   const monsterImages = {};
   /** A monster's portrait as an image; `hide` lists parts to leave out
    * (the Hollow Choir's shattered masks, by name). */
-  function monsterImage(type, hide = []) {
-    const key = `${type}|${hide.join(',')}|${typeof monsterArtStyle === 'string' ? monsterArtStyle : ''}`;
+  function monsterImage(type, hide = [], monster = null) {
+    let svg = monster && typeof getMonsterPortrait === 'function' ? getMonsterPortrait(monster, false)
+      : typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
+    const look = svg ? svg.length : 0;   // (a monster whose look changes as it's hurt gets a new image)
+    const key = `${type}|${hide.join(',')}|${typeof monsterArtStyle === 'string' ? monsterArtStyle : ''}|${look}`;
     if (monsterImages[key]) return monsterImages[key];
-    let svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
     if (svg && hide.length && typeof DOMParser === 'function') {
       const doc = new DOMParser().parseFromString(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'), 'image/svg+xml');
       for (const part of hide) doc.querySelectorAll(`.m-${part}`).forEach(el => el.remove());
@@ -295,7 +297,7 @@
   function monsterArt(obj) {
     return {
       draw(ctx, x, y, w, h, t) {
-        const img = monsterImage(obj.type, obj.hide);
+        const img = monsterImage(obj.type, obj.hide, obj.monster);
         if (!img.complete || !img.naturalWidth) return;
         const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
         const hh = h * (1 + breathe), ww = w * (1 - breathe * 0.5);

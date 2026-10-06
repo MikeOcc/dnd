@@ -282,14 +282,38 @@
     ctx.beginPath();
     ctx.ellipse(sprite.screenX, sprite.baseY, sprite.width * 0.46, Math.max(1.5, sprite.width * 0.08), 0, 0, Math.PI * 2);
     ctx.fill();
+    // Drawn on a canvas of its own first, so the darkening for distance (and
+    // a hit's flash) touches only the figure, not the walls behind it.
     const dim = 1 - light(sprite.depth);
-    art.draw(ctx, sprite.left, sprite.top, sprite.width, sprite.height, t, sprite);
-    if (dim > 0.02) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.92, dim).toFixed(3)})`;
-      ctx.fillRect(sprite.left - 2, sprite.top - 2, sprite.width + 4, sprite.height + 4);
+    const pad = Math.ceil(Math.max(8, sprite.height * 0.06));
+    const ow = Math.ceil(sprite.width + pad * 2), oh = Math.ceil(sprite.height + pad * 2);
+    if (ow > 0 && oh > 0 && ow * oh < 16e6) {
+      const off = spriteScratch(ow, oh);
+      const octx = off.getContext('2d');
+      octx.clearRect(0, 0, ow, oh);
+      octx.save();
+      octx.translate(pad - sprite.left, pad - sprite.top);
+      art.draw(octx, sprite.left, sprite.top, sprite.width, sprite.height, t, sprite);
+      octx.restore();
+      if (dim > 0.02) {
+        octx.save();
+        octx.globalCompositeOperation = 'source-atop';
+        octx.fillStyle = `rgba(0,0,0,${Math.min(0.92, dim).toFixed(3)})`;
+        octx.fillRect(0, 0, ow, oh);
+        octx.restore();
+      }
+      ctx.drawImage(off, 0, 0, ow, oh, sprite.left - pad, sprite.top - pad, ow, oh);
     }
     ctx.restore();
+  }
+
+  /** A reusable offscreen canvas at least this big (for drawing one figure). */
+  let scratch = null;
+  function spriteScratch(w, h) {
+    if (!scratch) scratch = document.createElement('canvas');
+    if (scratch.width < w) scratch.width = w;
+    if (scratch.height < h) scratch.height = h;
+    return scratch;
   }
 
   // ─── ASCII 3D ───────────────────────────────────────────────────────────

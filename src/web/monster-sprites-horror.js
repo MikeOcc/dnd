@@ -227,6 +227,211 @@ const DRAGON_PALETTES = {
   gold:  { hi: '#ffe070', mid: '#b47818', dark: '#3a2004', belly: '#fff2b8', bellyDark: '#b8902a', rim: '#fff6c8', wing: '#a87018', bone: '#5a3a08', vein: '#ffe080', horn: '#7a5a30', eye: '#ff4020', seed: 13 },
 };
 
+/** Asmodeus as he's hurt: 0 whole (the full towering figure), 1 wounded,
+ * 2 badly hurt. Close (for the portrait), the view moves in on him as he's
+ * hurt; in the 3D scene he stays whole-figure, wounds and all. */
+function horrorAsmodeus(stage = 0, close = false) {
+  const view = !close || stage === 0 ? '0 0 200 200' : stage === 1 ? '28 0 144 144' : '48 4 104 104';
+  const wounds = stage === 0 ? '' : `
+    <!-- wounds: gashes glowing with the fire inside him, burning ichor running -->
+    <g stroke="#ffb040" stroke-width="1.4" fill="none" filter="url(#ha-glow)" stroke-linecap="round">
+      <path d="M 74 80 L 92 98"/><path d="M 116 74 L 104 92"/><path d="M 94 22 L 104 36"/>
+      ${stage === 2 ? '<path d="M 70 98 L 98 112"/><path d="M 124 88 L 108 108"/><path d="M 86 30 L 90 44"/><path d="M 110 28 L 112 46"/><path d="M 46 100 L 40 116"/><path d="M 148 96 L 154 112"/>' : ''}
+    </g>
+    <g fill="#ff6a10" opacity="0.9">
+      <path d="M 92 98 q 1 6 -1 10 q 2 0 2 -4 Z"/><path d="M 104 92 q 1 6 0 12 q 2 -1 2 -5 Z"/><path d="M 104 36 q 1 4 0 7 q 1.6 -1 1 -4 Z"/>
+      ${stage === 2 ? '<path d="M 98 112 q 1 6 -1 12 q 2 0 2 -5 Z"/><path d="M 108 108 q 1 5 0 10 q 2 -1 1.6 -5 Z"/><path d="M 90 44 q 0.6 4 0 7 q 1.4 -1 1 -4 Z"/>' : ''}
+    </g>
+    <!-- rage: the eyes burn hotter -->
+    <circle cx="92" cy="30" r="${stage === 2 ? 9 : 6}" fill="url(#ha-eye)" opacity="${stage === 2 ? 0.75 : 0.5}"/>
+    <circle cx="108" cy="30" r="${stage === 2 ? 9 : 6}" fill="url(#ha-eye)" opacity="${stage === 2 ? 0.75 : 0.5}"/>
+    ${stage === 2 ? '<g class="obj-smoke" fill="#2a2420" opacity="0.45"><circle cx="80" cy="60" r="8"/><circle cx="120" cy="56" r="9"/><circle cx="100" cy="46" r="7"/></g>' : ''}`;
+  return `
+    <svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus: a towering, gaunt devil of wet red flesh split by glowing fissures, horned, winged, grinning with too many teeth">
+    <defs>
+      ${wetSkinFilter('ha-hide')}
+      ${horrorSkinFilter('ha-wing', { freq: '0.05 0.2', scale: 2, seed: 4, k: 1.2 })}
+      ${horrorVignette('ha-vig', '50%', '45%', 0.45)}
+      <radialGradient id="ha-fire" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#ff6a14" stop-opacity="0.8"/><stop offset="0.35" stop-color="#8a1404" stop-opacity="0.6"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="ha-slag" x1="0" y1="0" x2="0.4" y2="1">
+        <stop offset="0" stop-color="#c4202a"/><stop offset="0.5" stop-color="#7a0a12"/><stop offset="1" stop-color="#2a0206"/>
+      </linearGradient>
+      <radialGradient id="ha-face" cx="42%" cy="30%" r="80%">
+        <stop offset="0" stop-color="#d8303a"/><stop offset="0.5" stop-color="#8a0e18"/><stop offset="1" stop-color="#2a0206"/>
+      </radialGradient>
+      ${scalePattern('ha-scales', 3.6, '#1a0002', '#ff9090')}
+      ${scalePattern('ha-fine', 2, '#1a0002', '#ff9090')}
+      <linearGradient id="ha-leg" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#3a0206"/><stop offset="0.35" stop-color="#c41c26"/><stop offset="0.6" stop-color="#8a0a14"/><stop offset="1" stop-color="#2a0204"/>
+      </linearGradient>
+      <radialGradient id="ha-form" cx="42%" cy="35%" r="62%"><stop offset="0.35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a0002" stop-opacity="0.85"/></radialGradient>
+      <linearGradient id="ha-horn" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#4a4038"/><stop offset="0.5" stop-color="#1a1410"/><stop offset="1" stop-color="#050302"/>
+      </linearGradient>
+      <linearGradient id="ha-membrane" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3a0e0a"/><stop offset="1" stop-color="#120404"/>
+      </linearGradient>
+      <radialGradient id="ha-eye" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#fffbe0"/><stop offset="0.35" stop-color="#ffd040"/><stop offset="0.7" stop-color="#ff5a10"/><stop offset="1" stop-color="#5a0a00" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="ha-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e8c060"/><stop offset="1" stop-color="#6a4810"/>
+      </linearGradient>
+      <filter id="ha-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <ellipse cx="100" cy="148" rx="98" ry="50" fill="url(#ha-fire)"/>
+    <!-- faces of the damned, half-seen in the fire behind him -->
+    <g fill="none" stroke="#ff7a2a" stroke-width="0.9" opacity="0.28">
+      <path d="M 22 150 q 6 -10 12 0 q -6 10 -12 0 M 25 148 l 1 0 M 30 148 l 1 0 M 26 154 q 2 3 4 0"/>
+      <path d="M 166 156 q 6 -10 12 0 q -6 10 -12 0 M 169 154 l 1 0 M 174 154 l 1 0 M 170 160 q 2 4 4 0"/>
+      <path d="M 40 176 q 5 -8 10 0 q -5 8 -10 0 M 43 175 l 1 0 M 47 175 l 1 0 M 44 180 q 1.5 3 3 0"/>
+      <path d="M 148 178 q 5 -8 10 0 q -5 8 -10 0 M 151 177 l 1 0 M 155 177 l 1 0 M 152 182 q 1.5 3 3 0"/>
+    </g>
+    <!-- chains, with hooks -->
+    <g stroke="#3a302a" stroke-width="1.6" fill="none">
+      <path d="M 14 0 V 60" stroke-dasharray="4 2"/><path d="M 186 0 V 52" stroke-dasharray="4 2"/>
+      <path d="M 14 60 q 0 8 -5 8 q -4 0 -4 -4" stroke-width="2"/><path d="M 186 52 q 0 8 5 8 q 4 0 4 -4" stroke-width="2"/>
+    </g>
+    <path d="M 8 66 q -2 4 1 6 M 192 58 q 2 4 -1 6" stroke="#6a0a0a" stroke-width="1.2" fill="none"/>
+    <!-- the wings: torn membrane stretched over bare bone -->
+    <g filter="url(#ha-wing)">
+      <path d="M 76 66 C 56 40, 30 22, 6 18 C 14 30, 16 44, 12 58 C 20 56, 26 60, 28 70 C 34 66, 42 68, 44 78 C 52 74, 60 76, 66 84 Z" fill="url(#ha-membrane)"/>
+      <path d="M 124 66 C 144 40, 170 22, 194 18 C 186 30, 184 44, 188 58 C 180 56, 174 60, 172 70 C 166 66, 158 68, 156 78 C 148 74, 140 76, 134 84 Z" fill="url(#ha-membrane)"/>
+    </g>
+    <g stroke="#7a6a5a" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M 76 66 C 56 40, 30 22, 6 18"/><path d="M 56 46 L 12 58"/><path d="M 62 54 L 28 70"/><path d="M 68 62 L 44 78"/>
+      <path d="M 124 66 C 144 40, 170 22, 194 18"/><path d="M 144 46 L 188 58"/><path d="M 138 54 L 172 70"/><path d="M 132 62 L 156 78"/>
+    </g>
+    <path d="M 30 44 l 6 6 l -4 4 M 40 60 l 3 5 M 170 44 l -6 6 l 4 4 M 160 60 l -3 5" stroke="#050101" stroke-width="2.4" fill="none"/>
+    <!-- the robe: black, blood-dark at the hem, falling into the fire -->
+    <path d="M 62 112 C 56 140, 50 170, 42 200 L 158 200 C 150 170, 144 140, 138 112 Z" fill="#0a0303"/>
+    <path d="M 62 112 C 56 140, 50 170, 42 200 L 58 200 C 64 170, 70 140, 74 114 Z M 138 112 C 144 140, 150 170, 158 200 L 142 200 C 136 170, 130 140, 126 114 Z" fill="#2a0606"/>
+    <path d="M 46 196 L 154 196" stroke="url(#ha-gold)" stroke-width="3"/>
+    <!-- legs: thick, meaty and muscular, red and scaled, on bare clawed feet -->
+    <g id="ha-legs">
+      <!-- left leg: thigh, the knee, a bulging calf, the ankle -->
+      <path d="M 70 118 C 62 132, 64 146, 72 156 C 66 166, 68 178, 74 188 L 89 188 C 93 178, 95 168, 92 158 C 99 146, 100 132, 99 120 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
+      <!-- right leg -->
+      <path d="M 130 118 C 138 132, 136 146, 128 156 C 134 166, 132 178, 126 188 L 111 188 C 107 178, 105 168, 108 158 C 101 146, 100 132, 101 120 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
+      <path d="M 70 118 C 62 132, 64 146, 72 156 C 66 166, 68 178, 74 188 L 89 188 C 93 178, 95 168, 92 158 C 99 146, 100 132, 99 120 Z" fill="url(#ha-scales)" opacity="0.55"/>
+      <path d="M 130 118 C 138 132, 136 146, 128 156 C 134 166, 132 178, 126 188 L 111 188 C 107 178, 105 168, 108 158 C 101 146, 100 132, 101 120 Z" fill="url(#ha-scales)" opacity="0.55"/>
+      <!-- the muscle: quadriceps, kneecaps, calves -->
+      <path d="M 78 124 C 76 134, 78 144, 82 150 M 90 124 C 92 134, 90 144, 86 152 M 122 124 C 124 134, 122 144, 118 150 M 110 124 C 108 134, 110 144, 114 152" stroke="#2a0204" stroke-width="1.4" fill="none" opacity="0.8"/>
+      <path d="M 79 125 C 77 134, 79 142, 82 148 M 121 125 C 123 134, 121 142, 118 148" stroke="#ff9a9a" stroke-width="0.7" fill="none" opacity="0.45"/>
+      <ellipse cx="83" cy="157" rx="5" ry="4" fill="#d8303a" opacity="0.55"/><ellipse cx="117" cy="157" rx="5" ry="4" fill="#d8303a" opacity="0.55"/>
+      <path d="M 78 162 C 74 170, 76 178, 80 184 M 122 162 C 126 170, 124 178, 120 184" stroke="#ff9a9a" stroke-width="0.8" fill="none" opacity="0.4"/>
+      <path d="M 86 164 C 88 172, 86 180, 86 186 M 114 164 C 112 172, 114 180, 114 186" stroke="#2a0204" stroke-width="1.2" fill="none" opacity="0.8"/>
+      <g stroke="#ff7a24" stroke-width="0.6" fill="none" filter="url(#ha-glow)" opacity="0.7"><path d="M 80 132 L 84 138 L 82 144"/><path d="M 120 168 L 117 174 L 119 178"/></g>
+      <!-- bare feet: broad, knuckled toes, black claws -->
+      <path d="M 74 186 C 68 188, 62 192, 60 196 L 92 196 C 92 192, 90 188, 88 186 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
+      <path d="M 126 186 C 132 188, 138 192, 140 196 L 108 196 C 108 192, 110 188, 112 186 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
+      <path d="M 66 192 l 0 4 M 72 191 l 0 5 M 78 191 l 0 5 M 84 191 l 0 5 M 134 192 l 0 4 M 128 191 l 0 5 M 122 191 l 0 5 M 116 191 l 0 5" stroke="#2a0204" stroke-width="1"/>
+      <g fill="#0a0303" stroke="#4a3a30" stroke-width="0.3">
+        <path d="M 60 195 l -4 2 l 5 1 Z M 66 195 l -3 3 l 5 0 Z M 72 195 l -2 3 l 5 0 Z M 78 195 l -1 3 l 4 0 Z M 85 195 l 0 3 l 4 -1 Z"/>
+        <path d="M 140 195 l 4 2 l -5 1 Z M 134 195 l 3 3 l -5 0 Z M 128 195 l 2 3 l -5 0 Z M 122 195 l 1 3 l -4 0 Z M 115 195 l 0 3 l -4 -1 Z"/>
+      </g>
+      <path d="M 62 193 Q 76 189 90 192 M 138 193 Q 124 189 110 192" stroke="#ff9a9a" stroke-width="0.6" fill="none" opacity="0.4"/>
+    </g>
+    <!-- a loincloth, blood-dark, under a belt of gold studded with rubies -->
+    <path d="M 70 114 L 130 114 L 124 140 L 100 150 L 76 140 Z" fill="#160304"/>
+    <path d="M 90 120 L 100 148 L 110 120" stroke="#3a0608" stroke-width="1" fill="none"/>
+    <path d="M 66 112 Q 100 120 134 112 L 134 118 Q 100 126 66 118 Z" fill="url(#ha-gold)"/>
+    <circle cx="100" cy="120" r="2.6" fill="#c0102a" filter="url(#ha-glow)"/><circle cx="82" cy="118" r="1.4" fill="#a00a20"/><circle cx="118" cy="118" r="1.4" fill="#a00a20"/>
+    <!-- a starved chest of cracked slag, lit from within -->
+    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
+    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-scales)" opacity="0.5"/>
+    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-form)"/>
+    <!-- the shape of him: a starved chest, collarbones, ribs, a pit of a belly -->
+    <path d="M 74 74 Q 86 70 98 76 M 102 76 Q 114 70 126 74" stroke="#ff9a9a" stroke-width="0.9" fill="none" opacity="0.35"/>
+    <path d="M 70 100 Q 84 96 96 102 M 104 102 Q 116 96 130 100 M 72 108 Q 84 104 96 110 M 104 110 Q 116 104 128 108" stroke="#2a0204" stroke-width="1.6" fill="none" opacity="0.8"/>
+    <path d="M 71 98 Q 84 94 96 100 M 104 100 Q 116 94 129 98" stroke="#ff8a8a" stroke-width="0.6" fill="none" opacity="0.35"/>
+    <ellipse cx="100" cy="112" rx="12" ry="5" fill="#2a0204" opacity="0.6"/>
+    <g stroke="#ff6a1a" stroke-width="1" fill="none" filter="url(#ha-glow)" opacity="0.9">
+      <path d="M 80 74 L 86 86 L 82 98 L 88 112"/><path d="M 118 76 L 112 88 L 116 100 L 110 114"/>
+      <path d="M 92 80 L 100 84 L 108 80"/><path d="M 96 96 L 100 104 L 104 96"/>
+    </g>
+    <g stroke="#140605" stroke-width="1.4" fill="none" opacity="0.9">
+      <path d="M 72 84 Q 84 80 96 86"/><path d="M 104 86 Q 116 80 128 84"/><path d="M 72 94 Q 84 90 96 96"/><path d="M 104 96 Q 116 90 128 94"/>
+    </g>
+    <!-- the ruby at his throat -->
+    <path d="M 94 70 L 106 70 L 100 80 Z" fill="url(#ha-gold)"/>
+    <circle cx="100" cy="75" r="3.6" fill="#c0102a" filter="url(#ha-glow)"/><circle cx="99" cy="74" r="1" fill="#ffb0b8"/>
+    <!-- shoulder plates of black iron -->
+    <path d="M 54 70 C 58 60, 72 58, 80 64 L 74 76 C 66 74, 58 76, 54 70 Z" fill="#141010" stroke="#3a302a"/>
+    <path d="M 146 70 C 142 60, 128 58, 120 64 L 126 76 C 134 74, 142 76, 146 70 Z" fill="#141010" stroke="#3a302a"/>
+    <path d="M 58 64 l -4 -8 l 8 4 M 142 64 l 4 -8 l -8 4" fill="#2a2420"/>
+    <!-- one arm reaching for you, talons out -->
+    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
+    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-scales)" opacity="0.5"/>
+    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-form)"/>
+    <path d="M 34 120 C 28 124, 26 130, 30 134 C 36 136, 42 132, 42 124 Z" fill="#22100c"/>
+    <g stroke="#0a0505" stroke-width="2" stroke-linecap="round" fill="none">
+      <path d="M 30 132 C 26 138, 22 142, 18 146"/><path d="M 33 134 C 32 140, 30 146, 28 152"/><path d="M 37 134 C 38 140, 38 146, 38 152"/><path d="M 28 126 C 22 126, 18 128, 14 132"/>
+    </g>
+    <g stroke="#d8d0b0" stroke-width="1" stroke-linecap="round"><path d="M 18 146 l -3 3"/><path d="M 28 152 l -1 4"/><path d="M 38 152 l 0 4"/><path d="M 14 132 l -4 1"/></g>
+    <path d="M 40 106 L 44 112 L 38 116" stroke="#ff6a1a" stroke-width="0.8" fill="none" opacity="0.8"/>
+    <!-- the other holds the ruby rod -->
+    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
+    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-scales)" opacity="0.5"/>
+    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-form)"/>
+    <path d="M 164 40 L 154 170" stroke="url(#ha-gold)" stroke-width="3"/>
+    <circle cx="165" cy="36" r="6" fill="#a00a20" filter="url(#ha-glow)"/><path d="M 160 36 l 5 -8 l 5 8 l -5 8 Z" fill="#d81a34" opacity="0.8"/>
+    <path d="M 150 116 C 154 112, 162 114, 162 120 C 160 126, 152 126, 150 122 Z" fill="#22100c"/>
+    <!-- the neck, corded -->
+    <path d="M 90 52 L 110 52 L 112 68 L 88 68 Z" fill="url(#ha-face)" filter="url(#ha-hide)"/>
+    <path d="M 90 52 L 110 52 L 112 68 L 88 68 Z" fill="url(#ha-scales)" opacity="0.5"/>
+    <path d="M 94 66 L 96 54 M 106 66 L 104 54" stroke="#0a0403" stroke-width="1.4"/>
+    <!-- the horns: great ridged ram's horns, and a crown of lesser spikes -->
+    <path d="M 84 22 C 70 8, 48 8, 44 24 C 42 36, 54 44, 62 38 C 56 36, 52 30, 56 24 C 60 18, 72 18, 80 28 Z" fill="url(#ha-horn)"/>
+    <path d="M 116 22 C 130 8, 152 8, 156 24 C 158 36, 146 44, 138 38 C 144 36, 148 30, 144 24 C 140 18, 128 18, 120 28 Z" fill="url(#ha-horn)"/>
+    <g stroke="#5a5048" stroke-width="0.8" fill="none" opacity="0.7">
+      <path d="M 76 16 l -2 5 M 68 12 l -1 5 M 60 12 l 0 5 M 52 16 l 2 4 M 47 24 l 4 2"/>
+      <path d="M 124 16 l 2 5 M 132 12 l 1 5 M 140 12 l 0 5 M 148 16 l -2 4 M 153 24 l -4 2"/>
+    </g>
+    <path d="M 88 18 L 86 6 L 92 16 M 96 14 L 96 2 L 100 13 M 104 14 L 106 3 L 108 16 M 112 18 L 116 7 L 114 19" fill="#1a1410" stroke="#3a302a" stroke-width="0.6"/>
+    <!-- the face: long as a skull, skin drawn tight over it, pointed ears -->
+    <path d="M 80 30 L 70 22 L 80 36 Z M 120 30 L 130 22 L 120 36 Z" fill="#2e120c"/>
+    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-face)" filter="url(#ha-hide)"/>
+    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-fine)" opacity="0.5"/>
+    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-form)"/>
+    <path d="M 86 34 Q 88 44 92 50 M 114 34 Q 112 44 108 50" stroke="#0a0403" stroke-width="1.4" fill="none"/>
+    <path d="M 90 14 Q 100 10 110 14" stroke="#ff6a1a" stroke-width="0.6" fill="none" opacity="0.5"/>
+    <!-- the face split by glowing fissures; cheeks sunk to the bone -->
+    <g stroke="#ff7a24" stroke-width="0.6" fill="none" filter="url(#ha-glow)" opacity="0.85">
+      <path d="M 88 18 L 91 22 L 89 26"/><path d="M 112 18 L 109 23 L 111 26"/><path d="M 96 12 L 98 16 L 97 19"/>
+      <path d="M 86 38 L 88 42 L 87 46"/><path d="M 114 38 L 112 42 L 113 46"/><path d="M 102 52 L 101 56"/>
+    </g>
+    <path d="M 85 36 C 88 40, 90 44, 92 46 L 89 46 C 86 42, 85 40, 85 36 Z M 115 36 C 112 40, 110 44, 108 46 L 111 46 C 114 42, 115 40, 115 36 Z" fill="#050101" opacity="0.8"/>
+    <path d="M 86 34 Q 90 33 94 36 M 114 34 Q 110 33 106 36" stroke="#8a3a2a" stroke-width="0.7" fill="none" opacity="0.7"/>
+    <path d="M 95 22 L 97 26 M 105 22 L 103 26 M 98 19 L 100 24 L 102 19" stroke="#050101" stroke-width="0.8" fill="none"/>
+    <path d="M 84 30 l -3 -1 M 84 32 l -3 1 M 116 30 l 3 -1 M 116 32 l 3 1" stroke="#050101" stroke-width="0.6"/>
+    <!-- brow ridge, and eyes like holes into a furnace -->
+    <path d="M 84 26 Q 92 20 99 27 M 101 27 Q 108 20 116 26" stroke="#050101" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="92" cy="30" rx="5.5" ry="3.8" fill="#000"/><ellipse cx="108" cy="30" rx="5.5" ry="3.8" fill="#000"/>
+    <ellipse cx="92" cy="30" rx="4.2" ry="2.6" fill="url(#ha-eye)" filter="url(#ha-glow)"/><ellipse cx="108" cy="30" rx="4.2" ry="2.6" fill="url(#ha-eye)" filter="url(#ha-glow)"/>
+    <path d="M 92 28 L 92 32 M 108 28 L 108 32" stroke="#3a0a00" stroke-width="0.7"/>
+    <path d="M 86.6 28.6 Q 92 26 97.4 28.6 M 102.6 28.6 Q 108 26 113.4 28.6" stroke="#050101" stroke-width="1.2" fill="none"/>
+    <path d="M 87.4 32 Q 92 34 96.6 32 M 103.4 32 Q 108 34 112.6 32" stroke="#2a0805" stroke-width="0.8" fill="none"/>
+    <!-- no nose to speak of: a split ridge, two slits -->
+    <path d="M 100 32 L 98 40 L 100 41 L 102 40 Z" fill="#1a0806"/>
+    <path d="M 98 40 l -1 1 M 102 40 l 1 1" stroke="#000" stroke-width="1"/>
+    <!-- the lipless grin, ear to ear, of far too many teeth -->
+    <path d="M 86 44 Q 100 56 114 44 Q 100 50 86 44 Z" fill="#100202"/>
+    <g>${needleTeeth(87, 113, 44.6, 16, 3.2, 1, '#e8dcc0', 0.3)}</g>
+    <g>${needleTeeth(90, 110, 50.2, 12, 2.6, -1, '#d0c4a0', 0.3)}</g>
+    <path d="M 86 44 Q 100 56 114 44" stroke="#3a0a06" stroke-width="0.8" fill="none"/>
+    <path d="M 86 44 Q 84 42 83 39 M 114 44 Q 116 42 117 39" stroke="#0a0302" stroke-width="1" fill="none"/>
+    <path d="M 88 46.5 Q 100 54 112 46.5" stroke="#5a1408" stroke-width="0.5" fill="none" opacity="0.7"/>
+    <!-- a pointed black beard of matted hair -->
+    <path d="M 94 56 C 96 64, 98 72, 100 80 C 102 72, 104 64, 106 56 C 102 60, 98 60, 94 56 Z" fill="#050202"/>
+    <!-- smoke from the horns -->
+    <g fill="#2a2420" opacity="0.4"><circle cx="46" cy="10" r="5"/><circle cx="42" cy="2" r="4"/><circle cx="154" cy="10" r="5"/><circle cx="158" cy="2" r="4"/></g>
+    ${wounds}
+    </svg>`;
+}
+
 const HORROR_SPRITES = {
 
   // ─── Ghoul ───────────────────────────────────────────────────────────────
@@ -562,190 +767,7 @@ const HORROR_SPRITES = {
   // teeth, eyes like holes into a furnace. Great ridged horns; wings of torn
   // membrane over bare bone; chains with hooks; the ruby rod in one hand,
   // the other reaching for you; thick, scaled red legs on bare clawed feet. Behind him, faces in the flames.
-  'Asmodeus': `
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asmodeus: a towering, gaunt devil of wet red flesh split by glowing fissures, horned, winged, grinning with too many teeth">
-    <defs>
-      ${wetSkinFilter('ha-hide')}
-      ${horrorSkinFilter('ha-wing', { freq: '0.05 0.2', scale: 2, seed: 4, k: 1.2 })}
-      ${horrorVignette('ha-vig', '50%', '45%', 0.45)}
-      <radialGradient id="ha-fire" cx="50%" cy="85%" r="70%">
-        <stop offset="0" stop-color="#ff6a14" stop-opacity="0.8"/><stop offset="0.35" stop-color="#8a1404" stop-opacity="0.6"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="ha-slag" x1="0" y1="0" x2="0.4" y2="1">
-        <stop offset="0" stop-color="#c4202a"/><stop offset="0.5" stop-color="#7a0a12"/><stop offset="1" stop-color="#2a0206"/>
-      </linearGradient>
-      <radialGradient id="ha-face" cx="42%" cy="30%" r="80%">
-        <stop offset="0" stop-color="#d8303a"/><stop offset="0.5" stop-color="#8a0e18"/><stop offset="1" stop-color="#2a0206"/>
-      </radialGradient>
-      ${scalePattern('ha-scales', 3.6, '#1a0002', '#ff9090')}
-      ${scalePattern('ha-fine', 2, '#1a0002', '#ff9090')}
-      <linearGradient id="ha-leg" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#3a0206"/><stop offset="0.35" stop-color="#c41c26"/><stop offset="0.6" stop-color="#8a0a14"/><stop offset="1" stop-color="#2a0204"/>
-      </linearGradient>
-      <radialGradient id="ha-form" cx="42%" cy="35%" r="62%"><stop offset="0.35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a0002" stop-opacity="0.85"/></radialGradient>
-      <linearGradient id="ha-horn" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#4a4038"/><stop offset="0.5" stop-color="#1a1410"/><stop offset="1" stop-color="#050302"/>
-      </linearGradient>
-      <linearGradient id="ha-membrane" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#3a0e0a"/><stop offset="1" stop-color="#120404"/>
-      </linearGradient>
-      <radialGradient id="ha-eye" cx="50%" cy="50%" r="50%">
-        <stop offset="0" stop-color="#fffbe0"/><stop offset="0.35" stop-color="#ffd040"/><stop offset="0.7" stop-color="#ff5a10"/><stop offset="1" stop-color="#5a0a00" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="ha-gold" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#e8c060"/><stop offset="1" stop-color="#6a4810"/>
-      </linearGradient>
-      <filter id="ha-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <rect width="200" height="200" fill="url(#ha-fire)"/>
-    <!-- faces of the damned, half-seen in the fire behind him -->
-    <g fill="none" stroke="#ff7a2a" stroke-width="0.9" opacity="0.28">
-      <path d="M 22 150 q 6 -10 12 0 q -6 10 -12 0 M 25 148 l 1 0 M 30 148 l 1 0 M 26 154 q 2 3 4 0"/>
-      <path d="M 166 156 q 6 -10 12 0 q -6 10 -12 0 M 169 154 l 1 0 M 174 154 l 1 0 M 170 160 q 2 4 4 0"/>
-      <path d="M 40 176 q 5 -8 10 0 q -5 8 -10 0 M 43 175 l 1 0 M 47 175 l 1 0 M 44 180 q 1.5 3 3 0"/>
-      <path d="M 148 178 q 5 -8 10 0 q -5 8 -10 0 M 151 177 l 1 0 M 155 177 l 1 0 M 152 182 q 1.5 3 3 0"/>
-    </g>
-    <!-- chains, with hooks -->
-    <g stroke="#3a302a" stroke-width="1.6" fill="none">
-      <path d="M 14 0 V 60" stroke-dasharray="4 2"/><path d="M 186 0 V 52" stroke-dasharray="4 2"/>
-      <path d="M 14 60 q 0 8 -5 8 q -4 0 -4 -4" stroke-width="2"/><path d="M 186 52 q 0 8 5 8 q 4 0 4 -4" stroke-width="2"/>
-    </g>
-    <path d="M 8 66 q -2 4 1 6 M 192 58 q 2 4 -1 6" stroke="#6a0a0a" stroke-width="1.2" fill="none"/>
-    <!-- the wings: torn membrane stretched over bare bone -->
-    <g filter="url(#ha-wing)">
-      <path d="M 76 66 C 56 40, 30 22, 6 18 C 14 30, 16 44, 12 58 C 20 56, 26 60, 28 70 C 34 66, 42 68, 44 78 C 52 74, 60 76, 66 84 Z" fill="url(#ha-membrane)"/>
-      <path d="M 124 66 C 144 40, 170 22, 194 18 C 186 30, 184 44, 188 58 C 180 56, 174 60, 172 70 C 166 66, 158 68, 156 78 C 148 74, 140 76, 134 84 Z" fill="url(#ha-membrane)"/>
-    </g>
-    <g stroke="#7a6a5a" stroke-width="2" fill="none" stroke-linecap="round">
-      <path d="M 76 66 C 56 40, 30 22, 6 18"/><path d="M 56 46 L 12 58"/><path d="M 62 54 L 28 70"/><path d="M 68 62 L 44 78"/>
-      <path d="M 124 66 C 144 40, 170 22, 194 18"/><path d="M 144 46 L 188 58"/><path d="M 138 54 L 172 70"/><path d="M 132 62 L 156 78"/>
-    </g>
-    <path d="M 30 44 l 6 6 l -4 4 M 40 60 l 3 5 M 170 44 l -6 6 l 4 4 M 160 60 l -3 5" stroke="#050101" stroke-width="2.4" fill="none"/>
-    <!-- the robe: black, blood-dark at the hem, falling into the fire -->
-    <path d="M 62 112 C 56 140, 50 170, 42 200 L 158 200 C 150 170, 144 140, 138 112 Z" fill="#0a0303"/>
-    <path d="M 62 112 C 56 140, 50 170, 42 200 L 58 200 C 64 170, 70 140, 74 114 Z M 138 112 C 144 140, 150 170, 158 200 L 142 200 C 136 170, 130 140, 126 114 Z" fill="#2a0606"/>
-    <path d="M 46 196 L 154 196" stroke="url(#ha-gold)" stroke-width="3"/>
-    <!-- legs: thick, meaty and muscular, red and scaled, on bare clawed feet -->
-    <g id="ha-legs">
-      <!-- left leg: thigh, the knee, a bulging calf, the ankle -->
-      <path d="M 70 118 C 62 132, 64 146, 72 156 C 66 166, 68 178, 74 188 L 89 188 C 93 178, 95 168, 92 158 C 99 146, 100 132, 99 120 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
-      <!-- right leg -->
-      <path d="M 130 118 C 138 132, 136 146, 128 156 C 134 166, 132 178, 126 188 L 111 188 C 107 178, 105 168, 108 158 C 101 146, 100 132, 101 120 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
-      <path d="M 70 118 C 62 132, 64 146, 72 156 C 66 166, 68 178, 74 188 L 89 188 C 93 178, 95 168, 92 158 C 99 146, 100 132, 99 120 Z" fill="url(#ha-scales)" opacity="0.55"/>
-      <path d="M 130 118 C 138 132, 136 146, 128 156 C 134 166, 132 178, 126 188 L 111 188 C 107 178, 105 168, 108 158 C 101 146, 100 132, 101 120 Z" fill="url(#ha-scales)" opacity="0.55"/>
-      <!-- the muscle: quadriceps, kneecaps, calves -->
-      <path d="M 78 124 C 76 134, 78 144, 82 150 M 90 124 C 92 134, 90 144, 86 152 M 122 124 C 124 134, 122 144, 118 150 M 110 124 C 108 134, 110 144, 114 152" stroke="#2a0204" stroke-width="1.4" fill="none" opacity="0.8"/>
-      <path d="M 79 125 C 77 134, 79 142, 82 148 M 121 125 C 123 134, 121 142, 118 148" stroke="#ff9a9a" stroke-width="0.7" fill="none" opacity="0.45"/>
-      <ellipse cx="83" cy="157" rx="5" ry="4" fill="#d8303a" opacity="0.55"/><ellipse cx="117" cy="157" rx="5" ry="4" fill="#d8303a" opacity="0.55"/>
-      <path d="M 78 162 C 74 170, 76 178, 80 184 M 122 162 C 126 170, 124 178, 120 184" stroke="#ff9a9a" stroke-width="0.8" fill="none" opacity="0.4"/>
-      <path d="M 86 164 C 88 172, 86 180, 86 186 M 114 164 C 112 172, 114 180, 114 186" stroke="#2a0204" stroke-width="1.2" fill="none" opacity="0.8"/>
-      <g stroke="#ff7a24" stroke-width="0.6" fill="none" filter="url(#ha-glow)" opacity="0.7"><path d="M 80 132 L 84 138 L 82 144"/><path d="M 120 168 L 117 174 L 119 178"/></g>
-      <!-- bare feet: broad, knuckled toes, black claws -->
-      <path d="M 74 186 C 68 188, 62 192, 60 196 L 92 196 C 92 192, 90 188, 88 186 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
-      <path d="M 126 186 C 132 188, 138 192, 140 196 L 108 196 C 108 192, 110 188, 112 186 Z" fill="url(#ha-leg)" filter="url(#ha-hide)"/>
-      <path d="M 66 192 l 0 4 M 72 191 l 0 5 M 78 191 l 0 5 M 84 191 l 0 5 M 134 192 l 0 4 M 128 191 l 0 5 M 122 191 l 0 5 M 116 191 l 0 5" stroke="#2a0204" stroke-width="1"/>
-      <g fill="#0a0303" stroke="#4a3a30" stroke-width="0.3">
-        <path d="M 60 195 l -4 2 l 5 1 Z M 66 195 l -3 3 l 5 0 Z M 72 195 l -2 3 l 5 0 Z M 78 195 l -1 3 l 4 0 Z M 85 195 l 0 3 l 4 -1 Z"/>
-        <path d="M 140 195 l 4 2 l -5 1 Z M 134 195 l 3 3 l -5 0 Z M 128 195 l 2 3 l -5 0 Z M 122 195 l 1 3 l -4 0 Z M 115 195 l 0 3 l -4 -1 Z"/>
-      </g>
-      <path d="M 62 193 Q 76 189 90 192 M 138 193 Q 124 189 110 192" stroke="#ff9a9a" stroke-width="0.6" fill="none" opacity="0.4"/>
-    </g>
-    <!-- a loincloth, blood-dark, under a belt of gold studded with rubies -->
-    <path d="M 70 114 L 130 114 L 124 140 L 100 150 L 76 140 Z" fill="#160304"/>
-    <path d="M 90 120 L 100 148 L 110 120" stroke="#3a0608" stroke-width="1" fill="none"/>
-    <path d="M 66 112 Q 100 120 134 112 L 134 118 Q 100 126 66 118 Z" fill="url(#ha-gold)"/>
-    <circle cx="100" cy="120" r="2.6" fill="#c0102a" filter="url(#ha-glow)"/><circle cx="82" cy="118" r="1.4" fill="#a00a20"/><circle cx="118" cy="118" r="1.4" fill="#a00a20"/>
-    <!-- a starved chest of cracked slag, lit from within -->
-    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
-    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-scales)" opacity="0.5"/>
-    <path d="M 68 70 C 62 86, 62 104, 66 116 C 76 122, 124 122, 134 116 C 138 104, 138 86, 132 70 C 120 62, 80 62, 68 70 Z" fill="url(#ha-form)"/>
-    <!-- the shape of him: a starved chest, collarbones, ribs, a pit of a belly -->
-    <path d="M 74 74 Q 86 70 98 76 M 102 76 Q 114 70 126 74" stroke="#ff9a9a" stroke-width="0.9" fill="none" opacity="0.35"/>
-    <path d="M 70 100 Q 84 96 96 102 M 104 102 Q 116 96 130 100 M 72 108 Q 84 104 96 110 M 104 110 Q 116 104 128 108" stroke="#2a0204" stroke-width="1.6" fill="none" opacity="0.8"/>
-    <path d="M 71 98 Q 84 94 96 100 M 104 100 Q 116 94 129 98" stroke="#ff8a8a" stroke-width="0.6" fill="none" opacity="0.35"/>
-    <ellipse cx="100" cy="112" rx="12" ry="5" fill="#2a0204" opacity="0.6"/>
-    <g stroke="#ff6a1a" stroke-width="1" fill="none" filter="url(#ha-glow)" opacity="0.9">
-      <path d="M 80 74 L 86 86 L 82 98 L 88 112"/><path d="M 118 76 L 112 88 L 116 100 L 110 114"/>
-      <path d="M 92 80 L 100 84 L 108 80"/><path d="M 96 96 L 100 104 L 104 96"/>
-    </g>
-    <g stroke="#140605" stroke-width="1.4" fill="none" opacity="0.9">
-      <path d="M 72 84 Q 84 80 96 86"/><path d="M 104 86 Q 116 80 128 84"/><path d="M 72 94 Q 84 90 96 96"/><path d="M 104 96 Q 116 90 128 94"/>
-    </g>
-    <!-- the ruby at his throat -->
-    <path d="M 94 70 L 106 70 L 100 80 Z" fill="url(#ha-gold)"/>
-    <circle cx="100" cy="75" r="3.6" fill="#c0102a" filter="url(#ha-glow)"/><circle cx="99" cy="74" r="1" fill="#ffb0b8"/>
-    <!-- shoulder plates of black iron -->
-    <path d="M 54 70 C 58 60, 72 58, 80 64 L 74 76 C 66 74, 58 76, 54 70 Z" fill="#141010" stroke="#3a302a"/>
-    <path d="M 146 70 C 142 60, 128 58, 120 64 L 126 76 C 134 74, 142 76, 146 70 Z" fill="#141010" stroke="#3a302a"/>
-    <path d="M 58 64 l -4 -8 l 8 4 M 142 64 l 4 -8 l -8 4" fill="#2a2420"/>
-    <!-- one arm reaching for you, talons out -->
-    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
-    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-scales)" opacity="0.5"/>
-    <path d="M 58 76 C 46 88, 38 104, 34 122 L 42 124 C 46 108, 54 96, 66 86 Z" fill="url(#ha-form)"/>
-    <path d="M 34 120 C 28 124, 26 130, 30 134 C 36 136, 42 132, 42 124 Z" fill="#22100c"/>
-    <g stroke="#0a0505" stroke-width="2" stroke-linecap="round" fill="none">
-      <path d="M 30 132 C 26 138, 22 142, 18 146"/><path d="M 33 134 C 32 140, 30 146, 28 152"/><path d="M 37 134 C 38 140, 38 146, 38 152"/><path d="M 28 126 C 22 126, 18 128, 14 132"/>
-    </g>
-    <g stroke="#d8d0b0" stroke-width="1" stroke-linecap="round"><path d="M 18 146 l -3 3"/><path d="M 28 152 l -1 4"/><path d="M 38 152 l 0 4"/><path d="M 14 132 l -4 1"/></g>
-    <path d="M 40 106 L 44 112 L 38 116" stroke="#ff6a1a" stroke-width="0.8" fill="none" opacity="0.8"/>
-    <!-- the other holds the ruby rod -->
-    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-slag)" filter="url(#ha-hide)"/>
-    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-scales)" opacity="0.5"/>
-    <path d="M 142 76 C 152 88, 158 102, 160 118 L 152 120 C 150 106, 144 94, 134 86 Z" fill="url(#ha-form)"/>
-    <path d="M 164 40 L 154 170" stroke="url(#ha-gold)" stroke-width="3"/>
-    <circle cx="165" cy="36" r="6" fill="#a00a20" filter="url(#ha-glow)"/><path d="M 160 36 l 5 -8 l 5 8 l -5 8 Z" fill="#d81a34" opacity="0.8"/>
-    <path d="M 150 116 C 154 112, 162 114, 162 120 C 160 126, 152 126, 150 122 Z" fill="#22100c"/>
-    <!-- the neck, corded -->
-    <path d="M 90 52 L 110 52 L 112 68 L 88 68 Z" fill="url(#ha-face)" filter="url(#ha-hide)"/>
-    <path d="M 90 52 L 110 52 L 112 68 L 88 68 Z" fill="url(#ha-scales)" opacity="0.5"/>
-    <path d="M 94 66 L 96 54 M 106 66 L 104 54" stroke="#0a0403" stroke-width="1.4"/>
-    <!-- the horns: great ridged ram's horns, and a crown of lesser spikes -->
-    <path d="M 84 22 C 70 8, 48 8, 44 24 C 42 36, 54 44, 62 38 C 56 36, 52 30, 56 24 C 60 18, 72 18, 80 28 Z" fill="url(#ha-horn)"/>
-    <path d="M 116 22 C 130 8, 152 8, 156 24 C 158 36, 146 44, 138 38 C 144 36, 148 30, 144 24 C 140 18, 128 18, 120 28 Z" fill="url(#ha-horn)"/>
-    <g stroke="#5a5048" stroke-width="0.8" fill="none" opacity="0.7">
-      <path d="M 76 16 l -2 5 M 68 12 l -1 5 M 60 12 l 0 5 M 52 16 l 2 4 M 47 24 l 4 2"/>
-      <path d="M 124 16 l 2 5 M 132 12 l 1 5 M 140 12 l 0 5 M 148 16 l -2 4 M 153 24 l -4 2"/>
-    </g>
-    <path d="M 88 18 L 86 6 L 92 16 M 96 14 L 96 2 L 100 13 M 104 14 L 106 3 L 108 16 M 112 18 L 116 7 L 114 19" fill="#1a1410" stroke="#3a302a" stroke-width="0.6"/>
-    <!-- the face: long as a skull, skin drawn tight over it, pointed ears -->
-    <path d="M 80 30 L 70 22 L 80 36 Z M 120 30 L 130 22 L 120 36 Z" fill="#2e120c"/>
-    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-face)" filter="url(#ha-hide)"/>
-    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-fine)" opacity="0.5"/>
-    <path d="M 82 24 C 82 14, 90 10, 100 10 C 110 10, 118 14, 118 24 C 118 38, 114 50, 108 58 C 104 62, 96 62, 92 58 C 86 50, 82 38, 82 24 Z" fill="url(#ha-form)"/>
-    <path d="M 86 34 Q 88 44 92 50 M 114 34 Q 112 44 108 50" stroke="#0a0403" stroke-width="1.4" fill="none"/>
-    <path d="M 90 14 Q 100 10 110 14" stroke="#ff6a1a" stroke-width="0.6" fill="none" opacity="0.5"/>
-    <!-- the face split by glowing fissures; cheeks sunk to the bone -->
-    <g stroke="#ff7a24" stroke-width="0.6" fill="none" filter="url(#ha-glow)" opacity="0.85">
-      <path d="M 88 18 L 91 22 L 89 26"/><path d="M 112 18 L 109 23 L 111 26"/><path d="M 96 12 L 98 16 L 97 19"/>
-      <path d="M 86 38 L 88 42 L 87 46"/><path d="M 114 38 L 112 42 L 113 46"/><path d="M 102 52 L 101 56"/>
-    </g>
-    <path d="M 85 36 C 88 40, 90 44, 92 46 L 89 46 C 86 42, 85 40, 85 36 Z M 115 36 C 112 40, 110 44, 108 46 L 111 46 C 114 42, 115 40, 115 36 Z" fill="#050101" opacity="0.8"/>
-    <path d="M 86 34 Q 90 33 94 36 M 114 34 Q 110 33 106 36" stroke="#8a3a2a" stroke-width="0.7" fill="none" opacity="0.7"/>
-    <path d="M 95 22 L 97 26 M 105 22 L 103 26 M 98 19 L 100 24 L 102 19" stroke="#050101" stroke-width="0.8" fill="none"/>
-    <path d="M 84 30 l -3 -1 M 84 32 l -3 1 M 116 30 l 3 -1 M 116 32 l 3 1" stroke="#050101" stroke-width="0.6"/>
-    <!-- brow ridge, and eyes like holes into a furnace -->
-    <path d="M 84 26 Q 92 20 99 27 M 101 27 Q 108 20 116 26" stroke="#050101" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <ellipse cx="92" cy="30" rx="5.5" ry="3.8" fill="#000"/><ellipse cx="108" cy="30" rx="5.5" ry="3.8" fill="#000"/>
-    <ellipse cx="92" cy="30" rx="4.2" ry="2.6" fill="url(#ha-eye)" filter="url(#ha-glow)"/><ellipse cx="108" cy="30" rx="4.2" ry="2.6" fill="url(#ha-eye)" filter="url(#ha-glow)"/>
-    <path d="M 92 28 L 92 32 M 108 28 L 108 32" stroke="#3a0a00" stroke-width="0.7"/>
-    <path d="M 86.6 28.6 Q 92 26 97.4 28.6 M 102.6 28.6 Q 108 26 113.4 28.6" stroke="#050101" stroke-width="1.2" fill="none"/>
-    <path d="M 87.4 32 Q 92 34 96.6 32 M 103.4 32 Q 108 34 112.6 32" stroke="#2a0805" stroke-width="0.8" fill="none"/>
-    <!-- no nose to speak of: a split ridge, two slits -->
-    <path d="M 100 32 L 98 40 L 100 41 L 102 40 Z" fill="#1a0806"/>
-    <path d="M 98 40 l -1 1 M 102 40 l 1 1" stroke="#000" stroke-width="1"/>
-    <!-- the lipless grin, ear to ear, of far too many teeth -->
-    <path d="M 86 44 Q 100 56 114 44 Q 100 50 86 44 Z" fill="#100202"/>
-    <g>${needleTeeth(87, 113, 44.6, 16, 3.2, 1, '#e8dcc0', 0.3)}</g>
-    <g>${needleTeeth(90, 110, 50.2, 12, 2.6, -1, '#d0c4a0', 0.3)}</g>
-    <path d="M 86 44 Q 100 56 114 44" stroke="#3a0a06" stroke-width="0.8" fill="none"/>
-    <path d="M 86 44 Q 84 42 83 39 M 114 44 Q 116 42 117 39" stroke="#0a0302" stroke-width="1" fill="none"/>
-    <path d="M 88 46.5 Q 100 54 112 46.5" stroke="#5a1408" stroke-width="0.5" fill="none" opacity="0.7"/>
-    <!-- a pointed black beard of matted hair -->
-    <path d="M 94 56 C 96 64, 98 72, 100 80 C 102 72, 104 64, 106 56 C 102 60, 98 60, 94 56 Z" fill="#050202"/>
-    <!-- smoke from the horns -->
-    <g fill="#2a2420" opacity="0.4"><circle cx="46" cy="10" r="5"/><circle cx="42" cy="2" r="4"/><circle cx="154" cy="10" r="5"/><circle cx="158" cy="2" r="4"/></g>
-    </svg>
-  `,
+  'Asmodeus': horrorAsmodeus(0),
 
   // ─── The dragons ─────────────────────────────────────────────────────────
   // Rearing and roaring over the bones of the last party: wet, scaled hide,

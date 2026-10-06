@@ -5467,6 +5467,17 @@ function setMonsterArtStyle(style) {
   try { localStorage.setItem('sevenLevelsMonsterArt', monsterArtStyle); } catch { /* storage blocked */ }
 }
 
+/** The picture for a monster in a fight, which may change as it's hurt (the
+ * horror Asmodeus: closer and more wounded). close = the portrait; else the
+ * figure standing in the 3D scene. */
+function getMonsterPortrait(monster, close = true) {
+  if (monster && monster.type === 'Asmodeus' && monsterArtStyle === 'horror' && typeof horrorAsmodeus === 'function') {
+    const f = monster.maxHp ? monster.hp / monster.maxHp : 1;
+    return horrorAsmodeus(f > 0.66 ? 0 : f > 0.33 ? 1 : 2, close);
+  }
+  return getMonsterSprite(monster.type);
+}
+
 function getMonsterSprite(type) {
   if (monsterArtStyle === 'horror' && typeof HORROR_SPRITES !== 'undefined' && HORROR_SPRITES[type]) return HORROR_SPRITES[type];
   return MONSTER_SPRITES[type] || null;
