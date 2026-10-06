@@ -406,6 +406,11 @@ export const SPELLS = {
   BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this...
   BANISH_HIGH_LEVEL_MAX: 60,          // ...or this, whichever is lower (so deep dragons count)
   BANISH_COOLDOWN_SECONDS: 3600,
+  // Planar Step: wizards from this level step to any level they've visited
+  // (never in battle). Choose within the time, or the spell chooses: a
+  // random visited level, at a random spot. A moonstone gives anyone one cast.
+  PLANAR_STEP_LEVEL: 60,
+  PLANAR_STEP_SECONDS: 20,
 } as const;
 
 // Warriors trade most spells for more swings and combat skills, and are
@@ -796,6 +801,7 @@ export const GEMS = {
     diamond: 350,
     opal: 250,
     emerald: 300,
+    moonstone: 500,
   },
 
   // Emerald: a ward that lasts a few fights and deflects most, not all,
@@ -806,6 +812,7 @@ export const GEMS = {
   EMERALD_MAX_FIGHTS: 10,             // wards stack up to this
   EMERALD_FIND_BASE: 0.08,            // share of gem finds that are emeralds, plus...
   EMERALD_FIND_PER_LEVEL: 0.04,       // ...this per dungeon level
+  MOONSTONE_FIND_SHARE: 0.06,         // share of gem finds that are moonstones (Planar Step, once)
 
   // The game has no character-class system yet, so "only magicians and
   // wizards" is stood in with an INT threshold instead — about the top
@@ -823,7 +830,7 @@ export const GEMS = {
 
   // A character never carries more than this many of these gems. While
   // they have the most they can carry, chests mysteriously never hold more.
-  CARRY_CAP: { opal: 3, emerald: 3 } as Partial<Record<'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald', number>>,
+  CARRY_CAP: { opal: 3, emerald: 3 } as Partial<Record<'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone', number>>,
   // Opals are semi-common: a chest holds one this often, on top of the
   // general gem find (where they're also weighted up).
   OPAL_CHEST_CHANCE: 0.05,

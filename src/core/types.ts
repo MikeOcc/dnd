@@ -92,7 +92,7 @@ export interface StatusEffect {
   doom?: number;    // flesh rot: turns left to live once it has gone too far
 }
 
-export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald';
+export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone';
 
 export interface Inventory {
   potions: number;
@@ -360,7 +360,8 @@ export type InteractionType =
   | 'trap'
   | 'trap-choice'
   | 'shop'
-  | 'gear';
+  | 'gear'
+  | 'teleport';     // Planar Step: choose a level to go to
 
 export interface InteractionState {
   type: InteractionType;
@@ -369,7 +370,8 @@ export interface InteractionState {
   chestSearched?: boolean;     // chest: already checked for traps (no second look)
   chestTrapSpotted?: boolean;  // chest: the search found its trap, so disarming is on offer
   shop?: ShopState;            // shop: who's trading, which list is showing, what's for sale
-  gear?: { mode: 'list' | 'item'; index?: number };   // gear: the list, or one item's options
+  gear?: { mode: 'list' | 'item'; index?: number };
+  teleport?: { startedAt: number; source: 'spell' | 'moonstone'; levels: number[] };   // Planar Step   // gear: the list, or one item's options
 }
 
 /** A shop visit: the Trading Post (level 1) or the wandering Peddler (deep levels). */

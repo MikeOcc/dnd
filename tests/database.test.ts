@@ -126,7 +126,7 @@ describe('Repository — characters', () => {
 
     const loaded = repo.loadCharacter('c10');
     expect(loaded!.inventory.potions).toBe(5);
-    expect(loaded!.inventory.gems).toEqual({ ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0 });
+    expect(loaded!.inventory.gems).toEqual({ ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0, moonstone: 0 });
   });
 });
 

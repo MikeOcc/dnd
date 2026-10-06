@@ -241,6 +241,7 @@ function applyState(state) {
 
   // Choices
   renderChoices(state.choices || [], phase, state);
+  planarStepClock(state);
 
   // Help line
   updateHelpLine(phase);
@@ -825,6 +826,28 @@ function updateStatusBar(char) {
   updateCompass(char.facing);
 }
 
+// Planar Step: a countdown under the level list. When it runs out, the
+// spell chooses (a random level you've visited, at a random spot).
+let planarTimer = null, planarSeen = null;
+function planarStepClock(state) {
+  const t = state.phase === 'interaction' && state.interaction?.type === 'teleport' ? state.interaction.teleport : null;
+  if (!t) { clearInterval(planarTimer); planarTimer = null; planarSeen = null; return; }
+  if (planarSeen?.startedAt !== t.startedAt) planarSeen = { startedAt: t.startedAt, until: Date.now() + PLANAR_STEP_SECONDS * 1000 };
+  const area = document.getElementById('choices-area');
+  const clock = document.createElement('div');
+  clock.className = 'planar-clock';
+  area.appendChild(clock);
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((planarSeen.until - Date.now()) / 1000));
+    clock.textContent = `The spell chooses in ${left}s`;
+    if (left === 0) { clearInterval(planarTimer); planarTimer = null; apiAction('interact', { choice: 'timeout' }); }
+  };
+  clearInterval(planarTimer);
+  planarTimer = setInterval(tick, 250);
+  tick();
+}
+const PLANAR_STEP_SECONDS = 20;
+
 function renderChoices(choices, phase, state) {
   const area = document.getElementById('choices-area');
   area.innerHTML = '';
@@ -1324,7 +1347,7 @@ function updateHelpLine(phase) {
     case 'level-intro':
       hint.textContent = 'PRESS ANY KEY'; break;
     case 'playing':
-      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  J: Rings  |  A: Amulets  |  K: Gear  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
+      hint.textContent = 'Arrows: Move/Turn  |  U/D: Stairs  |  W: Rest  |  P: Potion  |  B: Tome  |  G: Diamond  |  E: Emerald  |  Y: Planar Step  |  J: Rings  |  A: Amulets  |  K: Gear  |  L: View  |  M: Map  |  T: Status  |  I: Inventory  |  R: Restore  |  S: Save  |  N: Sound  |  V: Arrows  |  O: Settings  |  Q: Quit'; break;
     case 'map':
       hint.textContent = 'Arrows: Walk  |  F: Full Floor / Centered  |  X: Whole Level / Explored (after a reveal)  |  + / −: Zoom  |  Drag or scroll to pan  |  N: Sound  |  M or Esc: Close Map'; break;
     case 'status':
@@ -1565,6 +1588,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'a') { openAmuletMenu(); return; }
     if (key === 'l') { cycleViewMode(); return; }
     if (key === 'k') { apiAction('open-gear'); return; }
+    if (key === 'y') { apiAction('planar-step'); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
     if (e.key === 'ArrowLeft')  apiAction('turn-left');
@@ -1719,6 +1743,7 @@ document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAc
 document.getElementById('btn-book')      ?.addEventListener('click', () => apiAction('use-book'));
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
+document.getElementById('btn-planar')    ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('planar-step'); });
 document.getElementById('btn-rings')     ?.addEventListener('click', () => { if (currentState.phase === 'playing') openRingMenu(); });
 document.getElementById('btn-amulets')   ?.addEventListener('click', () => { if (currentState.phase === 'playing') openAmuletMenu(); });
 document.getElementById('btn-gear')      ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('open-gear'); });

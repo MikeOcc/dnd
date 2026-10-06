@@ -40,6 +40,7 @@ export function buildStock(kind: ShopState['kind'], char: Character, rng: RNG): 
     return [
       gearItem(char, rng, rng.float() < 0.25 ? 3 : 2, m),
       gem('emerald', m),
+      gem('moonstone', m),
       { label: 'Magic tome', price: Math.round(SHOP.TOME_PRICE * m), qty: 1, goods: { type: 'tome' } },
       { label: 'Healing potion', price: Math.round(SHOP.POTION_PRICE * m), qty: 3, goods: { type: 'potion' } },
     ];

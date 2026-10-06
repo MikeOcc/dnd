@@ -847,3 +847,6 @@ html, body {
 #account-body table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
 #account-body td, #account-body th { padding: 3px 4px; border-bottom: 1px solid #0a3a0a; text-align: left; }
 #account-body h3 { font-size: 13px; color: var(--terminal-green-bright); margin: 16px 0 4px; font-weight: normal; letter-spacing: 0.08em; }
+
+/* Planar Step's countdown */
+.planar-clock { margin-top: 8px; color: #b9c8ff; letter-spacing: 0.05em; }

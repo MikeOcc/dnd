@@ -77,7 +77,7 @@ const CHEST_TRAP_ELEMENT: Record<ChestTrapType, FxElement> = {
 };
 
 const GEM_PLURAL: Record<GemType, string> = {
-  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds',
+  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds', moonstone: 'moonstones',
 };
 
 interface LevelCache {
@@ -387,7 +387,7 @@ export class GameEngine {
         + (c.charClass === 'warrior' ? `   (${attacksPerRound(c)} attack${attacksPerRound(c) === 1 ? '' : 's'} per round)` : ''),
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
-      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
+      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}${c.inventory.gems.moonstone ? `   Moonstone ${c.inventory.gems.moonstone}` : ''}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
       ...(bestWeapon(c) ? [`Weapon: ${gearName(bestWeapon(c)!)}`] : []),
       ...(wornArmor(c).body || wornArmor(c).shield ? [`Armour: ${[wornArmor(c).body, wornArmor(c).shield].filter(Boolean).map(a => gearName(a!)).join(' and ')} (turns aside ${Math.round(armorProtection(c) * 100)}% of a blow)`] : []),
@@ -422,6 +422,7 @@ export class GameEngine {
       { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
+      ...(c.inventory.gems.moonstone ? [{ name: 'Moonstone', type: 'Gem — Planar Step, once (Y)', qty: `x${c.inventory.gems.moonstone}` }] : []),
       ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
       ...(c.inventory.weapons ?? []).map(w => ({ name: `${gearName(w)}${bestWeapon(c) === w ? ' (wielded)' : ''}`, type: `Weapon: ${w.kind}${w.bonus ? `, +${w.bonus} to hit and damage` : ''}${canUseGear(c, w.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
       ...(c.inventory.armor ?? []).map(a => ({ name: `${gearName(a)}${wornArmor(c).body === a || wornArmor(c).shield === a ? ' (worn)' : ''}`, type: `Armour: ${a.kind}${a.bonus ? ` +${a.bonus}` : ''}${canUseGear(c, a.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
@@ -1601,6 +1602,7 @@ export class GameEngine {
       case 'diamond':  return this.useDiamond();
       case 'opal':     return this.useOpal();
       case 'emerald':  return this.useEmerald();
+      case 'moonstone': return this.planarStep();
     }
   }
 
@@ -1681,6 +1683,89 @@ export class GameEngine {
     this.char!.inventory.gems.opal--;
     const result = playerOpal(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
+  }
+
+  // ─── Planar Step ───────────────────────────────────────────────────────
+
+  /** Levels this character has set foot on (from the squares they've seen). */
+  private visitedLevels(): number[] {
+    const levels = new Set<number>([this.char!.dungeonLevel]);
+    for (const k of this.dungeonState?.visitedCells ?? []) levels.add(Number(k.split(':')[0]));
+    return [...levels].filter(n => n >= 1 && n <= 7).sort((a, b) => a - b);
+  }
+
+  /** Y while exploring: Planar Step. A wizard of level 60+ casts it; anyone
+   * else (or a wizard below 60) can use a moonstone, which crumbles. Never in
+   * battle. Choose a level you've visited, or after the time runs out the
+   * spell chooses for you. */
+  planarStep(): GameState {
+    const c = this.char;
+    if (!c || this.phase !== 'playing') {
+      if (c && this.phase === 'combat') this.messages = ['Planar Step needs calm and focus. Not in the middle of a fight!'];
+      return this.getState();
+    }
+    const knows = c.charClass === 'wizard' && c.level >= SPELLS.PLANAR_STEP_LEVEL;
+    if (!knows && c.inventory.gems.moonstone <= 0) {
+      this.messages = c.charClass === 'wizard'
+        ? [`Planar Step is a spell wizards learn at level ${SPELLS.PLANAR_STEP_LEVEL}. A moonstone would let you cast it once.`]
+        : ['You need a moonstone to step between the levels.'];
+      return this.getState();
+    }
+    if (!knows) {
+      // A moonstone takes the same aptitude as any gem.
+      if (c.charClass === 'warrior' && c.level < WARRIOR.GEM_LEVEL) { this.messages = [`The moonstone sits cold in your hand. A warrior learns to wield gem magic at Level ${WARRIOR.GEM_LEVEL}.`]; return this.getState(); }
+      if (c.charClass !== 'warrior' && c.intelligence < GEMS.MAGIC_INT_THRESHOLD) { this.messages = [`The moonstone sits cold in your hand. (Requires INT ${GEMS.MAGIC_INT_THRESHOLD}+)`]; return this.getState(); }
+    }
+    const levels = this.visitedLevels().filter(n => n !== c.dungeonLevel);
+    if (levels.length === 0) {
+      this.messages = ['The world thins around you, then settles. There is nowhere else you know to go.'];
+      return this.getState();
+    }
+    const source = knows ? 'spell' : 'moonstone';
+    this.interaction = {
+      type: 'teleport', contentId: source,
+      choices: [...levels.map((n, i) => ({ key: String.fromCharCode(97 + i), text: `Level ${n}` })), { key: String.fromCharCode(97 + levels.length), text: 'Cancel' }],
+      teleport: { startedAt: Date.now(), source, levels },
+    };
+    this.phase = 'interaction';
+    this.messages = [
+      source === 'spell' ? 'You speak the words of Planar Step. The walls grow thin as smoke.' : 'You hold the moonstone up. Its pale light swells, and the walls grow thin as smoke.',
+      `Where to? Choose a level you have walked. (${SPELLS.PLANAR_STEP_SECONDS} seconds, or the spell will choose for you.)`,
+    ];
+    this.cue('gem-ruby');
+    return this.getState();
+  }
+
+  private resolvePlanarStep(key: string): GameState {
+    const c = this.char;
+    const t = this.interaction?.teleport;
+    if (!c || !t) return this.closeInteraction();
+    const late = key === 'timeout' || Date.now() - t.startedAt > (SPELLS.PLANAR_STEP_SECONDS + 2) * 1000;
+    const pick = late ? undefined : t.levels[key.charCodeAt(0) - 97];
+    if (!late && pick === undefined) {
+      return this.closeInteraction(t.source === 'spell' ? 'You let the spell go. The walls thicken again.' : 'You lower the moonstone. Its light fades, but it is still whole.');
+    }
+    if (t.source === 'moonstone') c.inventory.gems.moonstone--;
+    const level = pick ?? this.rng.pick(t.levels);
+    this.interaction = null;
+    this.pace.atLevelEntry = true;      // as if arriving by the stairs
+    this.pace.movesSinceCombat = 0;
+    c.dungeonLevel = level;
+    this.loadLevelIntoCache(level);
+    const lvl = this.getLevel(level)!;
+    c.x = lvl.entrance.x; c.y = lvl.entrance.y;
+    if (late) this.teleportPlayer();   // the spell chose: somewhere on the level
+    this.lightAround();
+    this.lastArea = null;
+    this.phase = 'playing';
+    this.messages = [
+      late ? 'You hesitate, and the spell chooses for you. The world folds...' : 'You step through. The world folds...',
+      late ? `...and you are somewhere on Level ${level}.` : `...and you stand at the top of Level ${level}.`,
+      ...(t.source === 'moonstone' ? ['The moonstone crumbles to silver dust in your hand.'] : []),
+      '',
+      ...this.enterArea(),
+    ];
+    return this.getState();
   }
 
   // ─── Gear ──────────────────────────────────────────────────────────────
@@ -2815,6 +2900,8 @@ export class GameEngine {
         return this.resolveShopChoice(key);
       case 'gear':
         return this.resolveGearChoice(key);
+      case 'teleport':
+        return this.resolvePlanarStep(key);
       default:
         return this.closeInteraction();
     }

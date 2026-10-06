@@ -243,6 +243,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'amulet':
           state = engine.amuletAction(payload?.choice ?? '');
           break;
+        case 'planar-step':
+          state = engine.planarStep();
+          break;
         case 'open-gear':
           state = engine.openGear();
           break;
