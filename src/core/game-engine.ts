@@ -163,6 +163,17 @@ export class GameEngine {
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
       if (seen) state.sighting = seen;
+      // Every facing's view, so turning needs no wait for the server.
+      if (this.char && state.view) {
+        const facing = this.char.facing;
+        state.turnViews = {};
+        for (const f of ['N', 'E', 'S', 'W'] as Direction[]) {
+          this.char.facing = f;
+          const sight = this.sightAsmodeus();
+          state.turnViews[f] = { view: f === facing ? state.view : this.renderView(), ...(sight ? { sighting: sight } : {}) };
+        }
+        this.char.facing = facing;
+      }
     }
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
@@ -869,6 +880,16 @@ export class GameEngine {
   moveBackward(): GameState {
     const opposite: Record<Direction, Direction> = { N: 'S', S: 'N', E: 'W', W: 'E' };
     return this.tryMove(opposite[this.char?.facing ?? 'N'], 'backward');
+  }
+
+  /** Face a direction outright: the browser turns at once and tells the
+   * server where the character now faces. */
+  face(dir: string): GameState {
+    if (!this.char || this.phase !== 'playing' || !['N', 'E', 'S', 'W'].includes(dir)) return this.getState();
+    this.char.facing = dir as Direction;
+    this.lightAround();
+    this.messages = [];
+    return this.getState();
   }
 
   turnLeft(): GameState {
@@ -2171,7 +2192,7 @@ export class GameEngine {
     return [
       '',
       `*** YOU HAVE REACHED LEVEL ${r.newLevel}! ***`,
-      `Maximum HP increased by ${r.hpGain}.`,
+      `Maximum HP increased by ${r.hpGain}. You are fully healed! (${this.char.hp}/${this.char.maxHp})`,
       ...(r.statGained ? [`Your ${r.statGained} increases!`] : []),
       ...spellsLearnedBetween(r.previousLevel, r.newLevel, this.char.charClass).map(sp => `You have learned ${sp.name}!`),
       ...(this.char.charClass === 'warrior' && r.previousLevel < WARRIOR.GEM_LEVEL && r.newLevel >= WARRIOR.GEM_LEVEL

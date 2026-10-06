@@ -441,6 +441,10 @@ export interface GameState {
    * throne you see, where across the view he is (-1 left edge .. 1 right
    * edge), and whether only out of the corner of your eye. */
   sighting?: { monster: MonsterType; distance: number; view: 'front' | 'back' | 'faces-left' | 'faces-right'; offset: number; peripheral: boolean; empty?: boolean };
+  /** While exploring: the corridor view (and any sighting) for each way the
+   * character could face, so the browser can turn at once, without waiting
+   * for the server. */
+  turnViews?: Partial<Record<Direction, { view: string[]; sighting?: GameState['sighting'] }>>;
 }
 
 export interface CharacterSummary {

@@ -216,6 +216,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'move-backward':
           state = engine.moveBackward();
           break;
+        case 'face':
+          state = engine.face(String(payload?.facing ?? ''));
+          break;
         case 'turn-left':
           state = engine.turnLeft();
           break;

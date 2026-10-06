@@ -80,7 +80,7 @@ export function checkLevelUp(char: Character, rng: RNG): { didLevel: boolean; ne
     + (char.charClass === 'warrior' ? WARRIOR.HP_BONUS_PER_LEVEL * levels : 0);
   char.level = newLevel;
   char.maxHp += hpGain;
-  char.hp = Math.min(char.hp + hpGain, char.maxHp);
+  char.hp = char.maxHp;   // a new level heals you fully: the reward
 
   let statGained: string | undefined;
   if (rng.float() < LEVELING.STAT_GAIN_CHANCE) {

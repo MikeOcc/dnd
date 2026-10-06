@@ -49,7 +49,66 @@ function pageOutOfDate(res) {
   return true;
 }
 
-async function apiAction(action, payload) {
+// Requests go to the server one at a time, in the order they were made, so
+// a burst of key presses on a slow connection can't arrive or be drawn out of
+// order. Turning doesn't wait at all: the screen turns at once (from the
+// views the server sent for every facing) and a 'face' request follows;
+// turns still waiting to be sent merge into one.
+const actionQueue = [];
+let queueBusy = false;
+let facesPending = 0;       // 'face' requests not yet answered
+let localFacing = null;     // where the screen shows the character facing
+
+function apiAction(action, payload) {
+  return new Promise((resolve) => {
+    const last = actionQueue[actionQueue.length - 1];
+    if (action === 'face' && last?.action === 'face') { last.payload = payload; last.done.push(resolve); return; }
+    if (action === 'face') facesPending++;
+    actionQueue.push({ action, payload, done: [resolve] });
+    pumpActions();
+  });
+}
+
+async function pumpActions() {
+  if (queueBusy) return;
+  queueBusy = true;
+  while (actionQueue.length) {
+    const job = actionQueue.shift();
+    try { await sendAction(job.action, job.payload); }
+    catch (err) { console.error('API error:', err); }
+    finally { if (job.action === 'face') facesPending = Math.max(0, facesPending - 1); }
+    job.done.forEach(r => r());
+  }
+  queueBusy = false;
+}
+
+/** The state as it looks facing f (from its turnViews), or null if it can't say. */
+function facingState(state, f) {
+  const tv = state?.phase === 'playing' && state.character && state.turnViews?.[f];
+  if (!tv) return null;
+  const next = { ...state, character: { ...state.character, facing: f }, view: tv.view };
+  if (tv.sighting) next.sighting = tv.sighting; else delete next.sighting;
+  if (state.scene) next.scene = { ...state.scene, facing: f };
+  return next;
+}
+
+/** Turn left or right at once; the server hears about it right after. */
+function turnNow(which) {
+  const ORDER = ['N', 'E', 'S', 'W'];
+  const s = currentState;
+  const f = s.character && ORDER[(ORDER.indexOf(s.character.facing) + (which === 'right' ? 1 : 3)) % 4];
+  const next = f && facingState(s, f);
+  if (!next) { apiAction(which === 'right' ? 'turn-right' : 'turn-left'); return; }
+  next.messages = [];          // as a turn on the server leaves it
+  delete next.fx;              // (don't replay the last action's sounds)
+  localFacing = f;
+  lastAction = which === 'right' ? 'turn-right' : 'turn-left';
+  lastActionWalked = false;
+  applyState(next);
+  apiAction('face', { facing: f });
+}
+
+async function sendAction(action, payload) {
   const body = { characterId, action };
   if (payload) body.payload = payload;
 
@@ -69,10 +128,15 @@ async function apiAction(action, payload) {
   const data = await res.json();
   // null means the server let the character go (main menu, or it wasn't ours to play).
   if (data.characterId !== undefined) characterId = data.characterId;
+  // A turn the server hasn't heard yet: keep showing the way the screen already faces.
+  let state = data.state;
+  if (action === 'face' && facesPending <= 1) localFacing = null;   // this was the last one: the server agrees now
+  if (localFacing && (facesPending > (action === 'face' ? 1 : 0))) state = facingState(state, localFacing) || state;
+  if (action === 'face') { if (state) applyState(state); return; }  // (already drawn: no sounds again)
   lastAction = action;
   lastActionWalked = action === 'move-forward' || action === 'move-backward'
     || (action === 'map-move' && (payload?.dir === 'forward' || payload?.dir === 'backward'));
-  applyState(data.state);
+  applyState(state);
 }
 
 async function loadCharacters() {
@@ -1612,8 +1676,8 @@ document.addEventListener('keydown', (e) => {
     if (key === 'y') { apiAction('planar-step'); return; }
     if (e.key === 'ArrowUp')    apiAction('move-forward');
     if (e.key === 'ArrowDown')  apiAction('move-backward');
-    if (e.key === 'ArrowLeft')  apiAction('turn-left');
-    if (e.key === 'ArrowRight') apiAction('turn-right');
+    if (e.key === 'ArrowLeft')  turnNow('left');
+    if (e.key === 'ArrowRight') turnNow('right');
     if (key === 'u') apiAction('climb-up');
     if (key === 'd') apiAction('climb-down');
     if (key === 'p') apiAction('use-potion');
@@ -1746,6 +1810,7 @@ function toggleArrows() {
 // The arrows walk on the map screen too.
 function move(action, mapDir) {
   if (currentState.phase === 'map') apiAction('map-move', { dir: mapDir });
+  else if (action === 'turn-left' || action === 'turn-right') turnNow(mapDir);
   else apiAction(action);
 }
 document.getElementById('btn-forward')   ?.addEventListener('click', () => move('move-forward', 'forward'));
