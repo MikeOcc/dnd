@@ -167,6 +167,23 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     specialAbilities: ['ice-axe', 'ice-boulder', 'shard-storm', 'frost-stomp', 'winters-grasp'],
   },
   // ─── The great bestiary: these fight by move tables in bestiary.ts ─────────
+  // The olgoi-khorkhoi of the Gobi: a bloated, blood-red worm with no face,
+  // that spits a yellow acid, kills with lightning from across a room, and
+  // burns whatever touches it.
+  'Mongolian Death Worm': {
+    type: 'Mongolian Death Worm', isUndead: false, isUnique: false,
+    minLevel: 25, maxLevel: 50, naturalTier: 5, minDungeonLevel: 5, speed: 1.0,
+    baseHpPerLevel: 10, baseAttackPerLevel: 4.2, baseDefensePerLevel: 2.6,
+    fireballResistance: 0.8, acidResistance: 0.1, lightningResistance: 0.3,
+    encounterIntro: [
+      'The floor shifts like sand. A smell of hot metal and something sour.',
+      'A worm as thick as a horse heaves up out of the stone: blood-red, blotched,',
+      'spined at both ends, with no face at all. The air around it crackles.',
+      '',
+      'You have encountered a Level {LVL} Mongolian Death Worm!',
+    ],
+    specialAbilities: [],
+  },
   // From the swamps of the old pictures: a leech as long as a man, that
   // fastens on and drinks.
   'Giant Leech': {

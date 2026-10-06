@@ -4163,6 +4163,37 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  'Mongolian Death Worm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mongolian Death Worm">
+    <defs>
+    <linearGradient id="dw-body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a0606"/><stop offset="0.4" stop-color="#b3221a"/><stop offset="0.65" stop-color="#8a1410"/><stop offset="1" stop-color="#3a0404"/></linearGradient>
+    <radialGradient id="dw-spark" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e8f4ff"/><stop offset="1" stop-color="#6ab0ff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <!-- broken floor where it came up -->
+    <path d="M14 150 L40 138 L62 146 L90 136 L118 146 L146 140 L152 154 L10 156 Z" fill="#3a332b" stroke="#16120e" stroke-width="1.5"/>
+    <g fill="#5a5044" stroke="#16120e" stroke-width="1"><path d="M28 140 l8 -6 l6 5 Z"/><path d="M112 140 l7 -7 l7 6 Z"/></g>
+    <!-- the bloated body, rearing out of the stone -->
+    <path d="M44 146 Q34 100 50 70 Q62 44 84 34 Q108 26 118 46 Q126 66 114 92 Q102 120 112 146 Z" fill="url(#dw-body)" stroke="#1a0202" stroke-width="2.5"/>
+    <!-- blotches -->
+    <g fill="#4a0606" opacity="0.7">
+      <ellipse cx="62" cy="96" rx="7" ry="4" transform="rotate(-20 62 96)"/><ellipse cx="96" cy="74" rx="6" ry="3.5" transform="rotate(15 96 74)"/>
+      <ellipse cx="78" cy="122" rx="8" ry="4"/><ellipse cx="102" cy="108" rx="5" ry="3"/><ellipse cx="70" cy="62" rx="5" ry="3" transform="rotate(-30 70 62)"/>
+    </g>
+    <path d="M58 80 Q54 110 60 140" stroke="#ff8a7a" stroke-width="2.5" fill="none" opacity="0.3" stroke-linecap="round"/>
+    <!-- no face: a blunt, spined end -->
+    <g fill="#d8c8a8" stroke="#3a2010" stroke-width="0.8">
+      <path d="M84 34 l-6 -10 l9 6 Z"/><path d="M94 30 l0 -12 l6 11 Z"/><path d="M106 31 l6 -10 l-1 12 Z"/><path d="M116 40 l11 -5 l-7 10 Z"/><path d="M76 42 l-11 -4 l9 9 Z"/>
+    </g>
+    <ellipse cx="98" cy="38" rx="11" ry="6" transform="rotate(-15 98 38)" fill="#3a0404" opacity="0.8"/>
+    <!-- yellow acid dripping -->
+    <path d="M90 44 q-2 10 1 16" stroke="#d8c830" stroke-width="2.5" fill="none" opacity="0.85" stroke-linecap="round"/>
+    <circle cx="91" cy="64" r="2.4" fill="#d8c830" opacity="0.85"/>
+    <!-- crackling discharge -->
+    <circle cx="124" cy="52" r="10" fill="url(#dw-spark)" opacity="0.7"/>
+    <path d="M118 46 L128 40 L124 50 L134 46 L126 58" fill="none" stroke="#bfe0ff" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M44 84 L36 80 L40 88 L30 88" fill="none" stroke="#bfe0ff" stroke-width="1.2" opacity="0.8"/>
+    </svg>
+  `,
   'Giant Leech': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant Leech">
     <defs>
@@ -5376,6 +5407,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Mongolian Death Worm': 1.3,
   'Giant Leech': 1.1,
   'Giant Shrew': 1.0,
   'Hollow Choir': 1.2,

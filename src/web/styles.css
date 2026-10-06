@@ -817,3 +817,7 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   #monster-portrait.choir .choir-mask { animation: none; transition: none; }
 }
+
+/* A Death Worm under the floor: sunk out of sight. */
+#monster-portrait.burrowed svg { opacity: 0.12; transform: translateY(35%); transition: opacity 500ms ease, transform 500ms ease; }
+#monster-portrait svg { transition: opacity 500ms ease, transform 500ms ease; }

@@ -55,6 +55,44 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
 
   // ── Shallow levels ─────────────────────────────────────────────────────────
 
+  'Mongolian Death Worm': {
+    // Burrowed last turn: it bursts up beneath you (a nimble leap halves it).
+    before: k => {
+      if (!k.monster.burrowed) return false;
+      k.monster.burrowed = false;
+      k.say('The floor bursts open beneath you!');
+      const dodge = k.save(14 + Math.floor(k.monster.level / 6), ['dexterity']);
+      k.strike(dodge.ok ? 0.8 : 1.6, d => dodge.ok
+        ? `You throw yourself aside as the worm erupts. It still catches you. (${d} damage) ${dodge.text}`
+        : `The worm erupts under you and flings you down! You suffer ${d} damage. ${dodge.text}`);
+      return true;
+    },
+    moves: [
+      { id: 'worm-spit', weight: 35, run: k => {
+        k.strike(1.0, d => `The worm spits a gout of yellow acid! You suffer ${d} damage.`);
+        if (k.alive() && k.rng.float() < 0.5) {
+          const rust = k.char.statusEffects.find(e => e.type === 'corroded');
+          const value = Math.min(50, (rust?.value ?? 0) + 15);
+          k.char.statusEffects = k.char.statusEffects.filter(e => e.type !== 'corroded');
+          k.status({ type: 'corroded', value, turns: 40 });
+          k.say(`Your weapon yellows and pits where the spittle struck. (-${value}% weapon damage until you can clean it)`);
+        }
+      } },
+      { id: 'worm-lightning', weight: 35, run: k => {
+        // Metal armour carries the shock.
+        const body = k.char.inventory.armor?.find(a => a.kind === 'chain' || a.kind === 'plate');
+        const metal = body ? (body.kind === 'plate' ? 1.5 : 1.25) : 1;
+        k.say('The air crackles. A blue-white arc leaps from the worm across the room!');
+        k.strike(1.1 * metal, d => `It strikes you. You suffer ${d} damage.${metal > 1 ? ' Your metal armour carries the shock straight through you!' : ''}`);
+      } },
+      { id: 'worm-burrow', weight: 20, when: k => !k.monster.burrowed, run: k => {
+        k.monster.burrowed = true;
+        k.say('The worm dives into the floor. The stone heaves and ripples under your feet...');
+      } },
+      { id: 'worm-lash', weight: 10, run: k => { k.strike(1.2, d => `The worm's spined tail lashes you! You suffer ${d} damage.`); } },
+    ],
+  },
+
   'Giant Leech': { moves: [
     // Fastened on, it drinks: you bleed, it swells. Strength tears it free.
     { id: 'leech-drain', weight: 100, when: k => k.char.heldBy === 'latched' && k.held(), run: k => {

@@ -74,6 +74,10 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
     messages.push(`You swing at the ${monster.type} but miss!${label}`);
     return 0;
   }
+  if (monster.burrowed) {
+    messages.push(`Your blow strikes only broken stone: the ${monster.type} is under the floor.${label}`);
+    return 0;
+  }
   if (monster.type === 'Marilith' && rng.float() < 0.3) {
     messages.push(`The Marilith catches your blow on two crossed blades and turns it aside!${label}`);
     return 0;
@@ -102,6 +106,16 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
     : monster.type === 'Rakshasa' && plus >= 3 ? ' Your +3 blade cuts deep. It howls.'
     : plate >= 1 ? '' : monster.type === 'Orc King' ? ' His plate turns part of it aside.' : ' Your weapon barely bites.';
   messages.push(`You strike the ${monster.type} for ${damage} damage.${label}${aside}`);
+  // The Death Worm's skin burns whatever touches it, and eats at the blade.
+  if (monster.type === 'Mongolian Death Worm' && char.hp > 1 && rng.float() < 0.35) {
+    const burn = Math.min(char.hp - 1, Math.max(1, Math.round(monster.level * 0.5)));
+    char.hp -= burn;
+    messages.push(`  Its slick red skin burns your hands like acid! (${burn} damage)`);
+    if (rng.float() < 0.3 && !char.statusEffects.some(e => e.type === 'corroded')) {
+      char.statusEffects.push({ type: 'corroded', value: 10, turns: 30 });
+      messages.push('  Your weapon smokes and pits. (-10% weapon damage until you can clean it)');
+    }
+  }
   // Striking a Balor means reaching into its flames.
   if (monster.type === 'Balor' && char.hp > 1) {
     const burn = Math.min(char.hp - 1, Math.max(1, Math.round(monster.level * 0.6)));
@@ -1547,6 +1561,8 @@ export function abilityElement(ability: string | undefined): FxElement {
   if (ability === 'harpy-song' || ability === 'rakshasa-illusion' || ability === 'tyrant-rays' || ability === 'stone-gaze') return 'arcane';
   if (ability === 'chill-touch' || ability === 'banshee-wail') return 'drain';
   if (ability === 'radiant-horn') return 'holy';
+  if (ability === 'worm-spit') return 'acid';
+  if (ability === 'worm-lightning') return 'lightning';
   if (ability === 'lament' || ability === 'mask-whisper' || ability === 'choir-prepare') return 'psychic';
   if (ability === 'unmaking') return 'arcane';
   if (ability === 'false-joy') return 'drain';
@@ -1699,6 +1715,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'gold-wallop': 'sack of gold', 'gold-claws': 'claws', 'gold-dust-breath': 'gold-dust breath', 'gilding': 'gilding spell',
   'ice-axe': 'ice axe', 'ice-boulder': 'hurled boulder', 'shard-storm': 'ice shards', 'frost-stomp': 'stomp', 'winters-grasp': "winter's grasp",
   'titan-bite': 'bite',
+  'worm-spit': 'acid', 'worm-lightning': 'lightning', 'worm-burrow': 'eruption', 'worm-lash': 'spined tail',
   'leech-drain': 'drinking mouth', 'leech-latch': 'clamping mouth', 'leech-slam': 'slick weight', 'shrew-bite': 'teeth', 'shrew-frenzy': 'teeth', 'shrew-shriek': 'pack',
   'lament': 'Lament', 'false-joy': 'False Joy', 'rage-strike': 'raging mask', 'mask-whisper': 'whispering mask',
   'tail-slam': 'tail',

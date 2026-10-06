@@ -180,8 +180,9 @@ function applyState(state) {
       portraitEl.classList.toggle(`broken-${m}`, choir && (monster.choirBroken || []).includes(m));
       portraitEl.classList.toggle(`prep-${m}`, choir && prepMask === m);
     }
-    // An invisible Banshee is all but gone from sight.
+    // An invisible Banshee is all but gone from sight; a burrowed Death Worm is under the floor.
     portraitEl.classList.toggle('vanished', (monster.invisibleTurns ?? 0) > 0);
+    portraitEl.classList.toggle('burrowed', !!monster.burrowed);
   } else {
     portraitEl.classList.add('hidden');
     portraitEl.innerHTML = '';
@@ -412,7 +413,7 @@ function monsterObject(state, cam, now) {
   return {
     kind: 'monster', type: m.type, size: { w: h, h }, noClip: true, hide: m.choirBroken || [],
     at: [cam.x + cam.dir[0] * depth, cam.y + cam.dir[1] * depth],
-    alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : undefined, flash,
+    alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : m.burrowed ? 0.12 : undefined, flash,
   };
 }
 

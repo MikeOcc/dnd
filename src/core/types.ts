@@ -230,6 +230,7 @@ export type MonsterType =
   | 'Hollow Choir'
   | 'Giant Leech'
   | 'Giant Shrew'
+  | 'Mongolian Death Worm'
   | 'Cerebrovore'
   | 'Elder Oblex'
   | 'Sanguinid'
@@ -284,6 +285,7 @@ export interface Monster {
   backfireUsed?: boolean;    // green diamond ring: already used this fight
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
   burnedTurns?: number;
+  burrowed?: boolean;      // Mongolian Death Worm: under the floor (blades can't reach it); it erupts on its next turn
   invisibleTurns?: number;  // Banshee: turns it stays invisible (can't be attacked)
   invisCooldown?: number;   // Banshee: turns until it can vanish again
   reborn?: boolean;         // Phoenix, Troll: has risen again this fight
