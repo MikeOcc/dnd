@@ -7,6 +7,7 @@ import type { Express, Request, Response } from 'express';
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { Accounts } from '../database/accounts.js';
 import { ACCESS, SESSION_COOKIE, hashToken, sessionUser, visitorOf, readCookie } from './access.js';
+import { usernameProblem } from './security.js';
 
 export const AUTH = {
   SESSION_DAYS: 30,
@@ -16,7 +17,30 @@ export const AUTH = {
   LOGIN_FAILS: 5,               // wrong passwords before a lockout...
   LOCKOUT_MINUTES: 10,          // ...this long
   SIGNUPS_PER_ADDRESS_PER_DAY: 3,
+  SIGNUPS_PER_DAY_TOTAL: 25,    // new accounts a day across the whole site (the owner isn't counted against it)
 } as const;
+
+// ─── "Are you human?" (Cloudflare Turnstile) ─────────────────────────────────
+// On when TURNSTILE_SITE_KEY and TURNSTILE_SECRET are set (in the server's
+// env file); off otherwise (and in tests), when sign-up works without it.
+
+export const turnstile = {
+  siteKey: () => process.env.TURNSTILE_SITE_KEY || '',
+  /** Asks Cloudflare whether this token came from a person. Replaceable in tests. */
+  verify: async (token: string, ip: string): Promise<boolean> => {
+    const secret = process.env.TURNSTILE_SECRET;
+    if (!secret) return true;
+    try {
+      const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret, response: token, remoteip: ip }),
+        signal: AbortSignal.timeout(8000),
+      });
+      return !!((await r.json()) as { success?: boolean }).success;
+    } catch { return false; }
+  },
+};
 
 // ─── Hashing ─────────────────────────────────────────────────────────────────
 
@@ -103,18 +127,30 @@ export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveH
   };
 
   app.get('/api/auth/me', (req, res) => { res.json(me(req, res)); });
+  /** What the sign-up form needs: the "are you human" key, if that's on (not for the owner). */
+  app.get('/api/auth/config', (req, res) => { res.json({ turnstileSiteKey: visitorOf(req, res).owner ? '' : turnstile.siteKey() }); });
 
-  app.post('/api/auth/signup', (req, res) => {
-    const { username, password } = (req.body ?? {}) as { username?: string; password?: string };
+  app.post('/api/auth/signup', async (req, res) => {
+    const { username, password, turnstileToken } = (req.body ?? {}) as { username?: string; password?: string; turnstileToken?: string };
     if (typeof username !== 'string' || !AUTH.USERNAME.test(username)) return res.status(400).json({ error: 'Usernames are 3-20 letters, numbers, - or _.' });
+    const v = visitorOf(req, res);
+    const nameBad = v.owner ? null : usernameProblem(username);
+    if (nameBad) return res.status(400).json({ error: nameBad });
     const pwBad = passwordProblem(password);
     if (pwBad) return res.status(400).json({ error: pwBad });
     if (accounts.byName(username)) return res.status(409).json({ error: 'That username is taken.' });
     const addr = addressOf(req);
     const recent = (signups.get(addr) ?? []).filter(t => Date.now() - t < 86_400_000);
-    if (recent.length >= AUTH.SIGNUPS_PER_ADDRESS_PER_DAY) return res.status(429).json({ error: 'Too many new accounts from here today. Try again tomorrow.' });
+    if (!v.owner) {
+      if (recent.length >= AUTH.SIGNUPS_PER_ADDRESS_PER_DAY) return res.status(429).json({ error: 'Too many new accounts from here today. Try again tomorrow.' });
+      if (accounts.countSince(86_400_000) >= AUTH.SIGNUPS_PER_DAY_TOTAL) return res.status(429).json({ error: 'The game has had all the new players it can take today. Please try again tomorrow, or play as a guest for now.' });
+      if (turnstile.siteKey() && !(await turnstile.verify(String(turnstileToken ?? ''), addr))) {
+        return res.status(400).json({ error: 'Please complete the "are you human" check, then try again.' });
+      }
+      // (Someone may have taken the name while the check ran.)
+      if (accounts.byName(username)) return res.status(409).json({ error: 'That username is taken.' });
+    }
 
-    const v = visitorOf(req, res);
     const id = randomBytes(9).toString('hex');
     const code = newRecoveryCode();
     // Signing up from the owner's browser makes the admin account.

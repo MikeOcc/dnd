@@ -6,6 +6,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { getDb, initDb, setDbPath } from '../database/database.js';
 import { setupRoutes } from './routes.js';
 import { isOwner } from './access.js';
+import { securityHeaders } from './security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
@@ -13,6 +14,8 @@ const __dirname  = dirname(__filename);
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 const app = express();
+app.disable('x-powered-by');   // don't announce what the server runs
+app.use(securityHeaders);
 // The game moved from its temporary ngrok address to playsevenlevels.com:
 // old links (already shared on social media) send people to the new home.
 // Any other spelling of the address (a trailing dot from a copied link, or
@@ -24,7 +27,7 @@ app.use((req, res, next) => {
   if (offsite) return res.redirect(301, `https://playsevenlevels.com${req.originalUrl}`);
   next();
 });
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));   // game requests are tiny
 
 // Which version of the page is current: the time the page was last updated.
 // Every API answer carries it, so an open tab can tell it's out of date

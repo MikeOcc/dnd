@@ -6,6 +6,8 @@ import type { Server } from 'node:http';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { setupRoutes } from '../src/server/routes.js';
+import { turnstile, AUTH } from '../src/server/auth.js';
+import { securityHeaders, usernameProblem } from '../src/server/security.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any, server: Server, base = '', repo: Repository;
@@ -13,7 +15,7 @@ let addr = 0;
 
 beforeEach(async () => {
   db = createMemoryDb(); repo = new Repository(db);
-  const app = express(); app.use(express.json()); setupRoutes(app, db);
+  const app = express(); app.use(securityHeaders); app.use(express.json()); setupRoutes(app, db);
   await new Promise<void>(r => { server = app.listen(0, '127.0.0.1', () => r()); });
   const a = server.address(); base = `http://127.0.0.1:${typeof a === 'object' && a ? a.port : 0}`;
 });
@@ -156,5 +158,47 @@ describe('Accounts', () => {
     const b = browser();
     const r = await b.post('/api/auth/signup', { username: 'Saruman', password: 'whitehand1' }, { Origin: 'https://evil.example' });
     expect(r.status).toBe(403);
+  });
+});
+
+describe('Keeping out spam and nasty names', () => {
+  it('rude, reserved and disguised names are refused; ordinary ones are fine', () => {
+    for (const bad of ['admin', 'Owner', 'fuck_you', 'F_U_C_K', 'sh1tlord', 'xXnaziXx', 'big-ass', 'ass']) expect(usernameProblem(bad), bad).not.toBeNull();
+    for (const ok of ['Cassandra', 'Bassist', 'Titan', 'Sussex', 'Shitake'.replace('t', 'i').replace('S', 'M'), 'Gandalf', 'Frodo_99', 'Scunthorpe'.replace('cunt', 'kant')]) expect(usernameProblem(ok), ok).toBeNull();
+  });
+
+  it('a refused name is refused at sign-up too', async () => {
+    const r = await browser().post('/api/auth/signup', { username: 'Moderator', password: 'longenough' });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toContain('reserved');
+  });
+
+  it('only so many new accounts a day across the whole site', async () => {
+    for (let i = 0; i < AUTH.SIGNUPS_PER_DAY_TOTAL; i++) {
+      new (await import('../src/database/accounts.js')).Accounts(db).create({ id: 'x' + i, username: 'Seed' + i, passwordHash: 'x', recoveryHash: 'x', role: 'player' });
+    }
+    const r = await browser().post('/api/auth/signup', { username: 'OneTooMany', password: 'longenough' });
+    expect(r.status).toBe(429);
+    // The owner can still make accounts.
+    expect((await browser(true).post('/api/auth/signup', { username: 'OwnersFriend', password: 'longenough' })).status).toBe(200);
+  });
+
+  it("with the human check on, sign-up needs Cloudflare's OK", async () => {
+    const keep = { siteKey: turnstile.siteKey, verify: turnstile.verify };
+    turnstile.siteKey = () => 'test-key';
+    turnstile.verify = async (token: string) => token === 'human';
+    try {
+      expect((await browser().get('/api/auth/config')).body.turnstileSiteKey).toBe('test-key');
+      expect((await browser().post('/api/auth/signup', { username: 'Bot1', password: 'longenough', turnstileToken: 'bot' })).status).toBe(400);
+      expect((await browser().post('/api/auth/signup', { username: 'Human1', password: 'longenough', turnstileToken: 'human' })).status).toBe(200);
+      expect((await browser(true).get('/api/auth/config')).body.turnstileSiteKey).toBe('');
+    } finally { turnstile.siteKey = keep.siteKey; turnstile.verify = keep.verify; }
+  });
+
+  it('every answer carries the security headers', async () => {
+    const r = await fetch(base + '/api/auth/me');
+    expect(r.headers.get('x-frame-options')).toBe('DENY');
+    expect(r.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(r.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
   });
 });

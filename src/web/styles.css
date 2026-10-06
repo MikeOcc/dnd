@@ -877,3 +877,5 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 .obj-burst { transform-box: fill-box; transform-origin: center; animation: obj-burst 700ms ease-out; }
 @keyframes obj-burst { from { transform: scale(0.2); opacity: 0; } 30% { opacity: 1; } to { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .obj-sparkle, .obj-smoke, .obj-burst { animation: none; } }
+
+#human-check { margin-top: 12px; min-height: 0; }

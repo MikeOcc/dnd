@@ -46,6 +46,11 @@ export class Accounts {
     return r ? toUser(r) : null;
   }
 
+  /** Accounts made in the last `ms` milliseconds. */
+  countSince(ms: number): number {
+    return (this.db.prepare('SELECT COUNT(*) AS n FROM users WHERE created_at > ?').get(Date.now() - ms) as { n: number }).n;
+  }
+
   count(): number {
     return (this.db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n;
   }

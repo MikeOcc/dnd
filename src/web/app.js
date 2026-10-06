@@ -1110,6 +1110,33 @@ function closeAccount() {
   if (currentState.phase === 'main-menu') renderChoices(currentState.choices || [], 'main-menu', currentState);
 }
 
+// Cloudflare's "are you human" check on the sign-up form, when the server has it on.
+let turnstileToken = '', turnstileWidget = null;
+async function addHumanCheck() {
+  let key = '';
+  try { key = (await (await fetch('/api/auth/config')).json()).turnstileSiteKey || ''; } catch { /* no check */ }
+  if (!key) return;
+  const body = document.getElementById('account-body');
+  const box = document.createElement('div');
+  box.id = 'human-check';
+  body.insertBefore(box, body.querySelector('.row'));
+  if (!window.turnstile) {
+    await new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.onload = resolve; s.onerror = resolve;
+      document.head.appendChild(s);
+    });
+  }
+  if (!window.turnstile || !document.getElementById('human-check')) return;
+  turnstileToken = '';
+  turnstileWidget = window.turnstile.render('#human-check', {
+    sitekey: key, theme: 'dark',
+    callback: (t) => { turnstileToken = t; },
+    'expired-callback': () => { turnstileToken = ''; },
+  });
+}
+
 function showRecoveryCode(code, lead) {
   const body = document.getElementById('account-body');
   body.innerHTML = `<p>${esc(lead)}</p><p>Your <b>recovery code</b>. Write it down or take a screenshot: it's the only way to reset a forgotten password yourself, and it won't be shown again.</p><div class="code">${esc(code)}</div>`;
@@ -1147,14 +1174,18 @@ function showAccountView(view) {
        { name: 'again', label: 'Password again', type: 'password', autocomplete: 'new-password' }],
       [{ text: 'Create account', run: async (v) => {
         if (v.password !== v.again) return accountMessage("The two passwords don't match.");
-        const r = await authPost('/api/auth/signup', { username: v.username, password: v.password });
-        if (!r.ok) return accountMessage(r.error || 'Could not sign up.');
+        const r = await authPost('/api/auth/signup', { username: v.username, password: v.password, turnstileToken });
+        if (!r.ok) {
+          if (turnstileWidget !== null && window.turnstile) { window.turnstile.reset(turnstileWidget); turnstileToken = ''; }
+          return accountMessage(r.error || 'Could not sign up.');
+        }
         await refreshAccount();
         accountMessage(`Welcome, ${r.username}!${r.role === 'admin' ? ' (You are the admin.)' : ''}`, true);
         showRecoveryCode(r.recoveryCode, r.claimed ? `Your ${r.claimed} character${r.claimed === 1 ? '' : 's'} from this browser now belong${r.claimed === 1 ? 's' : ''} to your account.` : 'Your account is ready.');
       } }],
       [{ text: 'Already have an account? Log in', run: () => showAccountView('login') }],
     );
+    addHumanCheck();
   } else if (view === 'recover') {
     t.textContent = '══ FORGOT YOUR PASSWORD ══';
     accountForm(
