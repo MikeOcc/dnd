@@ -202,3 +202,44 @@ describe('Keeping out spam and nasty names', () => {
     expect(r.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
   });
 });
+
+describe('Second security pass', () => {
+  it('guessing the current password locks you out after five tries', async () => {
+    const b = browser();
+    await b.post('/api/auth/signup', { username: 'Guesser', password: 'realpassword' });
+    for (let i = 0; i < 5; i++) expect((await b.post('/api/auth/change-password', { currentPassword: 'nope' + i, newPassword: 'whatever123' })).status).toBe(401);
+    expect((await b.post('/api/auth/change-password', { currentPassword: 'realpassword', newPassword: 'whatever123' })).status).toBe(429);
+    expect((await b.post('/api/auth/delete-account', { password: 'realpassword' })).status).toBe(429);
+  });
+
+  it('a wrong name takes about as long as a wrong password (no telling which names exist)', async () => {
+    await browser().post('/api/auth/signup', { username: 'RealOne', password: 'realpassword' });
+    const time = async (username: string) => { const t = performance.now(); await browser().post('/api/auth/login', { username, password: 'wrongwrong' }); return performance.now() - t; };
+    await time('RealOne'); await time('NoSuchUser');   // warm up
+    const real = (await time('RealOne') + await time('RealOne')) / 2;
+    const fake = (await time('NoSuchUser') + await time('NoSuchUser')) / 2;
+    expect(fake).toBeGreaterThan(real * 0.4);
+  });
+});
+
+describe('Shared characters can only be deleted by the owner or an admin', () => {
+  it('guests and players are refused; the owner and an admin may', async () => {
+    const shared = (name: string) => {
+      const owner = browser(true);
+      return owner.create(name).then(id => { repo.setOwner(id, null as unknown as string); return id; });
+    };
+    const id = await shared('SharedHero');
+    const del = async (b: ReturnType<typeof browser>) => (await fetch(`${base}/api/characters/${id}`, { method: 'DELETE', headers: { 'X-Forwarded-For': `198.51.100.${++addr}`, Cookie: [...b.jar].map(([k, v]) => `${k}=${v}`).join('; ') } })).status;
+    // A guest, and a signed-in player, can see it but not delete it.
+    const guest = browser(); await guest.list();
+    expect(await del(guest)).not.toBe(200);
+    const player = browser(); await player.post('/api/auth/signup', { username: 'PlainPlayer', password: 'longenough' });
+    expect(await del(player)).not.toBe(200);
+    expect(repo.loadCharacter(id)).not.toBeNull();
+    // An admin account may.
+    const admin = browser(true); await admin.post('/api/auth/signup', { username: 'TheAdmin', password: 'longenough' });
+    const r = await fetch(`${base}/api/characters/${id}`, { method: 'DELETE', headers: { Cookie: [...admin.jar].map(([k, v]) => `${k}=${v}`).join('; '), 'X-Forwarded-For': '198.51.100.250' } });
+    expect(r.status).toBe(200);
+    expect(repo.loadCharacter(id)).toBeNull();
+  });
+});

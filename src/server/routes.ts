@@ -69,7 +69,7 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
       const list = repo.listCharacters(owner => canUse(v, owner));
       res.json({ characters: list });
     } catch (err) {
-      res.status(500).json({ error: String(err) });
+      console.error(err); res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   });
 
@@ -82,7 +82,7 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
       sessions.delete(req.params.id);
       res.json({ ok: true });
     } catch (err) {
-      res.status(500).json({ error: String(err) });
+      console.error(err); res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   });
 
@@ -336,7 +336,7 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
       res.json({ state, characterId });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: String(err) });
+      console.error(err); res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   });
 

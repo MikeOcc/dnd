@@ -1500,7 +1500,11 @@ function showLordScene(state, prev) {
 function makeChoiceBtn(key, text) {
   const btn = document.createElement('button');
   btn.className = 'choice-btn';
-  btn.innerHTML = `<span class="key">[${key}]</span> ${text}`;
+  // As text, never HTML: labels can carry names players typed.
+  const k = document.createElement('span');
+  k.className = 'key';
+  k.textContent = `[${key}]`;
+  btn.replaceChildren(k, document.createTextNode(` ${text}`));
   return btn;
 }
 

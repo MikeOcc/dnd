@@ -70,6 +70,10 @@ const normalizeCode = (c: string) => c.trim().toUpperCase().replace(/\s+/g, '');
 /** A temporary password the admin hands to someone who's locked out. */
 const tempPassword = () => randomBytes(6).toString('base64url');
 
+/** Checked against when there's no such user, so a wrong name takes as long
+ * as a wrong password (the timing gives nothing away). */
+const DECOY_HASH = hashSecret(randomBytes(12).toString('hex'));
+
 // ─── Limits ──────────────────────────────────────────────────────────────────
 
 const addressOf = (req: Request) => String(req.headers['cf-connecting-ip'] ?? (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0] ?? req.socket.remoteAddress ?? '?').trim();
@@ -121,6 +125,9 @@ export function sameSiteOnly(req: Request, res: Response, next: () => void): voi
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveHolder: (from: string, to: string) => void }): void {
+  accounts.dropExpiredSessions();
+  setInterval(() => accounts.dropExpiredSessions(), 86_400_000).unref();
+
   const me = (req: Request, res: Response) => {
     const v = visitorOf(req, res);
     return { user: v.user ? { username: v.user.username, role: v.user.role, mustChange: v.user.mustChange } : null, owner: v.owner, guest: !v.user && !v.owner };
@@ -169,7 +176,8 @@ export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveH
     const wait = lockedOut(key);
     if (wait) return res.status(429).json({ error: `Too many wrong passwords. Try again in ${wait} minute${wait === 1 ? '' : 's'}.` });
     const u = typeof username === 'string' ? accounts.byName(username) : null;
-    if (!u || typeof password !== 'string' || !checkSecret(password, u.passwordHash)) { failed(key); return res.status(401).json({ error: 'Wrong username or password.' }); }
+    const ok = checkSecret(typeof password === 'string' ? password : '', u?.passwordHash ?? DECOY_HASH);
+    if (!u || !ok) { failed(key); return res.status(401).json({ error: 'Wrong username or password.' }); }
     if (u.disabled) return res.status(403).json({ error: 'This account has been disabled.' });
     const guest = readCookie(req, ACCESS.COOKIE);
     const claimed = guest && /^g-/.test(guest) ? accounts.claimGuestCharacters(guest, u.id) : 0;
@@ -188,7 +196,8 @@ export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveH
     const wait = lockedOut(key);
     if (wait) return res.status(429).json({ error: `Too many tries. Try again in ${wait} minute${wait === 1 ? '' : 's'}.` });
     const u = typeof username === 'string' ? accounts.byName(username) : null;
-    if (!u || typeof recoveryCode !== 'string' || !checkSecret(normalizeCode(recoveryCode), u.recoveryHash)) { failed(key); return res.status(401).json({ error: 'That username and recovery code do not match.' }); }
+    const ok = checkSecret(normalizeCode(typeof recoveryCode === 'string' ? recoveryCode : ''), u?.recoveryHash ?? DECOY_HASH);
+    if (!u || !ok) { failed(key); return res.status(401).json({ error: 'That username and recovery code do not match.' }); }
     const pwBad = passwordProblem(newPassword);
     if (pwBad) return res.status(400).json({ error: pwBad });
     const code = newRecoveryCode();
@@ -204,7 +213,10 @@ export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveH
     if (!user) return res.status(401).json({ error: 'Log in first.' });
     const { currentPassword, newPassword } = (req.body ?? {}) as Record<string, string | undefined>;
     const u = accounts.byId(user.id)!;
-    if (typeof currentPassword !== 'string' || !checkSecret(currentPassword, u.passwordHash)) return res.status(401).json({ error: 'Your current password is wrong.' });
+    const lockKey = `user|${u.id}`;
+    const wait = lockedOut(lockKey);
+    if (wait) return res.status(429).json({ error: `Too many wrong passwords. Try again in ${wait} minute${wait === 1 ? '' : 's'}.` });
+    if (typeof currentPassword !== 'string' || !checkSecret(currentPassword, u.passwordHash)) { failed(lockKey); return res.status(401).json({ error: 'Your current password is wrong.' }); }
     const pwBad = passwordProblem(newPassword);
     if (pwBad) return res.status(400).json({ error: pwBad });
     accounts.setPassword(u.id, hashSecret(newPassword!), false);
@@ -216,7 +228,10 @@ export function setupAuthRoutes(app: Express, accounts: Accounts, hooks: { moveH
     const user = sessionUser(req);
     if (!user) return res.status(401).json({ error: 'Log in first.' });
     const { password } = (req.body ?? {}) as Record<string, string | undefined>;
-    if (typeof password !== 'string' || !checkSecret(password, accounts.byId(user.id)!.passwordHash)) return res.status(401).json({ error: 'Wrong password.' });
+    const lockKey = `user|${user.id}`;
+    const wait = lockedOut(lockKey);
+    if (wait) return res.status(429).json({ error: `Too many wrong passwords. Try again in ${wait} minute${wait === 1 ? '' : 's'}.` });
+    if (typeof password !== 'string' || !checkSecret(password, accounts.byId(user.id)!.passwordHash)) { failed(lockKey); return res.status(401).json({ error: 'Wrong password.' }); }
     if (user.role === 'admin' && accounts.list().filter(x => x.role === 'admin').length <= 1) return res.status(400).json({ error: 'You are the only admin: that account stays.' });
     accounts.remove(user.id);
     res.append('Set-Cookie', `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure`);

@@ -102,6 +102,11 @@ export class Accounts {
     return u;
   }
 
+  /** Forgets sessions past their expiry. */
+  dropExpiredSessions(): void {
+    this.db.prepare('DELETE FROM auth_sessions WHERE expires_at <= ?').run(Date.now());
+  }
+
   dropSession(tokenHash: string): void {
     this.db.prepare('DELETE FROM auth_sessions WHERE token_hash = ?').run(tokenHash);
   }

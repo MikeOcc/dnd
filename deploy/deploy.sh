@@ -20,7 +20,7 @@ if $WEB_ONLY; then
 fi
 ssh "$SERVER" 'set -e
   chown -R seven:seven /srv/seven-levels/app
-  cd /srv/seven-levels/app && sudo -u seven npm ci --no-audit --no-fund --loglevel=error
+  cd /srv/seven-levels/app && sudo -u seven npm ci --omit=dev --no-audit --no-fund --loglevel=error
   install -m 644 deploy/seven-levels.service /etc/systemd/system/seven-levels.service
   chmod +x deploy/backup.sh
   systemctl daemon-reload
