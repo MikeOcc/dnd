@@ -37,6 +37,18 @@ const RESUMABLE_PHASES = ['playing', 'combat', 'interaction', 'level-intro', 'st
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
+// The page this tab loaded, by the server's version stamp. If a newer one has
+// been deployed since, reload: the server picks the game back up where it was.
+let pageVersion = null;
+function pageOutOfDate(res) {
+  const v = res.headers.get('X-Page-Version');
+  if (!v) return false;
+  if (pageVersion === null) { pageVersion = v; return false; }
+  if (v === pageVersion) return false;
+  location.reload();
+  return true;
+}
+
 async function apiAction(action, payload) {
   const body = { characterId, action };
   if (payload) body.payload = payload;
@@ -46,6 +58,7 @@ async function apiAction(action, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+  if (pageOutOfDate(res)) return;
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -163,7 +176,8 @@ function applyState(state) {
     portraitEl.classList.add('hidden');
     portraitEl.innerHTML = '';
   } else if (monster) {
-    const sprite = getMonsterSprite(monster.type);
+    // (If its art is somehow missing, a dark silhouette with its name rather than nothing.)
+    const sprite = getMonsterSprite(monster.type) || `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${monster.type}"><ellipse cx="80" cy="96" rx="44" ry="52" fill="#120c0c" stroke="#3a1a1a" stroke-width="3"/><circle cx="66" cy="84" r="4" fill="#c33"/><circle cx="94" cy="84" r="4" fill="#c33"/><text x="80" y="156" text-anchor="middle" font-family="monospace" font-size="11" fill="#a99">${monster.type}</text></svg>`;
     // Only redraw for a new monster, so slow animations (the Choir's drift) carry on.
     if (portraitEl.dataset.monster !== monster.type || !portraitEl.innerHTML) {
       portraitEl.innerHTML = sprite || '';

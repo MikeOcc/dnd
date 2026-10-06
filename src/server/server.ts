@@ -1,5 +1,6 @@
 import express from 'express';
 import { join, dirname } from 'path';
+import { statSync } from 'fs';
 import { fileURLToPath } from 'url';
 import type { DatabaseSync } from 'node:sqlite';
 import { getDb, initDb, setDbPath } from '../database/database.js';
@@ -24,6 +25,15 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
+
+// Which version of the page is current: the time the page was last updated.
+// Every API answer carries it, so an open tab can tell it's out of date
+// (after a deploy) and refresh itself, picking the game back up.
+const pagePath = join(__dirname, '../../src/web/index.html');
+app.use('/api', (_req, res, next) => {
+  try { res.setHeader('X-Page-Version', String(Math.floor(statSync(pagePath).mtimeMs))); } catch { /* no page: no header */ }
+  next();
+});
 
 // Development pages (e.g. the 3D view test scene) are for the owner only.
 app.use('/dev', (req, res, next) => (isOwner(req) ? next() : res.status(404).send('Not found')));
