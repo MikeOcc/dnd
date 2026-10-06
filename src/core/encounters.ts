@@ -810,3 +810,109 @@ export function dragonHoardLoot(char: Character, monster: string, monsterLevel: 
   if (got.length) messages.push(`And magic gems: ${got.map(g => `a${/^[aeiou]/.test(g) ? 'n' : ''} ${g}`).join(', ')}.`);
   return { messages, goldGained: gold + worth };
 }
+
+// ─── Treasure some monsters carry ────────────────────────────────────────────
+// Found on (or in) the body when they fall, in keeping with the creature:
+// things floating in a Gelatinous Cube, undigested finds in a worm's gut,
+// an Orc King's war chest, a giant's sack, a vampire's grave gold...
+
+export interface CarriedTreasure {
+  messages: string[];
+  ring?: boolean;      // a ring on a finger bone (the engine puts it on)
+  amulet?: boolean;    // an amulet (the engine adds it)
+}
+
+interface CarryRule {
+  chance: number;
+  find: (char: Character, L: number, rng: RNG, out: CarriedTreasure) => void;
+}
+
+const coins = (char: Character, n: number, out: CarriedTreasure, what: string) => { char.gold += n; out.messages.push(`${what} (${n} gold)`); };
+const stones = (char: Character, L: number, rng: RNG, out: CarriedTreasure, min: number, max: number, what: string) => {
+  const n = rng.int(min, max); let worth = 0;
+  for (let i = 0; i < n; i++) worth += rng.int(10, 30) * L;
+  char.gold += worth;
+  out.messages.push(`${what}: ${n === 1 ? 'a gemstone' : `${n} gemstones`}, worth ${worth} gold.`);
+};
+const magicGem = (char: Character, rng: RNG, out: CarriedTreasure, kinds: GemType[] = ['ruby', 'sapphire', 'diamond', 'opal', 'emerald', 'moonstone']) => {
+  const g = rng.pick(kinds.filter(k => char.inventory.gems[k] < (GEMS.CARRY_CAP[k] ?? Infinity)));
+  if (!g) return;
+  char.inventory.gems[g]++;
+  out.messages.push(`A magic gem: a${/^[aeiou]/.test(g) ? 'n' : ''} ${g}.`);
+};
+const gear = (char: Character, rng: RNG, out: CarriedTreasure, bonus?: number) => { const g = rollGear(char, rng, 'monster', bonus); if (g) out.messages.push(...g); };
+
+const SWALLOWER: CarryRule = { chance: 0.4, find: (c, L, rng, out) => {
+  out.messages.push('Its gut splits open on things it swallowed and never digested:');
+  stones(c, L, rng, out, 1, 3, 'Gemstones, slick with bile');
+  coins(c, rng.int(10, 25) * L, out, 'A dead man\u2019s purse.');
+  if (rng.float() < 0.25) magicGem(c, rng, out);
+  if (rng.float() < 0.15) out.ring = true;
+} };
+
+export const CARRIERS: Record<string, CarryRule> = {
+  'Gelatinous Cube': { chance: 0.6, find: (c, L, rng, out) => {
+    out.messages.push('As it collapses, the things suspended in its quivering bulk spill out across the floor:');
+    coins(c, rng.int(10, 30) * L, out, 'Coins, etched by its acid.');
+    gear(c, rng, out);
+    if (rng.float() < 0.5) magicGem(c, rng, out);
+    if (rng.float() < 0.1) out.ring = true;
+  } },
+  'Mimic': { chance: 0.7, find: (c, L, rng, out) => {
+    out.messages.push('Behind where it squatted, the real chest it was guarding: and inside, what it took from the last ones fooled.');
+    coins(c, rng.int(20, 50) * L, out, 'Gold.');
+    stones(c, L, rng, out, 1, 3, 'Jewels');
+    if (rng.float() < 0.3) gear(c, rng, out);
+  } },
+  'Purple Worm': SWALLOWER, 'Mongolian Death Worm': SWALLOWER, 'Titanoboa': SWALLOWER, 'Giant Leech': SWALLOWER,
+  'Orc King': { chance: 1, find: (c, L, rng, out) => {
+    out.messages.push('His war chest stands by the throne of skulls: the plunder of a hundred raids.');
+    coins(c, rng.int(40, 100) * L, out, 'Gold, by the fistful.');
+    stones(c, L, rng, out, 2, 4, 'Looted jewels');
+    gear(c, rng, out, rng.int(1, 2));
+  } },
+  'Giant': { chance: 0.5, find: (c, L, rng, out) => {
+    out.messages.push(`The giant\u2019s sack: a whole cheese, a cow\u2019s thighbone, a bent iron pot, and under it all...`);
+    coins(c, rng.int(15, 40) * L, out, 'Coins, tipped in like crumbs.');
+    if (rng.float() < 0.2) { if (rng.float() < 0.5) gear(c, rng, out, rng.int(1, 2)); else magicGem(c, rng, out); }
+  } },
+  'Frost Giant': { chance: 0.5, find: (c, L, rng, out) => {
+    out.messages.push('The frost giant\u2019s sack, crusted with ice: a frozen elk haunch, a horn of mead, and...');
+    coins(c, rng.int(15, 40) * L, out, 'Coins, frozen together in a lump.');
+    if (rng.float() < 0.2) { if (rng.float() < 0.5) gear(c, rng, out, rng.int(1, 2)); else magicGem(c, rng, out, ['sapphire', 'diamond', 'moonstone']); }
+  } },
+  'Vampire': { chance: 0.5, find: (c, L, rng, out) => {
+    out.messages.push('In the coffin it slept in, under the grave-dirt: the gold of centuries, and a signet ring of a house long dead.');
+    coins(c, rng.int(20, 50) * L, out, 'Grave gold.');
+    stones(c, L, rng, out, 1, 1, 'The signet ring');
+    if (rng.float() < 0.2) out.amulet = true;
+  } },
+  'Lich': { chance: 0.7, find: (c, L, rng, out) => {
+    out.messages.push('Its treasury lies behind the bones: the wealth of a kingdom it ruled before it died, and its spellbooks.');
+    stones(c, L, rng, out, 2, 5, 'Crown jewels');
+    magicGem(c, rng, out); magicGem(c, rng, out);
+    c.inventory.books = (c.inventory.books ?? 0) + 1;
+    out.messages.push('A magic tome, bound in something that is not leather. (B: read it)');
+  } },
+  'Medusa': { chance: 0.5, find: (c, L, rng, out) => {
+    out.messages.push('Around her lair, the jewellery of those she turned to stone: rings on stone fingers, chains on stone throats.');
+    stones(c, L, rng, out, 2, 4, 'Jewellery');
+  } },
+  'Rakshasa': { chance: 0.6, find: (c, L, rng, out) => {
+    out.messages.push('Among its silks, a bundle wrapped in brocade: jewels fit for a maharaja.');
+    stones(c, L, rng, out, 2, 5, 'Jewels');
+    if (rng.float() < 0.3) magicGem(c, rng, out, ['moonstone', 'opal']);
+  } },
+  'Goblin': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(3, 10) * L + 5, out, 'A greasy purse of stolen coins, and a tin whistle.'); } },
+  'Kobold': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(3, 10) * L + 5, out, 'A pouch of shiny things: copper coins, a brass button, a glass bead.'); } },
+  'Bugbear': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(4, 12) * L + 5, out, 'A sack of loot from its last ambush.'); if (rng.float() < 0.15) gear(c, rng, out); } },
+};
+
+/** What a fallen monster carried, if anything (the engine adds rings and amulets). */
+export function carriedTreasure(char: Character, monsterType: string, level: number, rng: RNG): CarriedTreasure | null {
+  const rule = CARRIERS[monsterType];
+  if (!rule || rng.float() >= rule.chance) return null;
+  const out: CarriedTreasure = { messages: [] };
+  rule.find(char, Math.max(1, level), rng, out);
+  return out;
+}

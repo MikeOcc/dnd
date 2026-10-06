@@ -12,7 +12,7 @@ import type { EntityMarker } from './corridor-view.js';
 import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
-import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot } from './encounters.js';
+import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS } from './config.js';
@@ -2757,6 +2757,22 @@ export class GameEngine {
     }
 
     this.messages.push('', `You gain ${xpGained} experience.`);
+
+    // Some monsters carry treasure: found on (or in) the body.
+    const carried = carriedTreasure(this.char, monster.type, monster.level, this.rng);
+    if (carried) {
+      this.messages.push('', ...carried.messages);
+      if (carried.ring) {
+        const rings = (['fire', 'cold', 'evil', 'undead', 'escape'] as RingId[]).filter(r => r === 'escape' || !this.char!.inventory.rings?.includes(r));
+        this.messages.push('On a finger bone among it all, a ring:', ...this.giveRing(this.rng.pick(rings)));
+      }
+      if (carried.amulet && (this.char.inventory.amulets?.length ?? 0) < AMULETS.MAX_CARRIED) {
+        const stats: AmuletStat[] = ['strength', 'intelligence', 'dexterity', 'constitution', 'wisdom'];
+        const amulet: Amulet = { stat: this.rng.pick(stats), bonus: this.rng.int(AMULETS.BONUS_MIN, AMULETS.BONUS_MAX), cursed: this.rng.float() < AMULETS.CURSE_CHANCE, look: this.rng.pick([...AMULETS.LOOKS]) };
+        this.char.inventory.amulets = [...(this.char.inventory.amulets ?? []), amulet];
+        this.messages.push(`And a ${amuletName(amulet, false)}. Its power is a mystery until you wear it. (A: Amulets)`);
+      }
+    }
 
     // A dragon sometimes leaves its hoard (the great ones always do).
     if ((monster.type.includes('Dragon') || ['Tiamat', 'Dracolich'].includes(monster.type))
