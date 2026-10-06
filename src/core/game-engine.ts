@@ -19,7 +19,7 @@ import {
   chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
   resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm,
 } from './encounters.js';
-import { createMonster, asmodeusReturnBonus, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
+import { createMonster, asmodeusReturnBonus, isHiddenMonster, HIDDEN_STAND_IN, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
@@ -1419,6 +1419,7 @@ export class GameEngine {
 
   private startFixedEncounter(content: CellContent, monsterType: import('./types.js').MonsterType): GameState {
     if (!this.char) return this.getState();
+    if (isHiddenMonster(monsterType)) monsterType = HIDDEN_STAND_IN;   // kept out of the hosted game
     const def = getDefinition(monsterType);
     // Unique bosses roll a level in their own [minLevel, maxLevel] range each
     // encounter. Most bosses have a single fixed level (min === max); Asmodeus

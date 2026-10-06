@@ -657,3 +657,26 @@ describe('Opals and emeralds: never more than 3', () => {
     expect(char.inventory.gems.emerald).toBe(GEMS.CARRY_CAP.emerald);
   });
 });
+
+describe('Beholders are kept out of the hosted game', () => {
+  it('hosted (NODE_ENV=production), random encounters never pick a Beholder or Death Tyrant; locally they can', async () => {
+    const { pickRandomMonsterType, isHiddenMonster } = await import('../src/core/monsters.js');
+    const roll = () => {
+      const rng = new RNG(4242); const seen = new Set<string>();
+      for (let i = 0; i < 6000; i++) seen.add(pickRandomMonsterType(6 + (i % 2), rng));
+      return seen;
+    };
+    const was = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      const hosted = roll();
+      expect(hosted.has('Beholder')).toBe(false);
+      expect(hosted.has('Death Tyrant')).toBe(false);
+      expect(isHiddenMonster('Beholder')).toBe(true);
+      process.env.NODE_ENV = 'development';
+      const local = roll();
+      expect(local.has('Beholder')).toBe(true);
+      expect(isHiddenMonster('Beholder')).toBe(false);
+    } finally { process.env.NODE_ENV = was; }
+  });
+});

@@ -2791,3 +2791,29 @@ describe('The scene sent for the 3D views', () => {
     expect(engine.getState().scene!.objects.some(o => o.x === s.x && o.y === s.y + 1)).toBe(false);
   });
 });
+
+describe('The level 6 Beholder guard, hosted', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('is a Death Knight on the hosted site, and a Beholder locally', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    e.char.hp = e.char.maxHp = 1e9;
+    const was = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      e.char.dungeonLevel = 6;
+      e.startFixedEncounter({ type: 'fixed-monster', id: 'fm-6-2', monsterId: 'Beholder' }, 'Beholder');
+      expect(e.combat.monster.type).toBe('Death Knight');
+      e.combat = null; e.phase = 'playing';
+      process.env.NODE_ENV = 'development';
+      e.startFixedEncounter({ type: 'fixed-monster', id: 'fm-6-2', monsterId: 'Beholder' }, 'Beholder');
+      expect(e.combat.monster.type).toBe('Beholder');
+    } finally { process.env.NODE_ENV = was; }
+  });
+});

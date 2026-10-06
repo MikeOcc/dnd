@@ -878,11 +878,23 @@ export function randomMonsterLevel(
   return rng.int(range.min, Math.max(range.min, cappedMax));
 }
 
+// ─── Monsters kept out of the hosted game ───────────────────────────────────
+// Beholders (and the Death Tyrant, an undead beholder) are Wizards of the
+// Coast's own creation, so until further notice they never appear on the
+// hosted site. Running locally (not NODE_ENV=production) they still do.
+export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Beholder', 'Death Tyrant'];
+/** What stands in for a hidden monster that's placed on the map as a guard. */
+export const HIDDEN_STAND_IN: MonsterType = 'Death Knight';
+
+export function isHiddenMonster(type: MonsterType): boolean {
+  return process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type);
+}
+
 export function pickRandomMonsterType(dungeonDepth: number, rng: RNG): MonsterType {
   const tiers = MONSTER_SCALING.MIN_NATURAL_TIER_BY_DUNGEON_LEVEL;
   const minTier = tiers[Math.max(0, Math.min(tiers.length - 1, dungeonDepth - 1))];
   const pool = (Object.values(DEFINITIONS) as MonsterDefinition[]).filter(
-    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth
+    d => !d.isUnique && d.minDungeonLevel <= dungeonDepth && !isHiddenMonster(d.type)
       && (d.naturalTier >= minTier || MONSTER_SCALING.ANY_DEPTH_TYPES.includes(d.type)),
   );
   const picked = rng.pick(pool).type;
