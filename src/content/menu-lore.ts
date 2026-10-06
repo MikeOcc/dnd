@@ -13,7 +13,7 @@ export const MENU_LORE: string[][] = [
   ['Every step you take is remembered by the stone.', 'Some of it would like you to stay.'],
   ['The deeper you go, the more the walls seem to breathe.', 'Try not to match their rhythm.'],
   ['Gold glitters brightest just before the trap springs.', 'Check the lock. Then check it again.'],
-  ['A Mind Flayer has already heard you thinking about coming down.', 'It thought it was a lovely idea.'],
+  ['A Cerebrovore has already heard you thinking about coming down.', 'It thought you sounded delicious.'],
   ['The Gelatinous Cube leaves the corridors spotless.', 'It keeps the bones as souvenirs.'],
   ['Five heads. Five colours. Five ways to die.', 'Tiamat waits where the seventh level ends.'],
   ['The Nightwalker does not hurry.', 'It has never needed to.'],

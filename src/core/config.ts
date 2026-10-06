@@ -717,7 +717,7 @@ export const RINGS = {
   EVIL_MONSTERS: [
     'Asmodeus', 'Tiamat', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes', 'Rakshasa',
     'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
-    'Beholder', 'Death Tyrant', 'Mind Flayer', 'Aboleth', 'Elder Oblex', 'Nightwalker',
+    'Beholder', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
     'Lich', 'Demilich', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
     'Orc King', 'Wendigo', 'Banshee',
   ] as string[],

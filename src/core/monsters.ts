@@ -649,12 +649,14 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     specialAbilities: ['fear-ray', 'slow-ray', 'enervation-ray', 'telekinetic-ray', 'paralyze-ray',
       'sleep-ray', 'charm-ray', 'petrify-ray', 'disintegrate-ray', 'death-ray'],
   },
-  'Mind Flayer': {
-    type: 'Mind Flayer', isUndead: false, isUnique: false,
+  // A psychic brain-eater: a hunched, robed thing with a swollen, exposed
+  // cranium and a round lamprey mouth. It feeds on minds.
+  'Cerebrovore': {
+    type: 'Cerebrovore', isUndead: false, isUnique: false,
     minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 10, baseAttackPerLevel: 5.5, baseDefensePerLevel: 3.0,
     fireballResistance: 1.0,
-    encounterIntro: ['Tentacles writhe from a pale, bloated face. Its thoughts press against yours.', '', 'You have encountered a Level {LVL} Mind Flayer!'],
+    encounterIntro: ['A hunched, robed figure turns. Its skull is swollen and bare, the brain beneath pulsing and veined.', 'A round mouth of tiny teeth opens. Its thoughts press against yours.', '', 'You have encountered a Level {LVL} Cerebrovore!'],
     specialAbilities: ['psychic-blast', 'intelligence-drain', 'fear', 'spell-disrupt'],
   },
   'Elder Oblex': {
@@ -835,8 +837,16 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
   },
 };
 
+/** Monsters that were renamed: saved levels may still name them the old way. */
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore' };
+
+/** A monster type as the game knows it now (an old saved name maps to its new one). */
+export function currentMonsterType(type: string): MonsterType {
+  return (RENAMED[type] ?? type) as MonsterType;
+}
+
 export function getDefinition(type: MonsterType): MonsterDefinition {
-  return DEFINITIONS[type];
+  return DEFINITIONS[currentMonsterType(type)];
 }
 
 export function allDefinitions(): MonsterDefinition[] {
@@ -879,12 +889,16 @@ export function randomMonsterLevel(
 }
 
 // ─── Monsters kept out of the hosted game ───────────────────────────────────
-// Beholders (and the Death Tyrant, an undead beholder) are Wizards of the
-// Coast's own creation, so until further notice they never appear on the
-// hosted site. Running locally (not NODE_ENV=production) they still do.
-export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Beholder', 'Death Tyrant'];
-/** What stands in for a hidden monster that's placed on the map as a guard. */
-export const HIDDEN_STAND_IN: MonsterType = 'Death Knight';
+// Monsters that are Wizards of the Coast's own creations (beholders, the
+// Death Tyrant (an undead beholder), the displacer beast, the elder oblex)
+// never appear on the hosted site until further notice. Running locally
+// (not NODE_ENV=production) they still do.
+export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Beholder', 'Death Tyrant', 'Displacer Beast', 'Elder Oblex'];
+/** What stands in for a hidden monster placed on the map as a guard. */
+const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' }   // the closest in strength (Beholder → Death Knight: same range);
+export function hiddenStandIn(type: MonsterType): MonsterType {
+  return STAND_INS[type] ?? 'Death Knight';
+}
 
 export function isHiddenMonster(type: MonsterType): boolean {
   return process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type);
@@ -966,7 +980,7 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Behir', 'Rakshasa', 'Death Tyrant', 'Demilich', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
-  'Wizard', 'Beholder', 'Mind Flayer', 'Elder Oblex', 'Sanguinid',
+  'Wizard', 'Beholder', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon',
 ];
 

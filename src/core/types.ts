@@ -219,7 +219,7 @@ export type MonsterType =
   | 'Lich'
   | 'Wizard'
   | 'Beholder'
-  | 'Mind Flayer'
+  | 'Cerebrovore'
   | 'Elder Oblex'
   | 'Sanguinid'
   | 'Black Dragon'

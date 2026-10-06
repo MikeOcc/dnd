@@ -4392,167 +4392,51 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Mind Flayer': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mind Flayer">
+  'Cerebrovore': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cerebrovore">
     <defs>
-    <linearGradient id="mf-robe" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#0c0614"/>
-    <stop offset="0.35" stop-color="#34184a"/>
-    <stop offset="0.6" stop-color="#281238"/>
-    <stop offset="1" stop-color="#0a0410"/>
-    </linearGradient>
-    <linearGradient id="mf-collar" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#5a2e78"/>
-    <stop offset="1" stop-color="#1a0a26"/>
-    </linearGradient>
-    <radialGradient id="mf-head" cx="40%" cy="28%" r="75%">
-    <stop offset="0" stop-color="#d8bede"/>
-    <stop offset="0.45" stop-color="#a080b0"/>
-    <stop offset="0.85" stop-color="#5a3a6c"/>
-    <stop offset="1" stop-color="#3a2248"/>
-    </radialGradient>
-    <linearGradient id="mf-tentacle" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#9a78a8"/>
-    <stop offset="1" stop-color="#4a2c5a"/>
-    </linearGradient>
-    <linearGradient id="mf-skin" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#b898c4"/>
-    <stop offset="1" stop-color="#5a3a6c"/>
-    </linearGradient>
-    <linearGradient id="mf-gold" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#e0c070"/>
-    <stop offset="1" stop-color="#7a5a20"/>
-    </linearGradient>
-    <radialGradient id="mf-psi" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
-    <stop offset="0.3" stop-color="#d8b8ff" stop-opacity="0.8"/>
-    <stop offset="0.7" stop-color="#8a4aff" stop-opacity="0.3"/>
-    <stop offset="1" stop-color="#6a2aff" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="mf-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.6"/></filter>
-    <filter id="mf-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <linearGradient id="cv-robe" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d0718"/><stop offset="0.45" stop-color="#3a1d52"/><stop offset="1" stop-color="#0d0718"/></linearGradient>
+    <radialGradient id="cv-brain" cx="0.45" cy="0.4" r="0.65"><stop offset="0" stop-color="#e9c2c8"/><stop offset="0.6" stop-color="#b98592"/><stop offset="1" stop-color="#6e4552"/></radialGradient>
+    <radialGradient id="cv-skin" cx="0.5" cy="0.35" r="0.7"><stop offset="0" stop-color="#b9adc0"/><stop offset="1" stop-color="#5d5266"/></radialGradient>
+    <radialGradient id="cv-psy" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#d9a8ff" stop-opacity="0.85"/><stop offset="1" stop-color="#7b2cff" stop-opacity="0"/></radialGradient>
     </defs>
-    
-    <ellipse cx="80" cy="155" rx="44" ry="4.5" fill="#000" opacity="0.55" filter="url(#mf-soft)"/>
-    
-    <!-- flared high collar, behind the head -->
-    <path d="M 64 84 C 50 72 40 54 36 32 C 48 38 58 48 67 62 Z" fill="url(#mf-collar)" stroke="url(#mf-gold)" stroke-width="1.1"/>
-    <path d="M 96 84 C 110 72 120 54 124 32 C 112 38 102 48 93 62 Z" fill="url(#mf-collar)" stroke="url(#mf-gold)" stroke-width="1.1"/>
-    <g stroke="#1a0a26" stroke-width="0.9" fill="none" opacity="0.8">
-    <path d="M 62 74 C 54 64 46 52 42 38"/><path d="M 65 68 C 59 60 53 52 49 43"/>
-    <path d="M 98 74 C 106 64 114 52 118 38"/><path d="M 95 68 C 101 60 107 52 111 43"/>
+    <!-- psychic halo -->
+    <circle cx="80" cy="46" r="44" fill="none" stroke="#8a4dff" stroke-width="1.2" opacity="0.35"/>
+    <circle cx="80" cy="46" r="52" fill="none" stroke="#8a4dff" stroke-width="0.8" opacity="0.2"/>
+    <!-- hunched robed body -->
+    <path d="M40 158 Q36 112 52 90 Q66 76 80 76 Q94 76 108 90 Q124 112 120 158 Z" fill="url(#cv-robe)" stroke="#05020a" stroke-width="2"/>
+    <path d="M58 86 Q80 104 102 86 L98 100 Q80 112 62 100 Z" fill="#241034" stroke="#05020a" stroke-width="1.5"/>
+    <path d="M80 100 V156" stroke="#1a0b28" stroke-width="2"/>
+    <!-- gaunt neck -->
+    <path d="M72 70 Q80 80 88 70 L90 84 Q80 90 70 84 Z" fill="url(#cv-skin)" stroke="#2a2030" stroke-width="1.2"/>
+    <!-- face: small, under the swollen cranium -->
+    <ellipse cx="80" cy="60" rx="17" ry="15" fill="url(#cv-skin)" stroke="#2a2030" stroke-width="1.5"/>
+    <!-- the swollen, exposed brain -->
+    <path d="M50 46 Q46 18 70 10 Q80 6 92 10 Q116 18 110 46 Q104 54 80 54 Q56 54 50 46 Z" fill="url(#cv-brain)" stroke="#4a2a34" stroke-width="2"/>
+    <g fill="none" stroke="#7a4652" stroke-width="1.4" stroke-linecap="round">
+      <path d="M58 40 Q62 30 70 34 Q74 24 82 28 Q90 22 96 30 Q104 30 104 40"/>
+      <path d="M56 32 Q60 22 68 22 Q74 14 84 18"/>
+      <path d="M88 16 Q98 16 102 24"/>
+      <path d="M62 46 Q70 40 78 46 Q86 40 96 46"/>
+      <path d="M80 10 Q78 28 80 52" stroke-width="1.8"/>
     </g>
-    
-    <!-- robe -->
-    <path d="M 56 84 C 48 110 42 132 36 153 L 124 153 C 118 132 112 110 104 84 Z" fill="url(#mf-robe)" stroke="#06020a" stroke-width="1.4"/>
-    <g fill="none" stroke-linecap="round">
-    <g stroke="#06020a" stroke-width="1.5" opacity="0.9">
-    <path d="M 62 102 Q 56 128 50 152"/><path d="M 70 106 Q 68 130 66 152"/>
-    <path d="M 98 102 Q 104 128 110 152"/><path d="M 90 106 Q 92 130 94 152"/>
+    <g fill="none" stroke="#a83a52" stroke-width="0.9" opacity="0.8"><path d="M52 44 Q58 50 66 48"/><path d="M108 44 Q102 50 94 48"/><path d="M66 14 Q60 20 62 26"/></g>
+    <!-- sunken, glowing eyes -->
+    <ellipse cx="73" cy="57" rx="3.4" ry="2.2" fill="#160a1e"/><ellipse cx="87" cy="57" rx="3.4" ry="2.2" fill="#160a1e"/>
+    <circle cx="73" cy="57" r="1.4" fill="#e6b8ff"/><circle cx="87" cy="57" r="1.4" fill="#e6b8ff"/>
+    <!-- the lamprey mouth -->
+    <circle cx="80" cy="68" r="6.5" fill="#2b0c16" stroke="#5a2a36" stroke-width="1.2"/>
+    <circle cx="80" cy="68" r="3.8" fill="#12040a"/>
+    <g stroke="#e8e0d0" stroke-width="1" stroke-linecap="round">
+      <path d="M80 62.6 v1.6 M85.4 68 h-1.6 M80 73.4 v-1.6 M74.6 68 h1.6 M83.8 64.2 l-1.1 1.1 M83.8 71.8 l-1.1 -1.1 M76.2 71.8 l1.1 -1.1 M76.2 64.2 l1.1 1.1"/>
     </g>
-    <g stroke="#6a448a" stroke-width="0.9" opacity="0.5">
-    <path d="M 64 104 Q 58 128 53 152"/><path d="M 100 104 Q 106 128 112 152"/>
-    </g>
-    </g>
-    <!-- centre panel with gold trim and sigils -->
-    <path d="M 75 94 L 85 94 L 88 153 L 72 153 Z" fill="#1a0c22" stroke="url(#mf-gold)" stroke-width="1"/>
-    <g fill="url(#mf-gold)">
-    <path d="M 80 106 L 83 110 L 80 114 L 77 110 Z"/>
-    <path d="M 80 122 L 83 126 L 80 130 L 77 126 Z"/>
-    <path d="M 80 138 L 83 142 L 80 146 L 77 142 Z"/>
-    </g>
-    <!-- hem trim -->
-    <path d="M 37 150 L 123 150" stroke="url(#mf-gold)" stroke-width="1.2" opacity="0.8"/>
-    <!-- sash -->
-    <path d="M 58 102 Q 80 108 102 102 L 101 107 Q 80 113 59 107 Z" fill="#4a1a3a" stroke="#1a0612" stroke-width="0.8"/>
-    
-    <!-- shoulders / mantle -->
-    <path d="M 50 90 Q 56 78 70 78 L 90 78 Q 104 78 110 90 Q 100 96 80 96 Q 60 96 50 90 Z" fill="#2e1640" stroke="#0a0410" stroke-width="1.2"/>
-    <path d="M 54 88 Q 60 81 70 81" stroke="#7a52a0" stroke-width="0.9" fill="none" opacity="0.5"/>
-    
-    <!-- left arm hanging, clawed hand -->
-    <path d="M 54 88 C 44 100 40 116 41 128 L 54 130 C 54 118 58 104 63 96 Z" fill="url(#mf-robe)" stroke="#06020a" stroke-width="1.2"/>
-    <path d="M 40 126 L 55 128 L 54 132 L 40 130 Z" fill="url(#mf-gold)" opacity="0.85"/>
-    <g stroke="url(#mf-skin)" stroke-width="2.4" fill="none" stroke-linecap="round">
-    <path d="M 43 131 Q 40 138 41 145"/>
-    <path d="M 46.5 132 Q 45 140 46 147"/>
-    <path d="M 50 132 Q 50 139 52 145"/>
-    <path d="M 53 130 Q 57 133 58 138"/>
-    </g>
-    <g fill="#1a0a22">
-    <path d="M 40.2 144 L 41 149 L 42 144.5 Z"/><path d="M 45.2 146 L 46 151 L 47 146.5 Z"/>
-    <path d="M 51.2 144 L 53 149 L 53 144 Z"/><path d="M 57.2 137 L 59.5 141 L 59 136.5 Z"/>
-    </g>
-    
-    <!-- right arm raised, casting -->
-    <path d="M 104 88 C 116 86 122 76 124 64 L 113 60 C 112 70 106 78 97 83 Z" fill="url(#mf-robe)" stroke="#06020a" stroke-width="1.2"/>
-    <path d="M 112 62 L 125 66 L 126 62 L 113 58 Z" fill="url(#mf-gold)" opacity="0.85"/>
-    <circle cx="121" cy="38" r="17" fill="url(#mf-psi)"/>
-    <g fill="none" stroke="#e0c8ff" stroke-linecap="round">
-    <circle cx="121" cy="38" r="9" stroke-width="0.8" stroke-dasharray="3 2.5" opacity="0.75"/>
-    <path d="M 108 28 Q 104 38 110 48" stroke-width="0.9" opacity="0.6"/>
-    <path d="M 134 28 Q 138 38 132 48" stroke-width="0.9" opacity="0.6"/>
-    <path d="M 114 20 Q 121 16 128 20" stroke-width="0.8" opacity="0.5"/>
-    </g>
-    <ellipse cx="119" cy="57" rx="5" ry="4" fill="url(#mf-skin)" stroke="#3a2248" stroke-width="0.7"/>
-    <g stroke="url(#mf-skin)" stroke-width="2.2" fill="none" stroke-linecap="round">
-    <path d="M 115.5 55 Q 112 49 112 43"/>
-    <path d="M 118.5 53.5 Q 118 47 119 41"/>
-    <path d="M 121.5 54 Q 124 47 126 42"/>
-    <path d="M 123.5 57 Q 128 53 131 50"/>
-    <path d="M 115 59 Q 111 60 108 57"/>
-    </g>
-    <g fill="#1a0a22">
-    <path d="M 111 44 L 111.5 39 L 113 43.5 Z"/><path d="M 118 42 L 119.5 37 L 120 42 Z"/>
-    <path d="M 125 43 L 127.5 38.5 L 127 43 Z"/><path d="M 130 51 L 134 48 L 131.5 50 Z"/>
-    </g>
-    
-    <!-- head: bulbous octopoid cranium -->
-    <path d="M 64 60 C 58 42 64 24 80 22 C 97 22 103 40 97 60 C 95 70 90 78 80 80 C 70 78 65 70 64 60 Z" fill="url(#mf-head)" stroke="#2a1638" stroke-width="1.4"/>
-    <g stroke="#5a3a6c" stroke-width="0.9" fill="none" opacity="0.7" stroke-linecap="round">
-    <path d="M 70 30 Q 74 26 80 28 Q 86 26 90 30"/>
-    <path d="M 66 40 Q 70 36 72 40"/>
-    <path d="M 94 40 Q 90 36 88 40"/>
-    <path d="M 76 34 Q 80 38 84 34"/>
-    </g>
-    <g stroke="#7a4a8a" stroke-width="0.5" fill="none" opacity="0.6">
-    <path d="M 68 50 Q 66 44 69 38"/><path d="M 92 50 Q 94 44 91 38"/>
-    </g>
-    <ellipse cx="74" cy="32" rx="6" ry="3.5" transform="rotate(-20 74 32)" fill="#fff" opacity="0.18" filter="url(#mf-soft)"/>
-    <!-- psionic glow from the raised hand, catching the right side of the head -->
-    <path d="M 96 42 Q 99 52 96 62" stroke="#c8a8ff" stroke-width="1.6" fill="none" opacity="0.45" stroke-linecap="round"/>
-    
-    <!-- brow and pupil-less eyes -->
-    <path d="M 64 49 Q 72 44 79 50 Q 72 48 64 51 Z" fill="#3a2248"/>
-    <path d="M 96 49 Q 88 44 81 50 Q 88 48 96 51 Z" fill="#3a2248"/>
-    <ellipse cx="72" cy="54" rx="7" ry="4.4" transform="rotate(14 72 54)" fill="#2a1438"/>
-    <ellipse cx="88" cy="54" rx="7" ry="4.4" transform="rotate(-14 88 54)" fill="#2a1438"/>
-    <ellipse cx="72" cy="54" rx="5.2" ry="3" transform="rotate(14 72 54)" fill="#e8dcff" filter="url(#mf-glow)" opacity="0.8"/>
-    <ellipse cx="88" cy="54" rx="5.2" ry="3" transform="rotate(-14 88 54)" fill="#e8dcff" filter="url(#mf-glow)" opacity="0.8"/>
-    <ellipse cx="72" cy="54" rx="4.4" ry="2.4" transform="rotate(14 72 54)" fill="#faf6ff"/>
-    <ellipse cx="88" cy="54" rx="4.4" ry="2.4" transform="rotate(-14 88 54)" fill="#faf6ff"/>
-    
-    <!-- mouth under the tentacles -->
-    <ellipse cx="80" cy="71" rx="4" ry="2.4" fill="#1a0822"/>
-    
-    <!-- four face tentacles with curled tips -->
-    <g fill="url(#mf-tentacle)" stroke="#2a1438" stroke-width="0.8">
-    <path d="M 66 64 C 60 80 66 92 58 104 Q 54 110 58 113 Q 57 107 62 103 C 70 91 64 80 71 67 Z"/>
-    <path d="M 73 69 C 70 84 76 96 70 110 Q 68 117 73 117 Q 72 111 74 108 C 80 96 75 84 78 71 Z"/>
-    <path d="M 87 69 C 90 84 84 96 90 110 Q 92 117 87 117 Q 88 111 86 108 C 80 96 85 84 82 71 Z"/>
-    <path d="M 94 64 C 100 80 94 92 102 104 Q 106 110 102 113 Q 103 107 98 103 C 90 91 96 80 89 67 Z"/>
-    </g>
-    <g stroke="#c8a8d6" stroke-width="0.7" fill="none" opacity="0.4">
-    <path d="M 67 70 C 63 80 66 88 62 96"/>
-    <path d="M 74 74 C 73 84 76 92 73 100"/>
-    <path d="M 86 74 C 87 84 84 92 87 100"/>
-    <path d="M 93 70 C 97 80 94 88 98 96"/>
-    </g>
-    <g fill="#d8bce0" opacity="0.65">
-    <circle cx="69" cy="80" r="0.9"/><circle cx="67" cy="88" r="0.8"/><circle cx="64" cy="96" r="0.7"/>
-    <circle cx="76" cy="82" r="0.9"/><circle cx="76.5" cy="91" r="0.8"/><circle cx="75" cy="100" r="0.7"/>
-    <circle cx="84" cy="82" r="0.9"/><circle cx="83.5" cy="91" r="0.8"/><circle cx="85" cy="100" r="0.7"/>
-    <circle cx="91" cy="80" r="0.9"/><circle cx="93" cy="88" r="0.8"/><circle cx="96" cy="96" r="0.7"/>
+    <!-- long clawed hands, raised, with psychic light -->
+    <circle cx="34" cy="96" r="14" fill="url(#cv-psy)"/><circle cx="126" cy="96" r="14" fill="url(#cv-psy)"/>
+    <path d="M52 104 Q42 100 36 98" stroke="#3a1d52" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M108 104 Q118 100 124 98" stroke="#3a1d52" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <g stroke="#9c8fa6" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <path d="M36 98 L26 86 M36 98 L24 94 M36 98 L26 102 M36 98 L30 108"/>
+      <path d="M124 98 L134 86 M124 98 L136 94 M124 98 L134 102 M124 98 L130 108"/>
     </g>
     </svg>
   `,

@@ -1927,7 +1927,7 @@ function monsterActionInner(
     return { messages, monsterDamage: base, playerDied, monsterDied: false };
   }
 
-  // Handle intelligence drain (Mind Flayer)
+  // Handle intelligence drain (Cerebrovore)
   if (ability === 'intelligence-drain') {
     const dmg = calculateMonsterDamage(monster, char, rng, naked, 'psychic-blast');
     char.hp = Math.max(0, char.hp - dmg);
