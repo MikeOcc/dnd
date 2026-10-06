@@ -819,5 +819,6 @@ html, body {
 }
 
 /* A Death Worm under the floor: sunk out of sight. */
-#monster-portrait.burrowed svg { opacity: 0.12; transform: translateY(35%); transition: opacity 500ms ease, transform 500ms ease; }
+/* Only its spined top shows above the broken floor (the rest is clipped away). */
+#monster-portrait.burrowed svg { opacity: 0.85; transform: translateY(42%); clip-path: inset(0 0 42% 0); transition: opacity 500ms ease, transform 500ms ease; }
 #monster-portrait svg { transition: opacity 500ms ease, transform 500ms ease; }

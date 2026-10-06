@@ -413,7 +413,7 @@ function monsterObject(state, cam, now) {
   return {
     kind: 'monster', type: m.type, size: { w: h, h }, noClip: true, hide: m.choirBroken || [],
     at: [cam.x + cam.dir[0] * depth, cam.y + cam.dir[1] * depth],
-    alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : m.burrowed ? 0.12 : undefined, flash,
+    alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : m.burrowed ? 0.45 : undefined, flash,
   };
 }
 
