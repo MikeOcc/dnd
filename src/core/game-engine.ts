@@ -2670,6 +2670,7 @@ export class GameEngine {
     // Gold from monster — already scales with dungeon depth via monster.level
     const goldDrop = this.rng.float() < TREASURE.MONSTER_DROP_CHANCE
       ? this.rng.int(TREASURE.MONSTER_DROP_MIN, TREASURE.MONSTER_DROP_MAX) * monster.level
+        + this.rng.int(TREASURE.MONSTER_DROP_BONUS_MIN, TREASURE.MONSTER_DROP_BONUS_MAX)
       : 0;
     if (goldDrop > 0) {
       this.char.gold += goldDrop;

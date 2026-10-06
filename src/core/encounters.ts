@@ -217,7 +217,8 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
 
   if (roll < 0.352) {
     const gold = rng.int(TREASURE.GOLD_MIN, TREASURE.GOLD_MAX) * char.dungeonLevel
-      + rng.int(0, char.level) * TREASURE.GOLD_CHAR_LEVEL_MULT;
+      + rng.int(0, char.level) * TREASURE.GOLD_CHAR_LEVEL_MULT
+      + rng.int(TREASURE.GOLD_BONUS_MIN, TREASURE.GOLD_BONUS_MAX);
     char.gold += gold;
     return { messages: [`You find ${gold} gold coins!`], goldGained: gold };
   }

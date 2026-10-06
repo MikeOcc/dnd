@@ -353,6 +353,10 @@ export const TREASURE = {
   GOLD_MIN: 10,
   GOLD_MAX: 80,
   GOLD_CHAR_LEVEL_MULT: 2,
+  // ...and a flat amount on top, the same at every depth: it roughly doubles
+  // a shallow chest and adds a little to a deep one.
+  GOLD_BONUS_MIN: 25,
+  GOLD_BONUS_MAX: 75,
 
   // Rarer, richer gemstone find: scales more steeply with dungeon depth.
   GEM_MIN: 30,
@@ -361,9 +365,11 @@ export const TREASURE = {
 
   // Monster gold drop chance/amount (amount already scales via monster.level,
   // which itself now scales with dungeon depth).
-  MONSTER_DROP_CHANCE: 0.4,
+  MONSTER_DROP_CHANCE: 0.5,
   MONSTER_DROP_MIN: 1,
   MONSTER_DROP_MAX: 15,
+  MONSTER_DROP_BONUS_MIN: 5,      // plus a flat amount (most felt early on)
+  MONSTER_DROP_BONUS_MAX: 20,
 } as const;
 
 // Trapped chests. Whether a chest is trapped (and with what) is fixed per
