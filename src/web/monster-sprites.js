@@ -4163,231 +4163,77 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Beholder': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beholder">
+  'Hollow Choir': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Hollow Choir: five cracked stone masks around a void">
     <defs>
-    <radialGradient id="bh-body" cx="38%" cy="30%" r="75%">
-    <stop offset="0" stop-color="#d2a684"/>
-    <stop offset="0.35" stop-color="#a0685c"/>
-    <stop offset="0.75" stop-color="#5a2a34"/>
-    <stop offset="1" stop-color="#240c16"/>
-    </radialGradient>
-    <radialGradient id="bh-sclera" cx="45%" cy="38%" r="65%">
-    <stop offset="0" stop-color="#ffffff"/>
-    <stop offset="0.6" stop-color="#ece2cc"/>
-    <stop offset="1" stop-color="#9a8670"/>
-    </radialGradient>
-    <radialGradient id="bh-iris" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#fff080"/>
-    <stop offset="0.35" stop-color="#ffb020"/>
-    <stop offset="0.75" stop-color="#c0400c"/>
-    <stop offset="1" stop-color="#4a0c04"/>
-    </radialGradient>
-    <radialGradient id="bh-maw" cx="50%" cy="30%" r="70%">
-    <stop offset="0" stop-color="#6a0c18"/>
-    <stop offset="1" stop-color="#140206"/>
-    </radialGradient>
-    <radialGradient id="bh-stalkeye" cx="40%" cy="35%" r="65%">
-    <stop offset="0" stop-color="#ffffff"/>
-    <stop offset="1" stop-color="#b0a088"/>
-    </radialGradient>
-    <filter id="bh-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
-    <filter id="bh-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
-    <clipPath id="bh-eyeclip"><path d="M 57 79 Q 80 58 103 79 Q 80 98 57 79 Z"/></clipPath>
+    <radialGradient id="hc-void" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000" stop-opacity="1"/><stop offset="0.45" stop-color="#05040a" stop-opacity="0.92"/><stop offset="1" stop-color="#05040a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hc-stone" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#9d9686"/><stop offset="0.5" stop-color="#6e685b"/><stop offset="1" stop-color="#36322b"/></linearGradient>
+    <radialGradient id="hc-grime" cx="0.5" cy="0.6" r="0.6"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#14110d" stop-opacity="0.55"/></radialGradient>
     </defs>
-    
-    <!-- floating: shadow well below the body -->
-    <ellipse cx="80" cy="153" rx="34" ry="4.5" fill="#000" opacity="0.55" filter="url(#bh-soft)"/>
-    
-    <!-- eyestalks: dark core, flesh, highlight, then ring segments -->
-    <g fill="none" stroke-linecap="round">
-    <g stroke="#2a1018" stroke-width="5.2">
-    <path d="M 38 78 C 26 74 18 80 11 71"/>
-    <path d="M 42 62 C 30 56 28 44 18 40"/>
-    <path d="M 50 52 C 44 40 48 30 36 22"/>
-    <path d="M 60 46 C 56 32 64 24 54 13"/>
-    <path d="M 72 43 C 70 30 78 20 70 8"/>
-    <path d="M 88 43 C 90 30 82 20 91 8"/>
-    <path d="M 100 46 C 104 32 96 24 106 13"/>
-    <path d="M 110 52 C 116 40 112 30 124 22"/>
-    <path d="M 118 62 C 130 56 132 44 142 40"/>
-    <path d="M 122 78 C 134 74 142 80 149 71"/>
+    <!-- the hollow: a darkness light does not enter -->
+    <circle cx="80" cy="84" r="46" fill="url(#hc-void)"/>
+    <!-- wisps of darkness binding each mask to it -->
+    <g fill="none" stroke="#0b0910" stroke-width="2.2" stroke-linecap="round" opacity="0.85">
+      <path d="M72 78 Q58 62 46 46"/><path d="M90 76 Q104 62 114 52"/><path d="M70 92 Q52 100 40 104"/>
+      <path d="M92 94 Q108 104 120 112"/><path d="M80 98 Q82 114 84 128"/>
     </g>
-    <g stroke="#9a6258" stroke-width="3.4">
-    <path d="M 38 78 C 26 74 18 80 11 71"/>
-    <path d="M 42 62 C 30 56 28 44 18 40"/>
-    <path d="M 50 52 C 44 40 48 30 36 22"/>
-    <path d="M 60 46 C 56 32 64 24 54 13"/>
-    <path d="M 72 43 C 70 30 78 20 70 8"/>
-    <path d="M 88 43 C 90 30 82 20 91 8"/>
-    <path d="M 100 46 C 104 32 96 24 106 13"/>
-    <path d="M 110 52 C 116 40 112 30 124 22"/>
-    <path d="M 118 62 C 130 56 132 44 142 40"/>
-    <path d="M 122 78 C 134 74 142 80 149 71"/>
+    <g fill="none" stroke="#2a2433" stroke-width="0.8" opacity="0.6">
+      <path d="M74 80 Q62 66 50 50"/><path d="M88 78 Q100 66 110 56"/><path d="M80 100 Q80 116 83 126"/>
     </g>
-    <g stroke="#e0b494" stroke-width="1" opacity="0.55" transform="translate(-0.8,-0.8)">
-    <path d="M 38 78 C 26 74 18 80 11 71"/>
-    <path d="M 42 62 C 30 56 28 44 18 40"/>
-    <path d="M 50 52 C 44 40 48 30 36 22"/>
-    <path d="M 60 46 C 56 32 64 24 54 13"/>
-    <path d="M 72 43 C 70 30 78 20 70 8"/>
-    <path d="M 88 43 C 90 30 82 20 91 8"/>
-    <path d="M 100 46 C 104 32 96 24 106 13"/>
-    <path d="M 110 52 C 116 40 112 30 124 22"/>
-    <path d="M 118 62 C 130 56 132 44 142 40"/>
-    <path d="M 122 78 C 134 74 142 80 149 71"/>
+    <g class="choir-mask m-grief">
+      <g transform="translate(44 42) rotate(-16) scale(1.0)">
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-stone)" stroke="#0e0c0a" stroke-width="1.3"/>
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-grime)"/>
+        <path d="M-12 -12 C-6 -18 6 -18 12 -12" fill="none" stroke="#d8d0bc" stroke-width="0.6" opacity="0.18"/>
+        <path d="M-10 -7 L-3 -10 M10 -7 L3 -10" stroke="#2a2620" stroke-width="1.6" stroke-linecap="round"/>
+        <ellipse cx="-6" cy="-3" rx="3.4" ry="2.6" fill="#080706"/><ellipse class="glow" cx="-6" cy="-3" rx="1.19" ry="0.91" fill="#d9e2cc" opacity="0.32"/><ellipse cx="6" cy="-3" rx="3.4" ry="2.6" fill="#080706"/><ellipse class="glow" cx="6" cy="-3" rx="1.19" ry="0.91" fill="#d9e2cc" opacity="0.32"/>
+        <path d="M-5 11 Q0 4 5 11 Q0 9 -5 11 Z" fill="#080706" stroke="#2a2620" stroke-width="0.8"/>
+        <path d="M-6 0 L-7 6 L-5 11 M3 -20 L1 -13 L4 -8" stroke="#0f0d0b" stroke-width="1.2" fill="none"/>
+      </g>
     </g>
-    <g stroke="#3a1620" stroke-width="3.6" stroke-dasharray="0.8 3.2" stroke-linecap="butt" opacity="0.6">
-    <path d="M 38 78 C 26 74 18 80 11 71"/>
-    <path d="M 42 62 C 30 56 28 44 18 40"/>
-    <path d="M 50 52 C 44 40 48 30 36 22"/>
-    <path d="M 60 46 C 56 32 64 24 54 13"/>
-    <path d="M 72 43 C 70 30 78 20 70 8"/>
-    <path d="M 88 43 C 90 30 82 20 91 8"/>
-    <path d="M 100 46 C 104 32 96 24 106 13"/>
-    <path d="M 110 52 C 116 40 112 30 124 22"/>
-    <path d="M 118 62 C 130 56 132 44 142 40"/>
-    <path d="M 122 78 C 134 74 142 80 149 71"/>
+    <g class="choir-mask m-rage">
+      <g transform="translate(118 48) rotate(14) scale(1.0)">
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-stone)" stroke="#0e0c0a" stroke-width="1.3"/>
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-grime)"/>
+        <path d="M-12 -12 C-6 -18 6 -18 12 -12" fill="none" stroke="#d8d0bc" stroke-width="0.6" opacity="0.18"/>
+        <path d="M-11 -10 L-2 -5 M11 -10 L2 -5" stroke="#2a2620" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="-6" cy="-2" rx="3.2" ry="1.9" fill="#080706"/><ellipse class="glow" cx="-6" cy="-2" rx="1.12" ry="0.66" fill="#d9e2cc" opacity="0.32"/><ellipse cx="6" cy="-2" rx="3.2" ry="1.9" fill="#080706"/><ellipse class="glow" cx="6" cy="-2" rx="1.12" ry="0.66" fill="#d9e2cc" opacity="0.32"/>
+        <path d="M-7 8 L7 8 L5 14 L-5 14 Z" fill="#080706" stroke="#2a2620" stroke-width="0.8"/><path d="M-4 8 v2 M0 8 v2 M4 8 v2" stroke="#7d776c" stroke-width="0.9"/>
+        <path d="M8 -18 L5 -9 L9 -2 L6 6 M-13 4 L-8 9" stroke="#0f0d0b" stroke-width="1.2" fill="none"/>
+      </g>
     </g>
+    <g class="choir-mask m-delight">
+      <g transform="translate(36 108) rotate(-10) scale(1.0)">
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-stone)" stroke="#0e0c0a" stroke-width="1.3"/>
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-grime)"/>
+        <path d="M-12 -12 C-6 -18 6 -18 12 -12" fill="none" stroke="#d8d0bc" stroke-width="0.6" opacity="0.18"/>
+        <path d="M-10 -9 Q-6 -12 -2 -9 M2 -9 Q6 -12 10 -9" stroke="#2a2620" stroke-width="1.2" fill="none"/>
+        <path d="M-10 -1 Q-6 -5 -2 -1 Q-6 -2.4 -10 -1 Z" fill="#080706"/><path d="M2 -1.5 Q6 -5.5 10 -1.5 Q6 -2.8 2 -1.5 Z" fill="#080706"/><ellipse class="glow" cx="-6" cy="-2.2" rx="1" ry="0.5" fill="#d9e2cc" opacity="0.32"/><ellipse class="glow" cx="6" cy="-2.6" rx="1" ry="0.5" fill="#d9e2cc" opacity="0.32"/>
+        <path d="M-13 5 Q-2 15 12 7 Q-1 11 -13 5 Z" fill="#080706" stroke="#1a1712" stroke-width="0.7"/><path d="M-13 5 l-1.5 -2 M12 7 l1.5 -2.5" stroke="#1a1712" stroke-width="0.8"/>
+        <path d="M0 -21 L-2 -12 L1 -6 M-14 2 L-10 5 L-11 10 M12 10 L8 14" stroke="#0f0d0b" stroke-width="1.2" fill="none"/>
+      </g>
     </g>
-    
-    <!-- stalk eyes: bulb, sclera, iris (each a different ray colour), slit, lid -->
-    <g>
-    <g fill="#6a3440" stroke="#2a1018" stroke-width="0.8">
-    <circle cx="10" cy="69" r="6"/><circle cx="16" cy="38" r="6"/><circle cx="34" cy="20" r="6"/>
-    <circle cx="53" cy="11" r="6"/><circle cx="69" cy="6" r="6"/><circle cx="92" cy="6" r="6"/>
-    <circle cx="107" cy="11" r="6"/><circle cx="126" cy="20" r="6"/><circle cx="144" cy="38" r="6"/>
-    <circle cx="150" cy="69" r="6"/>
+    <g class="choir-mask m-dread">
+      <g transform="translate(124 112) rotate(18) scale(1.0)">
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-stone)" stroke="#0e0c0a" stroke-width="1.3"/>
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-grime)"/>
+        <path d="M-12 -12 C-6 -18 6 -18 12 -12" fill="none" stroke="#d8d0bc" stroke-width="0.6" opacity="0.18"/>
+        <path d="M-10 -11 Q-6 -14 -2 -10 M2 -10 Q6 -14 10 -11" stroke="#2a2620" stroke-width="1.3" fill="none"/>
+        <ellipse cx="-6" cy="-3" rx="3.8" ry="3.8" fill="#080706"/><ellipse class="glow" cx="-6" cy="-3" rx="1.33" ry="1.33" fill="#d9e2cc" opacity="0.32"/><ellipse cx="6" cy="-3" rx="3.8" ry="3.8" fill="#080706"/><ellipse class="glow" cx="6" cy="-3" rx="1.33" ry="1.33" fill="#d9e2cc" opacity="0.32"/>
+        <ellipse cx="0" cy="11" rx="2.6" ry="3.6" fill="#080706" stroke="#2a2620" stroke-width="0.8"/>
+        <path d="M-4 -20 L-6 -11 M10 0 L13 6 L11 12 M-12 8 L-7 14" stroke="#0f0d0b" stroke-width="1.2" fill="none"/>
+      </g>
     </g>
-    <g fill="url(#bh-stalkeye)">
-    <circle cx="10" cy="69.5" r="4.2"/><circle cx="16" cy="38.5" r="4.2"/><circle cx="34" cy="20.5" r="4.2"/>
-    <circle cx="53" cy="11.5" r="4.2"/><circle cx="69" cy="6.5" r="4.2"/><circle cx="92" cy="6.5" r="4.2"/>
-    <circle cx="107" cy="11.5" r="4.2"/><circle cx="126" cy="20.5" r="4.2"/><circle cx="144" cy="38.5" r="4.2"/>
-    <circle cx="150" cy="69.5" r="4.2"/>
-    </g>
-    <circle cx="11" cy="70" r="2.4" fill="#e03030"/>
-    <circle cx="17" cy="39.5" r="2.4" fill="#40d040"/>
-    <circle cx="35" cy="21.5" r="2.4" fill="#f0d030"/>
-    <circle cx="54" cy="12.5" r="2.4" fill="#3a7aff"/>
-    <circle cx="70" cy="7.5" r="2.4" fill="#ff8a30"/>
-    <circle cx="91" cy="7.5" r="2.4" fill="#b040ff"/>
-    <circle cx="106" cy="12.5" r="2.4" fill="#30e0d0"/>
-    <circle cx="125" cy="21.5" r="2.4" fill="#ff4aa0"/>
-    <circle cx="143" cy="39.5" r="2.4" fill="#a0ff40"/>
-    <circle cx="149" cy="70" r="2.4" fill="#e8e8e8"/>
-    <g fill="#0a0204">
-    <ellipse cx="11" cy="70" rx="0.7" ry="1.9"/><ellipse cx="17" cy="39.5" rx="0.7" ry="1.9"/>
-    <ellipse cx="35" cy="21.5" rx="0.7" ry="1.9"/><ellipse cx="54" cy="12.5" rx="0.7" ry="1.9"/>
-    <ellipse cx="70" cy="7.5" rx="0.7" ry="1.9"/><ellipse cx="91" cy="7.5" rx="0.7" ry="1.9"/>
-    <ellipse cx="106" cy="12.5" rx="0.7" ry="1.9"/><ellipse cx="125" cy="21.5" rx="0.7" ry="1.9"/>
-    <ellipse cx="143" cy="39.5" rx="0.7" ry="1.9"/><ellipse cx="149" cy="70" rx="0.7" ry="1.9"/>
-    </g>
-    <!-- heavy upper lids -->
-    <g fill="#7a4048" stroke="#2a1018" stroke-width="0.6">
-    <path d="M 4 68 Q 10 61 16 68 Q 10 65 4 68 Z"/><path d="M 10 37 Q 16 30 22 37 Q 16 34 10 37 Z"/>
-    <path d="M 28 19 Q 34 12 40 19 Q 34 16 28 19 Z"/><path d="M 47 10 Q 53 3 59 10 Q 53 7 47 10 Z"/>
-    <path d="M 63 5 Q 69 -2 75 5 Q 69 2 63 5 Z"/><path d="M 86 5 Q 92 -2 98 5 Q 92 2 86 5 Z"/>
-    <path d="M 101 10 Q 107 3 113 10 Q 107 7 101 10 Z"/><path d="M 120 19 Q 126 12 132 19 Q 126 16 120 19 Z"/>
-    <path d="M 138 37 Q 144 30 150 37 Q 144 34 138 37 Z"/><path d="M 144 68 Q 150 61 156 68 Q 150 65 144 68 Z"/>
-    </g>
-    <g fill="#fff" opacity="0.85">
-    <circle cx="9" cy="68" r="0.9"/><circle cx="15" cy="37.5" r="0.9"/><circle cx="33" cy="19.5" r="0.9"/>
-    <circle cx="52" cy="10.5" r="0.9"/><circle cx="68" cy="5.5" r="0.9"/><circle cx="90" cy="5.5" r="0.9"/>
-    <circle cx="105" cy="10.5" r="0.9"/><circle cx="124" cy="19.5" r="0.9"/><circle cx="142" cy="37.5" r="0.9"/>
-    <circle cx="148" cy="68" r="0.9"/>
-    </g>
-    </g>
-    
-    <!-- body sphere -->
-    <circle cx="80" cy="86" r="45" fill="url(#bh-body)" stroke="#1a0810" stroke-width="1.6"/>
-    <!-- rim light on the lower right -->
-    <path d="M 118 104 Q 108 126 84 131" stroke="#e09a70" stroke-width="2" fill="none" opacity="0.35" stroke-linecap="round"/>
-    <!-- sheen -->
-    <ellipse cx="60" cy="58" rx="13" ry="7" transform="rotate(-32 60 58)" fill="#fff" opacity="0.14" filter="url(#bh-blur)"/>
-    
-    <!-- chitin plate seams, each with a faint lit edge -->
-    <g fill="none" stroke-linecap="round">
-    <g stroke="#2e1018" stroke-width="1.3" opacity="0.7">
-    <path d="M 42 72 Q 48 56 62 47"/>
-    <path d="M 98 47 Q 112 56 118 72"/>
-    <path d="M 38 96 Q 42 112 54 122"/>
-    <path d="M 122 96 Q 118 112 106 122"/>
-    <path d="M 70 43 Q 80 48 90 43"/>
-    <path d="M 36 84 Q 44 82 50 88"/>
-    <path d="M 124 84 Q 116 82 110 88"/>
-    </g>
-    <g stroke="#e8b898" stroke-width="0.8" opacity="0.28" transform="translate(0.9,0.9)">
-    <path d="M 42 72 Q 48 56 62 47"/>
-    <path d="M 98 47 Q 112 56 118 72"/>
-    <path d="M 38 96 Q 42 112 54 122"/>
-    <path d="M 122 96 Q 118 112 106 122"/>
-    <path d="M 70 43 Q 80 48 90 43"/>
-    </g>
-    </g>
-    <!-- warts / nodules -->
-    <g>
-    <g fill="#6a3440" stroke="#2a1018" stroke-width="0.5">
-    <circle cx="48" cy="66" r="2.2"/><circle cx="112" cy="68" r="2"/><circle cx="44" cy="104" r="1.8"/>
-    <circle cx="118" cy="100" r="2.1"/><circle cx="64" cy="126" r="1.6"/><circle cx="98" cy="127" r="1.7"/>
-    <circle cx="80" cy="46" r="1.6"/><circle cx="58" cy="52" r="1.4"/><circle cx="104" cy="54" r="1.5"/>
-    </g>
-    <g fill="#f0c8a8" opacity="0.5">
-    <circle cx="47.3" cy="65.3" r="0.7"/><circle cx="111.3" cy="67.3" r="0.6"/><circle cx="43.4" cy="103.4" r="0.6"/>
-    <circle cx="117.3" cy="99.3" r="0.6"/><circle cx="79.4" cy="45.4" r="0.5"/><circle cx="57.4" cy="51.4" r="0.5"/>
-    <circle cx="103.4" cy="53.4" r="0.5"/>
-    </g>
-    </g>
-    
-    <!-- central eye: socket, sclera, veins, iris, slit pupil, lids -->
-    <ellipse cx="80" cy="80" rx="28" ry="21" fill="#2a0c16" opacity="0.75" filter="url(#bh-soft)"/>
-    <path d="M 57 79 Q 80 58 103 79 Q 80 98 57 79 Z" fill="url(#bh-sclera)"/>
-    <g clip-path="url(#bh-eyeclip)">
-    <g stroke="#c02a36" stroke-width="0.6" fill="none" opacity="0.55">
-    <path d="M 58 79 Q 63 76 66 79 Q 68 81 70 79"/>
-    <path d="M 102 79 Q 97 82 94 79 Q 92 76 90 78"/>
-    <path d="M 62 84 Q 66 86 68 84"/>
-    <path d="M 98 74 Q 95 72 92 74"/>
-    </g>
-    <circle cx="80" cy="79" r="15" fill="#ff9a20" opacity="0.35" filter="url(#bh-blur)"/>
-    <circle cx="80" cy="79" r="11.5" fill="url(#bh-iris)" stroke="#3a0804" stroke-width="0.8"/>
-    <g stroke="#7a2008" stroke-width="0.5" opacity="0.6">
-    <path d="M 80 68 L 80 72"/><path d="M 80 86 L 80 90"/><path d="M 69 79 L 73 79"/><path d="M 87 79 L 91 79"/>
-    <path d="M 72 71 L 75 74"/><path d="M 88 71 L 85 74"/><path d="M 72 87 L 75 84"/><path d="M 88 87 L 85 84"/>
-    </g>
-    <ellipse cx="80" cy="79" rx="3.1" ry="9.2" fill="#060102"/>
-    <!-- shadow cast by the upper lid -->
-    <path d="M 57 79 Q 80 58 103 79 Q 80 66 57 79 Z" fill="#3a1018" opacity="0.45"/>
-    </g>
-    <circle cx="75" cy="74" r="2.6" fill="#fff" opacity="0.9"/>
-    <circle cx="85" cy="84" r="1" fill="#fff" opacity="0.55"/>
-    <!-- upper lid: heavy fold -->
-    <path d="M 53 80 Q 80 52 107 80 Q 80 63 53 80 Z" fill="#8a4c50" stroke="#240a12" stroke-width="1.2"/>
-    <path d="M 58 74 Q 80 58 102 74" stroke="#d09080" stroke-width="0.8" fill="none" opacity="0.45"/>
-    <path d="M 56 70 Q 80 50 104 70" stroke="#2a0c16" stroke-width="1" fill="none" opacity="0.6"/>
-    <!-- lower lid -->
-    <path d="M 56 80 Q 80 101 104 80 Q 80 95 56 80 Z" fill="#6a3440" stroke="#240a12" stroke-width="1"/>
-    
-    <!-- maw: lips, dark interior, two rows of fangs -->
-    <path d="M 44 102 Q 80 124 116 102" stroke="#b07868" stroke-width="1.2" fill="none" opacity="0.5"/>
-    <path d="M 48 104 Q 80 120 112 104 C 106 130 54 130 48 104 Z" fill="url(#bh-maw)" stroke="#1a0408" stroke-width="1.6"/>
-    <path d="M 66 118 Q 80 124 94 118 Q 80 121 66 118 Z" fill="#8a2030" opacity="0.7"/>
-    <g fill="#f2ead2" stroke="#7a6a4a" stroke-width="0.45">
-    <path d="M 51.8 106.4 L 54.4 112.4 L 57 106.9 Z"/>
-    <path d="M 58.2 108.6 L 60.8 115 L 63.4 109.3 Z"/>
-    <path d="M 64.6 110.2 L 67.2 116.8 L 69.8 110.9 Z"/>
-    <path d="M 71 111.2 L 73.6 117.6 L 76.2 111.7 Z"/>
-    <path d="M 77.4 111.5 L 80 118.2 L 82.6 111.5 Z"/>
-    <path d="M 83.8 111.7 L 86.4 117.6 L 89 111.2 Z"/>
-    <path d="M 90.2 110.9 L 92.8 116.8 L 95.4 110.2 Z"/>
-    <path d="M 96.6 109.3 L 99.2 115 L 101.8 108.6 Z"/>
-    <path d="M 103 106.9 L 105.6 112.4 L 108.2 106.4 Z"/>
-    <path d="M 49.8 113 L 52.2 107.5 L 54.6 113.3 Z"/>
-    <path d="M 57.3 119.1 L 59.7 113.6 L 62.1 119.4 Z"/>
-    <path d="M 66.9 122.8 L 69.3 117.3 L 71.7 123 Z"/>
-    <path d="M 77.6 124 L 80 118.5 L 82.4 124 Z"/>
-    <path d="M 88.3 123 L 90.7 117.3 L 93.1 122.8 Z"/>
-    <path d="M 97.9 119.4 L 100.3 113.6 L 102.7 119.1 Z"/>
-    <path d="M 105.4 113.3 L 107.8 107.5 L 110.2 113 Z"/>
+    <g class="choir-mask m-blank">
+      <g transform="translate(82 136) rotate(4) scale(0.9)">
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-stone)" stroke="#0e0c0a" stroke-width="1.3"/>
+        <path d="M0 -21 C12 -21 16 -11 15.5 0 C15 12 9 21 0 22 C-9 21 -15 12 -15.5 0 C-16 -11 -12 -21 0 -21 Z" fill="url(#hc-grime)"/>
+        <path d="M-12 -12 C-6 -18 6 -18 12 -12" fill="none" stroke="#d8d0bc" stroke-width="0.6" opacity="0.18"/>
+        
+        <path d="M-10 -3 h7 M3 -3 h7" stroke="#080706" stroke-width="2.4" stroke-linecap="round"/><ellipse class="glow" cx="-6.5" cy="-3" rx="1.2" ry="0.6" fill="#d9e2cc" opacity="0.32"/><ellipse class="glow" cx="6.5" cy="-3" rx="1.2" ry="0.6" fill="#d9e2cc" opacity="0.32"/>
+        <path d="M-5 10 h10" stroke="#080706" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M2 -21 L0 -12 L3 -4 L1 4" stroke="#0f0d0b" stroke-width="1.2" fill="none"/>
+      </g>
     </g>
     </svg>
   `,
@@ -5467,6 +5313,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Hollow Choir': 1.2,
   'Asmodeus': 2.2,
   'Giant': 1.35,
   'Orc King': 1.25,

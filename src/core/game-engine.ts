@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import type { RingId, SceneData, SceneObject } from './types.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, beholderAntimagic, calculateXPReward,
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import {
@@ -1565,10 +1565,6 @@ export class GameEngine {
       return this.getState();
     }
 
-    if (this.combat) {
-      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'gem');
-      if (negated) return this.processCombatResult(negated);
-    }
 
     this.cue(`gem-${type}`);
     switch (type) {
@@ -1851,8 +1847,6 @@ export class GameEngine {
     if (spell !== 'heal' && this.targetInvisible()) return this.strikeAtNothing();
     if (spell !== 'heal' && isMagic(spell) && this.combat.monster.type === 'Rakshasa') return this.spellWashesOff();
     if (isMagic(spell)) {
-      const negated = beholderAntimagic(this.char, this.combat.monster, this.rng, 'spell');
-      if (negated) return this.processCombatResult(negated);
       this.fx.cast = spell === 'heal' ? 'heal' : 'attack';
     }
 
@@ -2352,6 +2346,9 @@ export class GameEngine {
 
     const monster = this.combat.monster;
     const def = monster.definition;
+    if (monster.type === 'Hollow Choir') {
+      this.messages.push('', 'The masks fall and crumble. The darkness between them vanishes.', 'For the first time, the chamber is silent.');
+    }
     const xpGained = calculateXPReward(this.char.level, monster.level, def.isUnique, def.naturalTier);
 
     this.char.xp += xpGained;

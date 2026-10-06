@@ -257,13 +257,21 @@
   // ─── Monsters standing in the scene (the portrait art, as a figure) ─────
 
   const monsterImages = {};
-  function monsterImage(type) {
-    if (monsterImages[type]) return monsterImages[type];
-    const svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
+  /** A monster's portrait as an image; `hide` lists parts to leave out
+   * (the Hollow Choir's shattered masks, by name). */
+  function monsterImage(type, hide = []) {
+    const key = `${type}|${hide.join(',')}`;
+    if (monsterImages[key]) return monsterImages[key];
+    let svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
+    if (svg && hide.length && typeof DOMParser === 'function') {
+      const doc = new DOMParser().parseFromString(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'), 'image/svg+xml');
+      for (const part of hide) doc.querySelectorAll(`.m-${part}`).forEach(el => el.remove());
+      svg = new XMLSerializer().serializeToString(doc.documentElement);
+    }
     const img = new Image();
     img.onload = () => onReady();
     if (svg) img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'));
-    return (monsterImages[type] = img);
+    return (monsterImages[key] = img);
   }
 
   /** A monster figure: breathes slowly (unless motion is reduced), flashes
@@ -271,7 +279,7 @@
   function monsterArt(obj) {
     return {
       draw(ctx, x, y, w, h, t) {
-        const img = monsterImage(obj.type);
+        const img = monsterImage(obj.type, obj.hide);
         if (!img.complete || !img.naturalWidth) return;
         const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
         const hh = h * (1 + breathe), ww = w * (1 - breathe * 0.5);

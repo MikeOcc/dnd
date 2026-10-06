@@ -45,7 +45,7 @@ describe('Spell unlocks', () => {
 describe('Banish', () => {
   it('always works on ordinary monsters', () => {
     expect(banishFailFaces(createMonster('Goblin', 5, 'g'))).toBe(0);
-    expect(banishFailFaces(createMonster('Beholder', 25, 'b'))).toBe(0);
+    expect(banishFailFaces(createMonster('Hollow Choir', 25, 'b'))).toBe(0);
     const rng = new RNG(5);
     for (let i = 0; i < 50; i++) {
       expect(playerBanish(makeChar(40), createMonster('Orc', 10, 'o'), rng).banished).toBe(true);

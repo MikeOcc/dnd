@@ -226,7 +226,7 @@ export type MonsterType =
   | 'Death Knight'
   | 'Lich'
   | 'Wizard'
-  | 'Beholder'
+  | 'Hollow Choir'
   | 'Cerebrovore'
   | 'Elder Oblex'
   | 'Sanguinid'
@@ -274,7 +274,8 @@ export interface Monster {
   definition: MonsterDefinition;
   prayerPenalty: number;
   confusedTurns?: number; // Opal's chiaroscuro blast: a chance to lose its turn each round until this ticks to 0
-  petrifyStage?: number;  // Beholder: set once its petrification ray lands; a second failed save that fight is fatal
+  choirPrep?: ChoirPower;      // Hollow Choir: the power a mask is gathering (it lands on the Choir's next turn)
+  choirBroken?: ChoirMask[];   // Hollow Choir: the masks shattered so far
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
@@ -309,10 +310,9 @@ export interface Fx {
 
 export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded' | 'webbed';
 
-/** The Beholder's eye rays, one per eyestalk. */
-export type BeholderRay =
-  | 'fear-ray' | 'slow-ray' | 'enervation-ray' | 'telekinetic-ray' | 'paralyze-ray'
-  | 'sleep-ray' | 'charm-ray' | 'petrify-ray' | 'disintegrate-ray' | 'death-ray';
+/** The Hollow Choir's five masks, and the three powers they hold. */
+export type ChoirMask = 'grief' | 'rage' | 'delight' | 'dread' | 'blank';
+export type ChoirPower = 'lament' | 'unmaking' | 'false-joy';
 
 export type GamePhase =
   | 'title'

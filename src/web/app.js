@@ -164,14 +164,28 @@ function applyState(state) {
     portraitEl.innerHTML = '';
   } else if (monster) {
     const sprite = getMonsterSprite(monster.type);
-    portraitEl.innerHTML = sprite || '';
+    // Only redraw for a new monster, so slow animations (the Choir's drift) carry on.
+    if (portraitEl.dataset.monster !== monster.type || !portraitEl.innerHTML) {
+      portraitEl.innerHTML = sprite || '';
+      portraitEl.dataset.monster = monster.type;
+    }
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
+    // The Hollow Choir: shattered masks are gone; a mask gathering a power brightens as the masks align.
+    const choir = monster.type === 'Hollow Choir';
+    const prepMask = { lament: 'grief', unmaking: 'blank', 'false-joy': 'delight' }[monster.choirPrep];
+    portraitEl.classList.toggle('choir', choir);
+    portraitEl.classList.toggle('choir-prep', choir && !!prepMask);
+    for (const m of ['grief', 'rage', 'delight', 'dread', 'blank']) {
+      portraitEl.classList.toggle(`broken-${m}`, choir && (monster.choirBroken || []).includes(m));
+      portraitEl.classList.toggle(`prep-${m}`, choir && prepMask === m);
+    }
     // An invisible Banshee is all but gone from sight.
     portraitEl.classList.toggle('vanished', (monster.invisibleTurns ?? 0) > 0);
   } else {
     portraitEl.classList.add('hidden');
     portraitEl.innerHTML = '';
+    portraitEl.dataset.monster = '';
   }
 
   playHitEffects(prev, state);
@@ -396,7 +410,7 @@ function monsterObject(state, cam, now) {
   }
   const h = Math.min(2.6, 0.85 * (typeof getMonsterSpriteScale === 'function' ? getMonsterSpriteScale(m.type) : 1));
   return {
-    kind: 'monster', type: m.type, size: { w: h, h }, noClip: true,
+    kind: 'monster', type: m.type, size: { w: h, h }, noClip: true, hide: m.choirBroken || [],
     at: [cam.x + cam.dir[0] * depth, cam.y + cam.dir[1] * depth],
     alpha: (m.invisibleTurns ?? 0) > 0 ? 0.08 : undefined, flash,
   };

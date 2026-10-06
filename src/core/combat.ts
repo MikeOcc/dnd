@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, DAGGERS } from './config.js';
-import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement, RingId } from './types.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, DAGGERS, CHOIR } from './config.js';
+import type { Character, Monster, MonsterType, StatusEffect, HeldCondition, FxElement, RingId, ChoirMask, ChoirPower } from './types.js';
 import { RINGS_INFO } from '../content/rings.js';
 import { BESTIARY, type Script, type Kit } from './bestiary.js';
 import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot, bestDagger } from './character.js';
@@ -334,7 +334,7 @@ export function playerAcid(char: Character, monster: Monster, rng: RNG): CombatR
 export function playerLightning(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   const eff = getEffectiveStats(char);
   // Undead are vulnerable to lightning as a category; specific monsters
-  // (Kobold, Slime Mold, Mold, Black Dragon, Red Dragon, Beholder) are
+  // (Kobold, Slime Mold, Mold, Black Dragon, Red Dragon) are
   // tagged individually. Explicit tags always win over the undead default.
   const lightningResistance = monster.definition.lightningResistance
     ?? (isUndead(monster.type) ? 2.0 : 1.0);
@@ -548,7 +548,7 @@ export function playerPray(char: Character, monster: Monster, rng: RNG): CombatR
   // even though they aren't undead themselves.
   const lightVulnerable = monster.definition.lightVulnerable === true;
   const divine = undead || isAsmodeus || lightVulnerable;
-  // Powerful-but-not-undead foes (high-tier beholders, dragons, aberrations)
+  // Powerful-but-not-undead foes (dragons, aberrations)
   // draw a fainter echo of prayer's power; ordinary creatures barely register.
   const powerful = !divine && monster.definition.naturalTier >= COMBAT.PRAYER_POWERFUL_NATURAL_TIER;
 
@@ -1542,6 +1542,9 @@ export function abilityElement(ability: string | undefined): FxElement {
   if (ability === 'harpy-song' || ability === 'rakshasa-illusion' || ability === 'tyrant-rays' || ability === 'stone-gaze') return 'arcane';
   if (ability === 'chill-touch' || ability === 'banshee-wail') return 'drain';
   if (ability === 'radiant-horn') return 'holy';
+  if (ability === 'lament' || ability === 'mask-whisper' || ability === 'choir-prepare') return 'psychic';
+  if (ability === 'unmaking') return 'arcane';
+  if (ability === 'false-joy') return 'drain';
   if (ability === 'winters-grasp' || ability === 'shard-storm') return 'cold';
   if (/disintegrate|petrify|paralyze-ray|slow-ray|magic|teleport|naked|light-bolt/.test(ability)) return 'arcane';
   if (/fire|flame|burn|infernal/.test(ability)) return 'fire';
@@ -1691,6 +1694,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'gold-wallop': 'sack of gold', 'gold-claws': 'claws', 'gold-dust-breath': 'gold-dust breath', 'gilding': 'gilding spell',
   'ice-axe': 'ice axe', 'ice-boulder': 'hurled boulder', 'shard-storm': 'ice shards', 'frost-stomp': 'stomp', 'winters-grasp': "winter's grasp",
   'titan-bite': 'bite',
+  'lament': 'Lament', 'false-joy': 'False Joy', 'rage-strike': 'raging mask', 'mask-whisper': 'whispering mask',
   'tail-slam': 'tail',
   'frostbite-claws': 'frostbitten claws',
   'devouring-bite': 'devouring bite',
@@ -1760,6 +1764,8 @@ function monsterActionInner(
   if (monster.hp <= 0) {
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: true };
   }
+  // The Hollow Choir's masks shatter as it weakens (before it acts, or fails to).
+  if (monster.type === 'Hollow Choir') shatterChoirMasks(monster, messages);
 
   if ((monster.confusedTurns ?? 0) > 0) {
     monster.confusedTurns!--;
@@ -1795,6 +1801,7 @@ function monsterActionInner(
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const eff = getEffectiveStats(char);
 
+  if (monster.type === 'Hollow Choir') return hollowChoirAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Orc King') return orcKingAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Manticore') return manticoreAction(char, monster, rng, messages, naked, out);
   if (monster.type === 'Titanoboa') return titanoboaAction(char, monster, rng, messages, naked, out);
@@ -1846,12 +1853,6 @@ function monsterActionInner(
     ability = pickWizardAbility(rng);
   }
 
-  // Special Beholder logic: a bite, or one eyestalk's ray
-  if (monster.type === 'Beholder') {
-    ability = pickBeholderAbility(monster, rng);
-    out.ability = ability;
-    if (ability) return resolveBeholderRay(ability as BeholderRay, char, monster, rng, messages, naked);
-  }
 
   // Special Sanguinid logic — passively radioactive every round, on top of
   // whichever of its three named attacks it uses this round
@@ -2131,203 +2132,114 @@ function pickSanguinidAbility(rng: RNG): string {
   return 'blood-drain';
 }
 
-// ─── Beholder ────────────────────────────────────────────────────────────────
+// ─── The Hollow Choir ─────────────────────────────────────────────────────────
 
-/** The rays a Beholder of this level has unlocked. */
-export function beholderRaysFor(level: number): BeholderRay[] {
-  return COMBAT.BEHOLDER_RAYS.filter(r => level >= r.minLevel).map(r => r.ray as BeholderRay);
-}
+const CHOIR_BREAK_TEXT: Record<string, string> = {
+  dread: 'The dread mask cracks across its brow and drops away into the dark. One voice falls silent.',
+  delight: 'The smiling mask splits from ear to ear and falls, still grinning. Its hunger goes with it.',
+  grief: 'The grieving mask shatters. Its cry dies before it is born.',
+};
+const CHOIR_CUE: Record<ChoirPower, string> = {
+  lament: 'The grieving mask opens its mouth. A pale light gathers inside.',
+  unmaking: 'The expressionless mask turns slowly toward you. Its empty eyes settle on yours.',
+  'false-joy': 'The smiling mask leans toward you, its grin widening. It is hungry.',
+};
 
-/** '' is a plain bite; otherwise a weighted pick among the unlocked rays. */
-function pickBeholderAbility(monster: Monster, rng: RNG): string {
-  if (rng.float() < COMBAT.BEHOLDER_BITE_CHANCE) return '';
-  const unlocked = COMBAT.BEHOLDER_RAYS.filter(r => monster.level >= r.minLevel);
-  if (unlocked.length === 0) return '';
-  const total = unlocked.reduce((sum, r) => sum + r.weight, 0);
-  let roll = rng.float() * total;
-  for (const r of unlocked) {
-    roll -= r.weight;
-    if (roll < 0) return r.ray;
+/** Masks break as the Choir weakens; a power still being gathered by a
+ * broken mask is lost. Exported for the tests. */
+export function shatterChoirMasks(monster: Monster, messages: string[]): void {
+  const broken = monster.choirBroken ?? [];
+  for (const [mask, share] of CHOIR.BREAKS) {
+    if (broken.includes(mask as ChoirMask) || monster.hp > monster.maxHp * share) continue;
+    broken.push(mask as ChoirMask);
+    messages.push(CHOIR_BREAK_TEXT[mask]);
+    if (monster.choirPrep && CHOIR.POWER_MASK[monster.choirPrep] === mask) {
+      monster.choirPrep = undefined;
+      messages.push('The light it was gathering gutters out.');
+    }
+    messages.push('The remaining masks crowd closer. Their murmuring grows louder.');
   }
-  return unlocked[unlocked.length - 1].ray;
+  monster.choirBroken = broken;
 }
 
-function rayEye(ray: BeholderRay): string {
-  return COMBAT.BEHOLDER_RAYS.find(r => r.ray === ray)?.eye ?? 'glaring';
-}
-
-/** d20 + a third of the listed attributes' average + level/5, against the
- * Beholder's DC. Averaging keeps a multi-attribute save from becoming
- * automatic for a well-rounded character. */
-function beholderSave(char: Character, monster: Monster, rng: RNG, stats: ('constitution' | 'resistance' | 'wisdom' | 'dexterity' | 'strength' | 'charisma')[]): boolean {
+/** d20 + (the attributes' average)/3 + level/5 against the Choir. */
+function choirSave(char: Character, monster: Monster, rng: RNG, stats: ('wisdom' | 'resistance')[]): { ok: boolean; line: string } {
   const eff = getEffectiveStats(char);
-  const avg = stats.reduce((sum, st) => sum + eff[st], 0) / stats.length;
-  const bonus = Math.floor(avg / 3);
-  const roll = rng.die(20) + bonus + Math.floor(char.level / 5);
-  return roll >= COMBAT.BEHOLDER_RAY_DC_BASE + Math.floor(monster.level / 3);
+  const bonus = Math.floor(stats.reduce((a, s) => a + eff[s], 0) / stats.length / 3) + Math.floor(char.level / 5);
+  const die = rng.die(20), dc = CHOIR.SAVE_DC_BASE + Math.floor(monster.level / 3);
+  return { ok: die + bonus >= dc, line: `(Saving roll: ${die} + ${bonus} vs ${dc})` };
 }
 
+/** The Hollow Choir's turn. A power prepared last turn lands now; otherwise
+ * it may begin preparing one (a clear cue, no harm this turn), or a lesser
+ * mask strikes. It never holds the character, so there is no losing turns. */
+function hollowChoirAction(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean, out: { ability?: string }): MonsterActionResult {
+  const broken = monster.choirBroken ?? [];
+  const alive = (m: ChoirMask) => !broken.includes(m);
+  const fury = 1 + broken.length * CHOIR.FURY_PER_BROKEN;
+  const blow = (mult = 1) => Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked) * fury * mult));
+  const hurt = (dmg: number) => { char.hp = Math.max(0, char.hp - dmg); return char.hp <= 0; };
+
+  // A power prepared last turn lands now.
+  const prep = monster.choirPrep;
+  if (prep) {
+    monster.choirPrep = undefined;
+    out.ability = prep;
+    if (prep === 'lament') {
+      const save = choirSave(char, monster, rng, ['wisdom']);
+      const dmg = blow(CHOIR.LAMENT_MULT * (save.ok ? 0.5 : 1));
+      messages.push('The Lament pours out of the grieving mask: the sound of every loss at once.',
+        save.ok ? `You steel your heart against it. You suffer ${dmg} damage. ${save.line}` : `It fills you. You suffer ${dmg} damage. ${save.line}`);
+      return { messages, monsterDamage: dmg, playerDied: hurt(dmg), monsterDied: false };
+    }
+    if (prep === 'unmaking') {
+      const save = choirSave(char, monster, rng, ['wisdom', 'resistance']);
+      if (save.ok) {
+        messages.push(`The expressionless mask stares through you, but you hold yourself together. ${save.line}`);
+      } else {
+        addStatusEffect(char, { type: 'dexterity-reduced', value: CHOIR.UNMAKE_DEX, turns: CHOIR.UNMAKE_TURNS });
+        messages.push(`The expressionless mask stares through you, and something in you comes undone. ${save.line}`,
+          `Your guard falters. (-${CHOIR.UNMAKE_DEX} Dexterity for ${CHOIR.UNMAKE_TURNS} turns)`);
+      }
+      return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
+    }
+    const dmg = blow(CHOIR.JOY_MULT);
+    const heal = Math.min(monster.maxHp - monster.hp, Math.round(dmg * CHOIR.JOY_HEAL_SHARE));
+    monster.hp += heal;
+    messages.push(`The smiling mask drinks from you. You suffer ${dmg} damage, and the Choir recovers ${heal}.`);
+    return { messages, monsterDamage: dmg, playerDied: hurt(dmg), monsterDied: false, monsterHealed: heal };
+  }
+
+  // Perhaps begin preparing a power: the masks align, and the cue says which.
+  const ready: ChoirPower[] = [];
+  if (alive('grief')) ready.push('lament');
+  if (alive('blank') && !char.statusEffects.some(e => e.type === 'dexterity-reduced')) ready.push('unmaking');
+  if (alive('delight') && monster.hp < monster.maxHp * 0.95) ready.push('false-joy');
+  if (ready.length && rng.float() < CHOIR.PREPARE_CHANCE + broken.length * CHOIR.PREPARE_PER_BROKEN) {
+    const power = rng.pick(ready);
+    monster.choirPrep = power;
+    out.ability = 'choir-prepare';
+    messages.push('The masks drift into line.', CHOIR_CUE[power]);
+    return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
+  }
+
+  // Otherwise a lesser mask strikes: the raging mask, or the dread mask's whisper.
+  if (alive('dread') && rng.float() < 0.3) {
+    const dmg = blow(0.8);
+    out.ability = 'mask-whisper';
+    messages.push(`The dread mask drifts close and whispers your death to you. You suffer ${dmg} damage.`);
+    return { messages, monsterDamage: dmg, playerDied: hurt(dmg), monsterDied: false };
+  }
+  const dmg = blow();
+  out.ability = 'rage-strike';
+  messages.push(`The raging mask hurtles at you and strikes. You suffer ${dmg} damage.`);
+  return { messages, monsterDamage: dmg, playerDied: hurt(dmg), monsterDied: false };
+}
+
+/** Holds the character for some rounds (paralysis, fear, coils...). */
 function holdCharacter(char: Character, rounds: number, why: HeldCondition): void {
   char.heldRounds = Math.max(char.heldRounds ?? 0, rounds);
   char.heldBy = why;
-}
-
-function resolveBeholderRay(
-  ray: BeholderRay,
-  char: Character,
-  monster: Monster,
-  rng: RNG,
-  messages: string[],
-  naked: boolean,
-): { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean } {
-  const hit = (mult: number) => {
-    const dmg = Math.max(1, Math.round(calculateMonsterDamage(monster, char, rng, naked) * mult));
-    char.hp = Math.max(0, char.hp - dmg);
-    return dmg;
-  };
-  const done = (dmg: number) => ({ messages, monsterDamage: dmg, playerDied: char.hp <= 0, monsterDied: false });
-
-  messages.push(`The Beholder's ${rayEye(ray)} eyestalk swivels toward you and fires!`);
-
-  switch (ray) {
-    case 'fear-ray': {
-      const dmg = hit(0.5);
-      messages.push(`FEAR RAY. Dread claws at your mind for ${dmg} damage.`);
-      if (beholderSave(char, monster, rng, ['wisdom'])) {
-        messages.push('You steel your nerves against the terror.');
-      } else {
-        addStatusEffect(char, { type: 'feared', value: 0, turns: 2 });
-        holdCharacter(char, 1, 'feared');
-        messages.push('Terror floods you. You cower, unable to act!');
-      }
-      return done(dmg);
-    }
-    case 'slow-ray': {
-      const dmg = hit(0.5);
-      messages.push(`SLOWING RAY. It strikes for ${dmg} damage.`);
-      if (beholderSave(char, monster, rng, ['dexterity'])) {
-        messages.push('You shake off the sluggishness.');
-      } else {
-        addStatusEffect(char, { type: 'dexterity-reduced', value: COMBAT.BEHOLDER_SLOW_DEX_REDUCTION, turns: 6 });
-        messages.push('Your limbs turn heavy and slow. Your Dexterity is reduced!');
-      }
-      return done(dmg);
-    }
-    case 'enervation-ray': {
-      const dmg = hit(1.3);
-      messages.push(`ENERVATION RAY. Withering energy rots your flesh for ${dmg} damage.`);
-      return done(dmg);
-    }
-    case 'telekinetic-ray': {
-      const dmg = hit(1.0);
-      messages.push(`TELEKINETIC RAY. You are hurled into the wall for ${dmg} damage.`);
-      if (char.hp > 0 && !beholderSave(char, monster, rng, ['strength'])) {
-        holdCharacter(char, 1, 'dazed');
-        messages.push('You slump to the floor, dazed!');
-      }
-      return done(dmg);
-    }
-    case 'paralyze-ray': {
-      messages.push('PARALYZING RAY.');
-      if (beholderSave(char, monster, rng, ['constitution', 'resistance'])) {
-        messages.push('Your muscles lock for an instant, then you tear free.');
-        return done(0);
-      }
-      messages.push('Every muscle locks rigid. YOU ARE PARALYZED!');
-      // One desperate roll to break free before it presses the attack.
-      if (beholderSave(char, monster, rng, ['strength', 'constitution'])) {
-        messages.push('You strain against the grip and wrench yourself free before it can strike!');
-        return done(0);
-      }
-      // Helpless: the Beholder gets two more attacks before you can respond.
-      messages.push('You cannot break free. The Beholder turns every eye upon you...');
-      let total = 0;
-      for (let i = 0; i < COMBAT.BEHOLDER_PARALYSIS_FREE_ATTACKS && char.hp > 0; i++) {
-        messages.push('');
-        total += beholderFreeAttack(char, monster, rng, messages, naked);
-      }
-      if (char.hp > 0) messages.push('', 'The paralysis breaks. You can move again.');
-      return done(total);
-    }
-    case 'sleep-ray': {
-      messages.push('SLEEP RAY.');
-      if (beholderSave(char, monster, rng, ['wisdom'])) {
-        messages.push('Your eyelids droop, but you force them open.');
-      } else {
-        holdCharacter(char, 2, 'asleep');
-        messages.push('A heavy drowsiness drags you down. You fall asleep!');
-      }
-      return done(0);
-    }
-    case 'charm-ray': {
-      messages.push('CHARM RAY.');
-      if (beholderSave(char, monster, rng, ['wisdom', 'charisma'])) {
-        messages.push('A honeyed voice fills your head. You shut it out.');
-        return done(0);
-      }
-      const eff = getEffectiveStats(char);
-      const own = (char.level * COMBAT.DAMAGE_LEVEL_WEIGHT) + Math.floor(eff.strength / COMBAT.DAMAGE_STR_DIVISOR);
-      const rand = COMBAT.DAMAGE_RAND_MIN + rng.float() * (COMBAT.DAMAGE_RAND_MAX - COMBAT.DAMAGE_RAND_MIN);
-      const dmg = Math.max(1, Math.round(own * rand * 0.5));
-      char.hp = Math.max(0, char.hp - dmg);
-      holdCharacter(char, 1, 'charmed');
-      messages.push(`The Beholder is your dearest friend. You turn your weapon on yourself for ${dmg} damage!`);
-      return done(dmg);
-    }
-    case 'petrify-ray': {
-      messages.push('PETRIFICATION RAY.');
-      if (beholderSave(char, monster, rng, ['constitution', 'resistance'])) {
-        messages.push('Your skin stiffens to grey, then softens again.');
-        return done(0);
-      }
-      if ((monster.petrifyStage ?? 0) >= 1) {
-        char.hp = 0;
-        messages.push('The stone creeps over your chest, your throat, your eyes.');
-        messages.push('YOU HAVE BEEN TURNED TO STONE.');
-        return done(0);
-      }
-      monster.petrifyStage = 1;
-      addStatusEffect(char, { type: 'dexterity-reduced', value: COMBAT.BEHOLDER_PETRIFY_DEX_REDUCTION, turns: 8 });
-      holdCharacter(char, 1, 'petrifying');
-      messages.push('Your legs turn to grey stone! Another hit like that will finish the job.');
-      return done(0);
-    }
-    case 'disintegrate-ray': {
-      const saved = beholderSave(char, monster, rng, ['dexterity']);
-      const dmg = hit(saved ? 1.5 : 3.0);
-      messages.push(saved
-        ? `DISINTEGRATION RAY. You twist aside and it only grazes you for ${dmg} damage.`
-        : `DISINTEGRATION RAY. It strikes you full on for ${dmg} damage!`);
-      if (char.hp <= 0) messages.push('Your body crumbles into fine grey dust.');
-      return done(dmg);
-    }
-    case 'death-ray': {
-      messages.push('DEATH RAY.');
-      if (beholderSave(char, monster, rng, ['constitution', 'resistance', 'wisdom'])) {
-        const dmg = hit(1.5);
-        messages.push(`Your heart stutters but keeps beating. You suffer ${dmg} damage.`);
-        return done(dmg);
-      }
-      char.hp = 0;
-      messages.push('The white eye opens wide. YOUR HEART STOPS.');
-      return done(0);
-    }
-  }
-}
-
-/** One of the Beholder's attacks on a paralyzed victim: a bite or any ray
- * but paralysis (so it can't chain). Returns the damage dealt. */
-function beholderFreeAttack(char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean): number {
-  const ability = pickBeholderAbility(monster, rng);
-  if (ability && ability !== 'paralyze-ray') {
-    const before = char.hp;
-    resolveBeholderRay(ability as BeholderRay, char, monster, rng, messages, naked);
-    return before - char.hp;
-  }
-  const dmg = calculateMonsterDamage(monster, char, rng, naked);
-  char.hp = Math.max(0, char.hp - dmg);
-  messages.push(`The Beholder's jaws tear into you for ${dmg} damage.`);
-  return dmg;
 }
 
 const HELD_TEXT: Record<HeldCondition, string> = {
@@ -2362,20 +2274,6 @@ export function playerHeld(char: Character, monster: Monster, rng: RNG): CombatR
   const messages = [HELD_TEXT[char.heldBy ?? 'paralyzed']];
   char.heldRounds = Math.max(0, (char.heldRounds ?? 1) - 1);
   if (char.heldRounds === 0) char.heldBy = undefined;
-  const res = monsterAction(char, monster, rng, messages);
-  return { ...res, playerDamage: 0, monsterDied: false };
-}
-
-/** The Beholder's central eye: a chance to cancel a spell or gem outright,
- * spending the character's turn. Returns null when the magic gets through. */
-export function beholderAntimagic(char: Character, monster: Monster, rng: RNG, what: 'spell' | 'gem'): CombatRoundResult | null {
-  if (monster.type !== 'Beholder' || rng.float() >= COMBAT.BEHOLDER_ANTIMAGIC_CHANCE) return null;
-  const messages = [
-    'The Beholder turns its great central eye upon you.',
-    what === 'spell'
-      ? 'Your spell unravels in its antimagic gaze!'
-      : 'Your gem goes dark in its antimagic gaze, then slowly rekindles.',
-  ];
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: 0, monsterDied: false };
 }

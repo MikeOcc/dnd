@@ -785,3 +785,35 @@ html, body {
 #view3d.hidden { display: none; }
 #dungeon-view.under-3d { visibility: hidden; }
 #view-container.lair-mode #view3d { opacity: 0.12; transition: opacity 600ms ease; }
+
+/* The Hollow Choir: masks drift slowly and apart; before a power they ease
+   into line and the preparing mask's eyes brighten (no flashing). Shattered
+   masks are gone. Still for reduced motion. */
+#monster-portrait.choir .choir-mask {
+  transform-box: fill-box; transform-origin: center;
+  animation: choir-drift 7s ease-in-out infinite;
+  transition: translate 900ms ease;
+}
+#monster-portrait.choir .m-rage    { animation-duration: 8.5s; animation-delay: -1.7s; }
+#monster-portrait.choir .m-delight { animation-duration: 9.5s; animation-delay: -3.1s; }
+#monster-portrait.choir .m-dread   { animation-duration: 7.8s; animation-delay: -4.6s; }
+#monster-portrait.choir .m-blank   { animation-duration: 10s;  animation-delay: -2.2s; }
+@keyframes choir-drift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%      { transform: translate(0, -2.5px) rotate(2.5deg); }
+}
+#monster-portrait.choir-prep .m-grief   { translate: 6px 6px; }
+#monster-portrait.choir-prep .m-rage    { translate: -6px 5px; }
+#monster-portrait.choir-prep .m-delight { translate: 6px -4px; }
+#monster-portrait.choir-prep .m-dread   { translate: -6px -4px; }
+#monster-portrait.choir-prep .m-blank   { translate: 0 -6px; }
+#monster-portrait.choir .glow { transition: opacity 700ms ease; }
+#monster-portrait.prep-grief .m-grief .glow,
+#monster-portrait.prep-blank .m-blank .glow,
+#monster-portrait.prep-delight .m-delight .glow { opacity: 0.85; }
+#monster-portrait.broken-grief .m-grief, #monster-portrait.broken-rage .m-rage,
+#monster-portrait.broken-delight .m-delight, #monster-portrait.broken-dread .m-dread,
+#monster-portrait.broken-blank .m-blank { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  #monster-portrait.choir .choir-mask { animation: none; transition: none; }
+}

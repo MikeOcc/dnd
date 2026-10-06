@@ -3,7 +3,7 @@
 
 export const MENU_LORE: string[][] = [
   ['The torches on the third level were lit by no living hand.', 'They have never gone out.'],
-  ['Somewhere below, a Beholder is counting its eyes.', 'It always comes up one short. It is looking for yours.'],
+  ['Somewhere below, five voices are singing in a room with no air.', 'None of them has stopped for breath in a thousand years.'],
   ['A chest on the second level has been waiting a very long time.', 'It is patient. It is hungry. It is not a chest.'],
   ['The fountains of the deep levels run clear and cold.', 'Most who drink from them wake up. Most.'],
   ['Asmodeus keeps a ledger of every soul that enters the Seven Levels.', 'Your name is already written in it.'],

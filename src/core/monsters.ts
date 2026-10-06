@@ -637,20 +637,25 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['fireball', 'lightning-bolt', 'acid-bolt', 'light-bolt', 'teleport', 'make-naked'],
   },
-  'Beholder': {
-    type: 'Beholder', isUndead: false, isUnique: false,
-    minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
-    baseHpPerLevel: 12, baseAttackPerLevel: 6.0, baseDefensePerLevel: 3.5,
-    fireballResistance: 0.9,
-    lightningResistance: 2.0,  // weak to lightning
-    encounterIntro: ['A great floating sphere covered in eyes rotates slowly toward you.', '', 'You have encountered a Level {LVL} Beholder!'],
-    // Rays are chosen by level in combat.ts (see COMBAT.BEHOLDER_RAYS); the
-    // central eye's antimagic is handled where spells and gems are used.
-    specialAbilities: ['fear-ray', 'slow-ray', 'enervation-ray', 'telekinetic-ray', 'paralyze-ray',
-      'sleep-ray', 'charm-ray', 'petrify-ray', 'disintegrate-ray', 'death-ray'],
+  // An original creature: five cracked funerary masks orbiting a hollow,
+  // unnaturally dark centre. Its powers are foreshadowed a turn ahead, and
+  // its masks shatter as it weakens (see hollowChoirAction in combat.ts).
+  'Hollow Choir': {
+    type: 'Hollow Choir', isUndead: false, isUnique: false,
+    minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 6, speed: 0.9,
+    baseHpPerLevel: 11, baseAttackPerLevel: 5.5, baseDefensePerLevel: 3.5,
+    fireballResistance: 1.0,
+    lightningResistance: 2.0,  // lightning cracks old stone
+    encounterIntro: [
+      'You hear several voices murmuring. None seem to pause for breath.',
+      '',
+      'Pale fragments hang in the darkness ahead. As you look, they turn toward you:',
+      'five cracked stone masks, drifting around a hollow where no light reaches.',
+      '',
+      'You have encountered a Level {LVL} Hollow Choir!',
+    ],
+    specialAbilities: [],
   },
-  // A psychic brain-eater: a hunched, robed thing with a swollen, exposed
-  // cranium and a round lamprey mouth. It feeds on minds.
   'Cerebrovore': {
     type: 'Cerebrovore', isUndead: false, isUnique: false,
     minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
@@ -838,7 +843,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -889,13 +894,13 @@ export function randomMonsterLevel(
 }
 
 // ─── Monsters kept out of the hosted game ───────────────────────────────────
-// Monsters that are Wizards of the Coast's own creations (beholders, the
-// Death Tyrant (an undead beholder), the displacer beast, the elder oblex)
+// Monsters that are Wizards of the Coast's own creations (the Death Tyrant,
+// an undead beholder; the displacer beast; the elder oblex)
 // never appear on the hosted site until further notice. Running locally
 // (not NODE_ENV=production) they still do.
-export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Beholder', 'Death Tyrant', 'Displacer Beast', 'Elder Oblex'];
+export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Death Tyrant', 'Displacer Beast', 'Elder Oblex'];
 /** What stands in for a hidden monster placed on the map as a guard. */
-const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' }   // the closest in strength (Beholder → Death Knight: same range);
+const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' };   // the closest in strength (others: a Death Knight)
 export function hiddenStandIn(type: MonsterType): MonsterType {
   return STAND_INS[type] ?? 'Death Knight';
 }
@@ -980,7 +985,7 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Behir', 'Rakshasa', 'Death Tyrant', 'Demilich', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
-  'Wizard', 'Beholder', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',
+  'Wizard', 'Hollow Choir', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon',
 ];
 

@@ -3,7 +3,7 @@ import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, tickStatusEffects, potionHealAmount, slowFleshRot } from '../src/core/character.js';
 import { resolveAltar } from '../src/core/encounters.js';
 import { createMonster, getDefinition, randomMonsterLevel, pickRandomMonsterType } from '../src/core/monsters.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, beholderAntimagic, beholderRaysFor, calculateXPReward, transformationChance, playerSapphireOnAsmodeus, playerBanish, spellBackfireChance, playerSpellBackfire } from '../src/core/combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, prayerBanishChance, monsterFirstStrike, playerScare, scareChance, playerRun, playerHeld, petUnicorn, calculateXPReward, transformationChance, playerSapphireOnAsmodeus, playerBanish, spellBackfireChance, playerSpellBackfire } from '../src/core/combat.js';
 import { GEMS, COMBAT, MANTICORE, GHOUL, PHOENIX, BANSHEE } from '../src/core/config.js';
 
 function makeChar(overrides: Partial<ReturnType<typeof createCharacter>> = {}) {
@@ -164,10 +164,10 @@ describe('Combat formulas', () => {
 });
 
 describe('Prayer — tiered targets', () => {
-  it('hits powerful non-undead foes (Beholder, dragons) more often than ordinary ones, but less than undead', () => {
+  it('hits powerful non-undead foes (the Hollow Choir, dragons) more often than ordinary ones, but less than undead', () => {
     const char = makeChar({ level: 20, wisdom: 15 });
     const undead = createMonster('Spectre', 20, 'u1');
-    const powerful = createMonster('Beholder', 20, 'p1');
+    const powerful = createMonster('Hollow Choir', 20, 'p1');
     const ordinary = createMonster('Goblin', 20, 'o1');
 
     let undeadHits = 0, powerfulHits = 0, ordinaryHits = 0;
@@ -191,7 +191,7 @@ describe('Prayer — tiered targets', () => {
 
   it('powerful non-undead foes take noticeably less holy damage per hit than true undead', () => {
     const undead = createMonster('Spectre', 20, 'u2');
-    const powerful = createMonster('Beholder', 20, 'p2');
+    const powerful = createMonster('Hollow Choir', 20, 'p2');
 
     const undeadDamages: number[] = [];
     const powerfulDamages: number[] = [];
@@ -703,7 +703,7 @@ describe('Lightning', () => {
     expect(result.monsterDied).toBe(true);
   });
 
-  it.each(['Kobold', 'Mold', 'Slime Mold', 'Beholder', 'Black Dragon', 'Red Dragon'] as const)(
+  it.each(['Kobold', 'Mold', 'Slime Mold', 'Hollow Choir', 'Black Dragon', 'Red Dragon'] as const)(
     '%s is explicitly tagged weak to lightning (2.0x)',
     (type) => {
       const def = getDefinition(type);
@@ -1185,102 +1185,6 @@ describe('Invulnerability (from a magic book)', () => {
   });
 });
 
-describe('Beholder eye rays', () => {
-  const RAY_NAMES: Record<string, string> = {
-    'fear-ray': 'FEAR RAY', 'slow-ray': 'SLOWING RAY', 'enervation-ray': 'ENERVATION RAY',
-    'telekinetic-ray': 'TELEKINETIC RAY', 'paralyze-ray': 'PARALYZING RAY', 'sleep-ray': 'SLEEP RAY',
-    'charm-ray': 'CHARM RAY', 'petrify-ray': 'PETRIFICATION RAY', 'disintegrate-ray': 'DISINTEGRATION RAY',
-    'death-ray': 'DEATH RAY',
-  };
-
-  /** Fights many rounds with an unkillable hero and returns every ray name seen. */
-  function raysSeen(beholderLevel: number, rounds = 600): Set<string> {
-    const rng = new RNG(4242);
-    const seen = new Set<string>();
-    for (let i = 0; i < rounds; i++) {
-      const char = makeChar({ level: 20, hp: 100000, maxHp: 100000 });
-      const m = createMonster('Beholder', beholderLevel, 'b1');
-      m.hp = 100000; m.maxHp = 100000;
-      const text = playerAttack(char, m, rng).messages.join('\n');
-      for (const name of Object.values(RAY_NAMES)) if (text.includes(name)) seen.add(name);
-    }
-    return seen;
-  }
-
-  it('unlocks more eyestalks as the Beholder levels up', () => {
-    expect(beholderRaysFor(10)).toEqual(['fear-ray', 'slow-ray', 'enervation-ray', 'telekinetic-ray']);
-    expect(beholderRaysFor(14)).toHaveLength(6);
-    expect(beholderRaysFor(22)).toContain('petrify-ray');
-    expect(beholderRaysFor(25)).not.toContain('disintegrate-ray');
-    expect(beholderRaysFor(30)).toHaveLength(10);
-  });
-
-  it('a young Beholder never uses the extreme rays', () => {
-    const seen = raysSeen(10);
-    expect(seen).toEqual(new Set(['FEAR RAY', 'SLOWING RAY', 'ENERVATION RAY', 'TELEKINETIC RAY']));
-  });
-
-  it('an elder Beholder uses every one of its ten eyestalks', () => {
-    const seen = raysSeen(30);
-    expect(seen).toEqual(new Set(Object.values(RAY_NAMES)));
-  });
-
-  it('a paralyzed character loses turns, and the Beholder still acts', () => {
-    const rng = new RNG(7);
-    const char = makeChar({ level: 20, hp: 100000, maxHp: 100000, heldRounds: 2, heldBy: 'paralyzed' });
-    const m = createMonster('Beholder', 10, 'b1');
-
-    const first = playerHeld(char, m, rng);
-    expect(first.messages[0]).toContain('paralyzed');
-    expect(first.messages.length).toBeGreaterThan(1);
-    expect(char.heldRounds).toBe(1);
-
-    playerHeld(char, m, rng);
-    expect(char.heldRounds).toBe(0);
-    expect(char.heldBy).toBeUndefined();
-  });
-
-  it('a second failed petrification save in the same fight turns you to stone', () => {
-    const char = makeChar({ level: 1, hp: 100000, maxHp: 100000, constitution: 3, resistance: 3 });
-    const m = createMonster('Beholder', 30, 'b1');
-    m.hp = 100000; m.maxHp = 100000;
-    m.petrifyStage = 1;
-    const rng = new RNG(1);
-    let stoned = false;
-    for (let i = 0; i < 400 && !stoned; i++) {
-      const text = playerAttack(char, m, rng).messages.join(' ');
-      if (text.includes('TURNED TO STONE')) {
-        stoned = true;
-        expect(char.hp).toBe(0);
-      }
-      char.hp = 100000;
-      char.heldRounds = 0;
-    }
-    expect(stoned).toBe(true);
-  });
-
-  it('the central eye only negates magic against a Beholder, and about as often as configured', () => {
-    const rng = new RNG(99);
-    const char = makeChar({ level: 20, hp: 100000, maxHp: 100000 });
-    expect(beholderAntimagic(char, createMonster('Goblin', 5, 'g1'), rng, 'spell')).toBeNull();
-
-    let negated = 0;
-    const trials = 2000;
-    for (let i = 0; i < trials; i++) {
-      const m = createMonster('Beholder', 10, 'b1');
-      const res = beholderAntimagic(char, m, rng, 'spell');
-      if (res) {
-        negated++;
-        expect(res.messages.join(' ')).toContain('antimagic');
-      }
-      char.hp = 100000;
-      char.heldRounds = 0;
-    }
-    expect(negated / trials).toBeGreaterThan(COMBAT.BEHOLDER_ANTIMAGIC_CHANCE - 0.05);
-    expect(negated / trials).toBeLessThan(COMBAT.BEHOLDER_ANTIMAGIC_CHANCE + 0.05);
-  });
-});
-
 describe('Paralysis from the Basilisk, Gelatinous Cube and Lich', () => {
   /** Fights until the monster's paralysis lands; returns the held character. */
   function paralyzedBy(type: 'Basilisk' | 'Gelatinous Cube' | 'Lich') {
@@ -1348,32 +1252,6 @@ describe('Elder vampire hypnosis', () => {
     expect(hypnotized / hits).toBeLessThan(COMBAT.VAMPIRE_HYPNOSIS_CHANCE + 0.02);
     expect(killed / hypnotized).toBeGreaterThan(COMBAT.VAMPIRE_HYPNOSIS_KILL_CHANCE - 0.12);
     expect(killed / hypnotized).toBeLessThan(COMBAT.VAMPIRE_HYPNOSIS_KILL_CHANCE + 0.12);
-  });
-});
-
-describe('Beholder paralysis', () => {
-  it('a victim who fails to break free takes two more attacks at once; one who breaks free takes none', () => {
-    const rng = new RNG(1234);
-    let helpless = 0, brokeFree = 0;
-    for (let i = 0; i < 4000 && (helpless === 0 || brokeFree === 0); i++) {
-      const char = makeChar({ level: 20, hp: 100000, maxHp: 100000, strength: 10, constitution: 10, resistance: 3 });
-      char.heldRounds = 1; char.heldBy = 'dazed';
-      const m = createMonster('Beholder', 30, 'b');
-      const text = playerHeld(char, m, rng).messages.join('\n');
-      if (!text.includes('YOU ARE PARALYZED')) continue;
-      expect(char.heldBy).not.toBe('paralyzed');        // paralysis itself costs no later turns
-      if (text.includes('wrench yourself free')) {
-        brokeFree++;
-        expect(text).not.toContain('turns every eye');
-      } else {
-        helpless++;
-        expect(text).toContain('turns every eye upon you');
-        expect(text).toContain('The paralysis breaks');
-        expect(text.split('PARALYZING RAY').length - 1).toBe(1);   // never chains
-      }
-    }
-    expect(helpless).toBeGreaterThan(0);
-    expect(brokeFree).toBeGreaterThan(0);
   });
 });
 
@@ -1705,7 +1583,7 @@ describe('Ghouls: flesh rot, and the ancient ones below', () => {
       for (let i = 0; i < 20000; i++) if (pickRandomMonsterType(depth, rng) === 'Ghoul') n++;
       return n / 20000;
     };
-    for (const d of [2, 3, 4, 5]) expect(share(d)).toBeGreaterThan(0.03);
+    for (const d of [2, 3, 4, 5]) expect(share(d)).toBeGreaterThan(0.025);   // about 1 in 30-35 (one of many types)
     for (const d of [6, 7]) {
       expect(share(d)).toBeGreaterThan(0);
       expect(share(d)).toBeLessThan(share(5));

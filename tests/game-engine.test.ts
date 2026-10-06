@@ -1046,7 +1046,7 @@ describe('GameEngine — full-floor map toggle', () => {
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-describe('GameEngine — held by a Beholder ray', () => {
+describe('GameEngine — held (paralyzed, asleep...)', () => {
   let db: any;
 
   beforeEach(() => {
@@ -1062,11 +1062,11 @@ describe('GameEngine — held by a Beholder ray', () => {
     const e = engine as any;
     e.char.hp = 100000; e.char.maxHp = 100000;
     e.phase = 'combat';
-    e.combat = { monster: createMonster('Beholder', 10, 'b1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat = { monster: createMonster('Goblin', 3, 'g1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
     e.combat.monster.hp = 100000; e.combat.monster.maxHp = 100000;
     e.char.heldRounds = 1;
     e.char.heldBy = 'asleep';
-    // Ward off the Beholder's reply, so a new ray can't hold us again this round.
+    // Ward off the monster's reply, so nothing can hold us again this round.
     e.char.invulnerableTurns = 5;
 
     expect(engine.getState().choices).toEqual([{ key: 'a', text: 'Struggle (asleep)' }]);
@@ -1082,7 +1082,7 @@ describe('GameEngine — held by a Beholder ray', () => {
     const engine = makeReadyEngine(db);
     const e = engine as any;
     e.phase = 'combat';
-    e.combat = { monster: createMonster('Beholder', 10, 'b1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
+    e.combat = { monster: createMonster('Goblin', 3, 'g1'), round: 1, nakedActive: false, preCombatX: e.char.x, preCombatY: e.char.y };
     e.char.heldRounds = 2;
     e.char.heldBy = 'paralyzed';
 
@@ -2792,13 +2792,13 @@ describe('The scene sent for the 3D views', () => {
   });
 });
 
-describe('The level 6 Beholder guard, hosted', () => {
+describe('The Hollow Choir replaces the Beholder', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let db: any;
   beforeEach(() => { db = createMemoryDb(); });
   afterEach(() => { db.close(); });
 
-  it('is a Death Knight on the hosted site, and a Beholder locally', () => {
+  it('the level 6 guard is a Hollow Choir, and an old save naming a Beholder meets one too, hosted or not', () => {
     const engine = makeReadyEngine(db);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
@@ -2806,14 +2806,28 @@ describe('The level 6 Beholder guard, hosted', () => {
     e.char.hp = e.char.maxHp = 1e9;
     const was = process.env.NODE_ENV;
     try {
-      process.env.NODE_ENV = 'production';
-      e.char.dungeonLevel = 6;
-      e.startFixedEncounter({ type: 'fixed-monster', id: 'fm-6-2', monsterId: 'Beholder' }, 'Beholder');
-      expect(e.combat.monster.type).toBe('Death Knight');
-      e.combat = null; e.phase = 'playing';
-      process.env.NODE_ENV = 'development';
-      e.startFixedEncounter({ type: 'fixed-monster', id: 'fm-6-2', monsterId: 'Beholder' }, 'Beholder');
-      expect(e.combat.monster.type).toBe('Beholder');
+      for (const env of ['production', 'development']) {
+        process.env.NODE_ENV = env;
+        e.char.dungeonLevel = 6; e.combat = null; e.phase = 'playing';
+        e.startFixedEncounter({ type: 'fixed-monster', id: 'fm-6-2', monsterId: 'Beholder' }, 'Beholder');
+        expect(e.combat.monster.type).toBe('Hollow Choir');
+        expect(engine.getState().messages.join(' ')).toContain('None seem to pause for breath');
+      }
     } finally { process.env.NODE_ENV = was; }
+  });
+
+  it('defeated, its masks crumble, the chamber falls silent, and it pays out', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro();
+    const m = createMonster('Hollow Choir', 20, 'fm-6-2');
+    e.beginCombat(m); e.phase = 'combat';
+    const xp = e.char.xp;
+    m.hp = 0;
+    const s = e.processCombatResult({ messages: ['You strike.'], playerDamage: 1, monsterDamage: 0, playerDied: false, monsterDied: true });
+    expect(s.messages.join(' ')).toContain('For the first time, the chamber is silent.');
+    expect(e.char.xp).toBeGreaterThan(xp);
+    expect(s.phase).not.toBe('combat');
   });
 });

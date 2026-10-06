@@ -32,7 +32,7 @@ const NAMES: Record<SpellId, string> = {
   whirlwind: 'Whirlwind',
 };
 
-/** Skills that are feats of arms rather than magic — a Beholder's antimagic can't touch them. */
+/** Skills that are feats of arms rather than magic. */
 const NOT_MAGIC: SpellId[] = ['power-attack', 'shield-bash', 'cleave', 'battle-cry', 'whirlwind'];
 
 export function isMagic(id: SpellId): boolean {

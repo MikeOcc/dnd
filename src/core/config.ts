@@ -130,7 +130,7 @@ export const COMBAT = {
   PRAYER_PENALTY_PER_USE: 0.20,  // each prayer reduces chance by 20%
   PRAYER_ASMODEUS_MULT: 0.35,
 
-  // Prayer vs powerful-but-not-undead monsters (Beholders, Dragons, and
+  // Prayer vs powerful-but-not-undead monsters (Dragons, and
   // other naturalTier>=7 non-undead) — a fainter echo of the undead effect.
   PRAYER_POWERFUL_NATURAL_TIER: 7,
   PRAYER_POWERFUL_BASE_CHANCE: 0.40,
@@ -170,27 +170,6 @@ export const COMBAT = {
   LEVEL_DRAIN_CHANCE: 0.08,
   LEVEL_DRAIN_MIN_LEVEL_FRACTION: 0.7,  // monster.level must be >= maxLevel * this
 
-  // Beholder eye rays. Each eyestalk has its own ray; a Beholder only uses
-  // the rays its level has unlocked, so the extreme ones (petrification,
-  // disintegration, death) belong to the elder specimens. Weights are
-  // relative within whatever is unlocked. Saves: d20 + (average of the
-  // save's attributes) / 3 + level/5 against BEHOLDER_RAY_DC_BASE +
-  // beholder level / 3.
-  BEHOLDER_RAYS: [
-    { ray: 'fear-ray',         eye: 'violet',     minLevel: 10, weight: 3 },
-    { ray: 'slow-ray',         eye: 'blue',       minLevel: 10, weight: 3 },
-    { ray: 'enervation-ray',   eye: 'green',      minLevel: 10, weight: 3 },
-    { ray: 'telekinetic-ray',  eye: 'orange',     minLevel: 10, weight: 3 },
-    { ray: 'paralyze-ray',     eye: 'yellow',     minLevel: 14, weight: 2 },
-    { ray: 'sleep-ray',        eye: 'cyan',       minLevel: 14, weight: 2 },
-    { ray: 'charm-ray',        eye: 'pink',       minLevel: 18, weight: 2 },
-    { ray: 'petrify-ray',      eye: 'lime-green', minLevel: 22, weight: 1 },
-    { ray: 'disintegrate-ray', eye: 'red',        minLevel: 26, weight: 1 },
-    { ray: 'death-ray',        eye: 'white',      minLevel: 29, weight: 1 },
-  ],
-  BEHOLDER_BITE_CHANCE: 0.2,
-  BEHOLDER_PARALYSIS_FREE_ATTACKS: 2,  // extra attacks on a paralyzed victim who fails to break free
-
   // Elder vampires: any damaging hit may hypnotize; a hypnotized victim is
   // usually drained dead while helpless, otherwise snaps out as it bites.
   VAMPIRE_HYPNOSIS_MIN_LEVEL: 30,
@@ -199,11 +178,7 @@ export const COMBAT = {
 
   // Basilisk gaze / Gelatinous Cube engulf / Lich touch
   PARALYSIS_CHANCE: 0.4,
-  PARALYSIS_ROUNDS: 2,          // combat rounds the character loses        // chance a round is a plain bite instead of a ray
-  BEHOLDER_RAY_DC_BASE: 10,
-  BEHOLDER_ANTIMAGIC_CHANCE: 0.25,  // central eye: chance a spell or gem used against it fizzles
-  BEHOLDER_SLOW_DEX_REDUCTION: 4,
-  BEHOLDER_PETRIFY_DEX_REDUCTION: 6,
+  PARALYSIS_ROUNDS: 2,          // combat rounds the character loses
 
   // Run
   RUN_BASE_CHANCE: 0.55,
@@ -301,7 +276,7 @@ export const LEVELING = {
   // of the numeric level it happens to roll — a dragon or lich is a bigger
   // threat than a kobold of the "same" level. Each tier above 1 adds this
   // fraction to the XP multiplier, so tier-1 trash (Kobold, Goblin, Mold,
-  // Skeleton) is unaffected while tier-7/8 threats (dragons, Lich, Beholder)
+  // Skeleton) is unaffected while tier-7/8 threats (dragons, Lich, the Hollow Choir)
   // and tier-9/10 uniques pay out proportionally more. Raised from 0.15 for
   // the same reason as the quadratic term above — the toughest monster
   // types specifically needed a bigger payout.
@@ -368,7 +343,7 @@ export const MONSTER_SCALING = {
   ANY_DEPTH_TYPES: ['Orc', 'Ghoul'] as string[],
   // ...and of those, these are rare from this depth down: picked, then kept
   // only this often (otherwise something else is picked instead).
-  DEEP_RARE: { Ghoul: { fromDepth: 6, keep: 0.35 } } as Record<string, { fromDepth: number; keep: number }>,
+  DEEP_RARE: { Ghoul: { fromDepth: 6, keep: 0.35 }, 'Hollow Choir': { fromDepth: 1, keep: 0.4 } } as Record<string, { fromDepth: number; keep: number }>,
 } as const;
 
 export const TREASURE = {
@@ -395,7 +370,7 @@ export const TREASURE = {
 // character and chest, so leaving and coming back doesn't reroll it. Checking
 // for traps leans on Wisdom; disarming leans on Dexterity.
 // Wizard spells: the character level each is learned at. Lightning comes
-// late because it doubles damage against every undead, the Beholder and
+// late because it doubles damage against every undead and
 // two dragon colours; Poison Spray comes early because nothing is weak to it.
 export const SPELLS = {
   UNLOCK_LEVEL: {
@@ -690,6 +665,25 @@ export const CHEST_TRAPS = {
   DEPTH_DAMAGE_SCALE: 0.35,  // trap damage grows by this fraction per dungeon level below the first
 } as const;
 
+// The Hollow Choir (an original creature): five funerary masks around a void.
+// Its three powers are foreshadowed a turn ahead (a mask prepares, then the
+// power lands on its next turn), giving one chance to respond. Masks shatter
+// as it weakens, each taking its power with it; the rest grow fiercer.
+export const CHOIR = {
+  // Which mask breaks, at what share of the Choir's health left (in order).
+  BREAKS: [['dread', 0.8], ['delight', 0.55], ['grief', 0.3]] as [string, number][],
+  POWER_MASK: { lament: 'grief', unmaking: 'blank', 'false-joy': 'delight' } as Record<string, string>,
+  PREPARE_CHANCE: 0.4,          // chance a turn is spent preparing a power...
+  PREPARE_PER_BROKEN: 0.06,     // ...rising as masks break
+  FURY_PER_BROKEN: 0.12,        // the rest strike harder, per broken mask
+  LAMENT_MULT: 1.8,             // the Lament: a heavy blow (a Wisdom save halves it)
+  SAVE_DC_BASE: 10,             // d20 + attribute/3 + level/5 against this + Choir level/3
+  UNMAKE_DEX: 5,                // Unmaking: Dexterity (and so defence) lost...
+  UNMAKE_TURNS: 4,              // ...for this many turns
+  JOY_MULT: 0.9,                // False Joy: drains this much of a blow...
+  JOY_HEAL_SHARE: 0.8,          // ...and the Choir regains this share of it
+} as const;
+
 // Magic daggers, found in chests: +1 to +3. The best one carried is the one
 // you fight with (wizards above all, but anyone can use one).
 export const DAGGERS = {
@@ -736,7 +730,7 @@ export const RINGS = {
   EVIL_MONSTERS: [
     'Asmodeus', 'Tiamat', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes', 'Rakshasa',
     'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
-    'Beholder', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
+    'Hollow Choir', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
     'Lich', 'Demilich', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
     'Orc King', 'Wendigo', 'Banshee',
   ] as string[],
