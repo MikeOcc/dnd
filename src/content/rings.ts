@@ -33,6 +33,11 @@ export const RINGS_INFO: Record<RingId, RingInfo> = {
     id: 'backfire', name: 'green diamond ring', power: "Backfire: the monster's next attack turns on it",
     found: ['Inside lies a ring set with a green diamond, cut with a thousand tiny mirrors.', 'When you turn it, the room seems to look back at itself.'],
   },
+  // A unique ring, not found in any chest.
+  borak: {
+    id: 'borak', name: 'Borak', power: 'Once a fight: a beam of searing light',
+    found: ['A star ruby burns in a setting of white gold: a six-rayed star of light caught in blood-red stone.', 'It hums against your finger. They called it The Borak.'],
+  },
   escape: {
     id: 'escape', name: 'star sapphire ring', power: 'Teleport away from battle',
     found: ['Inside lies a ring set with a star sapphire. A six-rayed star drifts across the stone as you tilt it.', 'For a moment you are not quite sure where you are standing.'],
@@ -40,7 +45,7 @@ export const RINGS_INFO: Record<RingId, RingInfo> = {
 };
 
 /** The display order of rings in menus. */
-export const RING_ORDER: RingId[] = ['fire', 'cold', 'evil', 'undead', 'backfire', 'escape'];
+export const RING_ORDER: RingId[] = ['fire', 'cold', 'evil', 'undead', 'backfire', 'escape', 'borak'];
 
 /** Where the ring chests lie. Star sapphires are found more than once. */
 export const RING_CHESTS: { id: string; ring: RingId; level: number }[] = [

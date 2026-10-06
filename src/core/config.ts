@@ -359,6 +359,22 @@ export const HOARD = {
   ITEM_CHANCE: 0.5,                       // ...this often (the great uniques always do)
 } as const;
 
+// The Borak: a star ruby ring that fires a beam of searing light, once a
+// fight. Damage: the monster's level × d6+4, times how well it stands up to
+// light (undead burn; creatures of light, mirror-bright and void things
+// shrug much of it off).
+export const BORAK = {
+  PER_LEVEL_MIN: 5, PER_LEVEL_MAX: 10,
+  LIGHT: {
+    'Vampire': 1.75, 'Nightwalker': 1.75, 'Spectre': 1.75, 'Wight': 1.75, 'Banshee': 1.75,
+    'Aboleth': 1.3, 'Mold': 1.3, 'Slime Mold': 1.3, 'Cerebrovore': 1.2,
+    'Phoenix': 0.5, 'Unicorn': 0.5, 'Gelatinous Cube': 0.5, 'Hollow Choir': 0.5, 'Djinn': 0.6,
+    'Gold Dragon': 0.6, 'Iron Golem': 0.6, 'Pit Fiend': 0.8, 'Balor': 0.8, 'Marilith': 0.8, 'Erinyes': 0.8,
+    'Asmodeus': 0.4,
+  } as Record<string, number>,
+  UNDEAD: 1.5,       // any other undead
+} as const;
+
 export const TREASURE = {
   // Chest gold: rng.int(GOLD_MIN, GOLD_MAX) * dungeonLevel, plus a modest
   // character-level bonus so treasure keeps pace with a leveled-up character

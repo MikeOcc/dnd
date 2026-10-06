@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, GEAR, CHOIR } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, GEAR, CHOIR, BORAK } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, HeldCondition, FxElement, RingId, ChoirMask, ChoirPower } from './types.js';
 import { RINGS_INFO } from '../content/rings.js';
 import { BESTIARY, type Script, type Kit } from './bestiary.js';
@@ -2390,4 +2390,31 @@ function stilledTurn(monster: Monster, messages: string[]): MonsterActionResult 
     messages.push(`Time lurches back into motion. The ${monster.type} gasps and staggers.`);
   }
   return { messages, monsterDamage: 0, playerDied: false, monsterDied: monster.hp <= 0 };
+}
+
+// ─── The Borak ───────────────────────────────────────────────────────────────
+
+/** How the monster takes a beam of light: >1 it burns, <1 it shrugs some off. */
+export function lightFactor(monster: Monster): number {
+  return BORAK.LIGHT[monster.type] ?? (monster.definition.isUndead ? BORAK.UNDEAD : 1);
+}
+
+/** The Borak fires: the monster's level × d6+4, by how it takes light. Once a fight. */
+export function playerBorak(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  monster.borakUsed = true;
+  const roll = rng.int(BORAK.PER_LEVEL_MIN, BORAK.PER_LEVEL_MAX);
+  const f = lightFactor(monster);
+  const dmg = Math.max(1, Math.round(monster.level * roll * f));
+  monster.hp = Math.max(0, monster.hp - dmg);
+  const messages = [
+    'You raise your hand. The star in The Borak blazes, and a beam of white-hot light lances out!',
+    f >= 1.5 ? `The ${monster.type} SHRIEKS as the light burns into it: it was never meant to bear the light! (${dmg} damage)`
+      : f > 1 ? `The beam sears deep into the ${monster.type}. (${dmg} damage)`
+      : f < 0.75 ? `The beam strikes the ${monster.type}, but much of the light glances away or passes through. (${dmg} damage)`
+      : f < 1 ? `The ${monster.type} withstands some of the light. (${dmg} damage)`
+      : `The beam burns a smoking line across the ${monster.type}! (${dmg} damage)`,
+  ];
+  if (monster.hp <= 0) return { messages: [...messages, `The ${monster.type} collapses, smoking.`], playerDamage: dmg, monsterDamage: 0, playerDied: false, monsterDied: true };
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: dmg, monsterDied: monster.hp <= 0 };
 }

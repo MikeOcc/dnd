@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour, playerBorak } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
@@ -2114,6 +2114,7 @@ export class GameEngine {
         text += ` (${inv.starCharges} use${inv.starCharges === 1 ? '' : 's'} left${spare > 0 ? `, +${spare} spare ring${spare === 1 ? '' : 's'}` : ''})`;
       }
       if (r === 'backfire' && this.combat?.monster.backfireUsed) text += ' (spent this fight)';
+      if (r === 'borak') text = `The Borak (star ruby): ${info.power}${this.combat?.monster.borakUsed ? ' (spent this fight)' : ''}`;
       if (inv.activeRing === r) text += ' [IN USE]';
       return { key: String.fromCharCode(97 + i), text };
     });
@@ -2139,6 +2140,14 @@ export class GameEngine {
     if (inCombat) {
       if (this.isHeld()) return this.combatHeld();
       if (ring === 'escape') return this.useStarSapphire();
+      if (ring === 'borak') {
+        if (this.combat!.monster.borakUsed) {
+          this.messages = ['The Borak\u2019s star has gone dark. It will burn again in your next fight.'];
+          return this.getState();
+        }
+        this.fx.monster = 'holy';
+        return this.processCombatResult(playerBorak(this.char, this.combat!.monster, this.rng));
+      }
       if (ring === 'backfire') {
         if (this.combat!.monster.backfireUsed) {
           this.messages = ['The green diamond is dark and cold. Its mirrors are spent for this fight.'];
@@ -2155,6 +2164,10 @@ export class GameEngine {
 
     if (ring === 'escape') {
       this.messages = ["The star sapphire's star lies still. Its power is for escaping a fight."];
+      return this.getState();
+    }
+    if (ring === 'borak') {
+      this.messages = ['The Borak hums on your finger, waiting. Its beam is for a fight. (R in battle)'];
       return this.getState();
     }
     inv.activeRing = ring;

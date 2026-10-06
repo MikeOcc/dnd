@@ -132,7 +132,7 @@ export interface Amulet {
 /** The magic rings. fire, cold, evil and undead ward while in use; backfire
  * turns a monster's next attack back on it; escape (star sapphire) teleports
  * you out of a fight. */
-export type RingId = 'fire' | 'cold' | 'evil' | 'undead' | 'backfire' | 'escape';
+export type RingId = 'fire' | 'cold' | 'evil' | 'undead' | 'backfire' | 'escape' | 'borak';
 
 export interface Character {
   id: string;
@@ -287,6 +287,7 @@ export interface Monster {
   frozenElapsed?: number; // ...and has been for this many (it can't breathe after a few)
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
+  borakUsed?: boolean;       // The Borak: already fired this fight
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
   burnedTurns?: number;
   burrowed?: boolean;      // Mongolian Death Worm: under the floor (blades can't reach it); it erupts on its next turn
