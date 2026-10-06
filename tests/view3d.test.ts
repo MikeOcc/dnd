@@ -140,3 +140,13 @@ describe('3D view: landmarks anchored to the map', () => {
     expect(placed.some((p: { obj: { kind: string } }) => p.obj.kind === 'fountain')).toBe(false);
   });
 });
+
+describe('3D view: a south-facing throne is seen from the right side', () => {
+  it('front from the south, back from the north, profile from east and west', () => {
+    const o = { x: 7, y: 7 };
+    expect(V.sideSeen(V.cameraFor(7, 9, 'N'), o)).toBe('front');
+    expect(V.sideSeen(V.cameraFor(7, 4, 'S'), o)).toBe('back');
+    expect(V.sideSeen(V.cameraFor(4, 7, 'E'), o)).toBe('faces-right');
+    expect(V.sideSeen(V.cameraFor(8, 7, 'W'), o)).toBe('faces-left');
+  });
+});

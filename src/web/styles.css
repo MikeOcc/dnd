@@ -142,6 +142,7 @@ html, body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  z-index: 2;   /* above the 3D views' canvas (z-index 1) */
 }
 
 #monster-portrait svg {

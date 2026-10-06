@@ -191,18 +191,27 @@
     return { depth, lateral, screenX: width / 2 + (f * lateral) / depth, baseY: height / 2 + (f * EYE) / depth, scale: f / depth };
   }
 
+  /** Which side of a south-facing landmark (a throne) the camera sees:
+   * 'front', 'back', or its profile, 'faces-left' / 'faces-right' on screen. */
+  function sideSeen(cam, o) {
+    const vx = cam.x - (o.x + 0.5), vy = cam.y - (o.y + 0.5);
+    if (Math.abs(vy) >= Math.abs(vx)) return vy >= 0 ? 'front' : 'back';
+    return vx > 0 ? 'faces-left' : 'faces-right';   // from the east it faces your left
+  }
+
   /** Visible objects, farthest first, with their on-screen boxes. `sizeOf`
-   * gives each kind's size in world units ({ w, h }). */
+   * gives each kind's size in world units ({ w, h }), given the side seen. */
   function placeObjects(world, cam, width, height, sizeOf) {
     const placed = [];
     for (const o of world.objects) {
       const p = projectObject(cam, o.x, o.y, width, height);
       if (p.depth < NEAR || p.depth > MAX_DIST) continue;
-      const size = sizeOf(o);
+      const view = sideSeen(cam, o);
+      const size = sizeOf(o, view);
       const w = size.w * p.scale, h = size.h * p.scale;
       const left = p.screenX - w / 2;
       if (left > width || left + w < 0) continue;
-      placed.push({ obj: o, depth: p.depth, left, top: p.baseY - h, width: w, height: h, baseY: p.baseY, screenX: p.screenX, scale: p.scale });
+      placed.push({ obj: o, view, depth: p.depth, left, top: p.baseY - h, width: w, height: h, baseY: p.baseY, screenX: p.screenX, scale: p.scale });
     }
     return placed.sort((a, b) => b.depth - a.depth);
   }
@@ -261,7 +270,7 @@
     ctx.ellipse(sprite.screenX, sprite.baseY, sprite.width * 0.46, Math.max(1.5, sprite.width * 0.08), 0, 0, Math.PI * 2);
     ctx.fill();
     const dim = 1 - light(sprite.depth);
-    art.draw(ctx, sprite.left, sprite.top, sprite.width, sprite.height, t, sprite.obj);
+    art.draw(ctx, sprite.left, sprite.top, sprite.width, sprite.height, t, sprite);
     if (dim > 0.02) {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.fillStyle = `rgba(0,0,0,${Math.min(0.92, dim).toFixed(3)})`;
@@ -448,37 +457,78 @@
   const TEXTURES = {};
   function rand(seed) { let s = seed >>> 0; return () => ((s = Math.imul(s ^ (s >>> 15), 2246822519) ^ Math.imul(s ^ (s >>> 13), 3266489917)) >>> 0) / 4294967296; }
 
-  /** 64×64 wall textures, made once: large staggered stone blocks, brick,
-   * vertical planks, rough rock. Muted, so the scene stays dark. */
+  const TEX = 256;   // wall texture size (pixels per square of wall)
+
+  /** Wall textures, made once per material: big staggered stone blocks,
+   * brick, planks with grain and nails, rough rock. Each block gets its own
+   * shade, a bevel, deep mortar, and now and then a crack or moss. */
   function texture(material) {
     if (TEXTURES[material]) return TEXTURES[material];
     const c = document.createElement('canvas');
-    c.width = c.height = 64;
+    c.width = c.height = TEX;
     const g = c.getContext('2d');
     const r = rand(material.length * 977 + 13);
-    const base = { stone: [92, 88, 80], brick: [104, 62, 48], wood: [92, 64, 38], rough: [78, 74, 68] }[material];
-    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
-      const n = (r() - 0.5) * 18;
-      g.fillStyle = `rgb(${base.map(v => Math.max(0, Math.min(255, v + n))).join(',')})`;
-      g.fillRect(x, y, 1, 1);
-    }
-    g.strokeStyle = 'rgba(20,16,12,0.9)';
-    g.lineWidth = 2;
-    if (material === 'stone' || material === 'brick') {
-      const ch = material === 'stone' ? 21 : 10, bw = material === 'stone' ? 32 : 21;
-      for (let y = 0, i = 0; y < 64; y += ch, i++) {
-        g.beginPath(); g.moveTo(0, y + 1); g.lineTo(64, y + 1); g.stroke();
-        for (let x = (i % 2) * (bw / 2); x < 64; x += bw) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + ch); g.stroke(); }
+    const rgb = (v) => `rgb(${v.map(x => Math.max(0, Math.min(255, Math.round(x)))).join(',')})`;
+    const speckle = (x0, y0, w, h, base, amt, density = 0.35) => {
+      for (let i = 0; i < w * h * density; i++) {
+        const x = x0 + r() * w, y = y0 + r() * h, n = (r() - 0.5) * amt;
+        g.fillStyle = rgb(base.map(v => v + n));
+        g.fillRect(x, y, 1 + (r() < 0.2 ? 1 : 0), 1);
       }
-      g.fillStyle = 'rgba(255,255,255,0.05)';
-      for (let y = 0; y < 64; y += ch) g.fillRect(0, y + 2, 64, 2);
+    };
+    const block = (x, y, w, h, base, mortar) => {
+      g.fillStyle = rgb(base); g.fillRect(x, y, w, h);
+      speckle(x, y, w, h, base, 26);
+      g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(x, y, w, 3); g.fillRect(x, y, 3, h);          // bevel: lit top/left
+      g.fillStyle = 'rgba(0,0,0,0.28)'; g.fillRect(x, y + h - 4, w, 4); g.fillRect(x + w - 4, y, 4, h); // shadowed bottom/right
+      if (r() < 0.22) {                                                                                 // a crack
+        g.strokeStyle = 'rgba(15,12,10,0.7)'; g.lineWidth = 1.2; g.beginPath();
+        let cx = x + r() * w, cy = y + 4; g.moveTo(cx, cy);
+        for (let k = 0; k < 5; k++) { cx += (r() - 0.5) * w * 0.25; cy += h / 6; g.lineTo(cx, cy); }
+        g.stroke();
+      }
+      if (r() < 0.12) { g.fillStyle = 'rgba(60,90,40,0.35)'; for (let k = 0; k < 30; k++) g.fillRect(x + r() * w, y + h - 10 + r() * 8, 2, 2); }  // moss
+      g.strokeStyle = mortar; g.lineWidth = 4; g.strokeRect(x, y, w, h);
+    };
+    if (material === 'stone' || material === 'brick') {
+      const bw = material === 'stone' ? 128 : 64, bh = material === 'stone' ? 85 : 32;
+      const base = material === 'stone' ? [96, 92, 84] : [112, 60, 44];
+      const mortar = material === 'stone' ? 'rgb(28,25,22)' : 'rgb(70,66,60)';
+      g.fillStyle = mortar; g.fillRect(0, 0, TEX, TEX);
+      for (let y = 0, i = 0; y < TEX; y += bh, i++) {
+        for (let x = -((i % 2) * bw) / 2; x < TEX; x += bw) {
+          const v = (r() - 0.5) * 24, tint = material === 'brick' ? [(r() - 0.5) * 20, (r() - 0.5) * 8, 0] : [0, 0, (r() - 0.5) * 8];
+          block(x, y, bw, Math.min(bh, TEX - y), base.map((b, k) => b + v + tint[k]), mortar);
+          if (x + bw > TEX) block(x - TEX, y, bw, Math.min(bh, TEX - y), base.map(b => b + v), mortar);   // wrap seamlessly
+        }
+      }
     } else if (material === 'wood') {
-      for (let x = 0; x < 64; x += 16) { g.beginPath(); g.moveTo(x + 1, 0); g.lineTo(x + 1, 64); g.stroke(); }
-      g.strokeStyle = 'rgba(40,24,10,0.5)'; g.lineWidth = 1;
-      for (let i = 0; i < 14; i++) { const x = r() * 64; g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + 3, 20, x - 3, 44, x, 64); g.stroke(); }
+      for (let x = 0; x < TEX; x += 64) {
+        const base = [96 + (r() - 0.5) * 20, 66 + (r() - 0.5) * 12, 40];
+        g.fillStyle = rgb(base); g.fillRect(x, 0, 64, TEX);
+        for (let i = 0; i < 40; i++) {                                        // grain
+          const gx = x + r() * 64, wob = 2 + r() * 3;
+          g.strokeStyle = `rgba(40,24,10,${0.15 + r() * 0.3})`; g.lineWidth = 1; g.beginPath(); g.moveTo(gx, 0);
+          for (let yy = 0; yy <= TEX; yy += 16) g.lineTo(gx + Math.sin(yy / 30 + i) * wob, yy);
+          g.stroke();
+        }
+        if (r() < 0.7) { const kx = x + 12 + r() * 40, ky = r() * TEX; g.fillStyle = 'rgba(40,22,8,0.75)'; g.beginPath(); g.ellipse(kx, ky, 4, 8, 0, 0, Math.PI * 2); g.fill(); }  // a knot
+        g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(x, 0, 3, TEX);             // the gap between planks
+        g.fillStyle = 'rgba(255,240,210,0.07)'; g.fillRect(x + 3, 0, 3, TEX);
+        g.fillStyle = 'rgb(40,38,36)';                                       // nails
+        for (const ny of [20, TEX / 2 + 10, TEX - 24]) { g.fillRect(x + 12, ny, 4, 4); g.fillRect(x + 48, ny, 4, 4); }
+      }
     } else {
-      g.strokeStyle = 'rgba(25,22,18,0.7)'; g.lineWidth = 1.5;
-      for (let i = 0; i < 9; i++) { g.beginPath(); let x = r() * 64, y = r() * 64; g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (r() - 0.5) * 24; y += (r() - 0.5) * 24; g.lineTo(x, y); } g.stroke(); }
+      g.fillStyle = 'rgb(74,70,64)'; g.fillRect(0, 0, TEX, TEX);
+      for (let i = 0; i < 26; i++) {                                         // irregular stones
+        const cx = r() * TEX, cy = r() * TEX, rad = 18 + r() * 34, v = (r() - 0.5) * 30;
+        g.fillStyle = rgb([80 + v, 76 + v, 68 + v]);
+        g.beginPath();
+        for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2, rr = rad * (0.7 + r() * 0.4); g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+        g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(20,18,15,0.6)'; g.lineWidth = 2; g.stroke();
+      }
+      speckle(0, 0, TEX, TEX, [76, 72, 66], 30, 0.25);
     }
     return (TEXTURES[material] = c);
   }
@@ -490,16 +540,16 @@
     const width = canvas.width, height = canvas.height;
     const world = buildWorld(scene);
     const cam = cameraFor(scene.x, scene.y, scene.facing);
-    const cols = Math.ceil(width / 2);
+    const cols = width;                          // one ray per pixel column: full sharpness
     const cast = castColumns(world, cam, cols, width, height);
     const { f, horizon } = cast;
     const colW = width / cols;
 
-    // Floor and ceiling, cast per pixel row at half resolution.
-    const img = ctx.createImageData(cols, Math.ceil(height / 2));
+    // Floor and ceiling, cast per pixel.
+    const img = ctx.createImageData(cols, height);
     const data = img.data;
     for (let py = 0; py < img.height; py++) {
-      const y = (py + 0.5) * 2;
+      const y = py + 0.5;
       for (let c = 0; c < cols; c++) {
         const col = cast.columns[c];
         let rgb = [0, 0, 0];
@@ -507,11 +557,17 @@
           const d = (f * EYE) / (y - horizon);
           if (d < col.depth && d < MAX_DIST) {
             const fx = cam.x + col.rdx * d, fy = cam.y + col.rdy * d;
-            const sx = Math.abs(fx - Math.round(fx)), sy = Math.abs(fy - Math.round(fy));
-            const seam = sx < 0.03 || sy < 0.03 || Math.abs(((fx * 2) % 1) - 0.5) < 0.012 && sy > 0.1;
+            // Flagstones half a square across, every other row staggered.
+            const iy = Math.floor(fy * 2), vy = fy * 2 - iy;
+            const sx = fx * 2 + (iy & 1) * 0.5, ix = Math.floor(sx), vx = sx - ix;
+            const seamW = Math.min(0.06, 0.025 + d * 0.003);
+            const seam = vx < seamW || vy < seamW;
             const l = light(d);
-            const base = seam ? 26 : 58 + ((Math.floor(fx * 2) * 7 + Math.floor(fy * 2) * 13) % 9);
-            rgb = [base * l * 0.95, base * l * 0.9, base * l * 0.82];
+            const stone = (((ix * 73856093) ^ (iy * 19349663)) >>> 0) % 16;
+            const grain = (((Math.floor(fx * 48) * 83492791) ^ (Math.floor(fy * 48) * 2654435761)) >>> 0) % 9 - 4;
+            const bevel = !seam && (vx < seamW + 0.05 || vy < seamW + 0.05) ? 7 : !seam && (vx > 0.94 || vy > 0.94) ? -6 : 0;
+            const base = seam ? 20 : 50 + stone + grain + bevel;
+            rgb = [base * l * 0.97, base * l * 0.92, base * l * 0.84];
           }
         } else {
           const d = (f * (1 - EYE)) / (horizon - y);
@@ -541,22 +597,22 @@
       const col = cast.columns[c];
       const x = c * colW;
       for (const l of col.lintels) {
-        ctx.drawImage(texture('stone'), 32, 0, 1, 64, x, l.top, colW + 0.5, l.bottom - l.top);
+        ctx.drawImage(texture('stone'), TEX / 2, 0, 1, TEX, x, l.top, colW + 0.5, l.bottom - l.top);
         ctx.fillStyle = `rgba(0,0,0,${(1 - light(l.dist) * 0.85).toFixed(3)})`;
         ctx.fillRect(x, l.top, colW + 0.5, l.bottom - l.top);
       }
       const w = col.wall;
       if (!w) continue;
       const fullTop = screenY(horizon, f, w.height, w.dist);
-      const tx = Math.min(63, Math.floor(w.u * 64));
+      const tx = Math.min(TEX - 1, Math.floor(w.u * TEX));
       const reps = w.height;                         // the texture repeats once per unit of height
-      const srcTop = 64 * reps * ((w.top - fullTop) / (w.bottom - fullTop));
+      const srcTop = TEX * reps * ((w.top - fullTop) / (w.bottom - fullTop));
       // Draw the visible part, tiling the texture vertically.
       let y = w.top, sy = srcTop;
-      const pxPerTex = (w.bottom - fullTop) / reps / 64;
+      const pxPerTex = (w.bottom - fullTop) / reps / TEX;
       while (y < w.bottom - 0.01) {
-        const inTile = sy % 64;
-        const take = Math.min(64 - inTile, (w.bottom - y) / pxPerTex);
+        const inTile = sy % TEX;
+        const take = Math.min(TEX - inTile, (w.bottom - y) / pxPerTex);
         ctx.drawImage(texture(w.material), tx, inTile, 1, take, x, y, colW + 0.5, take * pxPerTex);
         y += take * pxPerTex; sy += take;
       }
@@ -616,7 +672,7 @@
   }
 
   const api = {
-    buildWorld, wallBetween, cameraFor, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor,
+    buildWorld, wallBetween, cameraFor, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
     renderAscii, renderPainted, prefersReducedMotion,
     FOV, EYE, MAX_DIST, NEAR, CEILING_HEIGHTS,
   };

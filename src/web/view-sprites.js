@@ -29,6 +29,8 @@
     'ladder-up': { w: 0.46, h: 1.0 },
     'ladder-down': { w: 0.72, h: 0.24 },
     throne: { w: 1.25, h: 1.6 },
+    'throne-back': { w: 1.2, h: 1.6 },
+    'throne-side': { w: 0.95, h: 1.6 },
     'throne-orc': { w: 1.15, h: 1.35 },
     pillar: { w: 0.42, h: 1.0 },
   };
@@ -131,6 +133,27 @@
       <rect x="78" y="228" width="94" height="20" fill="#262020" stroke="#000" stroke-width="2"/>
       <circle cx="125" cy="88" r="9" fill="#a8140a"/>
     </svg>`,
+    'throne-back': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+      <defs><radialGradient id="gl" cx="0.5" cy="0.6" r="0.6"><stop offset="0" stop-color="#ff3a10" stop-opacity="0.25"/><stop offset="1" stop-color="#ff3a10" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="120" cy="180" rx="120" ry="140" fill="url(#gl)"/>
+      <path d="M16 312 H224 V292 H16 Z" fill="#1d1a1a" stroke="#000" stroke-width="2"/>
+      <path d="M52 292 V150 Q52 60 86 34 L100 70 L120 18 L140 70 L154 34 Q188 60 188 150 V292 Z" fill="#141111" stroke="#000" stroke-width="3"/>
+      <path d="M86 34 Q66 10 48 6 Q72 24 74 52 Z M154 34 Q174 10 192 6 Q168 24 166 52 Z" fill="#241e1e" stroke="#000" stroke-width="2"/>
+      <g stroke="#2e2626" stroke-width="3" fill="none"><path d="M72 110 V280 M120 80 V280 M168 110 V280"/><path d="M60 170 H180 M60 230 H180"/></g>
+      <g fill="#3a3030"><circle cx="72" cy="170" r="5"/><circle cx="120" cy="170" r="5"/><circle cx="168" cy="170" r="5"/><circle cx="72" cy="230" r="5"/><circle cx="120" cy="230" r="5"/><circle cx="168" cy="230" r="5"/></g>
+    </svg>`,
+    'throne-side': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 320">
+      <defs><radialGradient id="gl" cx="0.5" cy="0.6" r="0.6"><stop offset="0" stop-color="#ff3a10" stop-opacity="0.28"/><stop offset="1" stop-color="#ff3a10" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="95" cy="180" rx="95" ry="140" fill="url(#gl)"/>
+      <path d="M8 312 H182 V292 H8 Z" fill="#1d1a1a" stroke="#000" stroke-width="2"/>
+      <path d="M20 292 V40 Q24 18 34 8 L44 30 L52 292 Z" fill="#171414" stroke="#000" stroke-width="3"/>
+      <path d="M34 8 Q20 -2 6 2 Q24 12 26 30 Z" fill="#2a2222" stroke="#000" stroke-width="2"/>
+      <path d="M52 236 H172 V256 H52 Z" fill="#262020" stroke="#000" stroke-width="2"/>
+      <path d="M44 188 H160 Q172 188 172 198 V206 H44 Z" fill="#221d1d" stroke="#000" stroke-width="2"/>
+      <path d="M160 206 l10 16 M150 206 l4 16" stroke="#3a3030" stroke-width="3"/>
+      <path d="M52 256 V292 M164 256 V292" stroke="#1d1818" stroke-width="10"/>
+      <path d="M44 120 Q60 112 70 130 V236 H52 Z" fill="#3d0b08" stroke="#000" stroke-width="2"/>
+    </svg>`,
     'throne-orc': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 270">
       <path d="M14 262 H216 V242 H14 Z" fill="#3a3027" stroke="#1a140e" stroke-width="2"/>
       <path d="M54 242 V96 L78 60 L115 40 L152 60 L176 96 V242 Z" fill="#4e3a26" stroke="#1a140e" stroke-width="3"/>
@@ -169,7 +192,13 @@
     return (images[kind] = img);
   }
 
-  const kindOf = (obj) => (obj.kind === 'throne' && obj.variant === 'Orc King' ? 'throne-orc' : obj.kind);
+  /** Which artwork a landmark uses, given the side seen (Asmodeus's throne
+   * has a back and a profile; it faces south, like the classic view's). */
+  const kindOf = (obj, view = 'front') => {
+    if (obj.kind !== 'throne') return obj.kind;
+    if (obj.variant === 'Orc King') return 'throne-orc';
+    return view === 'back' ? 'throne-back' : view === 'faces-left' || view === 'faces-right' ? 'throne-side' : 'throne';
+  };
 
   // ─── Animation overlays (restrained; none when motion is reduced) ───────
 
@@ -227,19 +256,23 @@
 
   /** The artwork for one landmark: draws it into the box (x, y, w, h). */
   function art(obj) {
-    const kind = kindOf(obj);
-    const img = load(kind);
     const anim = ANIMATE[obj.kind];
     return {
-      draw(ctx, x, y, w, h, t) {
-        if (img.complete && img.naturalWidth) ctx.drawImage(img, x, y, w, h);
+      draw(ctx, x, y, w, h, t, sprite) {
+        const view = sprite?.view;
+        const img = load(kindOf(obj, view));
+        if (img.complete && img.naturalWidth) {
+          if (view === 'faces-left' && obj.kind === 'throne') {   // the profile art faces right; mirror it
+            ctx.save(); ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); ctx.restore();
+          } else ctx.drawImage(img, x, y, w, h);
+        }
         if (anim && !still()) anim(ctx, x, y, w, h, t);
         else if (anim && obj.kind === 'altar') anim(ctx, x, y, w, h, 0);   // candles still burn, unmoving
       },
     };
   }
 
-  const sizeOf = (obj) => SIZES[kindOf(obj)] || { w: 0.6, h: 0.6 };
+  const sizeOf = (obj, view) => SIZES[kindOf(obj, view)] || { w: 0.6, h: 0.6 };
 
   /** Whether anything in a scene is animated (so the view needs redrawing over time). */
   const animates = (objects) => objects.some(o => ANIMATE[o.kind]) && !still();

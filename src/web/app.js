@@ -345,7 +345,7 @@ function draw3D(state) {
   canvas.style.top = `${pre.offsetTop}px`;
   canvas.style.width = `${pre.offsetWidth}px`;
   canvas.style.height = `${pre.offsetHeight}px`;
-  const crisp = viewMode === 'ascii3d' ? Math.min(2, window.devicePixelRatio || 1) : 1;
+  const crisp = Math.min(2, window.devicePixelRatio || 1);   // full sharpness on high-density screens
   const w = Math.max(100, Math.round((pre.offsetWidth - 2) * crisp)), h = Math.max(60, Math.round((pre.offsetHeight - 2) * crisp));
   if (canvas.width !== w) canvas.width = w;
   if (canvas.height !== h) canvas.height = h;
