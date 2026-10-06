@@ -930,3 +930,7 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 }
 #move-hint.save-nudge { color: #ffcf6a; }
 #move-hint.save-nudge b { color: #fff0b0; }
+
+/* Stairs buttons: greyed out until a ladder is in reach, then they light up. */
+.ctrl-btn[aria-disabled="true"] { opacity: 0.35; cursor: default; }
+.ctrl-btn.reachable { border-color: var(--terminal-green-bright); color: var(--terminal-green-bright); box-shadow: 0 0 6px rgba(0, 255, 0, 0.35); }

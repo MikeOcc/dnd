@@ -447,6 +447,8 @@ export interface GameState {
    * character could face, so the browser can turn at once, without waiting
    * for the server. */
   turnViews?: Partial<Record<Direction, { view: string[]; sighting?: GameState['sighting']; waysOut?: ('ahead' | 'left' | 'right' | 'behind')[] }>>;
+  /** While exploring: whether a ladder up / down is within reach (on your square or beside it). */
+  ladders?: { up: boolean; down: boolean };
   /** While exploring: which way the ways out of this room (or this corridor square) lie, relative to facing. */
   waysOut?: ('ahead' | 'left' | 'right' | 'behind')[];
 }
@@ -488,4 +490,8 @@ export interface DungeonState {
   defeatedUniqueMonsters: Set<string>;
   visitedDescriptions: Set<string>;
   revealedLevels: Set<number>;   // levels whose whole map a diamond or tome has shown (kept apart from explored squares)
+  hoards?: Hoard[];              // dragons' hoard chests left where they fell
 }
+
+/** A dragon's hoard chest, left where it fell (its chest id begins 'hoard-'). */
+export interface Hoard { id: string; level: number; x: number; y: number; monster: string; monsterLevel: number }

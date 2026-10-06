@@ -113,3 +113,26 @@ describe('Already in front of it', () => {
     expect([e.char.x, e.char.y]).toEqual([p.at.x, p.at.y]);
   });
 });
+
+describe('Ladders', () => {
+  it('can be climbed from beside them, not only on them; the state says which are in reach', () => {
+    const { engine, e } = ready();
+    const p = placeNear(e, 'ladder-down')!;
+    expect(p).toBeTruthy();
+    e.char.x = p.n.x; e.char.y = p.n.y;
+    expect(engine.getState().ladders).toEqual({ up: false, down: true });
+    const s = engine.climbDown();
+    expect(e.char.dungeonLevel).toBe(2);
+    expect(s.phase).not.toBe('playing-blocked');
+  });
+
+  it('too far away: no climbing, and the buttons stay dark', () => {
+    const { engine, e } = ready();
+    const p = placeNear(e, 'ladder-down')!;
+    if (!p.m) return;
+    e.char.x = p.m.x; e.char.y = p.m.y;
+    expect(engine.getState().ladders?.down).toBe(false);
+    expect(engine.climbDown().messages.join(' ')).toContain('no ladder leading down within reach');
+    expect(e.char.dungeonLevel).toBe(1);
+  });
+});

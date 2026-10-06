@@ -327,6 +327,7 @@ function applyState(state) {
   planarStepClock(state);
   updateViewStrip(state);
   updateViewButton();
+  updateLadderButtons(state);
   if (phase !== 'playing' && moreOpen) setMore(false);
   // A first visit: the short how-to-play, once, when the dungeon first appears.
   if (phase === 'playing' && !helpOpen) {
@@ -460,6 +461,18 @@ function cycleViewMode() {
   try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* per-viewer nicety only */ }
   updateViewButton();
   applyState(currentState);
+}
+
+/** Stairs Up / Down light up only with a ladder in reach (on it or beside it). */
+function updateLadderButtons(state) {
+  const reach = state.phase === 'playing' ? (state.ladders || { up: false, down: false }) : { up: false, down: false };
+  for (const [id, on, word] of [['btn-climb-up', reach.up, 'up'], ['btn-climb-down', reach.down, 'down']]) {
+    const b = document.getElementById(id);
+    if (!b) continue;
+    b.setAttribute('aria-disabled', String(!on));   // (not disabled: its tip still shows on hover)
+    b.classList.toggle('reachable', on);
+    b.dataset.tip = on ? `Climb the ladder ${word}. (${word === 'up' ? 'U' : 'D'})` : `No ladder ${word} within reach. Stand on a ladder, or beside one, to climb it.`;
+  }
 }
 
 /** The View button names the view you're in. */

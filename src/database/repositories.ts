@@ -213,8 +213,8 @@ export class Repository {
       INSERT OR REPLACE INTO dungeon_state (
         character_id, visited_cells, opened_chests, read_books,
         used_fountains, used_altars, triggered_traps, disarmed_traps,
-        defeated_fixed, defeated_unique, visited_descriptions, revealed_levels
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        defeated_fixed, defeated_unique, visited_descriptions, revealed_levels, hoards
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       characterId,
       JSON.stringify([...state.visitedCells]),
@@ -228,6 +228,7 @@ export class Repository {
       JSON.stringify([...state.defeatedUniqueMonsters]),
       JSON.stringify([...state.visitedDescriptions]),
       JSON.stringify([...(state.revealedLevels ?? [])]),
+      JSON.stringify(state.hoards ?? []),
     );
   }
 
@@ -250,6 +251,7 @@ export class Repository {
       defeatedUniqueMonsters: new Set(JSON.parse(row['defeated_unique']     || '[]')),
       visitedDescriptions:    new Set(JSON.parse(row['visited_descriptions'] || '[]')),
       revealedLevels:         new Set(JSON.parse(row['revealed_levels'] || '[]')),
+      hoards:                 JSON.parse(row['hoards'] || '[]'),
     };
   }
 }

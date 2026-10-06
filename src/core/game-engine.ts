@@ -9,19 +9,14 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
-import type { RingId, SceneData, SceneObject } from './types.js';
+import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward,
   playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
-import {
-  initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace,
-  applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain,
-  chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap,
-  resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear,
-} from './encounters.js';
+import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -166,6 +161,8 @@ export class GameEngine {
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
       if (seen) state.sighting = seen;
+      // Which ladders are close enough to climb (the Up and Down buttons light up).
+      state.ladders = { up: this.char!.dungeonLevel > 1 && this.ladderInReach('ladder-up'), down: this.char!.dungeonLevel < 7 && this.ladderInReach('ladder-down') };
       // Which way the ways out lie, for the indicator by the compass.
       const lvlNow = this.getLevel(this.char!.dungeonLevel);
       if (lvlNow) { lvlNow.areas ??= mapAreas(lvlNow.grid); state.waysOut = [...new Set(waysOut(lvlNow.grid, lvlNow.areas, this.char!.x, this.char!.y, this.char!.facing))]; }
@@ -863,6 +860,7 @@ export class GameEngine {
     this.dungeonState = this.repo.loadDungeonState(id);
     if (!this.dungeonState) this.dungeonState = this.emptyDungeonState();
     dropLegacyVisitedKeys(this.dungeonState);
+    for (const n of this.levelCache.keys()) this.placeHoards(n);   // (a Restore: back to the saved hoards)
     this.lair = null;
     this.lightAround();
 
@@ -1289,14 +1287,25 @@ export class GameEngine {
 
   // ─── Level transitions ───────────────────────────────────────────────────
 
+  /** A ladder of this kind on your square, or on one beside it with no wall
+   * between: close enough to climb. */
+  private ladderInReach(kind: 'ladder-up' | 'ladder-down'): boolean {
+    if (!this.char) return false;
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return false;
+    const { x, y } = this.char;
+    if (lvl.contents.get(`${x},${y}`)?.type === kind) return true;
+    const STEP: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+    return STEP.some(([d, dx, dy]) => canMove(lvl.grid, x, y, d) && lvl.contents.get(`${x + dx},${y + dy}`)?.type === kind);
+  }
+
   climbUp(): GameState {
     if (!this.char || this.phase !== 'playing') return this.getState();
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return this.getState();
 
-    const content = lvl.contents.get(`${this.char.x},${this.char.y}`);
-    if (content?.type !== 'ladder-up' || this.char.dungeonLevel <= 1) {
-      this.messages = ['There is no ladder leading up here.'];
+    if (!this.ladderInReach('ladder-up') || this.char.dungeonLevel <= 1) {
+      this.messages = ['There is no ladder leading up within reach.'];
       return this.getState();
     }
 
@@ -1317,9 +1326,8 @@ export class GameEngine {
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return this.getState();
 
-    const content = lvl.contents.get(`${this.char.x},${this.char.y}`);
-    if (content?.type !== 'ladder-down' || this.char.dungeonLevel >= 7) {
-      this.messages = ['There is no ladder leading down here.'];
+    if (!this.ladderInReach('ladder-down') || this.char.dungeonLevel >= 7) {
+      this.messages = ['There is no ladder leading down within reach.'];
       return this.getState();
     }
 
@@ -2734,6 +2742,12 @@ export class GameEngine {
 
     this.messages.push('', `You gain ${xpGained} experience.`);
 
+    // A dragon sometimes leaves its hoard (the great ones always do).
+    if ((monster.type.includes('Dragon') || ['Tiamat', 'Dracolich'].includes(monster.type))
+        && (def.isUnique || this.rng.float() < HOARD.CHANCE)) {
+      this.messages.push(...this.leaveHoard(monster));
+    }
+
     this.messages.push(...this.levelUp());
 
     // Clear naked status
@@ -3046,26 +3060,23 @@ export class GameEngine {
       alarm = !!sprung.triggerMonster;
     }
 
+    // A dragon's hoard: gold, gemstones, magic gems, and for the toughest a singular item.
+    const hoard = id.startsWith(HOARD_PREFIX) ? this.dungeonState.hoards?.find(h => h.id === id) : undefined;
+    if (hoard) {
+      const loot = dragonHoardLoot(this.char, hoard.monster, hoard.monsterLevel, this.rng);
+      messages.push(...loot.messages);
+      const unique = ['Tiamat', 'Dracolich'].includes(hoard.monster);
+      if (unique || (hoard.monsterLevel >= HOARD.ITEM_FROM_LEVEL && this.rng.float() < HOARD.ITEM_CHANCE)) messages.push(...this.hoardItem());
+      this.dungeonState.hoards = this.dungeonState.hoards!.filter(h => h.id !== id);
+      this.cue('victory-4');
+      this.messages = messages;
+      return this.closeInteractionWithSave();
+    }
+
     // A ring chest holds its ring and nothing else.
     const ringChest = id.startsWith(RING_CHEST_PREFIX) ? ringChestById(id.slice(RING_CHEST_PREFIX.length)) : undefined;
     if (ringChest) {
-      const inv = this.char.inventory;
-      const ring = ringChest.ring;
-      const info = RINGS_INFO[ring];
-      messages.push(...info.found, '');
-      if (ring === 'escape') {
-        inv.starRings = (inv.starRings ?? 0) + 1;
-        if (!inv.starCharges) inv.starCharges = RINGS.STAR_CHARGES;
-        messages.push(`You slip the star sapphire ring onto your finger. (${info.power}: ${RINGS.STAR_CHARGES} uses, in a fight)`);
-      } else {
-        if (!inv.rings?.includes(ring)) inv.rings = [...(inv.rings ?? []), ring];
-        messages.push(`You slip the ${info.name} onto your finger. (${info.power})`);
-        if (!inv.activeRing && ring !== 'backfire') {
-          inv.activeRing = ring;
-          messages.push('It is the ring in use. Many rings can be worn, but only one used at a time.');
-        }
-      }
-      messages.push('(J: choose the ring in use. R in a fight.)');
+      messages.push(...this.giveRing(ringChest.ring));
       this.cue('victory-3');
       this.messages = messages;
       if (alarm) { this.closeInteraction(); return this.startRandomEncounter(); }
@@ -3309,6 +3320,78 @@ export class GameEngine {
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
+    this.placeHoards(levelNum);
+  }
+
+  /** Puts the level's unopened dragon hoards where their dragons fell, and
+   * takes away any the saved game doesn't know of (after a Restore). */
+  private placeHoards(levelNum: number): void {
+    const lvl = this.levelCache.get(levelNum);
+    if (!lvl || !this.dungeonState) return;
+    for (const [k, c] of lvl.contents) if (c.id.startsWith(HOARD_PREFIX)) lvl.contents.delete(k);
+    for (const h of this.dungeonState.hoards ?? []) {
+      if (h.level !== levelNum || this.dungeonState.openedChests.has(h.id)) continue;
+      const k = `${h.x},${h.y}`;
+      if (!lvl.contents.has(k)) lvl.contents.set(k, { type: 'chest', id: h.id });
+    }
+  }
+
+  /** A slain dragon sometimes leaves its hoard: a chest on an open square
+   * beside you (in front if it can be), opened once. */
+  private leaveHoard(monster: { type: string; level: number; definition: { isUnique?: boolean } }): string[] {
+    if (!this.char || !this.dungeonState) return [];
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl) return [];
+    const STEP: Record<Direction, [number, number]> = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+    const order: Direction[] = [this.char.facing, ...(['N', 'E', 'S', 'W'] as Direction[]).filter(d => d !== this.char!.facing)];
+    const spot = order.map(d => ({ d, x: this.char!.x + STEP[d][0], y: this.char!.y + STEP[d][1] }))
+      .find(p => canMove(lvl.grid, this.char!.x, this.char!.y, p.d) && !lvl.contents.has(`${p.x},${p.y}`));
+    if (!spot) return [];
+    const hoard = { id: `${HOARD_PREFIX}${this.char.dungeonLevel}-${spot.x}-${spot.y}-${Date.now().toString(36)}`, level: this.char.dungeonLevel, x: spot.x, y: spot.y, monster: monster.type, monsterLevel: monster.level };
+    this.dungeonState.hoards = [...(this.dungeonState.hoards ?? []), hoard];
+    lvl.contents.set(`${spot.x},${spot.y}`, { type: 'chest', id: hoard.id });
+    const where = spot.d === this.char.facing ? 'just ahead of you' : `to your ${{ N: { E: 'left', W: 'right', S: 'back' }, E: { S: 'left', N: 'right', W: 'back' }, S: { W: 'left', E: 'right', N: 'back' }, W: { N: 'left', S: 'right', E: 'back' } }[this.char.facing][spot.d as 'N'] ?? 'side'}`;
+    return ['', `Behind where the ${monster.type} lay, half-buried in bones and coins: an iron-bound chest, ${where}. Its hoard.`];
+  }
+
+  /** The singular magic item in a tough dragon's hoard: a +3 weapon or armour,
+   * a magic ring you don't have, or an uncursed amulet at full strength. */
+  private hoardItem(): string[] {
+    if (!this.char) return [];
+    const inv = this.char.inventory;
+    const rings = (['fire', 'cold', 'evil', 'undead', 'escape'] as RingId[]).filter(r => r === 'escape' || !inv.rings?.includes(r));
+    const options = ['gear', ...(rings.length ? ['ring'] : []), ...((inv.amulets?.length ?? 0) < AMULETS.MAX_CARRIED ? ['amulet'] : [])];
+    const pick = this.rng.pick(options);
+    if (pick === 'ring') return ['', 'On a finger bone among the coins, a ring:', ...this.giveRing(this.rng.pick(rings))];
+    if (pick === 'amulet') {
+      const stats: AmuletStat[] = ['strength', 'intelligence', 'dexterity', 'constitution', 'wisdom'];
+      const amulet: Amulet = { stat: this.rng.pick(stats), bonus: AMULETS.BONUS_MAX, cursed: false, look: this.rng.pick([...AMULETS.LOOKS]) };
+      inv.amulets = [...(inv.amulets ?? []), amulet];
+      return ['', `Draped over a crown lies a ${amuletName(amulet, false)}, heavy with old power. (A: Amulets)`];
+    }
+    const gear = rollGear(this.char, this.rng, 'hoard', 3);
+    return gear ? ['', ...gear] : [];
+  }
+
+  /** Puts a ring on: the star sapphire's charges, or one of the others (in use if none is). */
+  private giveRing(ring: RingId): string[] {
+    const inv = this.char!.inventory;
+    const info = RINGS_INFO[ring];
+    const out = [...info.found, ''];
+    if (ring === 'escape') {
+      inv.starRings = (inv.starRings ?? 0) + 1;
+      if (!inv.starCharges) inv.starCharges = RINGS.STAR_CHARGES;
+      out.push(`You slip the star sapphire ring onto your finger. (${info.power}: ${RINGS.STAR_CHARGES} uses, in a fight)`);
+    } else {
+      if (!inv.rings?.includes(ring)) inv.rings = [...(inv.rings ?? []), ring];
+      out.push(`You slip the ${info.name} onto your finger. (${info.power})`);
+      if (!inv.activeRing && ring !== 'backfire') {
+        inv.activeRing = ring;
+        out.push('It is the ring in use. Many rings can be worn, but only one used at a time.');
+      }
+    }
+    out.push('(J: choose the ring in use. R in a fight.)');
+    return out;
   }
 
   // ─── Utilities ───────────────────────────────────────────────────────────

@@ -346,6 +346,19 @@ export const MONSTER_SCALING = {
   DEEP_RARE: { Ghoul: { fromDepth: 6, keep: 0.35 }, 'Hollow Choir': { fromDepth: 1, keep: 0.4 } } as Record<string, { fromDepth: number; keep: number }>,
 } as const;
 
+// A dragon's hoard: a chest that sometimes appears where a dragon falls
+// (always for the great uniques), opened once. Amounts scale with the
+// dragon's level; tough dragons may also guard one singular magic item.
+export const HOARD = {
+  CHANCE: 0.5,
+  GOLD_MIN: 30, GOLD_MAX: 90,             // × the dragon's level
+  STONES_MIN: 1, STONES_MAX: 4,           // gemstones, each worth...
+  STONE_MIN: 15, STONE_MAX: 45,           // ...this × the dragon's level, in gold
+  MAGIC_GEMS_MIN: 1, MAGIC_GEMS_MAX: 3,
+  ITEM_FROM_LEVEL: 20,                    // dragons this tough may guard a singular item...
+  ITEM_CHANCE: 0.5,                       // ...this often (the great uniques always do)
+} as const;
+
 export const TREASURE = {
   // Chest gold: rng.int(GOLD_MIN, GOLD_MAX) * dungeonLevel, plus a modest
   // character-level bonus so treasure keeps pace with a leveled-up character

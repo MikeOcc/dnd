@@ -1,6 +1,6 @@
 import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat, Weapon, Armor, WeaponKind, ArmorKind } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS, GEAR } from './config.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS, GEAR, HOARD } from './config.js';
 import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName, bestWeapon, wornArmor, gearName, armorProtection } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ function findGem(char: Character, type: GemType): ChestResult {
 /** A weapon or armour the character can use, at a plus suited to the
  * depth, added to their pack. Returns the lines describing it, or null if
  * their pack has no room for it. Used by chests and fallen monsters. */
-export function rollGear(char: Character, rng: RNG, where: 'chest' | 'monster'): string[] | null {
+export function rollGear(char: Character, rng: RNG, where: 'chest' | 'monster' | 'hoard', forceBonus?: number): string[] | null {
   const wizard = char.charClass !== 'warrior';
   const isWeapon = rng.float() < 0.55;
   const kinds = isWeapon
@@ -155,11 +155,12 @@ export function rollGear(char: Character, rng: RNG, where: 'chest' | 'monster'):
   const odds = [...GEAR.PLUS_ODDS].reverse().find(([from]) => char.dungeonLevel >= from)![1];
   let pick = rng.float() * odds.reduce((a, b) => a + b, 0), bonus = 0;
   for (let i = 0; i < odds.length; i++) { if (pick < odds[i]) { bonus = i; break; } pick -= odds[i]; }
+  if (forceBonus !== undefined) bonus = forceBonus;
   const kind = rng.pick(kinds as string[]);
   const base = rng.pick([...GEAR.NAMES[kind]]);
   const name = bonus > 0 ? `${rng.pick([...GEAR.MAKERS[bonus]])} ${base}` : base;
   const item = { kind, bonus, name: name[0].toUpperCase() + name.slice(1) };
-  const lines = [where === 'chest' ? `Inside lies ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.` : `Among its remains you find ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.`];
+  const lines = [where !== 'monster' ? `Inside lies ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.` : `Among its remains you find ${bonus ? 'an enchanted' : 'a'} ${base}: the ${gearName(item as Weapon)}.`];
   if (isWeapon) {
     char.inventory.weapons = [...(char.inventory.weapons ?? []), item as Weapon];
     lines.push(bestWeapon(char) === item ? 'It is the best weapon you carry: you will fight with it now.' : 'You already carry a better weapon. You keep it anyway.');
@@ -642,6 +643,7 @@ function stableHash(s: string): number {
 
 /** The trap on this chest for this character, or null if it isn't trapped. */
 export function chestTrapFor(char: Character, chestId: string): ChestTrapType | null {
+  if (chestId.startsWith(HOARD_PREFIX)) return null;   // a dragon's hoard isn't trapped: the dragon was the trap
   const h = stableHash(`${char.id}:${chestId}`);
   if ((h % 10000) / 10000 >= CHEST_TRAPS.CHANCE) return null;
   return CHEST_TRAP_TYPES[Math.floor(h / 10000) % CHEST_TRAP_TYPES.length];
@@ -776,4 +778,35 @@ export function resolveTrapDisarm(char: Character, variant: string, rng: RNG): T
   }
   const sprung = resolveTrapTriggered(char, variant, rng);
   return { ...sprung, messages: ['You fail to disarm it!', ...sprung.messages] };
+}
+
+// ─── A dragon's hoard ────────────────────────────────────────────────────────
+
+export const HOARD_PREFIX = 'hoard-';
+const STONE_NAMES = ['rubies', 'pearls', 'garnets', 'topazes', 'star sapphires', 'black opals', 'emeralds the size of eggs', 'moonstones', 'amethysts'];
+
+/** Gold, gemstones worth gold, and magic gems from a dragon's hoard. (A
+ * singular magic item, for the toughest, is handed out by the engine.) */
+export function dragonHoardLoot(char: Character, monster: string, monsterLevel: number, rng: RNG): { messages: string[]; goldGained: number } {
+  const L = Math.max(1, monsterLevel);
+  const messages = [`The ${monster}\u2019s hoard spills out: coins, cups, crowns, the wealth of everyone it ever ate.`, ''];
+  const gold = rng.int(HOARD.GOLD_MIN, HOARD.GOLD_MAX) * L;
+  messages.push(`${gold} gold coins.`);
+  const stones = rng.int(HOARD.STONES_MIN, HOARD.STONES_MAX);
+  let worth = 0;
+  for (let i = 0; i < stones; i++) worth += rng.int(HOARD.STONE_MIN, HOARD.STONE_MAX) * L;
+  messages.push(`${stones === 1 ? 'A gemstone' : `${stones} gemstones`}: ${rng.pick(STONE_NAMES)}${stones > 1 ? ' and more' : ''}, worth ${worth} gold.`);
+  char.gold += gold + worth;
+  // Magic gems, as many as can be carried.
+  const kinds: GemType[] = ['ruby', 'sapphire', 'diamond', 'opal', 'emerald', 'moonstone'];
+  const got: string[] = [];
+  const n = rng.int(HOARD.MAGIC_GEMS_MIN, HOARD.MAGIC_GEMS_MAX);
+  for (let i = 0; i < n; i++) {
+    const g = rng.pick(kinds.filter(k => char.inventory.gems[k] < (GEMS.CARRY_CAP[k] ?? Infinity)));
+    if (!g) break;
+    char.inventory.gems[g]++;
+    got.push(g);
+  }
+  if (got.length) messages.push(`And magic gems: ${got.map(g => `a${/^[aeiou]/.test(g) ? 'n' : ''} ${g}`).join(', ')}.`);
+  return { messages, goldGained: gold + worth };
 }
