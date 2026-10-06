@@ -47,6 +47,9 @@ function isSolidRock(cell: DungeonCell): boolean {
 
 /** visitedCells keys carry the dungeon level: the same (x, y) is a different
  * square on every level. */
+/** What you deal with from the square in front of it, rather than by stepping on it. */
+const APPROACHABLE = new Set<string>(['chest', 'altar', 'fountain', 'book', 'shop']);
+
 function visitedKey(level: number, x: number, y: number): string {
   return `${level}:${x},${y}`;
 }
@@ -894,7 +897,7 @@ export class GameEngine {
     this.char.facing = dir as Direction;
     this.lightAround();
     this.messages = [];
-    return this.getState();
+    return this.approachAhead() ?? this.getState();
   }
 
   turnLeft(): GameState {
@@ -903,7 +906,7 @@ export class GameEngine {
     this.char.facing = map[this.char.facing];
     this.lightAround();
     this.messages = [];
-    return this.getState();
+    return this.approachAhead() ?? this.getState();
   }
 
   turnRight(): GameState {
@@ -912,7 +915,7 @@ export class GameEngine {
     this.char.facing = map[this.char.facing];
     this.lightAround();
     this.messages = [];
-    return this.getState();
+    return this.approachAhead() ?? this.getState();
   }
 
   /** Torchlight: marks explored every square within LIGHT_RADIUS steps of
@@ -1002,14 +1005,20 @@ export class GameEngine {
     const areaLines = this.enterArea();
     if (areaLines.length) this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...areaLines];
 
-    // Check cell content
+    // Check cell content. Something you already dealt with from the next
+    // square (a chest you left shut, say) lets you walk over it.
     const cellKey = `${this.char.x},${this.char.y}`;
     const content = lvl.contents.get(cellKey);
+    const passingOver = !!content && APPROACHABLE.has(content.type) && this.approached?.key === cellKey;
+    if (this.approached && cellKey !== this.approached.key && cellKey !== this.approached.from) this.approached = null;
 
-    const contentState = this.handleCellContent(content, cellKey);
+    const contentState = passingOver ? null : this.handleCellContent(content, cellKey);
     if (contentState) {
       return contentState;
     }
+    // A chest, altar, fountain, book or shop right ahead: it opens now, before you step onto it.
+    const ahead = this.approachAhead();
+    if (ahead) return ahead;
 
     // Check random encounter
     if (shouldTriggerRandomEncounter(this.pace, this.rng)) {
@@ -1067,6 +1076,35 @@ export class GameEngine {
     if (ev.fx) this.fx.player = ev.fx;
     if (ev.turnTo) this.char.facing = ev.turnTo;
     if (ev.flee) this.teleportPlayer();
+  }
+
+  /** Things you deal with from the square in front of them, not by stepping
+   * on: when one is right ahead (no wall between), it opens as you come up
+   * to it or turn to face it. Once you've left it alone, it stays quiet
+   * while you stand there and lets you walk over it. (Traps aren't among
+   * them: you find those by stepping on them.) */
+  private approached: { key: string; from: string } | null = null;
+
+  private approachAhead(): GameState | null {
+    if (!this.char || this.phase !== 'playing') return null;
+    const lvl = this.getLevel(this.char.dungeonLevel);
+    if (!lvl || !canMove(lvl.grid, this.char.x, this.char.y, this.char.facing)) return null;
+    const [dx, dy] = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] }[this.char.facing];
+    const key = `${this.char.x + dx},${this.char.y + dy}`;
+    const content = lvl.contents.get(key);
+    if (!content || !APPROACHABLE.has(content.type)) return null;
+    const here = `${this.char.x},${this.char.y}`;
+    if (this.approached?.key === key && this.approached.from === here) return null;
+    const before = this.messages;
+    const state = this.handleCellContent(content, key);
+    if (!state) return null;
+    this.approached = { key, from: here };
+    // Keep what the step itself said (the room you came into, say) above it.
+    if (before.length && before !== this.messages) {
+      this.messages = [...before, '', ...this.messages];
+      state.messages = [...this.messages];
+    }
+    return state;
   }
 
   private handleCellContent(content: CellContent | undefined, cellKey: string): GameState | null {
