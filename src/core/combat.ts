@@ -65,7 +65,7 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   // A monster above the character's level defends only as well as one of
   // their own level, so no foe is out of reach of a blade.
   const defLevel = Math.min(monster.level, char.level);
-  const monsterDef = COMBAT.MONSTER_BASE_DEFENSE + defLevel + Math.floor(defLevel / 4);
+  const monsterDef = Math.round((COMBAT.MONSTER_BASE_DEFENSE + defLevel + Math.floor(defLevel / 4)) * ((monster.witherTurns ?? 0) > 0 ? RINGS.WITHER_DEFENSE : 1));
   const label = opts.label ? ` (${opts.label})` : '';
 
   // A stunned Asmodeus can't defend himself: nearly every blow lands.
@@ -1587,9 +1587,14 @@ type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDi
  * the character, which attack did it and the lines describing it. */
 function monsterAction(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
   const start = messages.length;
-  const before = char.inventory.activeRing ? snapshotChar(char) : null;
+  const guarding = (char.inventory.wornRings?.length ?? 0) > 0 || monster.backfirePrimed;
+  const before = guarding ? snapshotChar(char) : null;
   const out: { acted?: boolean; ability?: string } = {};
   const inner = monsterActionInner(char, monster, rng, messages, out);
+  if ((monster.witherTurns ?? 0) > 0) {
+    monster.witherTurns!--;
+    if (monster.witherTurns === 0) messages.push(`The ${monster.type} straightens as the withering passes.`);
+  }
   if (!out.acted) return inner;
   let res = vampireHypnosis(char, monster, rng, messages, { ...inner, monsterElement: abilityElement(out.ability) });
   if (before) res = applyRing(char, monster, before, out.ability, res, messages, start);
@@ -1621,70 +1626,82 @@ export function isEvil(monster: Monster): boolean {
   return RINGS.EVIL_MONSTERS.includes(monster.type);
 }
 
-/** The ring in use, after the monster has acted. The green diamond, primed,
- * undoes the whole attack and turns part of it back on the monster; a
- * warding ring turns aside part of the damage of the kind it guards against
- * (and the onyx and rose quartz rings stop evil's fear and charms, and the
- * undead's level drain). */
+/** Rings, after the monster has acted. A primed green diamond undoes the
+ * whole attack and turns part of it back on the monster. Otherwise every
+ * protective ring worn guards against its own kind of harm, together: each
+ * turns aside its share of the damage (ruby fire, aquamarine cold, onyx
+ * evil, rose quartz the undead, jade poison), and the onyx stops evil's fear
+ * and charms, the rose quartz the undead's level drain, the jade poison
+ * taking hold. */
 function applyRing(char: Character, monster: Monster, before: Character, ability: string | undefined, res: MonsterActionResult, messages: string[], from: number): MonsterActionResult {
-  const ring = char.inventory.activeRing;
-  if (!ring) return res;
-
-  if (ring === 'backfire') {
-    if (!monster.backfirePrimed) return res;
+  if (monster.backfirePrimed && char.inventory.readiedRing === 'backfire') {
     const touched = res.playerDied || res.playerTeleported || JSON.stringify(char) !== JSON.stringify(before);
-    if (!touched) return res;   // it did nothing to you: the ring keeps waiting
-    const dealt = Math.max(res.monsterDamage, before.hp - char.hp, 0);
-    restoreChar(char, before);
-    monster.backfirePrimed = false;
-    const back = Math.round(dealt * RINGS.BACKFIRE_FRACTION);
-    monster.hp -= back;
-    messages.push('', `Your green diamond ring blazes! The ${monster.type}'s attack turns back on it. You are untouched${back > 0 ? `, and it takes ${back} damage` : ''}!`);
-    if (monster.hp <= 0) messages.push(`The ${monster.type} collapses!`);
-    return { ...res, monsterDamage: 0, playerDied: false, playerTeleported: false, ballOfDooFired: false, monsterDied: monster.hp <= 0 };
+    if (touched) {
+      const dealt = Math.max(res.monsterDamage, before.hp - char.hp, 0);
+      restoreChar(char, before);
+      monster.backfirePrimed = false;
+      const back = Math.round(dealt * RINGS.BACKFIRE_FRACTION);
+      monster.hp -= back;
+      messages.push('', `Your green diamond ring blazes! The ${monster.type}'s attack turns back on it. You are untouched${back > 0 ? `, and it takes ${back} damage` : ''}!`);
+      if (monster.hp <= 0) messages.push(`The ${monster.type} collapses!`);
+      return { ...res, monsterDamage: 0, playerDied: false, playerTeleported: false, ballOfDooFired: false, monsterDied: monster.hp <= 0 };
+    }
   }
 
-  const guards = (ring === 'fire' && res.monsterElement === 'fire') ? RINGS.FIRE_WARD
-    : (ring === 'cold' && res.monsterElement === 'cold') ? RINGS.COLD_WARD
-    : (ring === 'evil' && isEvil(monster)) ? RINGS.EVIL_WARD
-    : (ring === 'undead' && monster.definition.isUndead) ? RINGS.UNDEAD_WARD
-    : 0;
-  if (!guards) return res;
-  const name = RINGS_INFO[ring].name;
+  const worn = char.inventory.wornRings ?? [];
+  const poisoned = res.monsterElement === 'poison'
+    || char.statusEffects.some(e => (e.type === 'poison' || e.type === 'fiend-venom') && !before.statusEffects.some(b => b.type === e.type));
+  const wards: { ring: RingId; share: number }[] = [];
+  if (worn.includes('fire') && res.monsterElement === 'fire') wards.push({ ring: 'fire', share: RINGS.FIRE_WARD });
+  if (worn.includes('cold') && res.monsterElement === 'cold') wards.push({ ring: 'cold', share: RINGS.COLD_WARD });
+  if (worn.includes('evil') && isEvil(monster)) wards.push({ ring: 'evil', share: RINGS.EVIL_WARD });
+  if (worn.includes('undead') && monster.definition.isUndead) wards.push({ ring: 'undead', share: RINGS.UNDEAD_WARD });
+  if (worn.includes('poison') && poisoned) wards.push({ ring: 'poison', share: RINGS.POISON_WARD });
+  if (!wards.length) return res;
 
-  if (ring === 'undead' && char.level < before.level) {
+  if (worn.includes('undead') && monster.definition.isUndead && char.level < before.level) {
     char.level = before.level; char.maxHp = before.maxHp; char.xp = before.xp;
     // Take back the "you have been drained" line: it didn't happen.
     for (let i = messages.length - 1; i >= from; i--) if (/YOU HAVE BEEN DRAINED|drains your very essence/.test(messages[i])) messages.splice(i, 1);
     messages.push('A deathly chill reaches for your life, but your rose quartz ring flares and drives it back! (Level drain blocked)');
   }
-  if (ring === 'evil' && (char.heldRounds ?? 0) > (before.heldRounds ?? 0) && (char.heldBy === 'feared' || char.heldBy === 'charmed')) {
+  if (worn.includes('evil') && isEvil(monster) && (char.heldRounds ?? 0) > (before.heldRounds ?? 0) && (char.heldBy === 'feared' || char.heldBy === 'charmed')) {
     char.heldRounds = before.heldRounds; char.heldBy = before.heldBy;
     messages.push(`Your onyx ring's eye opens, and the ${monster.type}'s hold on your mind breaks!`);
+  }
+  if (worn.includes('poison') && poisoned) {
+    const fresh = char.statusEffects.filter(e => (e.type === 'poison' || e.type === 'fiend-venom') && !before.statusEffects.some(b => b.type === e.type));
+    if (fresh.length) {
+      char.statusEffects = char.statusEffects.filter(e => !fresh.includes(e));
+      messages.push('Your jade ring turns cold, and the poison cannot take hold.');
+    }
   }
 
   const taken = before.hp - char.hp;
   const instant = res.playerDied && (INSTANT_KILLS.has(ability ?? '') || res.monsterDamage === before.hp);
   if (taken <= 0 || instant) return res;
-  const saved = Math.round(taken * guards);
+  // Several rings together: each turns aside its share of what the others let through.
+  const share = Math.min(0.9, 1 - wards.reduce((left, w) => left * (1 - w.share), 1));
+  const saved = Math.round(taken * share);
   if (saved <= 0) return res;
   char.hp = Math.min(char.maxHp, char.hp + saved);
-  messages.push(`Your ${name} glows and turns aside ${saved} of the damage.`);
+  const names = wards.map(w => RINGS_INFO[w.ring].name);
+  const said = names.length === 1 ? `Your ${names[0]} glows` : `Your ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]} glow`;
+  messages.push(`${said} and turn${names.length === 1 ? 's' : ''} aside ${saved} of the damage.`);
   return { ...res, monsterDamage: Math.max(0, res.monsterDamage - saved), playerDied: char.hp <= 0 };
 }
 
-/** Changes which ring is in use, mid-fight: it costs the turn. */
-export function playerChangeRing(char: Character, monster: Monster, rng: RNG, ring: RingId): CombatRoundResult {
-  char.inventory.activeRing = ring;
+/** Readies another power ring, mid-fight: it costs the turn. */
+export function playerReadyRing(char: Character, monster: Monster, rng: RNG, ring: RingId): CombatRoundResult {
+  char.inventory.readiedRing = ring;
   const info = RINGS_INFO[ring];
-  const messages = [`You turn the ${info.name} on your finger, and it wakes. (${info.power})`];
+  const messages = [`You turn the ${info.name} to the front, and it wakes. (${info.power})`];
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: 0, monsterDied: monster.hp <= 0 };
 }
 
 /** The green diamond ring: the monster's next attack backfires. Once a fight. */
 export function playerBackfireRing(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
-  char.inventory.activeRing = 'backfire';
   monster.backfirePrimed = true;
   monster.backfireUsed = true;
   const messages = ['You twist the green diamond ring. A thousand tiny mirrors wake, and wait...'];
@@ -2117,7 +2134,8 @@ function calculateMonsterDamage(
   // Armour turns aside part of a blow; against magic and breath, half as much. (Not when stripped bare.)
   const physical = !ability || abilityElement(ability) === 'physical';
   const armor = naked ? 1 : 1 - armorProtection(char) * (physical ? 1 : GEAR.MAGIC_SHARE);
-  return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness * armor));
+  const withered = (monster.witherTurns ?? 0) > 0 ? RINGS.WITHER_DAMAGE : 1;   // the bloodstone ring
+  return Math.max(1, Math.round(base * rand * defenseMultiplier * toughness * armor * withered));
 }
 
 /** Chance Asmodeus turns the character into a pile of lizard excrement this turn:
@@ -2418,4 +2436,15 @@ export function playerBorak(char: Character, monster: Monster, rng: RNG): Combat
   if (monster.hp <= 0) return { messages: [...messages, `The ${monster.type} collapses, smoking.`], playerDamage: dmg, monsterDamage: 0, playerDied: false, monsterDied: true };
   const res = monsterAction(char, monster, rng, messages);
   return { ...res, playerDamage: dmg, monsterDied: monster.hp <= 0 };
+}
+
+/** The bloodstone ring: the monster withers for a few turns, its blows
+ * softer and its guard weaker. Once a fight. */
+export function playerWitherRing(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  monster.witherUsed = true;
+  monster.witherTurns = rng.int(RINGS.WITHER_TURNS_MIN, RINGS.WITHER_TURNS_MAX) + 1;   // (+1: it starts wearing off on its own turn)
+  const messages = [`You close your fist on the bloodstone ring. Red threads run through its green, and the ${monster.type} WITHERS:`,
+    `its strength drains out of it, its guard sags. (${monster.witherTurns - 1} turns: its blows ${Math.round((1 - RINGS.WITHER_DAMAGE) * 100)}% softer, and it's easier to hit)`];
+  const res = monsterAction(char, monster, rng, messages);
+  return { ...res, playerDamage: 0, monsterDied: monster.hp <= 0 };
 }

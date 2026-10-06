@@ -1,6 +1,8 @@
+import type { RingId } from '../core/types.js';
+import { PROTECTION_RINGS, POWER_RINGS } from '../content/rings.js';
 import { DatabaseSync } from 'node:sqlite';
 import type { Character, SerializedDungeon, DungeonState, CharacterSummary } from '../core/types.js';
-import { CHARACTER, GEMS } from '../core/config.js';
+import { CHARACTER, GEMS, RINGS } from '../core/config.js';
 
 // ─── Repository class ────────────────────────────────────────────────────────
 
@@ -139,6 +141,14 @@ export class Repository {
     if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0, moonstone: 0 };
     if (inventory.gems.emerald === undefined) inventory.gems.emerald = 0;
     if (inventory.gems.moonstone === undefined) inventory.gems.moonstone = 0;
+    // Rings: protective ones are worn (all at once), one power ring readied.
+    if (inventory.wornRings === undefined) {
+      const owned: RingId[] = inventory.rings ?? [];
+      inventory.wornRings = owned.filter(r => PROTECTION_RINGS.includes(r)).slice(0, RINGS.MAX_WORN);
+      const powers: RingId[] = [...owned.filter(r => POWER_RINGS.includes(r)), ...((inventory.starRings ?? 0) > 0 ? ['escape' as RingId] : [])];
+      inventory.readiedRing = inventory.activeRing && powers.includes(inventory.activeRing) ? inventory.activeRing : powers[0];
+      delete inventory.activeRing;
+    }
     if (!inventory.books) inventory.books = 0;
     // Saves from before weapons and armour carried magic daggers: they're weapons now.
     const legacy = (inventory as unknown as { daggers?: { bonus: number; name: string }[] }).daggers;

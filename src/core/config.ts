@@ -830,6 +830,11 @@ export const RINGS = {
   COLD_WARD: 0.75,      // aquamarine: likewise for cold
   EVIL_WARD: 0.5,       // onyx: this much of the damage evil creatures deal, and their fear and charms fail
   UNDEAD_WARD: 0.5,     // rose quartz: this much of the damage undead deal, and their level drain fails
+  POISON_WARD: 0.75,    // jade: this much of any poison damage, and poison can't take hold
+  MAX_WORN: 6,          // protective rings worn at once (power rings are readied, one at a time)
+  WITHER_TURNS_MIN: 3, WITHER_TURNS_MAX: 6,   // bloodstone: the monster withers this long...
+  WITHER_DAMAGE: 0.6,   // ...its blows doing this much of their usual damage...
+  WITHER_DEFENSE: 0.75, // ...and defending this well
   BACKFIRE_FRACTION: 0.5,   // green diamond: the monster takes this share of what its backfired attack would have done
   STAR_CHARGES: 3,      // star sapphire: teleports per ring before it crumbles
   // Who counts as evil, for the onyx ring.

@@ -102,7 +102,9 @@ export interface Inventory {
   rings?: RingId[];       // magic rings worn (content/rings.ts); one of each, except star sapphires, counted below
   starRings?: number;     // star sapphire rings carried
   starCharges?: number;   // uses left on the star sapphire ring in use (fresh ones hold RINGS.STAR_CHARGES)
-  activeRing?: RingId;    // the one ring in use: many can be worn, only one is used at a time
+  activeRing?: RingId;    // (old saves: the one ring in use; now wornRings and readiedRing)
+  wornRings?: RingId[];   // protective rings worn: all of them guard you at once (up to RINGS.MAX_WORN)
+  readiedRing?: RingId;   // the one power ring readied: the one you can use in a fight
   amulets?: Amulet[];     // magic amulets carried; at most one worn
   weapons?: Weapon[];      // weapons carried; the best for your class is the one you fight with
   armor?: Armor[];         // armour and shields carried; the best of each is worn
@@ -132,7 +134,7 @@ export interface Amulet {
 /** The magic rings. fire, cold, evil and undead ward while in use; backfire
  * turns a monster's next attack back on it; escape (star sapphire) teleports
  * you out of a fight. */
-export type RingId = 'fire' | 'cold' | 'evil' | 'undead' | 'backfire' | 'escape' | 'borak';
+export type RingId = 'fire' | 'cold' | 'evil' | 'undead' | 'poison' | 'backfire' | 'escape' | 'borak' | 'wither';
 
 export interface Character {
   id: string;
@@ -289,6 +291,8 @@ export interface Monster {
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
   borakUsed?: boolean;       // The Borak: already fired this fight
+  witherUsed?: boolean;      // the bloodstone ring: already used this fight
+  witherTurns?: number;      // ...and the monster is withered for this many more turns
   darkTurns?: number;        // the Barrow-King's barrow-dark: your blows land less often
   wight?: boolean;           // the Barrow-King's summoned barrow-wight fights beside him
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells

@@ -43,7 +43,7 @@ describe('The Borak in a fight', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
     e.dismissLevelIntro(); e.char.hp = e.char.maxHp = 1e6;
-    e.char.inventory.rings = ['borak'];
+    e.char.inventory.rings = ['borak']; e.char.inventory.readiedRing = 'borak';
     const m = createMonster('Giant', 30, 'g'); m.hp = m.maxHp = 1e6;   // (not a Troll: it would regenerate)
     e.combat = { monster: m, round: 1 }; e.phase = 'combat';
     const key = engine.getState().ringChoices!.find((c: { text: string }) => c.text.includes('Borak'))!.key;

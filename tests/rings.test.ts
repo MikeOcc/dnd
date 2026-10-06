@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter } from '../src/core/character.js';
 import { createMonster } from '../src/core/monsters.js';
-import { monsterFirstStrike, playerBackfireRing, playerChangeRing } from '../src/core/combat.js';
+import { monsterFirstStrike, playerBackfireRing, playerReadyRing, playerWitherRing } from '../src/core/combat.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
 import { GameEngine } from '../src/core/game-engine.js';
@@ -10,16 +10,18 @@ import { RINGS } from '../src/core/config.js';
 import { RING_CHESTS } from '../src/content/rings.js';
 import type { Character, MonsterType, RingId } from '../src/core/types.js';
 
-function hero(ring?: RingId): Character {
+/** A hero owning every ring, wearing the protective ones named, the green diamond readied. */
+function hero(worn?: RingId | RingId[]): Character {
   const c = createCharacter('h', 'Hero', rollCharacter(new RNG(1)));
   c.level = 40; c.hp = c.maxHp = 1e6; c.statusEffects = [];
-  c.inventory.rings = ['fire', 'cold', 'evil', 'undead', 'backfire'];
-  c.inventory.activeRing = ring;
+  c.inventory.rings = ['fire', 'cold', 'evil', 'undead', 'poison', 'backfire', 'wither'];
+  c.inventory.wornRings = worn === undefined ? [] : Array.isArray(worn) ? worn : [worn];
+  c.inventory.readiedRing = 'backfire';
   return c;
 }
 
 /** Total damage taken over many monster turns, with and without a ring (same rolls). */
-function damageOver(type: MonsterType, level: number, ring: RingId | undefined, turns = 300) {
+function damageOver(type: MonsterType, level: number, ring: RingId | RingId[] | undefined, turns = 300) {
   const c = hero(ring);
   const rng = new RNG(77);
   let taken = 0, glows = 0;
@@ -68,16 +70,54 @@ describe('Warding rings', () => {
     expect(drained('undead')).toBe(0);
   });
 
-  it('only the ring in use wards: a fire ring worn but not in use does nothing', () => {
+  it('a ring carried but not worn does nothing; every ring worn guards at once', () => {
     expect(damageOver('Red Dragon', 60, 'cold').taken).toBe(damageOver('Red Dragon', 60, undefined).taken);
+    // A Red Dragon is evil and breathes fire: ruby and onyx together beat either alone.
+    const both = damageOver('Red Dragon', 60, ['fire', 'evil']).taken;
+    expect(both).toBeLessThan(damageOver('Red Dragon', 60, 'fire').taken);
+    expect(both).toBeLessThan(damageOver('Red Dragon', 60, 'evil').taken);
   });
 
-  it('changing rings mid-fight costs the turn, and the new ring wards at once', () => {
-    const c = hero('cold');
-    const r = playerChangeRing(c, createMonster('Goblin', 3, 'g'), new RNG(3), 'fire');
-    expect(c.inventory.activeRing).toBe('fire');
-    expect(r.messages[0]).toContain('ruby ring');
+  it('the jade ring: poison cannot take hold', () => {
+    const stuck = (worn?: RingId) => {
+      const c = hero(worn); const rng = new RNG(9); let n = 0;
+      for (let i = 0; i < 400; i++) {
+        c.hp = c.maxHp; c.statusEffects = [];
+        monsterFirstStrike(c, createMonster('Giant Spider', 15, 's' + i), rng);
+        if (c.statusEffects.some(e => e.type === 'poison')) n++;
+      }
+      return n;
+    };
+    expect(stuck()).toBeGreaterThan(0);
+    expect(stuck('poison')).toBe(0);
+  });
+
+  it('readying another power ring mid-fight costs the turn', () => {
+    const c = hero();
+    const r = playerReadyRing(c, createMonster('Goblin', 3, 'g'), new RNG(3), 'wither');
+    expect(c.inventory.readiedRing).toBe('wither');
+    expect(r.messages[0]).toContain('bloodstone ring');
     expect(r.playerDamage).toBe(0);
+  });
+});
+
+describe('The bloodstone ring', () => {
+  it('withers the monster a few turns: its blows land softer, and it is easier to hit', () => {
+    const taken = (withered: boolean) => {
+      const c = hero(); const rng = new RNG(4); let t = 0;
+      for (let i = 0; i < 300; i++) {
+        const m = createMonster('Troll', 30, 't' + i); m.hp = m.maxHp = 1e6;
+        if (withered) m.witherTurns = 5;
+        c.hp = c.maxHp; monsterFirstStrike(c, m, rng); t += c.maxHp - c.hp;
+      }
+      return t;
+    };
+    expect(taken(true)).toBeLessThan(taken(false) * 0.75);
+    const c = hero(); const m = createMonster('Troll', 30, 't'); m.hp = m.maxHp = 1e6;
+    const r = playerWitherRing(c, m, new RNG(1));
+    expect(m.witherUsed).toBe(true);
+    expect(m.witherTurns).toBeGreaterThanOrEqual(3);
+    expect(r.messages.join(' ')).toContain('WITHERS');
   });
 });
 
@@ -132,30 +172,63 @@ describe('Rings in the game', () => {
         expect([...contents.values()].some((c: { id: string }) => c.id === 'ring-' + rc.id)).toBe(true);
       }
     }
-    e.char.inventory.rings = []; e.char.inventory.activeRing = undefined;
+    e.char.inventory.rings = []; e.char.inventory.wornRings = []; e.char.inventory.readiedRing = undefined;
     e.interaction = { type: 'chest', contentId: 'ring-fire', choices: [] };
     e.phase = 'interaction';
     const state = e.openChest('ring-fire', null, []);
     expect(e.char.inventory.rings).toEqual(['fire']);
-    expect(e.char.inventory.activeRing).toBe('fire');
+    expect(e.char.inventory.wornRings).toEqual(['fire']);
     expect(state.messages.join(' ')).toContain('ruby ring');
-    expect(engine.getState().ringChoices?.[0].text).toContain('[IN USE]');
+    expect(engine.getState().ringChoices?.[0].text).toContain('[WORN]');
   });
 
-  it('while exploring, choosing a ring is free; Cancel leaves them be', () => {
+  it('exploring: protective rings go on and off freely; a power ring is readied; Cancel leaves them be', () => {
     const { engine, e } = ready();
-    e.char.inventory.rings = ['fire', 'cold'];
+    e.char.inventory.rings = ['fire', 'cold', 'backfire', 'wither'];
+    e.char.inventory.wornRings = ['fire']; e.char.inventory.readiedRing = 'backfire';
+    engine.ringAction('b');                                  // the aquamarine: on
+    expect(e.char.inventory.wornRings).toEqual(['fire', 'cold']);
+    engine.ringAction('a');                                  // the ruby: off
+    expect(e.char.inventory.wornRings).toEqual(['cold']);
+    engine.ringAction('d');                                  // the bloodstone: readied
+    expect(e.char.inventory.readiedRing).toBe('wither');
+    engine.ringAction('e');                                  // Cancel
+    expect(e.char.inventory.readiedRing).toBe('wither');
+  });
+
+  it('in a fight the menu lists only power rings: using the readied one, or readying another', () => {
+    const { engine, e } = ready();
+    e.char.inventory.rings = ['fire', 'backfire', 'wither'];
+    e.char.inventory.wornRings = ['fire']; e.char.inventory.readiedRing = 'wither';
+    e.char.hp = e.char.maxHp = 1e6;
+    const m = createMonster('Giant', 10, 'g'); m.hp = m.maxHp = 1e6;
+    e.beginCombat(m); e.phase = 'combat';
+    const texts = engine.getState().ringChoices!.map(c => c.text);
+    expect(texts.some(t => t.includes('ruby'))).toBe(false);
+    const wither = engine.getState().ringChoices!.find(c => c.text.startsWith('Bloodstone'))!;
+    expect(wither.text).toContain('READIED');
+    engine.ringAction(wither.key);
+    expect(m.witherUsed).toBe(true);
+  });
+
+  it('an old save: protective rings go on, the ring in use (if a power ring) is readied', () => {
+    const { e } = ready();
+    const repo = new Repository(db);
+    e.char.inventory.rings = ['fire', 'cold', 'backfire'];
+    delete e.char.inventory.wornRings; delete e.char.inventory.readiedRing;
     e.char.inventory.activeRing = 'fire';
-    engine.ringAction('b');
-    expect(e.char.inventory.activeRing).toBe('cold');
-    engine.ringAction('c');   // Cancel
-    expect(e.char.inventory.activeRing).toBe('cold');
+    repo.saveCharacter(e.char);
+    const back = repo.loadCharacter(e.char.id)!;
+    expect(back.inventory.wornRings).toEqual(['fire', 'cold']);
+    expect(back.inventory.readiedRing).toBe('backfire');
+    expect(back.inventory.activeRing).toBeUndefined();
   });
 
   it('the star sapphire teleports out of a fight; after 3 uses the ring crumbles and the next takes over', () => {
     const { engine, e } = ready();
     e.char.inventory.starRings = 2;
     e.char.inventory.starCharges = 1;
+    e.char.inventory.readiedRing = 'escape';
     e.beginCombat(createMonster('Troll', 10, 't'));
     e.phase = 'combat';
     const key = engine.getState().ringChoices!.find(c => c.text.startsWith('Star sapphire'))!.key;
@@ -169,6 +242,7 @@ describe('Rings in the game', () => {
   it('the green diamond works once a fight', () => {
     const { engine, e } = ready();
     e.char.inventory.rings = ['backfire'];
+    e.char.inventory.readiedRing = 'backfire';
     e.char.hp = e.char.maxHp = 1e6;
     const m = createMonster('Troll', 10, 't'); m.hp = m.maxHp = 1e6;
     e.beginCombat(m); e.phase = 'combat';

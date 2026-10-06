@@ -11,7 +11,7 @@ import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTE
 import type { EntityMarker } from './corridor-view.js';
 import type { SpellId } from './spells.js';
 import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour, playerBorak } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerReadyRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour, playerBorak, playerWitherRing } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } from './spells.js';
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
@@ -22,7 +22,7 @@ import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair } from './lai
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
 import { buildStock, cannotBuy, buy, sellables, outpostHours } from './shop.js';
 import { treasureById } from '../content/treasures.js';
-import { RINGS_INFO, RING_ORDER, ringChestById } from '../content/rings.js';
+import { RINGS_INFO, RING_ORDER, ringChestById, POWER_RINGS, isProtectionRing } from '../content/rings.js';
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
@@ -154,7 +154,7 @@ export class GameEngine {
       state.mapShowWhole = state.mapRevealed && this.mapShowWhole;
     }
     if (this.phase === 'combat' && this.char) state.spellChoices = this.spellChoices();
-    if ((this.phase === 'combat' || this.phase === 'playing') && this.ringsWorn().length > 0) state.ringChoices = this.ringChoices();
+    if ((this.phase === 'combat' || this.phase === 'playing') && this.ringMenuRings().length > 0) state.ringChoices = this.ringChoices();
     if (this.phase === 'playing' && (this.char?.inventory.amulets?.length ?? 0) > 0) state.amuletChoices = this.amuletChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     if (this.phase === 'asmodeus-scene' && this.lordScene) state.lordScene = this.lordScene.scene;
@@ -362,7 +362,7 @@ export class GameEngine {
         { key: 'f', text: 'Scare' },
         { key: 'e', text: 'Use Gem' },
         { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
-        ...(this.ringsWorn().length > 0 ? [{ key: 'r', text: 'Use Ring' }] : []),
+        ...(this.ringsOwned().some(r => POWER_RINGS.includes(r)) ? [{ key: 'r', text: 'Use Ring' }] : []),
         ...(this.combat.monster.type === 'Unicorn' ? [{ key: 'h', text: 'Offer Your Hand' }] : []),
         ...(this.repeatSpellKey() ? [{ key: 'z', text: `${knownSpells(this.char!.level, 'wizard').find(s => s.id === this.lastSpell)?.name} again` }] : []),
       ];
@@ -409,7 +409,8 @@ export class GameEngine {
       ...(bestWeapon(c) ? [`Weapon: ${gearName(bestWeapon(c)!)}`] : []),
       ...(wornArmor(c).body || wornArmor(c).shield ? [`Armour: ${[wornArmor(c).body, wornArmor(c).shield].filter(Boolean).map(a => gearName(a!)).join(' and ')} (turns aside ${Math.round(armorProtection(c) * 100)}% of a blow)`] : []),
       ...(wornAmulet(c) ? [`Amulet worn: ${amuletName(wornAmulet(c)!)}`] : []),
-      ...(c.inventory.activeRing ? [`Ring in use: ${RINGS_INFO[c.inventory.activeRing].name} (${RINGS_INFO[c.inventory.activeRing].power})`] : []),
+      ...((c.inventory.wornRings ?? []).length ? [`Rings worn: ${c.inventory.wornRings!.map(r => RINGS_INFO[r].name).join(', ')}`] : []),
+      ...(c.inventory.readiedRing ? [`Ring readied: ${c.inventory.readiedRing === 'borak' ? 'The Borak' : RINGS_INFO[c.inventory.readiedRing].name} (${RINGS_INFO[c.inventory.readiedRing].power})`] : []),
       ``,
       `STR ${String(c.strength).padStart(2)}   CON ${String(c.constitution).padStart(2)}   INT ${String(c.intelligence).padStart(2)}`,
       `WIS ${String(c.wisdom).padStart(2)}   DEX ${String(c.dexterity).padStart(2)}   CHA ${String(c.charisma).padStart(2)}`,
@@ -444,9 +445,10 @@ export class GameEngine {
       ...(c.inventory.weapons ?? []).map(w => ({ name: `${gearName(w)}${bestWeapon(c) === w ? ' (wielded)' : ''}`, type: `Weapon: ${w.kind}${w.bonus ? `, +${w.bonus} to hit and damage` : ''}${canUseGear(c, w.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
       ...(c.inventory.armor ?? []).map(a => ({ name: `${gearName(a)}${wornArmor(c).body === a || wornArmor(c).shield === a ? ' (worn)' : ''}`, type: `Armour: ${a.kind}${a.bonus ? ` +${a.bonus}` : ''}${canUseGear(c, a.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
       ...(c.inventory.amulets ?? []).map(a => ({ name: `${amuletName(a, false)}${a.worn ? ' (worn)' : ''}`, type: a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown', qty: 'x1' })),
-      ...this.ringsWorn().map(r => {
+      ...this.ringsOwned().map(r => {
         const info = RINGS_INFO[r];
-        const name = `${info.name[0].toUpperCase()}${info.name.slice(1)}${c.inventory.activeRing === r ? ' (in use)' : ''}`;
+        const state = isProtectionRing(r) ? (c.inventory.wornRings?.includes(r) ? ' (worn)' : ' (carried)') : (c.inventory.readiedRing === r ? ' (readied)' : '');
+        const name = `${r === 'borak' ? 'The Borak' : info.name[0].toUpperCase() + info.name.slice(1)}${state}`;
         const qty = r === 'escape' ? `x${c.inventory.starRings} (${c.inventory.starCharges} use${c.inventory.starCharges === 1 ? '' : 's'} left)` : 'x1';
         return { name, type: `Ring: ${info.power}`, qty };
       }),
@@ -2108,41 +2110,54 @@ export class GameEngine {
 
   // ─── Rings ─────────────────────────────────────────────────────────────
 
-  /** The rings worn, in menu order. */
-  private ringsWorn(): RingId[] {
+  /** The rings owned, in menu order. */
+  private ringsOwned(): RingId[] {
     const inv = this.char?.inventory;
     if (!inv) return [];
     return RING_ORDER.filter(r => r === 'escape' ? (inv.starRings ?? 0) > 0 : !!inv.rings?.includes(r));
   }
 
-  /** The ring menu: each ring worn, lettered in order, then Cancel. */
+  /** The ring menu's rings: in a fight only power rings (protective ones work
+   * by themselves); exploring, all of them. */
+  private ringMenuRings(): RingId[] {
+    const inCombat = this.phase === 'combat' && !!this.combat;
+    return this.ringsOwned().filter(r => !inCombat || POWER_RINGS.includes(r));
+  }
+
+  /** The ring menu: each ring, lettered in order, then Cancel. */
   private ringChoices(): Choice[] {
     const inv = this.char!.inventory;
-    const worn = this.ringsWorn();
-    const choices = worn.map((r, i) => {
+    const inCombat = this.phase === 'combat' && !!this.combat;
+    const list = this.ringMenuRings();
+    const choices = list.map((r, i) => {
       const info = RINGS_INFO[r];
-      let text = `${info.name[0].toUpperCase()}${info.name.slice(1)}: ${info.power}`;
+      let text = r === 'borak' ? `The Borak (star ruby): ${info.power}` : `${info.name[0].toUpperCase()}${info.name.slice(1)}: ${info.power}`;
       if (r === 'escape') {
         const spare = (inv.starRings ?? 0) - 1;
         text += ` (${inv.starCharges} use${inv.starCharges === 1 ? '' : 's'} left${spare > 0 ? `, +${spare} spare ring${spare === 1 ? '' : 's'}` : ''})`;
       }
-      if (r === 'backfire' && this.combat?.monster.backfireUsed) text += ' (spent this fight)';
-      if (r === 'borak') text = `The Borak (star ruby): ${info.power}${this.combat?.monster.borakUsed ? ' (spent this fight)' : ''}`;
-      if (inv.activeRing === r) text += ' [IN USE]';
+      if (isProtectionRing(r)) {
+        text += inv.wornRings?.includes(r) ? ' [WORN]' : ' (carried: put it on)';
+      } else {
+        const m = this.combat?.monster;
+        const spent = (r === 'backfire' && m?.backfireUsed) || (r === 'borak' && m?.borakUsed) || (r === 'wither' && m?.witherUsed);
+        text += inv.readiedRing === r ? (inCombat ? (spent ? ' [READIED, spent this fight]' : ' [READIED: use it]') : ' [READIED]')
+          : (inCombat ? ' (ready it: costs your turn)' : ' (ready it)');
+      }
       return { key: String.fromCharCode(97 + i), text };
     });
-    choices.push({ key: String.fromCharCode(97 + worn.length), text: 'Cancel' });
+    choices.push({ key: String.fromCharCode(97 + list.length), text: 'Cancel' });
     return choices;
   }
 
-  /** A choice from the ring menu. Mid-fight, changing rings costs the turn;
-   * while exploring it's free. The star sapphire and green diamond only
-   * work in a fight. */
+  /** A choice from the ring menu. Exploring: put a protective ring on or take
+   * it off (up to RINGS.MAX_WORN worn), or ready a power ring. In a fight:
+   * use the readied power ring, or ready another (that costs your turn). */
   ringAction(key: string): GameState {
     if (!this.char) return this.getState();
     const inCombat = this.phase === 'combat' && !!this.combat;
     if (!inCombat && this.phase !== 'playing') return this.getState();
-    const ring = this.ringsWorn()[key.charCodeAt(0) - 97];
+    const ring = this.ringMenuRings()[key.charCodeAt(0) - 97];
     if (!ring) {
       this.messages = ['You leave your rings as they are.'];
       return this.getState();
@@ -2152,41 +2167,45 @@ export class GameEngine {
 
     if (inCombat) {
       if (this.isHeld()) return this.combatHeld();
+      if (inv.readiedRing !== ring) return this.processCombatResult(playerReadyRing(this.char, this.combat!.monster, this.rng, ring));
+      const m = this.combat!.monster;
       if (ring === 'escape') return this.useStarSapphire();
       if (ring === 'borak') {
-        if (this.combat!.monster.borakUsed) {
-          this.messages = ['The Borak\u2019s star has gone dark. It will burn again in your next fight.'];
-          return this.getState();
-        }
+        if (m.borakUsed) { this.messages = ['The Borak\u2019s star has gone dark. It will burn again in your next fight.']; return this.getState(); }
         this.fx.monster = 'holy';
-        return this.processCombatResult(playerBorak(this.char, this.combat!.monster, this.rng));
+        return this.processCombatResult(playerBorak(this.char, m, this.rng));
       }
       if (ring === 'backfire') {
-        if (this.combat!.monster.backfireUsed) {
-          this.messages = ['The green diamond is dark and cold. Its mirrors are spent for this fight.'];
-          return this.getState();
-        }
-        return this.processCombatResult(playerBackfireRing(this.char, this.combat!.monster, this.rng));
+        if (m.backfireUsed) { this.messages = ['The green diamond is dark and cold. Its mirrors are spent for this fight.']; return this.getState(); }
+        return this.processCombatResult(playerBackfireRing(this.char, m, this.rng));
       }
-      if (inv.activeRing === ring) {
-        this.messages = [`The ${info.name} is already the ring in use.`];
-        return this.getState();
+      if (ring === 'wither') {
+        if (m.witherUsed) { this.messages = ['The bloodstone is dull and cold. It has drunk its fill for this fight.']; return this.getState(); }
+        this.fx.monster = 'drain';
+        return this.processCombatResult(playerWitherRing(this.char, m, this.rng));
       }
-      return this.processCombatResult(playerChangeRing(this.char, this.combat!.monster, this.rng, ring));
+      return this.getState();
     }
 
-    if (ring === 'escape') {
-      this.messages = ["The star sapphire's star lies still. Its power is for escaping a fight."];
+    if (isProtectionRing(ring)) {
+      const worn = inv.wornRings ?? [];
+      if (worn.includes(ring)) {
+        inv.wornRings = worn.filter(r => r !== ring);
+        this.messages = [`You take off the ${info.name} and put it away. (It no longer guards you.)`];
+      } else if (worn.length >= RINGS.MAX_WORN) {
+        this.messages = [`You already wear ${RINGS.MAX_WORN} rings: there's no finger left for the ${info.name}. Take one off first.`];
+      } else {
+        inv.wornRings = [...worn, ring];
+        this.messages = [`You slip the ${info.name} onto your finger. It will guard you while you wear it. (${info.power})`];
+      }
       return this.getState();
     }
-    if (ring === 'borak') {
-      this.messages = ['The Borak hums on your finger, waiting. Its beam is for a fight. (R in battle)'];
+    if (inv.readiedRing === ring) {
+      this.messages = [`The ${info.name} is already the ring you have ready.`];
       return this.getState();
     }
-    inv.activeRing = ring;
-    this.messages = ring === 'backfire'
-      ? ['You turn the green diamond ring to the front. In a fight, use it to make the next attack backfire.', '(None of your warding rings is in use now.)']
-      : [`You turn the ${info.name} on your finger, and it wakes. (${info.power})`];
+    inv.readiedRing = ring;
+    this.messages = [`You turn the ${info.name} to the front, ready for your next fight. (${info.power}; R in battle)`];
     return this.getState();
   }
 
@@ -2209,6 +2228,7 @@ export class GameEngine {
         this.messages.push('The star sapphire cracks and crumbles to blue dust. You turn the next one to the front.');
       } else {
         this.messages.push('The star sapphire cracks and crumbles to blue dust. It was your last.');
+        inv.readiedRing = this.ringsOwned().find(r => POWER_RINGS.includes(r));
       }
     }
     return this.getState();
@@ -2798,7 +2818,7 @@ export class GameEngine {
     if (carried) {
       this.messages.push('', ...carried.messages);
       if (carried.ring) {
-        const rings = (['fire', 'cold', 'evil', 'undead', 'escape'] as RingId[]).filter(r => r === 'escape' || !this.char!.inventory.rings?.includes(r));
+        const rings = (['fire', 'cold', 'evil', 'undead', 'poison', 'wither', 'escape'] as RingId[]).filter(r => r === 'escape' || !this.char!.inventory.rings?.includes(r));
         this.messages.push('On a finger bone among it all, a ring:', ...this.giveRing(this.rng.pick(rings)));
       }
       if (carried.amulet && (this.char.inventory.amulets?.length ?? 0) < AMULETS.MAX_CARRIED) {
@@ -3489,7 +3509,7 @@ export class GameEngine {
   private hoardItem(): string[] {
     if (!this.char) return [];
     const inv = this.char.inventory;
-    const rings = (['fire', 'cold', 'evil', 'undead', 'escape'] as RingId[]).filter(r => r === 'escape' || !inv.rings?.includes(r));
+    const rings = (['fire', 'cold', 'evil', 'undead', 'poison', 'wither', 'escape'] as RingId[]).filter(r => r === 'escape' || !inv.rings?.includes(r));
     const options = ['gear', ...(rings.length ? ['ring'] : []), ...((inv.amulets?.length ?? 0) < AMULETS.MAX_CARRIED ? ['amulet'] : [])];
     const pick = this.rng.pick(options);
     if (pick === 'ring') return ['', 'On a finger bone among the coins, a ring:', ...this.giveRing(this.rng.pick(rings))];
@@ -3535,16 +3555,21 @@ export class GameEngine {
     if (ring === 'escape') {
       inv.starRings = (inv.starRings ?? 0) + 1;
       if (!inv.starCharges) inv.starCharges = RINGS.STAR_CHARGES;
-      out.push(`You slip the star sapphire ring onto your finger. (${info.power}: ${RINGS.STAR_CHARGES} uses, in a fight)`);
+      out.push(`You take the star sapphire ring. (${info.power}: ${RINGS.STAR_CHARGES} uses, in a fight)`);
     } else {
       if (!inv.rings?.includes(ring)) inv.rings = [...(inv.rings ?? []), ring];
-      out.push(`You slip the ${info.name} onto your finger. (${info.power})`);
-      if (!inv.activeRing && ring !== 'backfire') {
-        inv.activeRing = ring;
-        out.push('It is the ring in use. Many rings can be worn, but only one used at a time.');
-      }
     }
-    out.push('(J: choose the ring in use. R in a fight.)');
+    if (isProtectionRing(ring)) {
+      const worn = inv.wornRings ?? [];
+      if (worn.includes(ring)) out.push(`You already wear one like it. (${info.power})`);
+      else if (worn.length < RINGS.MAX_WORN) { inv.wornRings = [...worn, ring]; out.push(`You slip the ${info.name} onto your finger. It guards you while you wear it. (${info.power})`); }
+      else out.push(`You carry the ${info.name}: all ${RINGS.MAX_WORN} of your ring fingers are taken. (J: rings)`);
+      out.push('(Protective rings all work at once while worn. J: rings.)');
+    } else {
+      if (ring !== 'escape') out.push(`You take the ${ring === 'borak' ? 'Borak' : info.name}. (${info.power})`);
+      if (!inv.readiedRing) { inv.readiedRing = ring; out.push('It is the ring you have ready. (Only one power ring is ready at a time. R in a fight.)'); }
+      else out.push('(Power rings are readied one at a time. J: ready it. R in a fight.)');
+    }
     return out;
   }
 

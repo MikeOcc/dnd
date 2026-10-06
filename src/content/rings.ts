@@ -38,6 +38,14 @@ export const RINGS_INFO: Record<RingId, RingInfo> = {
     id: 'borak', name: 'Borak', power: 'Once a fight: a beam of searing light',
     found: ['A star ruby burns in a setting of white gold: a six-rayed star of light caught in blood-red stone.', 'It hums against your finger. They called it The Borak.'],
   },
+  poison: {
+    id: 'poison', name: 'jade ring', power: 'Protection from poison',
+    found: ['Inside lies a ring of green jade, carved as a snake swallowing its own tail.', 'It is cool against your skin, and your mouth tastes clean.'],
+  },
+  wither: {
+    id: 'wither', name: 'bloodstone ring', power: 'Once a fight: the monster withers for a few turns',
+    found: ['Inside lies a ring set with a bloodstone: dark green, flecked with red like drops of blood.', 'When you close your hand on it, the flowers carved on the chest lid brown and curl.'],
+  },
   escape: {
     id: 'escape', name: 'star sapphire ring', power: 'Teleport away from battle',
     found: ['Inside lies a ring set with a star sapphire. A six-rayed star drifts across the stone as you tilt it.', 'For a moment you are not quite sure where you are standing.'],
@@ -45,14 +53,22 @@ export const RINGS_INFO: Record<RingId, RingInfo> = {
 };
 
 /** The display order of rings in menus. */
-export const RING_ORDER: RingId[] = ['fire', 'cold', 'evil', 'undead', 'backfire', 'escape', 'borak'];
+export const RING_ORDER: RingId[] = ['fire', 'cold', 'evil', 'undead', 'poison', 'backfire', 'escape', 'borak', 'wither'];
+
+/** Rings that guard you while worn: all of them at once, up to RINGS.MAX_WORN. */
+export const PROTECTION_RINGS: RingId[] = ['fire', 'cold', 'evil', 'undead', 'poison'];
+/** Rings you use in a fight: only the readied one, and readying another takes your turn. */
+export const POWER_RINGS: RingId[] = ['backfire', 'escape', 'borak', 'wither'];
+export const isProtectionRing = (r: RingId) => PROTECTION_RINGS.includes(r);
 
 /** Where the ring chests lie. Star sapphires are found more than once. */
 export const RING_CHESTS: { id: string; ring: RingId; level: number }[] = [
   { id: 'star-1', ring: 'escape', level: 2 },
+  { id: 'poison', ring: 'poison', level: 2 },
   { id: 'fire', ring: 'fire', level: 3 },
   { id: 'undead', ring: 'undead', level: 3 },
   { id: 'cold', ring: 'cold', level: 4 },
+  { id: 'wither', ring: 'wither', level: 4 },
   { id: 'star-2', ring: 'escape', level: 5 },
   { id: 'evil', ring: 'evil', level: 5 },
   { id: 'backfire', ring: 'backfire', level: 6 },
