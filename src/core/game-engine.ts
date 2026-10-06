@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestDagger, daggerName } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -384,6 +384,7 @@ export class GameEngine {
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
       `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
+      ...(bestDagger(c) ? [`Weapon: ${daggerName(bestDagger(c)!)}`] : []),
       ...(wornAmulet(c) ? [`Amulet worn: ${amuletName(wornAmulet(c)!)}`] : []),
       ...(c.inventory.activeRing ? [`Ring in use: ${RINGS_INFO[c.inventory.activeRing].name} (${RINGS_INFO[c.inventory.activeRing].power})`] : []),
       ``,
@@ -416,6 +417,7 @@ export class GameEngine {
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
       ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
+      ...(c.inventory.daggers ?? []).map(d => ({ name: `${daggerName(d)}${bestDagger(c) === d ? ' (wielded)' : ''}`, type: `Magic dagger: +${d.bonus} to hit and damage`, qty: 'x1' })),
       ...(c.inventory.amulets ?? []).map(a => ({ name: `${amuletName(a, false)}${a.worn ? ' (worn)' : ''}`, type: a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown', qty: 'x1' })),
       ...this.ringsWorn().map(r => {
         const info = RINGS_INFO[r];

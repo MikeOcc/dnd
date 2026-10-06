@@ -1,6 +1,6 @@
 import { RNG } from './random.js';
 import { LEVELING, CHARACTER, WARRIOR, GAMEPLAY, GHOUL, AMULETS } from './config.js';
-import type { Amulet, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
+import type { Amulet, MagicDagger, Character, CharacterRoll, DiceRoll, StatusEffect, StatusEffectType } from './types.js';
 
 function roll3d6(rng: RNG): DiceRoll {
   const r = rng.roll(3, 6);
@@ -168,6 +168,14 @@ export function getEffectiveStats(char: Character): Character {
   if (amulet) c[amulet.stat] = Math.max(1, c[amulet.stat] + amuletDelta(amulet));
   return c;
 }
+
+/** The best magic dagger carried (the one you fight with), if any. */
+export function bestDagger(char: Character): MagicDagger | undefined {
+  return (char.inventory?.daggers ?? []).reduce<MagicDagger | undefined>((b, d) => (!b || d.bonus > b.bonus ? d : b), undefined);
+}
+
+/** "Moonsilver dagger (+2)" */
+export const daggerName = (d: MagicDagger) => `${d.name} (+${d.bonus})`;
 
 /** The amulet worn, if any. */
 export function wornAmulet(char: Character): Amulet | undefined {

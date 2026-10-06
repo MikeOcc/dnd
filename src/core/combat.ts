@@ -1,9 +1,9 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, DAGGERS } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, BeholderRay, HeldCondition, FxElement, RingId } from './types.js';
 import { RINGS_INFO } from '../content/rings.js';
 import { BESTIARY, type Script, type Kit } from './bestiary.js';
-import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot } from './character.js';
+import { getEffectiveStats, addStatusEffect, applyLevelDrain, potionHealAmount, wardFights, healingFactor, slowFleshRot, bestDagger } from './character.js';
 import { isUndead, monsterAttackText } from './monsters.js';
 
 export interface CombatRoundResult {
@@ -51,9 +51,10 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const naked = char.statusEffects.some(e => e.type === 'naked');
   const warrior = char.charClass === 'warrior';
 
-  // A Pit Fiend's dread spoils your aim.
+  // A Pit Fiend's dread spoils your aim. A magic dagger steadies it.
   const dread = monster.type === 'Pit Fiend' ? 4 : 0;
-  const hitRoll = rng.die(20) + char.level
+  const plus = bestDagger(char)?.bonus ?? 0;
+  const hitRoll = rng.die(20) + char.level + plus * DAGGERS.HIT_PER_PLUS
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
     + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
     + (warrior ? WARRIOR.HIT_BONUS : 0)
@@ -81,13 +82,20 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const cry = (char.battleCryRounds ?? 0) > 0 ? WARRIOR.BATTLE_CRY_MULT : 1;
   // The Orc King's black plate turns aside part of every blow; stone and
   // unholy flesh shrug off half of it; rust on your blade costs you too.
+  // Stone, werewolf hide and a demilich's dust shrug off ordinary steel, but not an enchanted blade.
   const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
-    : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Demilich') ? 0.5 : 1;
+    : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Demilich') && plus === 0 ? 0.5 : 1;
+  // A Rakshasa is truly harmed only by a +3 weapon.
+  const rakshasa = monster.type === 'Rakshasa' ? DAGGERS.RAKSHASA_BY_PLUS[Math.min(3, plus)] : 1;
+  const magic = 1 + plus * DAGGERS.DAMAGE_PER_PLUS;
   const rust = char.statusEffects.find(e => e.type === 'corroded');
   const rustMult = rust ? 1 - rust.value / 100 : 1;
-  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * rustMult * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
+  const damage = Math.max(1, Math.round(baseDamage * rand * (opts.mult ?? 1) * cry * plate * rustMult * magic * rakshasa * (naked ? COMBAT.NAKED_ATTACK_MULT : 1)));
   monster.hp -= damage;
-  const aside = plate >= 1 ? '' : monster.type === 'Orc King' ? ' His plate turns part of it aside.' : ' Your weapon barely bites.';
+  const aside = rakshasa < 1
+    ? (plus === 0 ? ' Ordinary steel barely marks its hide: only a +3 weapon can truly wound a Rakshasa.' : ` Your +${plus} blade bites, but not deeply: only a +3 can truly wound a Rakshasa.`)
+    : monster.type === 'Rakshasa' && plus >= 3 ? ' Your +3 blade cuts deep. It howls.'
+    : plate >= 1 ? '' : monster.type === 'Orc King' ? ' His plate turns part of it aside.' : ' Your weapon barely bites.';
   messages.push(`You strike the ${monster.type} for ${damage} damage.${label}${aside}`);
   // Striking a Balor means reaching into its flames.
   if (monster.type === 'Balor' && char.hp > 1) {

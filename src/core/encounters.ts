@@ -1,7 +1,7 @@
-import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat } from './types.js';
+import type { Character, Monster, StatusEffect, GemType, ChestTrapType, Amulet, AmuletStat, MagicDagger } from './types.js';
 import type { RNG } from './random.js';
-import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS } from './config.js';
-import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName } from './character.js';
+import { ENCOUNTER, FOUNTAIN, MAGIC_BOOK, DEATH, TREASURE, GEMS, CHEST_TRAPS, TRAPS, FIRST_LEVEL, AMULETS, DAGGERS } from './config.js';
+import { addStatusEffect, xpForLevel, applyLevelDrain, amuletName, bestDagger, daggerName } from './character.js';
 
 // ─── Encounter pacing ────────────────────────────────────────────────────────
 
@@ -157,6 +157,22 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
 
   // Opals are semi-common, unless the character already has all they can carry.
   if (roll < GEMS.OPAL_CHEST_CHANCE && canHold('opal')) return findGem(char, 'opal');
+
+  // Now and then, a magic dagger (unless the pack already holds plenty).
+  const daggerFrom = GEMS.OPAL_CHEST_CHANCE + AMULETS.CHEST_CHANCE;
+  if (roll >= daggerFrom && roll < daggerFrom + DAGGERS.CHEST_CHANCE && (char.inventory.daggers?.length ?? 0) < DAGGERS.MAX_CARRIED) {
+    const odds = [...DAGGERS.ODDS].reverse().find(([from]) => char.dungeonLevel >= from)![1];
+    let pick = rng.float() * odds.reduce((a, b) => a + b, 0), bonus = 1;
+    for (let i = 0; i < odds.length; i++) { if (pick < odds[i]) { bonus = i + 1; break; } pick -= odds[i]; }
+    const dagger: MagicDagger = { bonus, name: rng.pick([...DAGGERS.NAMES[bonus]]) };
+    char.inventory.daggers = [...(char.inventory.daggers ?? []), dagger];
+    const best = bestDagger(char) === dagger;
+    return { messages: [
+      `Wrapped in oilcloth lies a magic dagger: the ${daggerName(dagger)}.`,
+      bonus === 3 ? 'Its edge hums faintly. A blade like this could wound even a Rakshasa.' : 'It is light, and wickedly sharp.',
+      best ? 'It is the finest blade you carry: you will fight with it now.' : 'You already carry a finer blade.',
+    ] };
+  }
 
   // Now and then, a magic amulet (unless the pack already holds plenty).
   if (roll >= GEMS.OPAL_CHEST_CHANCE && roll < GEMS.OPAL_CHEST_CHANCE + AMULETS.CHEST_CHANCE

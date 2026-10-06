@@ -103,6 +103,14 @@ export interface Inventory {
   starCharges?: number;   // uses left on the star sapphire ring in use (fresh ones hold RINGS.STAR_CHARGES)
   activeRing?: RingId;    // the one ring in use: many can be worn, only one is used at a time
   amulets?: Amulet[];     // magic amulets carried; at most one worn
+  daggers?: MagicDagger[];  // magic daggers carried; the best is the one you fight with
+}
+
+/** A magic dagger: +1 to +3, to hit and to damage. Rakshasas are truly
+ * harmed only by +3 (see DAGGERS.RAKSHASA_BY_PLUS). */
+export interface MagicDagger {
+  bonus: number;   // 1-3
+  name: string;    // 'Moonsilver dagger'
 }
 
 export type AmuletStat = 'strength' | 'intelligence' | 'dexterity' | 'constitution' | 'wisdom';

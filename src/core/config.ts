@@ -690,6 +690,25 @@ export const CHEST_TRAPS = {
   DEPTH_DAMAGE_SCALE: 0.35,  // trap damage grows by this fraction per dungeon level below the first
 } as const;
 
+// Magic daggers, found in chests: +1 to +3. The best one carried is the one
+// you fight with (wizards above all, but anyone can use one).
+export const DAGGERS = {
+  CHEST_CHANCE: 0.04,
+  MAX_CARRIED: 4,
+  // Odds of +1 / +2 / +3 by dungeon level (deeper, better).
+  ODDS: [[1, [80, 18, 2]], [3, [62, 30, 8]], [5, [45, 38, 17]]] as [number, number[]][],
+  HIT_PER_PLUS: 2,          // added to the attack roll per plus
+  DAMAGE_PER_PLUS: 0.15,    // extra damage per plus (+15%, +30%, +45%)
+  // Rakshasas: share of a blow's damage that lands, by the weapon's plus.
+  // Only a +3 blade strikes one fully.
+  RAKSHASA_BY_PLUS: [0.25, 0.5, 0.75, 1],
+  NAMES: {
+    1: ['Silvered dagger', 'Runed dirk', 'Glimmering knife', 'Keen stiletto'],
+    2: ['Moonsilver dagger', 'Whisperblade', 'Ember-edged dirk', 'Starsteel knife'],
+    3: ['Saint\'s kris', 'Dawnfang', 'Wardbreaker', 'The Unmaker\'s dagger'],
+  } as Record<number, string[]>,
+} as const;
+
 // Magic amulets: one worn at a time, +1 to +3 to one attribute, or as much
 // off it if cursed (and then it won't come off until a fountain, an altar or
 // an emerald breaks the curse; the amulet crumbles as it does).
