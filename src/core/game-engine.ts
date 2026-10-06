@@ -882,6 +882,12 @@ export class GameEngine {
   // ─── Movement ────────────────────────────────────────────────────────────
 
   moveForward(): GameState {
+    // Already standing in front of a chest, a shop...? Stepping toward it
+    // opens it (unless you've just left it alone, when you walk over it).
+    if (this.phase === 'playing') {
+      const ahead = this.approachAhead();
+      if (ahead) return ahead;
+    }
     return this.tryMove(this.char?.facing ?? 'N', 'forward');
   }
 

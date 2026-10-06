@@ -99,3 +99,17 @@ describe('Approaching things', () => {
     expect(engine.turnRight().phase).toBe('playing');
   });
 });
+
+describe('Already in front of it', () => {
+  it('stepping toward a chest you are standing before opens it instead of stepping onto it', () => {
+    const { engine, e } = ready();
+    const p = placeNear(e, 'chest')!;
+    e.char.x = p.n.x; e.char.y = p.n.y; e.char.facing = p.toward;   // placed there, nothing triggered yet
+    const s = engine.moveForward();
+    expect(s.interaction?.type).toBe('chest');
+    expect([e.char.x, e.char.y]).toEqual([p.n.x, p.n.y]);
+    engine.interactionChoice('c');                                    // leave it
+    engine.moveForward();                                             // now you walk onto it
+    expect([e.char.x, e.char.y]).toEqual([p.at.x, p.at.y]);
+  });
+});
