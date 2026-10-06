@@ -18,7 +18,7 @@ import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, cur
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
-import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
+import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
 import { buildStock, cannotBuy, buy, sellables, outpostHours } from './shop.js';
 import { treasureById } from '../content/treasures.js';
@@ -2809,6 +2809,11 @@ export class GameEngine {
         && (def.isUnique || this.rng.float() < HOARD.CHANCE)) {
       this.messages.push(...this.leaveHoard(monster));
     }
+    // The Barrow-King: his wight crumbles, and his grave goods are yours.
+    if (monster.type === 'Barrow-King') {
+      if (monster.wight) this.messages.push('', 'The barrow-wight crumbles to grave-dust in mid-stride.');
+      this.messages.push(...this.leaveHoard(monster, 'Beside the empty bier, his grave goods: a chest of old gold, untouched for a thousand years'));
+    }
 
     this.messages.push(...this.levelUp());
 
@@ -3124,6 +3129,13 @@ export class GameEngine {
 
     // A dragon's hoard: gold, gemstones, magic gems, and for the toughest a singular item.
     const hoard = id.startsWith(HOARD_PREFIX) ? this.dungeonState.hoards?.find(h => h.id === id) : undefined;
+    if (hoard && hoard.monster === 'Barrow-King') {
+      messages.push(...this.graveGoods(hoard.monsterLevel));
+      this.dungeonState.hoards = this.dungeonState.hoards!.filter(h => h.id !== id);
+      this.cue('victory-4');
+      this.messages = messages;
+      return this.closeInteractionWithSave();
+    }
     if (hoard) {
       const loot = dragonHoardLoot(this.char, hoard.monster, hoard.monsterLevel, this.rng);
       messages.push(...loot.messages);
@@ -3378,6 +3390,7 @@ export class GameEngine {
 
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
+    if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
     if (levelNum === 7) centerAsmodeusLair(grid, contents);
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
@@ -3400,7 +3413,7 @@ export class GameEngine {
 
   /** A slain dragon sometimes leaves its hoard: a chest on an open square
    * beside you (in front if it can be), opened once. */
-  private leaveHoard(monster: { type: string; level: number; definition: { isUnique?: boolean } }): string[] {
+  private leaveHoard(monster: { type: string; level: number; definition: { isUnique?: boolean } }, what?: string): string[] {
     if (!this.char || !this.dungeonState) return [];
     const lvl = this.getLevel(this.char.dungeonLevel);
     if (!lvl) return [];
@@ -3413,7 +3426,7 @@ export class GameEngine {
     this.dungeonState.hoards = [...(this.dungeonState.hoards ?? []), hoard];
     lvl.contents.set(`${spot.x},${spot.y}`, { type: 'chest', id: hoard.id });
     const where = spot.d === this.char.facing ? 'just ahead of you' : `to your ${{ N: { E: 'left', W: 'right', S: 'back' }, E: { S: 'left', N: 'right', W: 'back' }, S: { W: 'left', E: 'right', N: 'back' }, W: { N: 'left', S: 'right', E: 'back' } }[this.char.facing][spot.d as 'N'] ?? 'side'}`;
-    return ['', `Behind where the ${monster.type} lay, half-buried in bones and coins: an iron-bound chest, ${where}. Its hoard.`];
+    return ['', what ? `${what}, ${where}.` : `Behind where the ${monster.type} lay, half-buried in bones and coins: an iron-bound chest, ${where}. Its hoard.`];
   }
 
   /** The singular magic item in a tough dragon's hoard: a +3 weapon or armour,
@@ -3433,6 +3446,30 @@ export class GameEngine {
     }
     const gear = rollGear(this.char, this.rng, 'hoard', 3);
     return gear ? ['', ...gear] : [];
+  }
+
+  /** The Barrow-King's grave goods: barrow gold, old jewellery, and one
+   * singular thing: his ancient enchanted blade (a +3 weapon), or his crown,
+   * which raises one of your attributes for good. */
+  private graveGoods(level: number): string[] {
+    const c = this.char!;
+    const L = Math.max(1, level);
+    const gold = this.rng.int(40, 90) * L;
+    let jewels = 0;
+    for (let i = 0; i < 3; i++) jewels += this.rng.int(15, 40) * L;
+    c.gold += gold + jewels;
+    const out = ['The lid groans open on a thousand years of dark.', '',
+      `Barrow gold, dull and heavy: ${gold} gold.`, `Torcs, arm-rings and brooches of the old kings: worth ${jewels} gold.`];
+    if (this.rng.float() < 0.5) {
+      const blade = rollGear(c, this.rng, 'hoard', 3);
+      if (blade) return [...out, '', 'Laid across the gold, wrapped in rotted silk:', ...blade];
+    }
+    const stats = ['strength', 'constitution', 'wisdom'] as const;
+    const stat = this.rng.pick([...stats]);
+    c[stat] += 2;
+    const name = stat[0].toUpperCase() + stat.slice(1);
+    return [...out, '', 'At the bottom, his crown: a plain band of black iron, colder than the grave.',
+      `You set it on your brow. The cold goes into you, and stays, and makes you more than you were. (+2 ${name}, for good)`];
   }
 
   /** Puts a ring on: the star sapphire's charges, or one of the others (in use if none is). */

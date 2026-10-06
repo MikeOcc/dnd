@@ -60,7 +60,8 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
     + Math.floor(eff.strength  / COMBAT.HIT_STR_DIVISOR)
     + Math.floor(eff.dexterity / COMBAT.HIT_DEX_DIVISOR)
     + (warrior ? WARRIOR.HIT_BONUS : 0)
-    - (opts.hitPenalty ?? 0) - dread;
+    - (opts.hitPenalty ?? 0) - dread
+    - ((monster.darkTurns ?? 0) > 0 ? COMBAT.BARROW_DARK_HIT_PENALTY : 0);   // the Barrow-King's barrow-dark
   // A monster above the character's level defends only as well as one of
   // their own level, so no foe is out of reach of a blade.
   const defLevel = Math.min(monster.level, char.level);

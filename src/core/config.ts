@@ -65,6 +65,7 @@ export const ENCOUNTER = {
 } as const;
 
 export const COMBAT = {
+  BARROW_DARK_HIT_PENALTY: 5,      // the Barrow-King's barrow-dark: your blows land less often
   // Attack: d20 + charLevel + STR/2 + DEX/3 vs monsterDefense
   MONSTER_BASE_DEFENSE: 10,    // before monster level added
   HIT_STR_DIVISOR: 2,
@@ -837,7 +838,7 @@ export const RINGS = {
     'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
     'Hollow Choir', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
     'Lich', 'Caput Mortuum', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
-    'Orc King', 'Wendigo', 'Banshee',
+    'Orc King', 'Wendigo', 'Banshee', 'Barrow-King',
   ] as string[],
 } as const;
 

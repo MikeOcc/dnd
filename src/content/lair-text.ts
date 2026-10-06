@@ -37,6 +37,25 @@ export const LAIRS: Partial<Record<MonsterType, LairText>> = {
     sneak: 'You slip through the smoke, unseen, and strike from the shadows!',
     sneakFail: 'You creep through the smoke... but it was watching all along.',
   },
+  'Barrow-King': {
+    warning: [
+      'The passage slopes down between standing stones, and the air goes still and cold.',
+      '',
+      'Ahead, a low domed chamber of piled stone: a barrow. Grave-goods glint in the',
+      'dark: cups, rings, a heap of old gold. On a stone bier lies a tall figure in',
+      'rotted mail, a rusted crown on its brow, an ancient sword laid on its breast.',
+      '',
+      'Frost creeps across the floor toward your feet. Its fingers twitch.',
+    ],
+    backAway: 'You back away up the slope, never taking your eyes off the bier.',
+    afterBackAway: 'Behind you, stone grinds on stone. The barrow settles. It can wait. It always has.',
+    dragged: 'The cold seizes you like a hand and drags you down into the barrow!',
+    stepIn: 'You duck under the lintel and step down into the barrow.',
+    charge: 'You charge down into the barrow before it can rise!',
+    chargeFail: 'You charge, but the bier is already empty. He is behind you.',
+    sneak: 'You creep down among the grave-goods, and strike at the figure on the bier!',
+    sneakFail: 'You creep down... and the cold stars of its eyes open, already looking at you.',
+  },
   'Orc King': {
     warning: [
       'The war drums stop. The silence is worse.',

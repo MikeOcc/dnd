@@ -202,6 +202,7 @@ export type MonsterType =
   | 'Rakshasa'
   | 'Death Tyrant'
   | 'Caput Mortuum'
+  | 'Barrow-King'
   | 'Chimera'
   | 'Pit Fiend'
   | 'Balor'
@@ -288,6 +289,8 @@ export interface Monster {
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
   borakUsed?: boolean;       // The Borak: already fired this fight
+  darkTurns?: number;        // the Barrow-King's barrow-dark: your blows land less often
+  wight?: boolean;           // the Barrow-King's summoned barrow-wight fights beside him
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
   burnedTurns?: number;
   burrowed?: boolean;      // Mongolian Death Worm: under the floor (blades can't reach it); it erupts on its next turn

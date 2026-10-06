@@ -2450,6 +2450,54 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  // The Barrow-King: a tall dead king in rotted mail and a rusted crown,
+  // cold stars for eyes, an ancient sword, frost spreading at his feet.
+  'Barrow-King': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Barrow-King">
+    <defs>
+    <linearGradient id="bkc-mail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a9098"/><stop offset="1" stop-color="#3a3e46"/></linearGradient>
+    <linearGradient id="bkc-cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a34"/><stop offset="1" stop-color="#0c1410"/></linearGradient>
+    <radialGradient id="bkc-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#c8ccc4"/><stop offset="1" stop-color="#6a7068"/></radialGradient>
+    <radialGradient id="bkc-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.4" stop-color="#80d0ff"/><stop offset="1" stop-color="#2060c0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bkc-rust" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b08040"/><stop offset="1" stop-color="#5a3010"/></linearGradient>
+    </defs>
+    <!-- frost spreading at his feet -->
+    <ellipse cx="80" cy="152" rx="56" ry="6" fill="#c8e8ff" opacity="0.35"/>
+    <path d="M 40 152 l -6 -4 M 50 154 l -4 4 M 112 152 l 6 -4 M 120 154 l 5 3" stroke="#e8f6ff" stroke-width="1" opacity="0.7"/>
+    <!-- the cloak, tattered -->
+    <path d="M 48 60 C 40 90, 36 124, 34 150 L 44 146 L 50 152 L 58 146 L 66 152 L 80 148 L 94 152 L 102 146 L 110 152 L 116 146 L 126 150 C 124 124, 120 90, 112 60 Z" fill="url(#bkc-cloak)" stroke="#06100a" stroke-width="1"/>
+    <!-- grave-mail -->
+    <path d="M 58 60 L 102 60 L 106 112 L 54 112 Z" fill="url(#bkc-mail)" stroke="#22262c" stroke-width="1"/>
+    <g fill="none" stroke="#4a4e56" stroke-width="0.7" opacity="0.8">
+      <path d="M 58 68 h 46 M 57 76 h 48 M 56 84 h 49 M 56 92 h 50 M 55 100 h 50 M 55 108 h 51"/>
+    </g>
+    <path d="M 54 112 L 106 112 L 104 140 L 56 140 Z" fill="#2a2e34"/>
+    <path d="M 60 112 L 64 140 M 72 112 L 74 140 M 86 112 L 86 140 M 98 112 L 96 140" stroke="#16181c" stroke-width="1"/>
+    <!-- arms: one gripping the sword before him -->
+    <path d="M 58 62 C 48 74, 46 90, 54 104 L 62 98 C 58 88, 60 76, 64 68 Z" fill="url(#bkc-mail)" stroke="#22262c" stroke-width="0.8"/>
+    <path d="M 102 62 C 112 74, 114 90, 106 104 L 98 98 C 102 88, 100 76, 96 68 Z" fill="url(#bkc-mail)" stroke="#22262c" stroke-width="0.8"/>
+    <ellipse cx="80" cy="104" rx="10" ry="5" fill="url(#bkc-skin)"/>
+    <!-- the ancient sword, point down -->
+    <path d="M 77 104 L 83 104 L 82 150 L 80 154 L 78 150 Z" fill="#9aa4ac" stroke="#3a4048" stroke-width="0.6"/>
+    <path d="M 66 100 L 94 100 L 94 104 L 66 104 Z" fill="url(#bkc-rust)"/>
+    <path d="M 78 86 L 82 86 L 82 100 L 78 100 Z" fill="#3a2a1a"/><circle cx="80" cy="84" r="3" fill="url(#bkc-rust)"/>
+    <path d="M 79 116 l 2 3 M 81 128 l -2 3" stroke="#3a4048" stroke-width="1"/>
+    <!-- the head: grey skin drawn tight over the skull -->
+    <path d="M 66 34 C 64 20, 72 12, 80 12 C 88 12, 96 20, 94 34 C 94 46, 88 56, 80 58 C 72 56, 66 46, 66 34 Z" fill="url(#bkc-skin)" stroke="#3a3e3a" stroke-width="1"/>
+    <path d="M 68 40 Q 72 48 76 50 M 92 40 Q 88 48 84 50" stroke="#5a605a" stroke-width="1" fill="none"/>
+    <ellipse cx="73" cy="32" rx="5" ry="4" fill="#0a0e14"/><ellipse cx="87" cy="32" rx="5" ry="4" fill="#0a0e14"/>
+    <circle cx="73" cy="32" r="3.4" fill="url(#bkc-eye)"/><circle cx="87" cy="32" r="3.4" fill="url(#bkc-eye)"/>
+    <path d="M 80 36 L 78 42 L 82 42 Z" fill="#2a2e2a"/>
+    <path d="M 73 48 Q 80 52 87 48" stroke="#2a2e2a" stroke-width="1.6" fill="none"/>
+    <path d="M 74 48 l 1 2 M 77 49 l 0.6 2 M 80 49.4 l 0 2 M 83 49 l -0.6 2 M 86 48 l -1 2" stroke="#d8d4c0" stroke-width="0.8"/>
+    <!-- the rusted crown -->
+    <path d="M 64 22 L 66 8 L 71 16 L 75 4 L 80 14 L 85 4 L 89 16 L 94 8 L 96 22 C 88 18, 72 18, 64 22 Z" fill="url(#bkc-rust)" stroke="#3a2008" stroke-width="0.8"/>
+    <circle cx="80" cy="17" r="2" fill="#80d0ff"/>
+    <!-- his cold breath -->
+    <path d="M 76 54 q -4 6 0 10 q 4 4 0 8" stroke="#c8e8ff" stroke-width="1" fill="none" opacity="0.5"/>
+    </svg>
+  `,
+
   'Orc King': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Orc King">
     <defs>
@@ -5415,6 +5463,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Barrow-King': 1.3,
   'Mongolian Death Worm': 1.3,
   'Giant Leech': 1.1,
   'Giant Shrew': 1.0,

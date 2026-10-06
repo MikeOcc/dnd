@@ -1227,4 +1227,68 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
+
+  // ─── The Barrow-King ─────────────────────────────────────────────────────
+  // A thousand years under the mound: grey skin shrunk to the skull and split
+  // over the cheekbones, the rusted crown grown into the brow, two cold stars
+  // for eyes, grave-mail rotted through to the ribs, the ancient sword held
+  // point-down, and frost creeping out from him across the stones.
+  'Barrow-King': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Barrow-King: a tall, desiccated dead king in rotted grave-mail, a rusted crown grown into his brow, cold stars for eyes, an ancient sword held point-down, frost creeping from him">
+    <defs>
+      ${horrorSkinFilter('hbk-skin', { freq: '0.22 0.28', scale: 2.6, seed: 81, k: 1.25 })}
+      ${horrorSkinFilter('hbk-mail', { freq: '0.6 0.6', scale: 2, seed: 82, k: 1.3 })}
+      <radialGradient id="hbk-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#b8bcb0"/><stop offset="0.6" stop-color="#7a7e74"/><stop offset="1" stop-color="#2a2e2a"/></radialGradient>
+      <linearGradient id="hbk-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a828a"/><stop offset="1" stop-color="#22262c"/></linearGradient>
+      <linearGradient id="hbk-cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2a24"/><stop offset="1" stop-color="#060a08"/></linearGradient>
+      <linearGradient id="hbk-rust" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a2a"/><stop offset="1" stop-color="#3a1a08"/></linearGradient>
+      <radialGradient id="hbk-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.3" stop-color="#a0e0ff"/><stop offset="1" stop-color="#2060c0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hbk-frost" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d8f0ff" stop-opacity="0.55"/><stop offset="1" stop-color="#d8f0ff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="150" rx="72" ry="10" fill="url(#hbk-frost)"/>
+    <g stroke="#e8f8ff" stroke-width="0.7" fill="none" opacity="0.7">
+      <path d="M 30 150 l -6 -3 l -2 -5 M 26 147 l -5 1 M 130 150 l 6 -3 l 2 -5 M 134 147 l 5 1 M 60 156 l -4 3 M 100 156 l 4 3"/>
+    </g>
+    <!-- the cloak in rags -->
+    <path d="M 46 58 C 38 90, 34 124, 30 152 L 42 146 L 48 154 L 58 146 L 66 154 L 80 148 L 94 154 L 102 146 L 112 154 L 118 146 L 130 152 C 126 124, 122 90, 114 58 Z" fill="url(#hbk-cloak)" filter="url(#hbk-skin)"/>
+    <!-- grave-mail, rotted through over the ribs -->
+    <path d="M 56 58 L 104 58 L 108 112 L 52 112 Z" fill="url(#hbk-steel)" filter="url(#hbk-mail)"/>
+    <path d="M 70 74 C 74 70, 86 70, 90 74 C 92 84, 88 94, 80 96 C 72 94, 68 84, 70 74 Z" fill="#0a0c0a"/>
+    <g fill="none" stroke="url(#hbk-face)" stroke-width="2" stroke-linecap="round" filter="url(#hbk-skin)">
+      <path d="M 72 78 Q 80 75 88 78"/><path d="M 71 84 Q 80 81 89 84"/><path d="M 72 90 Q 80 87 88 90"/>
+    </g>
+    <path d="M 80 74 L 80 96" stroke="#5a5e56" stroke-width="1.6"/>
+    <path d="M 52 112 L 108 112 L 106 142 L 54 142 Z" fill="#1a1c20" filter="url(#hbk-mail)"/>
+    <!-- arms of bone and leather-skin, both hands on the sword's pommel -->
+    <path d="M 56 60 C 44 74, 44 92, 56 104 L 64 98 C 58 88, 58 76, 64 66 Z" fill="url(#hbk-steel)" filter="url(#hbk-mail)"/>
+    <path d="M 104 60 C 116 74, 116 92, 104 104 L 96 98 C 102 88, 102 76, 96 66 Z" fill="url(#hbk-steel)" filter="url(#hbk-mail)"/>
+    <path d="M 66 98 C 70 94, 78 94, 80 98 C 82 94, 90 94, 94 98 L 92 106 L 68 106 Z" fill="url(#hbk-face)" filter="url(#hbk-skin)"/>
+    <g stroke="#1a1c18" stroke-width="0.7"><path d="M 70 100 l 0 5 M 74 99 l 0 6 M 86 99 l 0 6 M 90 100 l 0 5"/></g>
+    <!-- the ancient sword, notched, point down into the frost -->
+    <path d="M 77 106 L 83 106 L 82.4 150 L 80 156 L 77.6 150 Z" fill="url(#hbk-steel)" stroke="#1a1e24" stroke-width="0.5"/>
+    <path d="M 83 118 l -1.6 1.6 l 1.6 1 M 77 132 l 1.6 1.4 l -1.6 1" stroke="#0a0c10" stroke-width="0.8" fill="none"/>
+    <path d="M 64 102 L 96 102 L 96 107 L 64 107 Z" fill="url(#hbk-rust)"/>
+    <path d="M 79.6 108 L 79.6 148" stroke="#c8d8e8" stroke-width="0.4" opacity="0.6"/>
+    <!-- the head: skin shrunk to the skull, split over the cheekbones -->
+    <path d="M 64 32 C 62 18, 70 10, 80 10 C 90 10, 98 18, 96 32 C 96 46, 90 56, 80 58 C 70 56, 64 46, 64 32 Z" fill="url(#hbk-face)" filter="url(#hbk-skin)"/>
+    <path d="M 66 38 C 70 40, 72 44, 70 48 M 94 38 C 90 40, 88 44, 90 48" stroke="#0a0c0a" stroke-width="1.6" fill="none"/>
+    <path d="M 67 40 C 70 42, 70 45, 69 47" stroke="#e0dcc8" stroke-width="0.8" fill="none"/>
+    <path d="M 70 46 Q 74 52 78 54 M 90 46 Q 86 52 82 54" stroke="#2a2e2a" stroke-width="1" fill="none"/>
+    <!-- deep sockets, two cold stars -->
+    <path d="M 67 30 C 67 25, 76 25, 77 31 C 76 36, 68 36, 67 30 Z M 83 31 C 84 25, 93 25, 93 30 C 92 36, 84 36, 83 31 Z" fill="#05070a"/>
+    <circle cx="72" cy="31" r="4" fill="url(#hbk-eye)"/><circle cx="88" cy="31" r="4" fill="url(#hbk-eye)"/>
+    <path d="M 72 28.4 L 72 33.6 M 69.4 31 L 74.6 31 M 88 28.4 L 88 33.6 M 85.4 31 L 90.6 31" stroke="#ffffff" stroke-width="0.4"/>
+    <path d="M 80 34 L 77.6 42 L 82.4 42 Z" fill="#0a0c0a"/>
+    <!-- lips gone: the teeth, long in the gums -->
+    <path d="M 71 48 Q 80 53 89 48 Q 80 51 71 48 Z" fill="#100c0a"/>
+    <path d="M 72 48.2 l 0.8 3.4 l 0.8 -3.2 l 0.8 3.6 l 0.8 -3.4 l 0.8 3.6 l 0.8 -3.4 l 0.8 3.6 l 0.8 -3.4 l 0.8 3.6 l 0.8 -3.4 l 0.8 3.4 l 0.8 -3.2 l 0.8 3.4 l 0.8 -3.2 l 0.8 3 l 0.8 -3 l 0.8 2.8 l 0.8 -2.6 l 0.8 2.6" stroke="#cfc6a6" stroke-width="0.6" fill="none"/>
+    <!-- the crown, rusted, grown into the brow -->
+    <path d="M 62 20 L 64 6 L 70 14 L 74 2 L 80 12 L 86 2 L 90 14 L 96 6 L 98 20 C 90 16, 70 16, 62 20 Z" fill="url(#hbk-rust)" stroke="#2a1408" stroke-width="0.6" filter="url(#hbk-skin)"/>
+    <path d="M 64 20 C 66 23, 66 25, 64 27 M 96 20 C 94 23, 94 25, 96 27 M 76 19 C 76 22, 77 24, 76 26" stroke="#3a1a10" stroke-width="1.2" fill="none"/>
+    <circle cx="80" cy="15" r="1.8" fill="#a0e0ff"/>
+    <!-- cold breath -->
+    <g fill="none" stroke="#d8f0ff" stroke-width="1" opacity="0.45"><path d="M 74 56 q -6 6 -2 12 q 4 6 -2 12"/><path d="M 86 56 q 6 6 2 12 q -4 6 2 12"/></g>
+    </svg>
+  `,
+
 };

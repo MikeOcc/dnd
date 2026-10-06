@@ -389,6 +389,46 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     { id: 'tyrant-bite', weight: 30, run: k => { k.strike(1.1, d => `Its great rotting maw bites down on you! You suffer ${d} damage.`); } },
   ] },
 
+  // The Barrow-King (level 5): grave-chill, the barrow-dark (your blows land
+  // less often), and a barrow-wight called up from the stones to fight beside
+  // him until he falls.
+  'Barrow-King': {
+    before: k => {
+      if ((k.monster.darkTurns ?? 0) > 0) {
+        k.monster.darkTurns!--;
+        if (k.monster.darkTurns === 0) k.say('The barrow-dark thins. You can see his outline again.');
+      }
+      if (k.monster.wight) {
+        k.strike(0.35, d => `The barrow-wight claws at you with frozen fingers. (${d} damage)`);
+        if (k.alive() && k.rng.float() < 0.3) { k.status({ type: 'strength-reduced', value: 1, turns: 20 }); k.say('Its touch leaves a chill in your arm. (-1 Strength)'); }
+      }
+      return !k.alive();
+    },
+    moves: [
+      { id: 'barrow-blade', weight: 35, run: k => {
+        k.strike(1.3, d => `The ancient sword comes down, notched by a thousand years of nothing. You suffer ${d} damage.`);
+      } },
+      { id: 'grave-chill', weight: 30, run: k => {
+        k.strike(0.9, d => `His grave-cold hand closes on you. The chill sinks to the bone. (${d} damage)`);
+        if (k.alive()) {
+          const s = k.save(15, ['constitution']);
+          if (!s.ok) { k.status({ type: 'strength-reduced', value: 3, turns: 40 }); k.say(`Your strength drains into the stone. (-3 Strength) ${s.text}`); }
+          else k.say(`You shake off the worst of the cold. ${s.text}`);
+        }
+      } },
+      { id: 'barrow-dark', weight: 20, when: k => !(k.monster.darkTurns ?? 0), run: k => {
+        k.monster.darkTurns = 3;
+        k.say('He lifts a hand, and the barrow-dark pours from the stones. Your light gutters to a blue spark.',
+          '(For a few turns your blows land less often.)');
+      } },
+      { id: 'call-the-wight', weight: 15, when: k => !k.monster.wight, run: k => {
+        k.monster.wight = true;
+        k.say('"RISE, MY SWORN." The flagstones crack, and a barrow-wight claws its way up beside him.',
+          '(It will fight beside him until he falls.)');
+      } },
+    ],
+  },
+
   // Weapons only half bite on it (combat.ts).
   'Caput Mortuum': { moves: [
     { id: 'soul-howl', weight: 20, run: k => {

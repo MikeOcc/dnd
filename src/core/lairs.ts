@@ -168,3 +168,59 @@ export function centerAsmodeusLair(grid: DungeonCell[][], contents: Map<string, 
   contents.delete(key0);
   contents.set(best, lair);
 }
+
+// ─── The Barrow-King's barrow (level 5) ──────────────────────────────────────
+// A room far from the entrance, walled up to a single doorway, the king's
+// bier at its far end. Built as the level loads, like the Orc King's hall.
+
+export const BARROW_LAIR = {
+  KING_ID: 'unique-barrow-king',
+  MIN_ROOM_CELLS: 12,
+} as const;
+
+export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>): void {
+  if ([...contents.values()].some(c => c.id === BARROW_LAIR.KING_ID)) return;
+  const map = mapAreas(grid);
+  const width = grid[0].length;
+  const reachableBefore = floodFill(grid, entrance.x, entrance.y).size;
+  const fromEntrance = distances(grid, entrance);
+  const touches = (a: Area, p: Pt | null) => !!p && areaAtCell(map, p.x, p.y) === a;
+  const hasLadder = (idx: number) => [...contents.entries()].some(([k, c]) => {
+    if (c.type !== 'ladder-up' && c.type !== 'ladder-down') return false;
+    const [x, y] = k.split(',').map(Number);
+    return map.areaAt[y * width + x] === idx;
+  });
+
+  // The farthest room that can be walled up to one doorway without cutting off anything else.
+  let best: { area: Area; keep: Opening; seal: Opening[]; score: number } | null = null;
+  map.areas.forEach((area, idx) => {
+    if (area.kind !== 'room' || area.cells < BARROW_LAIR.MIN_ROOM_CELLS) return;
+    if (touches(area, entrance) || touches(area, exit) || hasLadder(idx)) return;
+    const openings = openingsOf(grid, map.areaAt, width, idx);
+    if (openings.length === 0) return;
+    const near = Math.min(...openings.map(o => fromEntrance.get(key(o.outside))?.d ?? Infinity));
+    if (!isFinite(near)) return;
+    if (best && near <= best.score) return;
+    for (const keep of openings) {
+      const seal = openings.filter(o => o !== keep);
+      seal.forEach(o => setWall(grid, o, true));
+      const ok = floodFill(grid, entrance.x, entrance.y).size === reachableBefore;
+      seal.forEach(o => setWall(grid, o, false));
+      if (ok) { best = { area, keep, seal, score: near }; break; }
+    }
+  });
+  if (!best) return;
+  const { area, keep, seal } = best as { area: Area; keep: Opening; seal: Opening[] };
+  seal.forEach(o => setWall(grid, o, true));
+
+  const free = (p: Pt) => !contents.has(key(p)) && !(p.x === entrance.x && p.y === entrance.y) && !(exit && p.x === exit.x && p.y === exit.y);
+  // The bier: the room square farthest from the doorway.
+  const fromDoor = distances(grid, keep.inside);
+  let bier: Pt | null = null, far = -1;
+  for (const [k, { d }] of fromDoor) {
+    const [x, y] = k.split(',').map(Number);
+    if (areaAtCell(map, x, y) !== area || d <= far || !free({ x, y })) continue;
+    bier = { x, y }; far = d;
+  }
+  if (bier) contents.set(key(bier), { type: 'unique-monster', id: BARROW_LAIR.KING_ID, monsterId: 'Barrow-King' });
+}

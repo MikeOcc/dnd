@@ -140,6 +140,47 @@ const LAIR_ART = {
   // An empty throne built of a hundred captured shields, in a towering hall
   // hung with red-eye banners, lit by torches, with war drums at the sides.
   // The Orc King is not shown.
+  // The Barrow-King's barrow: a low dome of piled stones, grave-goods
+  // glinting, a tall figure on a stone bier, frost creeping across the floor.
+  'Barrow-King': `
+    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A barrow: a low domed tomb of piled stone, grave-goods glinting, a crowned figure lying on a stone bier, frost on the floor">
+    <defs>
+      <radialGradient id="bkl-cold" cx="50%" cy="62%" r="60%"><stop offset="0" stop-color="#8ac8ff" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="bkl-stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a5e62"/><stop offset="1" stop-color="#1a1c1e"/></linearGradient>
+      <radialGradient id="bkl-gold" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#f0d080"/><stop offset="1" stop-color="#6a4a10"/></radialGradient>
+    </defs>
+    <rect width="400" height="240" fill="#050607"/>
+    <rect width="400" height="240" fill="url(#bkl-cold)"/>
+    <!-- the dome of piled stones -->
+    <path d="M 30 200 C 40 70, 360 70, 370 200 Z" fill="#0c0e10"/>
+    <g fill="url(#bkl-stone)" stroke="#08090a" stroke-width="1.5" opacity="0.85">
+      ${Array.from({ length: 26 }, (_, i) => { const a = Math.PI * (0.08 + 0.84 * (i / 25)); const r = 158 + (i % 3) * 6; const x = 200 - Math.cos(a) * r; const y = 205 - Math.sin(a) * r * 0.82; return `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${14 + (i % 4) * 3}" ry="${9 + (i % 3) * 2}"/>`; }).join('')}
+    </g>
+    <!-- the standing stones at the mouth -->
+    <path d="M 20 210 L 26 120 L 46 116 L 50 210 Z M 350 210 L 354 116 L 374 120 L 380 210 Z" fill="url(#bkl-stone)" stroke="#08090a" stroke-width="1.5"/>
+    <path d="M 30 140 l 10 4 M 32 170 l 8 -3 M 360 150 l 10 -2" stroke="#2a2e32" stroke-width="1"/>
+    <!-- grave-goods: cups, a shield, a heap of old gold -->
+    <ellipse cx="110" cy="196" rx="34" ry="8" fill="url(#bkl-gold)" opacity="0.85"/>
+    <path d="M 96 190 l 4 -10 l 8 0 l 4 10 Z M 120 192 l 3 -8 l 6 0 l 3 8 Z" fill="#a08030" stroke="#3a2a08" stroke-width="0.6"/>
+    <circle cx="300" cy="186" r="16" fill="#3a3020" stroke="#7a6030" stroke-width="2"/><circle cx="300" cy="186" r="4" fill="#7a6030"/>
+    <ellipse cx="292" cy="200" rx="24" ry="6" fill="url(#bkl-gold)" opacity="0.8"/>
+    <g fill="#fff4c0"><circle cx="104" cy="192" r="1"/><circle cx="118" cy="195" r="0.8"/><circle cx="288" cy="198" r="0.9"/></g>
+    <!-- the bier, and on it the king, crowned, the sword on his breast -->
+    <path d="M 140 190 L 260 190 L 254 206 L 146 206 Z" fill="url(#bkl-stone)" stroke="#08090a" stroke-width="1.5"/>
+    <path d="M 146 180 L 254 180 L 260 190 L 140 190 Z" fill="#4a4e52" stroke="#08090a" stroke-width="1"/>
+    <path d="M 160 176 C 170 168, 230 168, 242 176 L 238 182 C 226 178, 174 178, 164 182 Z" fill="#2a2e34"/>
+    <ellipse cx="156" cy="174" rx="9" ry="7" fill="#8a8e84"/>
+    <path d="M 148 168 L 150 160 L 153 165 L 156 158 L 159 165 L 162 160 L 164 168 Z" fill="#8a5a2a"/>
+    <path d="M 168 172 L 236 172" stroke="#9aa4ac" stroke-width="3"/><path d="M 172 168 L 172 176" stroke="#8a5a2a" stroke-width="3"/>
+    <circle cx="153" cy="173" r="1.4" fill="#a0e0ff"/><circle cx="158" cy="173" r="1.4" fill="#a0e0ff"/>
+    <!-- frost creeping toward you -->
+    <g stroke="#d8f0ff" stroke-width="1" fill="none" opacity="0.6">
+      <path d="M 200 206 l -8 14 l -6 4 M 200 206 l 10 16 l 8 2 M 170 208 l -14 12 M 230 208 l 16 12 M 192 220 l -4 8 M 212 222 l 4 8"/>
+    </g>
+    <ellipse cx="200" cy="222" rx="120" ry="14" fill="#c8e8ff" opacity="0.12"/>
+    </svg>
+  `,
+
   'Orc King': `
     <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An empty throne built of shields in a torchlit hall">
     <defs>

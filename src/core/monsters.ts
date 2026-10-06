@@ -533,6 +533,25 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['axe-flurry', 'shield-slam', 'war-chant', 'curse-of-gruumsh', 'eye-of-gruumsh'],
   },
+  // The one Barrow-King, on level 5: an ancient king who would not stay in
+  // his mound. Grave-chill, the barrow-dark, a barrow-wight called from the
+  // stones (combat.ts, bestiary.ts). He guards his grave goods.
+  'Barrow-King': {
+    type: 'Barrow-King', isUndead: true, isUnique: true,
+    minLevel: 55, maxLevel: 70, naturalTier: 8, minDungeonLevel: 5, speed: 0.9,
+    baseHpPerLevel: 16, baseAttackPerLevel: 6.0, baseDefensePerLevel: 5.0,
+    fireballResistance: 1.0, lightningResistance: 0.9,
+    encounterIntro: [
+      'The bier is empty. The cold stands up behind you.',
+      'A tall shape in rotted grave-mail, a rusted crown on a skull wrapped in grey skin,',
+      'lifts an ancient sword from the stones. Its eyes are two cold stars.',
+      '',
+      '"WHO OPENS MY HOUSE? THE DEAD KEEP WHAT IS GIVEN THEM."',
+      '',
+      'THE BARROW-KING, Level {LVL}, THE KING UNDER THE MOUND!',
+    ],
+    specialAbilities: ['grave-chill', 'barrow-dark', 'call-the-wight', 'barrow-blade'],
+  },
   'Giant': {
     type: 'Giant', isUndead: false, isUnique: false,
     minLevel: 5, maxLevel: 20, naturalTier: 4, minDungeonLevel: 2, speed: 0.9,
@@ -1020,7 +1039,7 @@ export const ANCIENT_GHOUL_INTRO = [
 
 export const UNDEAD_TYPES: MonsterType[] = [
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
-  'Death Tyrant', 'Caput Mortuum',
+  'Death Tyrant', 'Caput Mortuum', 'Barrow-King',
 ];
 
 export function isUndead(type: MonsterType): boolean {
