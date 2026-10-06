@@ -62,3 +62,20 @@ export function placeTreasures(
     contents.set(best, { type: 'chest', id, treasure: t.treasure });
   }
 }
+
+/** The shops beside the entrances: the Trading Post on level 1 and the
+ * Outpost on level 4, on a free square next to the entrance. */
+export const SHOP_IDS: Record<number, string> = { 1: 'trading-post', 4: 'outpost' };
+
+export function placeShop(levelNum: number, grid: DungeonCell[][], entrance: { x: number; y: number }, exit: { x: number; y: number } | null, contents: Map<string, CellContent>): void {
+  const id = SHOP_IDS[levelNum];
+  if (!id || [...contents.values()].some(c => c.id === id)) return;
+  const steps: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+  for (const [dir, dx, dy] of steps) {
+    if (!canMove(grid, entrance.x, entrance.y, dir)) continue;
+    const x = entrance.x + dx, y = entrance.y + dy, k = `${x},${y}`;
+    if (contents.has(k) || (exit && exit.x === x && exit.y === y)) continue;
+    contents.set(k, { type: 'shop', id });
+    return;
+  }
+}

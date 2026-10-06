@@ -21,10 +21,11 @@ import {
 } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair } from './lairs.js';
-import { placeTreasures, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
+import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
+import { buildStock, cannotBuy, buy, sellables, outpostHours } from './shop.js';
 import { treasureById } from '../content/treasures.js';
 import { RINGS_INFO, RING_ORDER, ringChestById } from '../content/rings.js';
 import { getLevelIntro } from '../content/level-text.js';
@@ -232,6 +233,7 @@ export class GameEngine {
         else if (c.type === 'book' && !ds.readBooks.has(c.id)) objects.push({ x, y, kind: 'book' });
         else if (c.type === 'ladder-up' || c.type === 'ladder-down') objects.push({ x, y, kind: c.type });
         else if (c.type === 'unique-monster' && (c.monsterId === 'Asmodeus' || c.monsterId === 'Orc King')) objects.push({ x, y, kind: 'throne', variant: c.monsterId });
+        else if (c.type === 'shop') objects.push({ x, y, kind: 'shop' });
       }
     }
     return { x: px, y: py, facing: this.char.facing, level, radius: R, cells, objects };
@@ -269,6 +271,9 @@ export class GameEngine {
           break;
         case 'altar':
           if (!ds.usedAltars.has(content.id)) entities.push({ depth, pattern: [...CONTENT_PATTERNS.altar] });
+          break;
+        case 'shop':
+          entities.push({ depth, pattern: [...CONTENT_PATTERNS.shop] });
           break;
         case 'fountain':
           if (!ds.usedFountains.has(content.id)) {
@@ -805,6 +810,7 @@ export class GameEngine {
       if (lvl === 1) {
         const { grid, entrance, exit, contents } = deserializeLevel(serialized);
         placeTreasures(1, grid, entrance, exit, contents);
+        placeShop(1, grid, entrance, exit, contents);
         this.levelCache.set(1, { grid, entrance, exit, contents });
         this.char.x = entrance.x;
         this.char.y = entrance.y;
@@ -983,6 +989,11 @@ export class GameEngine {
       return this.startRandomEncounter();
     }
 
+    // Deep down, now and then, a wandering Peddler.
+    if (this.char.dungeonLevel >= SHOP.PEDDLER_FROM_LEVEL && !content && this.rng.float() < SHOP.PEDDLER_CHANCE) {
+      return this.openShop('peddler');
+    }
+
     this.feelPresences();
     return this.getState();
   }
@@ -1038,6 +1049,21 @@ export class GameEngine {
     const lvl = this.getLevel(this.char.dungeonLevel)!;
 
     switch (content.type) {
+      case 'shop': {
+        if (content.id !== 'outpost') return this.openShop('post');
+        // The Outpost keeps shifts, and sometimes a monster eats the proprietor.
+        this.bankPlayTime();
+        const hours = outpostHours(this.char, this.char.playTime);
+        if (hours.state === 'open') return this.openShop('outpost');
+        const when = `(It opens again in about ${hours.minutesToOpen} minute${hours.minutesToOpen === 1 ? '' : 's'} of play.)`;
+        this.messages = hours.state === 'eaten'
+          ? ['You come to the Outpost: a stall of rough planks with its shutters smashed in.',
+             'Claw marks score the counter, and there is a great deal of blood.',
+             'A note is pinned to what is left of the shutter: PROPRIETOR EATEN. NEW SHIFT STARTS SOON.', when]
+          : ['You come to the Outpost: a stall of rough planks. The shutters are down.',
+             'A sign hangs from the latch: CLOSED BETWEEN SHIFTS. RING TWICE AND RUN.', when];
+        return this.getState();
+      }
       case 'description': {
         const descId = content.descriptionId ?? content.id;
         const isFirst = !ds.visitedDescriptions.has(content.id);
@@ -1655,6 +1681,71 @@ export class GameEngine {
     this.char!.inventory.gems.opal--;
     const result = playerOpal(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
+  }
+
+  // ─── Shops ─────────────────────────────────────────────────────────────
+
+  private static readonly SHOP_NAMES = { post: 'THE TRADING POST', outpost: 'THE OUTPOST', peddler: 'A CLOAKED PEDDLER' } as const;
+
+  /** Opens a shop: the Trading Post, the Outpost, or the wandering Peddler. */
+  private openShop(kind: 'post' | 'outpost' | 'peddler'): GameState {
+    if (!this.char) return this.getState();
+    this.interaction = { type: 'shop', contentId: kind, choices: [], shop: { kind, mode: 'main', stock: buildStock(kind, this.char, this.rng) } };
+    this.phase = 'interaction';
+    const greeting = {
+      post: ['A trader has set up beside the way down: a stall hung with lanterns,', 'crates of potions, and racks of weapons and armour.', '"Buying and selling, friend. Mind the drop."'],
+      outpost: ['Behind a counter of rough planks, a nervous trader looks up.', 'An axe leans within easy reach. "Quick now. Things come up the stairs."'],
+      peddler: ['A cloaked figure steps out of the dark, pack creaking.', '"Rare things, for rare prices," it whispers. "Choose quickly."'],
+    }[kind];
+    return this.showShop(greeting);
+  }
+
+  /** Puts up the shop's current list (main menu, buying, or selling). */
+  private showShop(lead: string[] = []): GameState {
+    const shop = this.interaction?.shop;
+    if (!this.char || !shop) return this.getState();
+    const letter = (i: number) => String.fromCharCode(97 + i);
+    const head = [`══ ${GameEngine.SHOP_NAMES[shop.kind]} ══`, ...lead, '', `Your gold: ${this.char.gold}`];
+    if (shop.mode === 'buy') {
+      const items = shop.stock;
+      this.messages = [...head, '', 'FOR SALE:', ...items.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold${it.qty > 1 ? ` (${it.qty} left)` : it.qty === 0 ? ' (sold out)' : ''}`)];
+      this.interaction!.choices = [...items.map((it, i) => ({ key: letter(i), text: `${it.label} (${it.price}g)` })), { key: letter(items.length), text: 'Back' }];
+    } else if (shop.mode === 'sell') {
+      const list = sellables(this.char).slice(0, 20);
+      this.messages = [...head, '', list.length ? 'WILL BUY:' : 'You have nothing they want.', ...list.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold`)];
+      this.interaction!.choices = [...list.map((it, i) => ({ key: letter(i), text: `Sell ${it.label} (${it.price}g)` })), { key: letter(list.length), text: 'Back' }];
+    } else {
+      this.messages = head;
+      this.interaction!.choices = [{ key: 'a', text: 'Buy' }, { key: 'b', text: 'Sell' }, { key: 'c', text: 'Leave' }];
+    }
+    return this.getState();
+  }
+
+  private resolveShopChoice(key: string): GameState {
+    const shop = this.interaction?.shop;
+    if (!this.char || !shop) return this.closeInteraction();
+    const i = key.charCodeAt(0) - 97;
+    if (shop.mode === 'main') {
+      if (key === 'a') { shop.mode = 'buy'; return this.showShop(); }
+      if (key === 'b') { shop.mode = 'sell'; return this.showShop(); }
+      return this.closeInteraction(shop.kind === 'peddler'
+        ? 'You turn to go. When you glance back, the peddler is gone.'
+        : 'You leave the stall behind.');
+    }
+    if (shop.mode === 'buy') {
+      const item = shop.stock[i];
+      if (!item) { shop.mode = 'main'; return this.showShop(); }
+      const no = cannotBuy(this.char, item);
+      if (no) return this.showShop([no]);
+      this.cue('gem-diamond');
+      return this.showShop([buy(this.char, item)]);
+    }
+    const list = sellables(this.char).slice(0, 20);
+    const it = list[i];
+    if (!it) { shop.mode = 'main'; return this.showShop(); }
+    it.sell();
+    this.char.gold += it.price;
+    return this.showShop([`You sell the ${it.label.replace(/ \(.*\)$/, '')} for ${it.price} gold.`]);
   }
 
   // ─── Amulets ───────────────────────────────────────────────────────────
@@ -2622,6 +2713,8 @@ export class GameEngine {
         return this.resolveFountainChoice(key, contentId);
       case 'trap-choice':
         return this.resolveTrapChoice(key, contentId);
+      case 'shop':
+        return this.resolveShopChoice(key);
       default:
         return this.closeInteraction();
     }
@@ -2946,6 +3039,7 @@ export class GameEngine {
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 7) centerAsmodeusLair(grid, contents);
     placeTreasures(levelNum, grid, entrance, exit, contents);
+    placeShop(levelNum, grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
   }
 

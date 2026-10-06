@@ -684,6 +684,29 @@ export const CHOIR = {
   JOY_HEAL_SHARE: 0.8,          // ...and the Choir regains this share of it
 } as const;
 
+// Trading: the Trading Post beside the entrance on level 1 (stock changes
+// each visit), and a rare wandering Peddler on the deep levels, gone once
+// you walk away. Gems sell at their stated worth; gear at a share of its price.
+export const SHOP = {
+  POTION_PRICE: 60,
+  TOME_PRICE: 450,
+  GEM_BUY_MULT: 2,                     // buying a gem costs twice its worth
+  GEAR_BASE: { dagger: 80, sword: 220, axe: 280, mace: 200, leather: 140, chain: 340, plate: 700, shield: 160 } as Record<string, number>,
+  PLUS_PRICE: [1, 3, 8, 20],           // price multiplier for +0 / +1 / +2 / +3
+  SELL_SHARE: 0.4,                     // gear sells for this share of its price
+  POST_GEAR: 3,                        // weapons/armour on offer at the Trading Post
+  PEDDLER_FROM_LEVEL: 5,
+  PEDDLER_CHANCE: 0.004,               // per step, on those levels
+  PEDDLER_MARKUP: 2.5,
+  // The level 4 store keeps shifts (in seconds of play): open a while, then
+  // shuttered until the next; and now and then a monster eats the proprietor,
+  // so that shift never opens at all.
+  OUTPOST_LEVEL: 4,
+  SHIFT_OPEN_SECONDS: 720,
+  SHIFT_CLOSED_SECONDS: 300,
+  EATEN_CHANCE: 0.2,
+} as const;
+
 // Weapons and armour, +0 to +3, found in chests and on fallen monsters.
 // You automatically fight with the best weapon for your class, and wear the
 // best armour and shield. Wizards: daggers and leather only.

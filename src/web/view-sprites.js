@@ -33,6 +33,7 @@
     'throne-side': { w: 0.95, h: 1.6 },
     'throne-orc': { w: 1.15, h: 1.35 },
     pillar: { w: 0.42, h: 1.0 },
+    shop: { w: 1.0, h: 1.0 },
   };
 
   // ─── Built-in artwork (viewBox matches each landmark's proportions) ─────
@@ -165,6 +166,21 @@
       <rect x="36" y="176" width="44" height="20" fill="#5a4a32" stroke="#1a140e" stroke-width="2"/>
       <rect x="150" y="176" width="44" height="20" fill="#5a4a32" stroke="#1a140e" stroke-width="2"/>
       <rect x="74" y="218" width="82" height="24" fill="#4a3a28" stroke="#1a140e" stroke-width="2"/>
+    </svg>`,
+    shop: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <rect x="18" y="40" width="7" height="160" fill="#4a3320" stroke="#1d130a" stroke-width="2"/>
+      <rect x="175" y="40" width="7" height="160" fill="#4a3320" stroke="#1d130a" stroke-width="2"/>
+      <path d="M6 44 L194 44 L182 18 L18 18 Z" fill="#6b1f1f" stroke="#2a0b0b" stroke-width="2"/>
+      <g fill="#c9b38a" opacity="0.85"><path d="M38 18 L32 44 H50 L54 18 Z"/><path d="M78 18 L74 44 H92 L94 18 Z"/><path d="M118 18 L116 44 H134 L134 18 Z"/><path d="M158 18 L158 44 H176 L172 18 Z"/></g>
+      <path d="M6 44 Q28 56 50 44 Q72 56 94 44 Q116 56 138 44 Q160 56 194 44" fill="#6b1f1f" stroke="#2a0b0b" stroke-width="1.5"/>
+      <line x1="100" y1="44" x2="100" y2="64" stroke="#2a2a2a" stroke-width="2"/>
+      <rect x="92" y="64" width="16" height="20" rx="3" fill="#ffcf6a" stroke="#4a3a12" stroke-width="2" opacity="0.95"/>
+      <rect x="10" y="120" width="180" height="80" fill="#6b4a2c" stroke="#24180c" stroke-width="2"/>
+      <rect x="6" y="110" width="188" height="14" fill="#7a5532" stroke="#24180c" stroke-width="2"/>
+      <g stroke="#3d2610" stroke-width="1" opacity="0.6"><path d="M10 150 H190 M10 176 H190 M55 124 V200 M100 124 V200 M145 124 V200"/></g>
+      <g stroke="#24180c" stroke-width="1.5"><rect x="28" y="88" width="22" height="22" fill="#8a2a2a"/><rect x="56" y="94" width="18" height="16" fill="#2a5a8a"/><path d="M126 110 L132 80 L140 80 L146 110 Z" fill="#9a8a5a"/><path d="M152 110 L156 86 L168 86 L172 110 Z" fill="#7a6a3a"/></g>
+      <ellipse cx="100" cy="104" rx="14" ry="6" fill="#d8b040" stroke="#5a4210" stroke-width="1.5"/>
+      <text x="100" y="140" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#e8d8a8">TRADE</text>
     </svg>`,
     pillar: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 200">
       <defs><linearGradient id="pl" x1="0" x2="1"><stop offset="0" stop-color="#4c4842"/><stop offset="0.45" stop-color="#9c978c"/><stop offset="1" stop-color="#3a3732"/></linearGradient></defs>

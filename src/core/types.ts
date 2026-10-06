@@ -24,6 +24,7 @@ export type CellContentType =
   | 'fixed-monster'
   | 'unique-monster'
   | 'description'
+  | 'shop'           // the Trading Post on level 1
   | 'entrance';
 
 export interface CellContent {
@@ -352,7 +353,8 @@ export type InteractionType =
   | 'altar'
   | 'fountain'
   | 'trap'
-  | 'trap-choice';
+  | 'trap-choice'
+  | 'shop';
 
 export interface InteractionState {
   type: InteractionType;
@@ -360,6 +362,21 @@ export interface InteractionState {
   choices: Choice[];
   chestSearched?: boolean;     // chest: already checked for traps (no second look)
   chestTrapSpotted?: boolean;  // chest: the search found its trap, so disarming is on offer
+  shop?: ShopState;            // shop: who's trading, which list is showing, what's for sale
+}
+
+/** A shop visit: the Trading Post (level 1) or the wandering Peddler (deep levels). */
+export interface ShopState {
+  kind: 'post' | 'outpost' | 'peddler';   // level 1, level 4 (keeps shifts), the wandering Peddler
+  mode: 'main' | 'buy' | 'sell';
+  stock: ShopItem[];
+}
+
+export interface ShopItem {
+  label: string;
+  price: number;
+  qty: number;
+  goods: { type: 'potion' } | { type: 'tome' } | { type: 'gem'; gem: GemType } | { type: 'weapon'; weapon: Weapon } | { type: 'armor'; armor: Armor };
 }
 
 export type ChestTrapType = 'needle' | 'blade' | 'gas' | 'fire-glyph' | 'alarm';
@@ -385,7 +402,7 @@ export interface SceneData {
 export interface SceneObject {
   x: number;
   y: number;
-  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne';
+  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop';
   variant?: string;   // throne: whose ('Asmodeus', 'Orc King')
 }
 

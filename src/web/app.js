@@ -1432,9 +1432,8 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'interaction') {
-    if (['a','b','c','d'].includes(key)) {
-      apiAction('interact', { choice: key });
-    }
+    // Any letter on offer (a shop's lists can run long).
+    if ((currentState.choices || []).some(c => c.key === key)) apiAction('interact', { choice: key });
     return;
   }
 });
