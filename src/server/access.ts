@@ -6,7 +6,8 @@
 // link from being abused.
 
 import type { Request, Response } from 'express';
-import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHmac, createHash, timingSafeEqual } from 'node:crypto';
+import type { Accounts, User } from '../database/accounts.js';
 
 export const ACCESS = {
   COOKIE: 'sl_visitor',
@@ -18,7 +19,23 @@ export const ACCESS = {
   RATE_BURST: 60,
 } as const;
 
-export interface Visitor { id: string; owner: boolean }
+export interface Visitor { id: string; owner: boolean; user?: User; guestId?: string }
+
+// ─── Accounts ────────────────────────────────────────────────────────────────
+// A signed-in player is known by their session cookie: their id is
+// 'u:<user id>', and an admin account counts as the owner.
+
+export const SESSION_COOKIE = 'sl_session';
+let accounts: Accounts | null = null;
+export function useAccounts(a: Accounts): void { accounts = a; }
+export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+/** The signed-in user, if this request carries a live session. */
+export function sessionUser(req: Request): User | null {
+  const token = readCookie(req, SESSION_COOKIE);
+  if (!token || !accounts) return null;
+  return accounts.userForSession(hashToken(token));
+}
 
 // ─── The owner's key ─────────────────────────────────────────────────────────
 // Hosted in the cloud, everyone arrives through the tunnel, so the owner signs
@@ -61,7 +78,7 @@ export function isOwner(req: Request): boolean {
   return local && !relayed;
 }
 
-function readCookie(req: Request, name: string): string | undefined {
+export function readCookie(req: Request, name: string): string | undefined {
   for (const part of (req.headers.cookie ?? '').split(';')) {
     const [k, ...v] = part.trim().split('=');
     if (k === name) return decodeURIComponent(v.join('='));
@@ -71,6 +88,8 @@ function readCookie(req: Request, name: string): string | undefined {
 
 /** Identifies the visitor, giving a new guest a cookie. */
 export function visitorOf(req: Request, res: Response): Visitor {
+  const user = sessionUser(req);
+  if (user) return { id: `u:${user.id}`, owner: user.role === 'admin', user, guestId: readCookie(req, ACCESS.COOKIE) };
   if (isOwner(req)) return { id: 'owner', owner: true };
   let id = readCookie(req, ACCESS.COOKIE);
   if (!id || !/^g-[a-f0-9]{24}$/.test(id)) {

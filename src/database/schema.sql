@@ -57,3 +57,27 @@ CREATE TABLE IF NOT EXISTS dungeon_state (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dungeon_levels_char ON dungeon_levels(character_id);
+
+-- Player accounts (username + password). Passwords and recovery codes are
+-- stored only as salted scrypt hashes; sessions only as SHA-256 hashes of
+-- their tokens. A character belongs to an account when characters.owner is
+-- 'u:<user id>'.
+CREATE TABLE IF NOT EXISTS users (
+  id              TEXT PRIMARY KEY,
+  username        TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  password_hash   TEXT NOT NULL,
+  recovery_hash   TEXT NOT NULL,
+  role            TEXT NOT NULL DEFAULT 'player',   -- 'player' | 'admin'
+  must_change     INTEGER NOT NULL DEFAULT 0,       -- signed in with a temporary password: choose a new one
+  disabled        INTEGER NOT NULL DEFAULT 0,
+  created_at      INTEGER NOT NULL,
+  last_login      INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash  TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  expires_at  INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

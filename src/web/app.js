@@ -918,6 +918,204 @@ function renderChoices(choices, phase, state) {
   }
 }
 
+// ─── Accounts ────────────────────────────────────────────────────────────────
+// The account panel: log in, sign up, recover a forgotten password, your
+// account (change password, log out, delete), and the admin's player list.
+
+let account = { user: null, owner: false, guest: true };
+let accountOpen = false;
+
+async function refreshAccount() {
+  try { account = await (await fetch('/api/auth/me')).json(); } catch { /* offline: keep what we had */ }
+  if (currentState.phase === 'main-menu') renderChoices(currentState.choices || [], 'main-menu', currentState);
+  return account;
+}
+
+async function authPost(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  let data = {};
+  try { data = await r.json(); } catch { /* none */ }
+  return { ok: r.ok, ...data };
+}
+
+const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function accountMessage(text, ok = false) {
+  const el = document.getElementById('account-msg');
+  el.textContent = text || '';
+  el.classList.toggle('ok', ok);
+}
+
+/** Builds a form: fields [{ name, label, type }], buttons [{ text, run }], extra links. */
+function accountForm(fields, buttons, links = []) {
+  const body = document.getElementById('account-body');
+  body.innerHTML = '';
+  const inputs = {};
+  for (const f of fields) {
+    const label = document.createElement('label'); label.textContent = f.label; label.htmlFor = `acct-${f.name}`;
+    const input = document.createElement('input');
+    input.id = `acct-${f.name}`; input.type = f.type || 'text'; input.autocomplete = f.autocomplete || 'off';
+    input.spellcheck = false; input.maxLength = 200;
+    inputs[f.name] = input;
+    body.append(label, input);
+  }
+  const values = () => Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
+  const row = document.createElement('div'); row.className = 'row';
+  buttons.forEach((b, i) => {
+    const btn = makeChoiceBtn(b.key || String(i + 1), b.text);
+    btn.onclick = () => b.run(values());
+    row.appendChild(btn);
+  });
+  body.appendChild(row);
+  if (links.length) {
+    const lr = document.createElement('div'); lr.className = 'row';
+    for (const l of links) { const a = document.createElement('button'); a.className = 'link'; a.textContent = l.text; a.onclick = l.run; lr.appendChild(a); }
+    body.appendChild(lr);
+  }
+  // Enter submits with the first button.
+  Object.values(inputs).forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); buttons[0].run(values()); } }));
+  const first = Object.values(inputs)[0];
+  if (first) setTimeout(() => first.focus(), 30);
+}
+
+function openAccount(view) {
+  accountOpen = true;
+  document.getElementById('account-panel').classList.remove('hidden');
+  accountMessage('');
+  showAccountView(view || (account.user ? 'account' : 'login'));
+}
+function closeAccount() {
+  accountOpen = false;
+  document.getElementById('account-panel').classList.add('hidden');
+  if (currentState.phase === 'main-menu') renderChoices(currentState.choices || [], 'main-menu', currentState);
+}
+
+function showRecoveryCode(code, lead) {
+  const body = document.getElementById('account-body');
+  body.innerHTML = `<p>${esc(lead)}</p><p>Your <b>recovery code</b>. Write it down or take a screenshot: it's the only way to reset a forgotten password yourself, and it won't be shown again.</p><div class="code">${esc(code)}</div>`;
+  const row = document.createElement('div'); row.className = 'row';
+  const done = makeChoiceBtn('Enter', "I've saved it");
+  done.onclick = () => { closeAccount(); apiAction('main-menu'); };
+  row.appendChild(done); body.appendChild(row);
+}
+
+async function afterSignIn(r) {
+  await refreshAccount();
+  if (r.mustChange) { showAccountView('must-change'); return; }
+  closeAccount();
+  apiAction('main-menu');
+}
+
+function showAccountView(view) {
+  const t = document.getElementById('account-title');
+  if (view === 'login') {
+    t.textContent = '══ LOG IN ══';
+    accountForm(
+      [{ name: 'username', label: 'Username', autocomplete: 'username' }, { name: 'password', label: 'Password', type: 'password', autocomplete: 'current-password' }],
+      [{ text: 'Log in', run: async (v) => {
+        const r = await authPost('/api/auth/login', v);
+        if (!r.ok) return accountMessage(r.error || 'Could not log in.');
+        await afterSignIn(r);
+      } }],
+      [{ text: 'Forgot your password?', run: () => showAccountView('recover') }, { text: 'New here? Sign up', run: () => showAccountView('signup') }],
+    );
+  } else if (view === 'signup') {
+    t.textContent = '══ SIGN UP ══';
+    accountForm(
+      [{ name: 'username', label: 'Username (3-20 letters, numbers, - or _)', autocomplete: 'username' },
+       { name: 'password', label: 'Password (at least 8 characters)', type: 'password', autocomplete: 'new-password' },
+       { name: 'again', label: 'Password again', type: 'password', autocomplete: 'new-password' }],
+      [{ text: 'Create account', run: async (v) => {
+        if (v.password !== v.again) return accountMessage("The two passwords don't match.");
+        const r = await authPost('/api/auth/signup', { username: v.username, password: v.password });
+        if (!r.ok) return accountMessage(r.error || 'Could not sign up.');
+        await refreshAccount();
+        accountMessage(`Welcome, ${r.username}!${r.role === 'admin' ? ' (You are the admin.)' : ''}`, true);
+        showRecoveryCode(r.recoveryCode, r.claimed ? `Your ${r.claimed} character${r.claimed === 1 ? '' : 's'} from this browser now belong${r.claimed === 1 ? 's' : ''} to your account.` : 'Your account is ready.');
+      } }],
+      [{ text: 'Already have an account? Log in', run: () => showAccountView('login') }],
+    );
+  } else if (view === 'recover') {
+    t.textContent = '══ FORGOT YOUR PASSWORD ══';
+    accountForm(
+      [{ name: 'username', label: 'Username', autocomplete: 'username' }, { name: 'recoveryCode', label: 'Recovery code (from when you signed up)' },
+       { name: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }],
+      [{ text: 'Set new password', run: async (v) => {
+        const r = await authPost('/api/auth/recover', v);
+        if (!r.ok) return accountMessage(r.error || 'Could not reset it.');
+        await refreshAccount();
+        accountMessage('Your password is changed, and you are logged in.', true);
+        showRecoveryCode(r.recoveryCode, 'Your old recovery code no longer works. Here is your new one.');
+      } }],
+      [{ text: 'Lost your recovery code too? Message the game’s owner: they can reset it for you.', run: () => {} }, { text: 'Back to log in', run: () => showAccountView('login') }],
+    );
+  } else if (view === 'must-change') {
+    t.textContent = '══ CHOOSE A NEW PASSWORD ══';
+    accountMessage('You signed in with a temporary password. Choose your own now.');
+    accountForm(
+      [{ name: 'currentPassword', label: 'The temporary password', type: 'password' }, { name: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }],
+      [{ text: 'Save', run: async (v) => {
+        const r = await authPost('/api/auth/change-password', v);
+        if (!r.ok) return accountMessage(r.error || 'Could not change it.');
+        await refreshAccount(); closeAccount(); apiAction('main-menu');
+      } }],
+    );
+  } else if (view === 'delete') {
+    t.textContent = '══ DELETE ACCOUNT ══';
+    accountMessage('This deletes your account and all its characters, for good.');
+    accountForm(
+      [{ name: 'password', label: 'Your password, to confirm', type: 'password' }],
+      [{ text: 'Delete forever', run: async (v) => {
+        const r = await authPost('/api/auth/delete-account', v);
+        if (!r.ok) return accountMessage(r.error || 'Could not delete it.');
+        characterId = null; await refreshAccount(); closeAccount(); apiAction('main-menu');
+      } }],
+      [{ text: 'Never mind', run: () => showAccountView('account') }],
+    );
+  } else {
+    t.textContent = '══ YOUR ACCOUNT ══';
+    const u = account.user;
+    if (!u) return showAccountView('login');
+    accountMessage(`Signed in as ${u.username}${u.role === 'admin' ? ' (admin)' : ''}.`, true);
+    accountForm(
+      [{ name: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { name: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }],
+      [{ text: 'Change password', run: async (v) => {
+        const r = await authPost('/api/auth/change-password', v);
+        accountMessage(r.ok ? 'Password changed. Other devices have been logged out.' : (r.error || 'Could not change it.'), r.ok);
+      } },
+       { text: 'Log out', run: async () => { await authPost('/api/auth/logout'); characterId = null; await refreshAccount(); closeAccount(); apiAction('main-menu'); } }],
+      [{ text: 'Delete my account…', run: () => showAccountView('delete') }],
+    );
+    if (u.role === 'admin') showAdmin();
+  }
+}
+
+/** The admin's player list, under their account page. */
+async function showAdmin() {
+  const r = await (await fetch('/api/admin/users')).json().catch(() => ({}));
+  if (!r.users) return;
+  const body = document.getElementById('account-body');
+  const h = document.createElement('h3'); h.textContent = `PLAYERS (${r.users.length})`;
+  const table = document.createElement('table');
+  table.innerHTML = '<tr><th>Player</th><th>Chars</th><th>Joined</th><th></th></tr>';
+  for (const p of r.users) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(p.username)}${p.role === 'admin' ? ' ★' : ''}${p.disabled ? ' (disabled)' : ''}</td><td>${p.characters}</td><td>${new Date(p.createdAt).toLocaleDateString()}</td><td></td>`;
+    if (p.role !== 'admin') {
+      const reset = document.createElement('button'); reset.className = 'link'; reset.textContent = 'Reset password';
+      reset.onclick = async () => {
+        const x = await authPost('/api/admin/reset-password', { userId: p.id });
+        accountMessage(x.ok ? `Temporary password for ${x.username}: ${x.temporaryPassword}\nSend it to them privately. They'll choose a new one when they log in.` : (x.error || 'Could not reset.'), x.ok);
+      };
+      const dis = document.createElement('button'); dis.className = 'link'; dis.textContent = p.disabled ? 'Enable' : 'Disable';
+      dis.onclick = async () => { await authPost('/api/admin/disable', { userId: p.id, disabled: !p.disabled }); showAccountView('account'); };
+      tr.lastChild.append(reset, ' ', dis);
+    }
+    table.appendChild(tr);
+  }
+  body.append(h, table);
+}
+
 function renderMainMenuChoices(area, state) {
   const newBtn = makeChoiceBtn('N', 'NEW CHARACTER');
   newBtn.onclick = () => apiAction('new-character-start');
@@ -930,6 +1128,19 @@ function renderMainMenuChoices(area, state) {
   const delBtn = makeChoiceBtn('D', 'DELETE CHARACTER');
   delBtn.onclick = () => showSaveList('delete');
   area.appendChild(delBtn);
+
+  // Accounts
+  if (account.user) {
+    const acct = makeChoiceBtn('A', `ACCOUNT (${account.user.username})`);
+    acct.onclick = () => openAccount('account');
+    area.appendChild(acct);
+  } else {
+    const login = makeChoiceBtn('L', 'LOG IN');
+    login.onclick = () => openAccount('login');
+    const signup = makeChoiceBtn('U', 'SIGN UP');
+    signup.onclick = () => openAccount('signup');
+    area.append(login, signup);
+  }
 }
 
 /** The ring menu (R in a fight, J while exploring), from the engine's ringChoices. */
@@ -1258,6 +1469,12 @@ function submitName() {
 document.addEventListener('keydown', (e) => {
   const phase = currentState.phase;
 
+  // The account panel takes the keyboard (its fields need typing).
+  if (accountOpen) {
+    if (e.key === 'Escape') { e.preventDefault(); closeAccount(); }
+    return;
+  }
+
   // The settings panel takes the keyboard while it's open.
   if (settingsOpen) {
     e.preventDefault();
@@ -1318,6 +1535,9 @@ document.addEventListener('keydown', (e) => {
     }
     if (key === 'n') apiAction('new-character-start');
     if (key === 'c') showSaveList('continue');
+    if (key === 'a' && account.user) openAccount('account');
+    if (key === 'l' && !account.user) openAccount('login');
+    if (key === 'u' && !account.user) openAccount('signup');
     if (key === 'd') showSaveList('delete');
     return;
   }
@@ -1512,6 +1732,7 @@ updateSoundButton();
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 (async () => {
+  refreshAccount();
   const savedCharacterId = localStorage.getItem(CHAR_ID_KEY);
   if (savedCharacterId) {
     // Resume where we left off. If the character no longer exists,

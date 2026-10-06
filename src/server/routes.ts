@@ -2,7 +2,9 @@ import type { Express, Request, Response } from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { Repository } from '../database/repositories.js';
 import { GameEngine } from '../core/game-engine.js';
-import { ACCESS, visitorOf, canUse, canDelete, allowRequest, ownerSignIn, ownerSignOut, type Visitor } from './access.js';
+import { ACCESS, visitorOf, canUse, canDelete, allowRequest, ownerSignIn, ownerSignOut, useAccounts, type Visitor } from './access.js';
+import { Accounts } from '../database/accounts.js';
+import { setupAuthRoutes, sameSiteOnly } from './auth.js';
 
 // One engine per character being played (keyed by characterId), held by the
 // visitor playing it. A character being made is keyed 'pending:<visitor>'.
@@ -45,6 +47,15 @@ function refused(repo: Repository, ...lines: string[]) {
 
 export function setupRoutes(app: Express, db: DatabaseSync): void {
   const repo = new Repository(db);
+
+  // ─── Accounts (see auth.ts) ────────────────────────────────────────────────
+  const accounts = new Accounts(db);
+  useAccounts(accounts);
+  app.use('/api', sameSiteOnly);
+  setupAuthRoutes(app, accounts, {
+    // Signing in carries a guest's game in progress over to the account.
+    moveHolder: (from, to) => { for (const s of sessions.values()) if (s.holder === from) s.holder = to; },
+  });
 
   // ─── The owner signing in (needed when hosted, where everyone is remote) ──
   app.get('/owner', ownerSignIn);
