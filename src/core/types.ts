@@ -312,6 +312,8 @@ export interface Fx {
   cast?: 'attack' | 'heal';  // the character cast an offensive or a healing spell (for sounds)
   monsterDied?: boolean;     // the monster was slain this action
   cues?: string[];           // other sounds this action: 'gulp', 'gem-ruby'.., 'victory-1'..'victory-5', 'scare'
+  /** How a chest, altar or fountain just turned out, for its picture. */
+  objectArt?: { kind: 'chest'; moment: 'open' | 'boom' } | { kind: 'altar'; moment: 'blessed' } | { kind: 'fountain'; moment: 'refreshed' | 'tainted' };
 }
 
 export type HeldCondition = 'feared' | 'dazed' | 'paralyzed' | 'asleep' | 'charmed' | 'petrifying' | 'engulfed' | 'constricted' | 'choked' | 'frozen' | 'gilded' | 'webbed' | 'latched';

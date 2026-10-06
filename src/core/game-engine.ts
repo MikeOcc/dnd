@@ -177,7 +177,7 @@ export class GameEngine {
     }
     // Hit-effect hints belong to the action that just happened, so hand them
     // out once and start fresh for the next one.
-    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied || this.fx.cues) state.fx = this.fx;
+    if (this.fx.player || this.fx.monster || this.fx.monsterAttacked || this.fx.cast || this.fx.monsterDied || this.fx.cues || this.fx.objectArt) state.fx = this.fx;
     this.fx = {};
 
     state.choices = this.buildChoices();
@@ -2982,6 +2982,7 @@ export class GameEngine {
 
     const messages = [...lead];
     let alarm = false;
+    this.fx.objectArt = { kind: 'chest', moment: trap ? 'boom' : 'open' };
     if (trap) {
       messages.push('TRAP!');
       const sprung = springChestTrap(this.char, trap, this.rng);
@@ -3084,6 +3085,7 @@ export class GameEngine {
 
     this.dungeonState.usedAltars.add(id);
     const result = resolveAltar(this.char, this.rng);
+    this.fx.objectArt = { kind: 'altar', moment: 'blessed' };
     const uncursed = breakAmuletCurse(this.char, 'Light pours from the altar and finds the curse at your throat.');
     this.messages = [...result.messages, ...(uncursed.length ? ['', ...uncursed] : []), ...this.levelUp()];
 
@@ -3099,6 +3101,8 @@ export class GameEngine {
 
     this.dungeonState.usedFountains.add(id);
     const result = resolveFountain(this.char, this.rng);
+    const tainted = !!(result.damageDealt || result.statusAdded || (result.statChanged && result.statChanged.delta < 0));
+    this.fx.objectArt = { kind: 'fountain', moment: tainted ? 'tainted' : 'refreshed' };
     const uncursed = breakAmuletCurse(this.char, 'The water runs over the amulet at your throat and hisses like acid on iron.');
     this.messages = [...result.messages, ...(uncursed.length ? ['', ...uncursed] : []), ...this.levelUp()];
 

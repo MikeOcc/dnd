@@ -868,3 +868,12 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 .shop-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: shop-flame 1.6s ease-in-out infinite alternate; }
 @keyframes shop-flame { 0% { transform: scale(1, 1); opacity: 1; } 40% { transform: scale(0.9, 1.12) skewX(3deg); opacity: 0.9; } 100% { transform: scale(1.06, 0.94) skewX(-2deg); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .shop-flame { animation: none; } }
+
+/* Chests, altars and fountains: sparkles twinkle, smoke rises, a trap's blast bursts open. */
+.obj-sparkle { animation: obj-twinkle 1.8s ease-in-out infinite alternate; }
+@keyframes obj-twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+.obj-smoke { transform-box: fill-box; transform-origin: center; animation: obj-smoke 5s ease-out infinite; }
+@keyframes obj-smoke { from { transform: translateY(8px) scale(0.9); } to { transform: translateY(-10px) scale(1.12); opacity: 0.25; } }
+.obj-burst { transform-box: fill-box; transform-origin: center; animation: obj-burst 700ms ease-out; }
+@keyframes obj-burst { from { transform: scale(0.2); opacity: 0; } 30% { opacity: 1; } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .obj-sparkle, .obj-smoke, .obj-burst { animation: none; } }

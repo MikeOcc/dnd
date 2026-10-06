@@ -63,3 +63,24 @@ describe('Levelling up', () => {
     expect(e.char.hp).toBe(e.char.maxHp);
   });
 });
+
+describe('Pictures for chests, altars and fountains', () => {
+  it('says how each turned out', () => {
+    const { engine, e } = ready();
+    e.char.hp = e.char.maxHp = 1e6;
+    expect(e.openChest('c-plain', null, []).fx?.objectArt).toEqual({ kind: 'chest', moment: 'open' });
+    e.phase = 'playing';
+    expect(e.openChest('c-trapped', 'blade', []).fx?.objectArt).toEqual({ kind: 'chest', moment: 'boom' });
+    e.phase = 'playing';
+    expect(e.resolveAltarChoice('a', 'alt-1').fx?.objectArt).toEqual({ kind: 'altar', moment: 'blessed' });
+    const moments = new Set<string>();
+    for (let i = 0; i < 300; i++) { e.phase = 'playing'; moments.add(e.resolveFountainChoice('a', `f-${i}`).fx?.objectArt?.moment); }
+    expect([...moments].sort()).toEqual(['refreshed', 'tainted']);
+    void engine;
+  });
+
+  it('leaving it alone shows no outcome', () => {
+    const { e } = ready();
+    expect(e.resolveAltarChoice('b', 'alt-2').fx?.objectArt).toBeUndefined();
+  });
+});

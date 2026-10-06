@@ -232,13 +232,21 @@ function applyState(state) {
   // At the Trading Post: its clerk close up while you decide, the shop while you browse.
   const shop = phase === 'interaction' && state.interaction?.type === 'shop' ? state.interaction.shop : null;
   const shopArt = shop?.kind === 'post' && typeof getShopArt === 'function' ? getShopArt(shop.mode) : null;
+  // A chest, altar or fountain: the thing itself while you decide, then how it
+  // turned out (until your next move). A fight that breaks out takes over.
+  const inter = phase === 'interaction' ? state.interaction : null;
+  const objMoment = inter?.type === 'chest' ? { kind: 'chest', moment: inter.chestTrapSpotted ? 'trapped' : 'closed' }
+    : inter?.type === 'altar' || inter?.type === 'fountain' ? { kind: inter.type, moment: 'idle' }
+    : phase !== 'combat' ? state.fx?.objectArt : null;
+  const objArt = objMoment && !lairArt && !shopArt && typeof getObjectArt === 'function' ? getObjectArt(objMoment.kind, objMoment.moment) : null;
+  const sceneArt = lairArt || shopArt || objArt;
   viewContainer.classList.toggle('lair-mode', !!lairArt);
-  viewContainer.classList.toggle('shop-mode', !!shopArt);
-  portraitEl.classList.toggle('lair', !!(lairArt || shopArt));
-  if (!lairArt && !shopArt) delete portraitEl.dataset.art;
-  if (lairArt || shopArt) {
-    const key = lairArt ? `lair:${state.lair.monster}` : `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}`;
-    if (portraitEl.dataset.art !== key) { portraitEl.innerHTML = lairArt || shopArt; portraitEl.dataset.art = key; }
+  viewContainer.classList.toggle('shop-mode', !!(shopArt || objArt));
+  portraitEl.classList.toggle('lair', !!sceneArt);
+  if (!sceneArt) delete portraitEl.dataset.art;
+  if (sceneArt) {
+    const key = lairArt ? `lair:${state.lair.monster}` : shopArt ? `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}` : `obj:${objMoment.kind}:${objMoment.moment}`;
+    if (portraitEl.dataset.art !== key) { portraitEl.innerHTML = sceneArt; portraitEl.dataset.art = key; }
     delete portraitEl.dataset.monster;
     portraitEl.style.removeProperty('--sprite-scale');
     portraitEl.classList.remove('hidden');
