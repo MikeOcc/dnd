@@ -134,8 +134,8 @@ async function sendAction(action, payload) {
   if (action === 'face' && facesPending <= 1) localFacing = null;   // this was the last one: the server agrees now
   if (localFacing && (facesPending > (action === 'face' ? 1 : 0))) state = facingState(state, localFacing) || state;
   if (action === 'face') { if (state) applyState(state); return; }  // (already drawn: no sounds again)
-  if (action === 'save' && /saved/i.test((state?.messages || []).join(' '))) { unsaved = false; flashSaved(); }
-  else if (action === 'load' || action === 'restore' || action === 'main-menu') unsaved = false;
+  if (action === 'save' && /saved/i.test((state?.messages || []).join(' '))) { unsaved = false; lastSavedAt = Date.now(); flashSaved(); }
+  else if (action === 'load' || action === 'restore' || action === 'main-menu' || action === 'accept') { unsaved = false; lastSavedAt = Date.now(); }
   else if (!NOT_PROGRESS.has(action) && ['playing', 'combat', 'interaction', 'resting', 'lair-warning'].includes(state?.phase)) unsaved = true;
   lastAction = action;
   lastActionWalked = action === 'move-forward' || action === 'move-backward'
@@ -526,10 +526,22 @@ function updateViewStrip(state) {
   const el = document.getElementById('ways-out');
   el.textContent = ways.length ? `Ways out: ${ways.map(w => ARROW[w]).join('  ')}` : 'Ways out: none you can see';
   el.title = 'Which way you can leave the room you\u2019re in (in a corridor: which way you can step), from where you stand and face.';
+  // Long unsaved? Say so where the essential keys are, until the next save.
+  const hint = document.getElementById('move-hint');
+  if (hint.classList.contains('saved-flash')) return;
+  const mins = Math.floor((Date.now() - lastSavedAt) / 60000);
+  const nudge = unsaved && mins >= SAVE_NUDGE_MINUTES;
+  hint.classList.toggle('save-nudge', nudge);
+  hint.innerHTML = nudge
+    ? `You haven\u2019t saved for ${mins} minutes: press <b>S</b> to keep your progress`
+    : '↑ forward · ↓ back · ← → turn · <b>M</b> map · <b>S</b> save · <b>H</b> help';
 }
 
 // Unsaved progress: warn before quitting to the menu without saving.
 let unsaved = false, quitArmedUntil = 0;
+// A gentle reminder under the view after a long while without saving (no autosave).
+const SAVE_NUDGE_MINUTES = 10;
+let lastSavedAt = Date.now();
 const NOT_PROGRESS = new Set(['save', 'restore', 'load', 'main-menu', 'show-map', 'show-status', 'show-inventory', 'dismiss-status', 'dismiss-inventory', 'dismiss-intro', 'open-gear']);
 function quitToMenu() {
   if (unsaved && Date.now() > quitArmedUntil) {
@@ -548,9 +560,9 @@ function flashSaved() {
   const hint = document.getElementById('move-hint');
   const btn = document.getElementById('btn-save');
   hint.classList.add('saved-flash'); btn.classList.add('saved-flash');
-  const was = hint.innerHTML;
+  hint.classList.remove('save-nudge');
   hint.textContent = '✓ Game saved';
-  setTimeout(() => { hint.innerHTML = was; hint.classList.remove('saved-flash'); btn.classList.remove('saved-flash'); }, 2200);
+  setTimeout(() => { hint.classList.remove('saved-flash'); btn.classList.remove('saved-flash'); updateViewStrip(currentState); }, 2200);
 }
 
 // How monsters appear in the 3D views: the portrait overlay, or standing in the scene.

@@ -928,3 +928,5 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
   #view-strip { font-size: 11px; }
   .help-keys { min-width: 64px; }
 }
+#move-hint.save-nudge { color: #ffcf6a; }
+#move-hint.save-nudge b { color: #fff0b0; }
