@@ -229,10 +229,17 @@ function applyState(state) {
   const portraitEl = document.getElementById('monster-portrait');
   const monster = phase === 'combat' ? state.combat?.monster : null;
   const lairArt = phase === 'lair-warning' && state.lair ? getLairArt(state.lair.monster) : null;
+  // At the Trading Post: its clerk close up while you decide, the shop while you browse.
+  const shop = phase === 'interaction' && state.interaction?.type === 'shop' ? state.interaction.shop : null;
+  const shopArt = shop?.kind === 'post' && typeof getShopArt === 'function' ? getShopArt(shop.mode) : null;
   viewContainer.classList.toggle('lair-mode', !!lairArt);
-  portraitEl.classList.toggle('lair', !!lairArt);
-  if (lairArt) {
-    portraitEl.innerHTML = lairArt;
+  viewContainer.classList.toggle('shop-mode', !!shopArt);
+  portraitEl.classList.toggle('lair', !!(lairArt || shopArt));
+  if (!lairArt && !shopArt) delete portraitEl.dataset.art;
+  if (lairArt || shopArt) {
+    const key = lairArt ? `lair:${state.lair.monster}` : `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}`;
+    if (portraitEl.dataset.art !== key) { portraitEl.innerHTML = lairArt || shopArt; portraitEl.dataset.art = key; }
+    delete portraitEl.dataset.monster;
     portraitEl.style.removeProperty('--sprite-scale');
     portraitEl.classList.remove('hidden');
   } else if (monster && monsterShownInScene(state)) {

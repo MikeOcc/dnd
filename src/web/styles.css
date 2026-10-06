@@ -860,3 +860,11 @@ html, body {
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 #account-body input { font-size: 16px; }
+
+/* The Trading Post: its clerk and his shop fill the view, candlelit. */
+#view-container.shop-mode { background: #000; }
+#view-container.shop-mode #dungeon-view,
+#view-container.shop-mode #view3d { opacity: 0.08; transition: opacity 500ms ease; }
+.shop-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: shop-flame 1.6s ease-in-out infinite alternate; }
+@keyframes shop-flame { 0% { transform: scale(1, 1); opacity: 1; } 40% { transform: scale(0.9, 1.12) skewX(3deg); opacity: 0.9; } 100% { transform: scale(1.06, 0.94) skewX(-2deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .shop-flame { animation: none; } }
