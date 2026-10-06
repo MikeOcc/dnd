@@ -1331,6 +1331,11 @@ export class GameEngine {
       this.messages = ['There is no ladder leading down within reach.'];
       return this.getState();
     }
+    if (this.isChampion() && this.char.dungeonLevel < 6) {
+      const s = this.offerDeepDescent(['The stairs go down further than they should. They remember you. How deep?']);
+      if (this.interaction) this.interaction.contentId = 'descend-ladder';
+      return s;
+    }
 
     this.char.dungeonLevel++;
     this.loadLevelIntoCache(this.char.dungeonLevel);
@@ -2914,7 +2919,55 @@ export class GameEngine {
       '',
       ...this.enterArea(),
     ];
+    // A champion needn't walk it all again: the way down knows them.
+    return this.offerDeepDescent([...this.messages, '', 'The way down remembers you. Go straight back down, as deep as you like?']);
+  }
+
+  /** Has beaten Asmodeus: any ladder down (and the restart) can take them deeper. */
+  private isChampion(): boolean {
+    return !!this.char && ((this.char.asmodeusVictories ?? 0) > 0 || this.char.asmodeusDefeated);
+  }
+
+  /** A champion's deep descent: choose any deeper level, arriving at its entrance. */
+  private offerDeepDescent(lead: string[]): GameState {
+    const c = this.char!;
+    const levels = Array.from({ length: 7 - c.dungeonLevel }, (_, i) => c.dungeonLevel + 1 + i);
+    if (!levels.length) { this.messages = lead; return this.getState(); }
+    this.interaction = {
+      type: 'descend', contentId: 'descend',
+      choices: [...levels.map((n, i) => ({ key: String.fromCharCode(97 + i), text: `Down to Level ${n}` })),
+        { key: String.fromCharCode(97 + levels.length), text: c.dungeonLevel === 1 && lead.length > 2 ? 'Walk it from here' : 'Just one level' }],
+      descend: levels,
+    };
+    this.phase = 'interaction';
+    this.messages = lead;
     return this.getState();
+  }
+
+  private resolveDeepDescent(key: string): GameState {
+    const c = this.char!;
+    const levels = this.interaction?.descend ?? [];
+    const pick = levels[key.charCodeAt(0) - 97];
+    const fromLadder = this.interaction?.contentId === 'descend-ladder';
+    this.interaction = null;
+    this.phase = 'playing';
+    if (pick === undefined) {
+      if (!fromLadder) return this.closeInteraction('You set off on foot, as you did the first time.');
+      return this.descendTo(c.dungeonLevel + 1);
+    }
+    return this.descendTo(pick, ['The stairs run on and on, down past the levels you know, and let you out far below.', '']);
+  }
+
+  /** Down to a level, at its entrance (as the stairs do). */
+  private descendTo(level: number, lead: string[] = []): GameState {
+    const c = this.char!;
+    c.dungeonLevel = level;
+    this.loadLevelIntoCache(level);
+    const lvl = this.getLevel(level)!;
+    c.x = lvl.entrance.x; c.y = lvl.entrance.y;
+    const s = this.enterLevel();
+    if (lead.length) { this.messages = [...lead, ...this.messages]; s.messages = [...this.messages]; }
+    return s;
   }
 
   /** Leaves Asmodeus's scene for the screen it leads to: the victory
@@ -3060,6 +3113,8 @@ export class GameEngine {
         return this.resolveGearChoice(key);
       case 'teleport':
         return this.resolvePlanarStep(key);
+      case 'descend':
+        return this.resolveDeepDescent(key);
       default:
         return this.closeInteraction();
     }

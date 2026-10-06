@@ -136,3 +136,23 @@ describe('Ladders', () => {
     expect(e.char.dungeonLevel).toBe(1);
   });
 });
+
+describe("A champion's deep descent", () => {
+  it('a ladder down asks a champion how deep, and goes there; others just go down one', () => {
+    for (const champion of [true, false]) {
+      const { engine, e } = ready();
+      if (champion) { e.char.asmodeusVictories = 1; e.char.asmodeusDefeated = true; }
+      const p = placeNear(e, 'ladder-down')!;
+      e.char.x = p.n.x; e.char.y = p.n.y;
+      const s = engine.climbDown();
+      if (!champion) { expect(e.char.dungeonLevel).toBe(2); continue; }
+      expect(s.interaction?.type).toBe('descend');
+      expect(s.choices!.map((c: { text: string }) => c.text)).toContain('Down to Level 6');
+      const key = s.choices!.find((c: { text: string }) => c.text === 'Down to Level 6')!.key;
+      engine.interactionChoice(key);
+      expect(e.char.dungeonLevel).toBe(6);
+      const lvl = e.getLevel(6);
+      expect([e.char.x, e.char.y]).toEqual([lvl.entrance.x, lvl.entrance.y]);
+    }
+  });
+});

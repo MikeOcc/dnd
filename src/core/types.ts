@@ -370,7 +370,8 @@ export type InteractionType =
   | 'trap-choice'
   | 'shop'
   | 'gear'
-  | 'teleport';     // Planar Step: choose a level to go to
+  | 'teleport'      // Planar Step: choose a level to go to
+  | 'descend';      // a champion's deep descent: choose how deep
 
 export interface InteractionState {
   type: InteractionType;
@@ -380,7 +381,8 @@ export interface InteractionState {
   chestTrapSpotted?: boolean;  // chest: the search found its trap, so disarming is on offer
   shop?: ShopState;            // shop: who's trading, which list is showing, what's for sale
   gear?: { mode: 'list' | 'item'; index?: number };
-  teleport?: { startedAt: number; source: 'spell' | 'moonstone'; levels: number[] };   // Planar Step   // gear: the list, or one item's options
+  teleport?: { startedAt: number; source: 'spell' | 'moonstone'; levels: number[] };   // Planar Step
+  descend?: number[];   // a champion's deep descent: the levels on offer   // gear: the list, or one item's options
 }
 
 /** A shop visit: the Trading Post (level 1) or the wandering Peddler (deep levels). */

@@ -2714,12 +2714,15 @@ describe('After banishing Asmodeus, the dungeon grows', () => {
     const engine = makeReadyEngine(db);
     const e = winAt7(engine);
     engine.continueLordScene();
-    const s = engine.continueAfterVictory();
+    let s = engine.continueAfterVictory();
+    // A champion is offered the deep descent straight away; walking it is the last choice.
+    expect(s.interaction?.type).toBe('descend');
+    expect(s.messages.join(' ')).toContain('+20 levels');
+    s = engine.interactionChoice(s.choices![s.choices!.length - 1].key);
     expect(s.phase).toBe('playing');
     expect(e.char.dungeonLevel).toBe(1);
     const lvl1 = e.getLevel(1);
     expect([e.char.x, e.char.y]).toEqual([lvl1.entrance.x, lvl1.entrance.y]);
-    expect(s.messages.join(' ')).toContain('+20 levels');
     const saved = new Repository(db).loadCharacter(e.char.id)!;
     expect(saved.dungeonLevel).toBe(1);
   });
