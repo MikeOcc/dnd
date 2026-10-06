@@ -5457,7 +5457,18 @@ const MONSTER_SPRITE_SCALE = {
   'Erinyes': 1.3,
 };
 
+// Which set of portraits to show: 'classic', or 'horror' (monster-sprites-
+// horror.js), chosen in Settings and remembered per browser. A monster
+// with no horror version keeps its classic portrait.
+let monsterArtStyle = 'classic';
+try { monsterArtStyle = localStorage.getItem('sevenLevelsMonsterArt') === 'horror' ? 'horror' : 'classic'; } catch { /* storage blocked */ }
+function setMonsterArtStyle(style) {
+  monsterArtStyle = style === 'horror' ? 'horror' : 'classic';
+  try { localStorage.setItem('sevenLevelsMonsterArt', monsterArtStyle); } catch { /* storage blocked */ }
+}
+
 function getMonsterSprite(type) {
+  if (monsterArtStyle === 'horror' && typeof HORROR_SPRITES !== 'undefined' && HORROR_SPRITES[type]) return HORROR_SPRITES[type];
   return MONSTER_SPRITES[type] || null;
 }
 

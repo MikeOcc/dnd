@@ -561,6 +561,14 @@ const SETTINGS = [
       smoothMove = !smoothMove;
       try { localStorage.setItem(SMOOTH_KEY, smoothMove ? '1' : '0'); } catch { /* per-viewer nicety only */ }
     } },
+  { key: 'g', label: 'Monster art', get: () => monsterArtStyle === 'horror', value: () => (monsterArtStyle === 'horror' ? 'HORROR' : 'CLASSIC'), toggle: () => {
+      setMonsterArtStyle(monsterArtStyle === 'horror' ? 'classic' : 'horror');
+      const portrait = document.getElementById('monster-portrait');
+      delete portrait.dataset.monster;   // redraw the one on screen in the new style
+      delete portrait.dataset.art;
+      document.getElementById('sighting').removeAttribute('data-key');
+      applyState(currentState);
+    } },
   { key: 'a', label: 'On-screen arrows',  get: () => arrowsShown,   toggle: () => toggleArrows() },
   { key: 'b', label: 'Show saving rolls', get: () => showRolls,     toggle: () => {
       showRolls = !showRolls;

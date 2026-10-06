@@ -276,7 +276,7 @@
   /** A monster's portrait as an image; `hide` lists parts to leave out
    * (the Hollow Choir's shattered masks, by name). */
   function monsterImage(type, hide = []) {
-    const key = `${type}|${hide.join(',')}`;
+    const key = `${type}|${hide.join(',')}|${typeof monsterArtStyle === 'string' ? monsterArtStyle : ''}`;
     if (monsterImages[key]) return monsterImages[key];
     let svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
     if (svg && hide.length && typeof DOMParser === 'function') {
