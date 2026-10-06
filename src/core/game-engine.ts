@@ -10,8 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
-import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward,
-  playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn } from './combat.js';
+import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
@@ -2203,6 +2202,11 @@ export class GameEngine {
       this.messages = [`Banish is still gathering power. It will be ready in ${this.banishReadyText()}.`];
       return this.getState();
     }
+    if (spell === 'stilled-hour' && this.stilledReadyIn() > 0) {
+      const m = Math.ceil(this.stilledReadyIn() / 60);
+      this.messages = [`The hours will not be stilled again so soon. (Ready in ${m} minute${m === 1 ? '' : 's'} of play.)`];
+      return this.getState();
+    }
     if (this.isHeld()) return this.combatHeld();
     if (spell !== 'heal' && this.targetInvisible()) return this.strikeAtNothing();
     if (spell !== 'heal' && isMagic(spell) && this.combat.monster.type === 'Rakshasa') return this.spellWashesOff();
@@ -2235,6 +2239,10 @@ export class GameEngine {
         this.fx.monster = 'arcane';
         this.char.banishCastAt = this.char.playTime;
         return this.processCombatResult(playerBanish(this.char, this.combat.monster, this.rng));
+      case 'stilled-hour':
+        this.fx.monster = 'arcane';
+        this.char.stilledHourAt = this.char.playTime;
+        return this.processCombatResult(playerStilledHour(this.char, this.combat.monster, this.rng));
     }
   }
 
@@ -2432,6 +2440,13 @@ export class GameEngine {
     if (!this.char || this.char.banishCastAt === undefined) return 0;
     return Math.max(0, this.char.banishCastAt + SPELLS.BANISH_COOLDOWN_SECONDS - this.char.playTime);
   }
+
+  /** Seconds of play until The Stilled Hour can be cast again. */
+  private stilledReadyIn(): number {
+    if (!this.char || this.char.stilledHourAt === undefined) return 0;
+    return Math.max(0, this.char.stilledHourAt + SPELLS.STILLED_HOUR.COOLDOWN_SECONDS - this.char.playTime);
+  }
+
 
   private banishReadyText(): string {
     const mins = Math.ceil(this.banishReadyIn() / 60);
@@ -2691,6 +2706,7 @@ export class GameEngine {
       return this.getState();
     }
 
+    if (!result.monsterDied && this.combat.monster.hp <= 0) result = { ...result, monsterDied: true };
     if (result.monsterDied) {
       return this.handleMonsterDefeated();
     }

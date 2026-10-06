@@ -400,6 +400,7 @@ export const SPELLS = {
     frost: 24,
     lightning: 35,
     banish: 40,
+    'stilled-hour': 80,
   },
   // A caster without the wits for it can lose control of an offensive spell
   // (Fireball, Poison Spray, Acid, Frost, Lightning): it turns on them.
@@ -425,6 +426,20 @@ export const SPELLS = {
   BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this...
   BANISH_HIGH_LEVEL_MAX: 60,          // ...or this, whichever is lower (so deep dragons count)
   BANISH_COOLDOWN_SECONDS: 3600,
+  // The Stilled Hour (wizards from level 80): time stops for the monster for
+  // d5+3 turns. It can't act and every blow lands. From the 4th still turn
+  // it can't breathe, and suffocates, harder each turn (a share of its full
+  // health). Things that don't breathe don't suffocate; Asmodeus is held
+  // half as long and never does. The price: you age (Strength and Dexterity
+  // down for a long while), and it's once per hour of play.
+  STILLED_HOUR: {
+    TURNS_MIN: 4, TURNS_MAX: 8,
+    BREATH_TURNS: 3,
+    SUFFOCATE_STEP: 0.06,          // 6%, 12%, 18%... of full health
+    COOLDOWN_SECONDS: 3600,
+    AGE_STATS: 3, AGE_STEPS: 300,  // −3 STR and DEX for 300 steps
+    ASMODEUS_RESIST_CHANCE: 0.33,  // he throws it off entirely; otherwise he's held half as long
+  },
   // Planar Step: wizards from this level step to any level they've visited
   // (never in battle). Choose within the time, or the spell chooses: a
   // random visited level, at a random spot. A moonstone gives anyone one cast.

@@ -279,6 +279,8 @@ function applyState(state) {
     }
     // An invisible Banshee is all but gone from sight; a burrowed Death Worm is under the floor.
     portraitEl.classList.toggle('vanished', (monster.invisibleTurns ?? 0) > 0);
+    // The Stilled Hour: drained to a still, blue-grey photograph until time starts again.
+    portraitEl.classList.toggle('time-stopped', (monster.frozenTurns ?? 0) > 0);
     portraitEl.classList.toggle('burrowed', !!monster.burrowed);
   } else {
     portraitEl.classList.add('hidden');

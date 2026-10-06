@@ -69,7 +69,8 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
 
   // A stunned Asmodeus can't defend himself: nearly every blow lands.
   const stunnedLord = monster.type === 'Asmodeus' && (monster.stunnedTurns ?? 0) > 0;
-  const misses = stunnedLord ? rng.float() >= COMBAT.ASMODEUS_STUNNED_HIT_CHANCE : hitRoll < monsterDef;
+  // Frozen in time, it can't even flinch: every blow lands.
+  const misses = (monster.frozenTurns ?? 0) > 0 ? false : stunnedLord ? rng.float() >= COMBAT.ASMODEUS_STUNNED_HIT_CHANCE : hitRoll < monsterDef;
   if (misses) {
     messages.push(`You swing at the ${monster.type} but miss!${label}`);
     return 0;
@@ -1802,6 +1803,7 @@ function monsterActionInner(
     messages.push(`Caught off guard, the ${monster.type} cannot answer your blow!`);
     return { messages, monsterDamage: 0, playerDied: false, monsterDied: false };
   }
+  if ((monster.frozenTurns ?? 0) > 0) return stilledTurn(monster, messages);
   if ((monster.stunnedTurns ?? 0) > 0) {
     monster.stunnedTurns!--;
     messages.push(`The ${monster.type} is still stunned and can't act!`);
@@ -2334,4 +2336,58 @@ export function calculateXPReward(
   if (isUnique) mult *= LEVELING.UNIQUE_MONSTER_XP_MULT;
 
   return Math.max(1, Math.round(base * mult));
+}
+
+// ─── The Stilled Hour ────────────────────────────────────────────────────────
+
+/** Things with no breath to lose: they don't suffocate in stopped time. */
+const NO_BREATH = ['Mold', 'Slime Mold', 'Gelatinous Cube', 'Elder Oblex', 'Iron Golem', 'Gargoyle', 'Banshee', 'Spectre',
+  'Nightwalker', 'Hollow Choir', 'Djinn', 'Asmodeus', 'Doppelganger'];
+export function breathes(monster: Monster): boolean {
+  return !monster.definition.isUndead && !NO_BREATH.includes(monster.type);
+}
+
+/** Cast: time stops for the monster, d5+3 turns (Asmodeus, half). It doesn't answer this turn. */
+export function playerStilledHour(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  const S = SPELLS.STILLED_HOUR;
+  const rolled = rng.int(S.TURNS_MIN, S.TURNS_MAX);
+  const messages = ['You speak the words of The Stilled Hour, and the world\u2019s clock stops for everything but you.'];
+  // Asmodeus is older than the clocks: he may throw it off, and holds still half as long if not.
+  if (monster.type === 'Asmodeus' && rng.float() < S.ASMODEUS_RESIST_CHANCE) {
+    messages.push('Everything stops but him. Asmodeus smiles, and with one slow word starts the clock again. "Time? In MY Hells?"');
+    addStatusEffect(char, { type: 'strength-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
+    addStatusEffect(char, { type: 'dexterity-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
+    messages.push(`It cost you all the same: grey threads your hair. (\u2212${S.AGE_STATS} Strength and Dexterity for a long while)`);
+    const res = monsterAction(char, monster, rng, messages);
+    return { ...res, playerDamage: 0, monsterDied: false };
+  }
+  const turns = monster.type === 'Asmodeus' ? Math.max(2, Math.floor(rolled / 2)) : rolled;
+  monster.frozenTurns = turns;
+  monster.frozenElapsed = 0;
+  messages.push(`The ${monster.type} hangs motionless, caught between one heartbeat and the next. (d5+3: ${rolled} turns${turns !== rolled ? `; he fights it, and is held only ${turns}` : ''})`);
+  if (!breathes(monster)) messages.push(`(It has no breath to lose: the stillness will not choke it.)`);
+  // The price: time takes it out of you.
+  addStatusEffect(char, { type: 'strength-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
+  addStatusEffect(char, { type: 'dexterity-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
+  messages.push(`Time takes its toll: grey threads your hair, and your joints ache like an old man\u2019s. (\u2212${S.AGE_STATS} Strength and Dexterity for a long while)`);
+  return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false };
+}
+
+/** A frozen monster's turn: nothing, and after a while, no breath either. */
+function stilledTurn(monster: Monster, messages: string[]): MonsterActionResult {
+  const S = SPELLS.STILLED_HOUR;
+  monster.frozenTurns!--;
+  monster.frozenElapsed = (monster.frozenElapsed ?? 0) + 1;
+  const n = monster.frozenElapsed;
+  if (breathes(monster) && n > S.BREATH_TURNS) {
+    const dmg = Math.max(1, Math.round(monster.maxHp * S.SUFFOCATE_STEP * (n - S.BREATH_TURNS)));
+    monster.hp = Math.max(0, monster.hp - dmg);
+    messages.push(`Frozen mid-breath, the ${monster.type} cannot breathe. Its eyes bulge; its colour darkens. (${dmg} damage)`);
+  } else {
+    messages.push(`The ${monster.type} is still as a painting. Not a hair of it moves.`);
+  }
+  if (monster.frozenTurns === 0 && monster.hp > 0) {
+    messages.push(`Time lurches back into motion. The ${monster.type} gasps and staggers.`);
+  }
+  return { messages, monsterDamage: 0, playerDied: false, monsterDied: monster.hp <= 0 };
 }

@@ -8,7 +8,7 @@ import { SPELLS as SPELL_CONFIG } from './config.js';
 import type { Choice, CharacterClass } from './types.js';
 
 export type SpellId =
-  | 'fireball' | 'heal' | 'poison' | 'acid' | 'frost' | 'lightning' | 'banish'
+  | 'fireball' | 'heal' | 'poison' | 'acid' | 'frost' | 'lightning' | 'banish' | 'stilled-hour'
   | 'power-attack' | 'shield-bash' | 'cleave' | 'battle-cry' | 'whirlwind';
 
 export interface SpellInfo {
@@ -25,6 +25,7 @@ const NAMES: Record<SpellId, string> = {
   frost: 'Frost Bolt',
   lightning: 'Lightning',
   banish: 'Banish',
+  'stilled-hour': 'The Stilled Hour',
   'power-attack': 'Power Attack',
   'shield-bash': 'Shield Bash',
   cleave: 'Cleave',

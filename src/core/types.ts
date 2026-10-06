@@ -164,6 +164,7 @@ export interface Character {
   heldRounds?: number;        // combat rounds the character loses (paralyzed, asleep, cowering...) — in-memory, cleared when combat ends
   heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
   banishCastAt?: number;      // play-time second of the last Banish (one per hour of play)
+  stilledHourAt?: number;     // play-time second of the last Stilled Hour (one per hour of play)
   charClass: CharacterClass;
   battleCryRounds?: number;   // warrior: rounds of Battle Cry's damage boost left (in-memory, cleared after combat)
   introsSeen: number[];
@@ -282,6 +283,8 @@ export interface Monster {
   choirPrep?: ChoirPower;      // Hollow Choir: the power a mask is gathering (it lands on the Choir's next turn)
   choirBroken?: ChoirMask[];   // Hollow Choir: the masks shattered so far
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
+  frozenTurns?: number;   // The Stilled Hour: still in time for this many more turns
+  frozenElapsed?: number; // ...and has been for this many (it can't breathe after a few)
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
