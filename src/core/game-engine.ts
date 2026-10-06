@@ -9,9 +9,10 @@ import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, format
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
+import type { SpellId } from './spells.js';
 import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerChangeRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour, playerBorak } from './combat.js';
-import { spellMenu, spellForKey, spellsLearnedBetween, isMagic } from './spells.js';
+import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } from './spells.js';
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
@@ -363,6 +364,7 @@ export class GameEngine {
         { key: 'p', text: `Drink Potion (${this.char?.inventory.potions ?? 0})` },
         ...(this.ringsWorn().length > 0 ? [{ key: 'r', text: 'Use Ring' }] : []),
         ...(this.combat.monster.type === 'Unicorn' ? [{ key: 'h', text: 'Offer Your Hand' }] : []),
+        ...(this.repeatSpellKey() ? [{ key: 'z', text: `${knownSpells(this.char!.level, 'wizard').find(s => s.id === this.lastSpell)?.name} again` }] : []),
       ];
     }
     if (this.interaction) {
@@ -1614,6 +1616,12 @@ export class GameEngine {
       case 'f': return this.combatScare();
       case 'e': return this.showGemMenu();
       case 'p': return this.combatPotion();
+      case 'z': {
+        // A wizard's last spell, cast again.
+        const k = this.repeatSpellKey();
+        if (!k) { this.messages = ['You have no spell to repeat yet. (B: cast a spell; then Z casts it again)']; return this.getState(); }
+        return this.spellAction(k);
+      }
       default:  return this.getState();
     }
   }
@@ -2203,9 +2211,18 @@ export class GameEngine {
 
   /** Keys come from spellMenu(): the character's known spells, lettered in
    * unlock order. Anything else (Cancel, or an unlearned spell) backs out. */
+  /** A wizard's last spell, for Z: the menu key it has now (if still known). */
+  private lastSpell: SpellId | null = null;
+  private repeatSpellKey(): string | null {
+    if (!this.char || this.char.charClass !== 'wizard' || !this.lastSpell) return null;
+    const i = knownSpells(this.char.level, 'wizard').findIndex(s => s.id === this.lastSpell);
+    return i >= 0 ? String.fromCharCode(97 + i) : null;
+  }
+
   spellAction(key: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
     const spell = spellForKey(this.char.level, key, this.char.charClass);
+    if (spell && this.char.charClass === 'wizard') this.lastSpell = spell;
     if (!spell) {
       this.phase = 'combat';
       this.messages = ['You reconsider.'];

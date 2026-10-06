@@ -110,3 +110,28 @@ describe('The Stilled Hour in a fight', () => {
     expect(engine.spellAction(key).messages.join(' ')).toContain('will not be stilled again so soon');
   });
 });
+
+describe('Z: the same spell again', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('a wizard can repeat the last spell with Z, even in the next fight; nothing to repeat at first', () => {
+    const engine = new GameEngine(new Repository(db));
+    engine.startNameEntry(); engine.submitName('Pyro'); engine.acceptCharacter('wizard');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro(); e.char.level = 30; e.char.hp = e.char.maxHp = 1e6; e.char.intelligence = 18;
+    const fight = () => { const m = createMonster('Giant', 10, 'g' + Math.random()); m.hp = m.maxHp = 1e6; e.combat = { monster: m, round: 1 }; e.phase = 'combat'; return m; };
+    fight();
+    expect(engine.combatAction('z').messages.join(' ')).toContain('no spell to repeat');
+    const fireball = engine.getState().spellChoices!.find((c: { text: string }) => c.text === 'Fireball')!.key;
+    engine.spellAction(fireball);
+    expect(engine.getState().choices!.some((c: { key: string; text: string }) => c.key === 'z' && c.text === 'Fireball again')).toBe(true);
+    const m2 = fight();
+    const s = engine.combatAction('z');
+    expect(s.messages.join(' ')).toMatch(/Fireball|fire/i);
+    expect(m2.hp).toBeLessThan(1e6);
+  });
+});

@@ -1636,7 +1636,7 @@ function updateHelpLine(phase) {
     case 'inventory':
       hint.textContent = 'X: Return to Game'; break;
     case 'combat':
-      hint.textContent = 'A: Attack  B: Spell/Skill  C: Pray  D: Run  F: Scare  E: Gem  P: Potion'; break;
+      hint.textContent = 'A: Attack  B: Spell/Skill  Z: Same spell again  C: Pray  D: Run  F: Scare  E: Gem  P: Potion  R: Ring'; break;
     case 'interaction':
       hint.textContent = 'Choose an option above'; break;
     case 'name-entry':
@@ -1977,7 +1977,7 @@ document.addEventListener('keydown', (e) => {
       if (gemBtn) gemBtn.click();
       return;
     }
-    if (['a','c','d','f','p','h'].includes(key)) apiAction('combat', { choice: key });
+    if (['a','c','d','f','p','h','z'].includes(key)) apiAction('combat', { choice: key });
     return;
   }
 
