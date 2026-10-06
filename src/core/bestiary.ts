@@ -390,7 +390,7 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
   ] },
 
   // Weapons only half bite on it (combat.ts).
-  'Demilich': { moves: [
+  'Caput Mortuum': { moves: [
     { id: 'soul-howl', weight: 20, run: k => {
       k.say('The skull opens its jaws and HOWLS. The gems in its eyes flare, hungry for a soul.');
       const s = k.save(16, ['wisdom', 'charisma']);
@@ -398,8 +398,8 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
       if (!s.ok) { k.kill('soul-trapped', 'Your soul is torn out of your body and sucked into the gem. Your body drops, empty.'); return; }
       k.strike(1.0, d => `You cling to yourself as the howl tears at your soul! You suffer ${d} damage.`);
     } },
-    { id: 'demilich-curse', weight: 35, run: k => {
-      k.strike(0.6, d => `The Demilich curses you in a dead tongue. (${d} damage)`);
+    { id: 'dead-head-curse', weight: 35, run: k => {
+      k.strike(0.6, d => `The Caput Mortuum curses you in a dead tongue. (${d} damage)`);
       k.status({ type: 'strength-reduced', value: 4, turns: 30 });
       k.status({ type: 'dexterity-reduced', value: 4, turns: 30 });
       k.say('Your body grows weak and clumsy. (-4 Strength and Dexterity)');

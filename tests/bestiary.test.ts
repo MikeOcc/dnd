@@ -104,7 +104,7 @@ describe('The great bestiary', () => {
     expect(w.swallowHp).toBeUndefined();
   });
 
-  it('Medusa and the Demilich can kill outright on a failed saving roll', () => {
+  it('Medusa and the Caput Mortuum can kill outright on a failed saving roll', () => {
     const killer = (type: MonsterType, cause: RegExp) => {
       const rng = new RNG(19);
       for (let i = 0; i < 3000; i++) {
@@ -115,7 +115,7 @@ describe('The great bestiary', () => {
       return false;
     };
     expect(killer('Medusa', /^Turned to stone by the gaze of/)).toBe(true);
-    expect(killer('Demilich', /^Soul trapped forever/)).toBe(true);
+    expect(killer('Caput Mortuum', /^Soul trapped forever/)).toBe(true);
   });
 
   it('you cannot run from an Erinyes; lightning slows an Iron Golem; fire stops a Troll healing', () => {

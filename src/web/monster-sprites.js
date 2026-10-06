@@ -2066,8 +2066,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Demilich': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Demilich">
+  'Caput Mortuum': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Caput Mortuum">
     <defs>
     <radialGradient id="dml-bone" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#f4ecd8"/><stop offset="0.6" stop-color="#b8a888"/><stop offset="1" stop-color="#5a4a30"/></radialGradient>
     <radialGradient id="dml-gem" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#b85aff"/><stop offset="1" stop-color="#3a0a6a"/></radialGradient>
@@ -5449,7 +5449,7 @@ const MONSTER_SPRITE_SCALE = {
   'Behir': 1.4,
   'Rakshasa': 1.2,
   'Death Tyrant': 1.35,
-  'Demilich': 1.1,
+  'Caput Mortuum': 1.1,
   'Chimera': 1.35,
   'Pit Fiend': 1.45,
   'Balor': 1.5,

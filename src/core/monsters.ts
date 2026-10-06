@@ -436,8 +436,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ["tyrant-rays", "tyrant-bite"],
   },
-  "Demilich": {
-    type: "Demilich", isUndead: true, isUnique: false,
+  "Caput Mortuum": {
+    type: "Caput Mortuum", isUndead: true, isUnique: false,
     minLevel: 55, maxLevel: 60, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 9, baseAttackPerLevel: 4.6, baseDefensePerLevel: 5.0,
     fireballResistance: 1.0,
@@ -445,9 +445,9 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       "On a heap of dust lies a skull, gems set in its eye sockets and teeth.",
       "It rises, slowly, into the air. The gems begin to glow. It knows your name.",
       '',
-      'You have encountered a Level {LVL} Demilich!',
+      'You have encountered a Level {LVL} Caput Mortuum!',
     ],
-    specialAbilities: ["soul-howl", "demilich-curse", "life-leech"],
+    specialAbilities: ["soul-howl", "dead-head-curse", "life-leech"],
   },
   "Chimera": {
     type: "Chimera", isUndead: false, isUnique: false,
@@ -891,7 +891,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1020,7 +1020,7 @@ export const ANCIENT_GHOUL_INTRO = [
 
 export const UNDEAD_TYPES: MonsterType[] = [
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
-  'Death Tyrant', 'Demilich',
+  'Death Tyrant', 'Caput Mortuum',
 ];
 
 export function isUndead(type: MonsterType): boolean {
@@ -1030,7 +1030,7 @@ export function isUndead(type: MonsterType): boolean {
 export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Titanoboa', 'Wendigo',
   'Djinn', 'Phoenix', 'Banshee', 'Unicorn', 'Frost Giant', 'Displacer Beast', 'Basilisk',
-  'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Behir', 'Rakshasa', 'Death Tyrant', 'Demilich', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
+  'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Behir', 'Rakshasa', 'Death Tyrant', 'Caput Mortuum', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Hollow Choir', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',

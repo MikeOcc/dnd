@@ -89,9 +89,9 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   const cry = (char.battleCryRounds ?? 0) > 0 ? WARRIOR.BATTLE_CRY_MULT : 1;
   // The Orc King's black plate turns aside part of every blow; stone and
   // unholy flesh shrug off half of it; rust on your blade costs you too.
-  // Stone, werewolf hide and a demilich's dust shrug off ordinary steel, but not an enchanted blade.
+  // Stone, werewolf hide and a Caput Mortuum's dust shrug off ordinary steel, but not an enchanted blade.
   const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
-    : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Demilich') && plus === 0 ? 0.5 : 1;
+    : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Caput Mortuum') && plus === 0 ? 0.5 : 1;
   // A Rakshasa is truly harmed only by a +3 weapon.
   const rakshasa = monster.type === 'Rakshasa' ? GEAR.RAKSHASA_BY_PLUS[Math.min(3, plus)] : 1;
   const magic = 1 + plus * GEAR.DAMAGE_PER_PLUS;
@@ -1558,7 +1558,7 @@ export function abilityElement(ability: string | undefined): FxElement {
   if (ability === 'ruby-ray' || ability === 'phoenix-flare' || ability === 'hellfire' || ability === 'chimera-heads' || ability === 'mirror-spell') return 'fire';
   if (ability === 'balor-sword') return 'lightning';
   if (ability === 'poison-gas' || ability === 'spider-bite' || ability === 'tail-stinger' || ability === 'fiend-bite') return 'poison';
-  if (ability === 'stirge-drain' || ability === 'life-leech' || ability === 'soul-howl' || ability === 'demilich-curse' || ability === 'rakshasa-curse') return 'drain';
+  if (ability === 'stirge-drain' || ability === 'life-leech' || ability === 'soul-howl' || ability === 'dead-head-curse' || ability === 'rakshasa-curse') return 'drain';
   if (ability === 'harpy-song' || ability === 'rakshasa-illusion' || ability === 'tyrant-rays' || ability === 'stone-gaze') return 'arcane';
   if (ability === 'chill-touch' || ability === 'banshee-wail') return 'drain';
   if (ability === 'radiant-horn') return 'holy';

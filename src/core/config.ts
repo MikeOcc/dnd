@@ -836,7 +836,7 @@ export const RINGS = {
     'Asmodeus', 'Tiamat', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes', 'Rakshasa',
     'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
     'Hollow Choir', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
-    'Lich', 'Demilich', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
+    'Lich', 'Caput Mortuum', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
     'Orc King', 'Wendigo', 'Banshee',
   ] as string[],
 } as const;

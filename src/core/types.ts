@@ -201,7 +201,7 @@ export type MonsterType =
   | 'Behir'
   | 'Rakshasa'
   | 'Death Tyrant'
-  | 'Demilich'
+  | 'Caput Mortuum'
   | 'Chimera'
   | 'Pit Fiend'
   | 'Balor'
