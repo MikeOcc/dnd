@@ -133,6 +133,8 @@ async function sendAction(action, payload) {
   let state = data.state;
   if (action === 'face' && facesPending <= 1) localFacing = null;   // this was the last one: the server agrees now
   if (localFacing && (facesPending > (action === 'face' ? 1 : 0))) state = facingState(state, localFacing) || state;
+  // The save reminder: seen, and you've moved on, so it goes away for another stretch.
+  if (nudgeShowing && /^(move-|turn-|face$|map-move)/.test(action)) { nudgeShowing = false; nudgeFrom = Date.now(); }
   if (action === 'face') { if (state) applyState(state); return; }  // (already drawn: no sounds again)
   if (action === 'save' && /saved/i.test((state?.messages || []).join(' '))) { unsaved = false; lastSavedAt = Date.now(); flashSaved(); }
   else if (action === 'load' || action === 'restore' || action === 'main-menu' || action === 'accept') { unsaved = false; lastSavedAt = Date.now(); }
@@ -547,7 +549,8 @@ function updateViewStrip(state) {
   const hint = document.getElementById('move-hint');
   if (hint.classList.contains('saved-flash')) return;
   const mins = Math.floor((Date.now() - lastSavedAt) / 60000);
-  const nudge = unsaved && mins >= SAVE_NUDGE_MINUTES;
+  const nudge = unsaved && (Date.now() - Math.max(lastSavedAt, nudgeFrom)) / 60000 >= SAVE_NUDGE_MINUTES;
+  nudgeShowing = nudge;
   hint.classList.toggle('save-nudge', nudge);
   hint.innerHTML = nudge
     ? `You haven\u2019t saved for ${mins} minutes: press <b>S</b> to keep your progress`
@@ -559,6 +562,8 @@ let unsaved = false, quitArmedUntil = 0;
 // A gentle reminder under the view after a long while without saving (no autosave).
 const SAVE_NUDGE_MINUTES = 10;
 let lastSavedAt = Date.now();
+// Once you've seen it and moved on, it stays away for another stretch.
+let nudgeShowing = false, nudgeFrom = Date.now();
 const NOT_PROGRESS = new Set(['save', 'restore', 'load', 'main-menu', 'show-map', 'show-status', 'show-inventory', 'dismiss-status', 'dismiss-inventory', 'dismiss-intro', 'open-gear']);
 function quitToMenu() {
   if (unsaved && Date.now() > quitArmedUntil) {
