@@ -224,3 +224,23 @@ export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: P
   }
   if (bier) contents.set(key(bier), { type: 'unique-monster', id: BARROW_LAIR.KING_ID, monsterId: 'Barrow-King' });
 }
+
+// ─── The Lambton Worm (level 6) ──────────────────────────────────────────────
+// Coiled on its hoard in a room far from the entrance. Nothing is walled up.
+
+export const LAMBTON_ID = 'unique-lambton-worm';
+
+export function placeLambtonWorm(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>): void {
+  if ([...contents.values()].some(c => c.id === LAMBTON_ID)) return;
+  const map = mapAreas(grid);
+  const fromEntrance = distances(grid, entrance);
+  const free = (p: Pt) => !contents.has(key(p)) && !(p.x === entrance.x && p.y === entrance.y) && !(exit && p.x === exit.x && p.y === exit.y);
+  let best: Pt | null = null, far = -1;
+  for (const [k, { d }] of fromEntrance) {
+    const [x, y] = k.split(',').map(Number);
+    const area = areaAtCell(map, x, y);
+    if (!area || area.kind !== 'room' || area.cells < 9 || d <= far || !free({ x, y })) continue;
+    best = { x, y }; far = d;
+  }
+  if (best) contents.set(key(best), { type: 'unique-monster', id: LAMBTON_ID, monsterId: 'Lambton Worm' });
+}

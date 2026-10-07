@@ -7,6 +7,7 @@
 
 import type { Character, Monster, MonsterType, StatusEffect, HeldCondition } from './types.js';
 import type { RNG } from './random.js';
+import { bestWeapon } from './character.js';
 
 type Stat = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma' | 'resistance';
 
@@ -425,6 +426,137 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
         k.monster.wight = true;
         k.say('"RISE, MY SWORN." The flagstones crack, and a barrow-wight claws its way up beside him.',
           '(It will fight beside him until he falls.)');
+      } },
+    ],
+  },
+
+  // ── From folklore ────────────────────────────────────────────────────────
+  'Grindylow': { moves: [
+    { id: 'grindy-drag', weight: 35, when: k => !k.held(), run: k => {
+      k.strike(0.7, d => `Long wet arms wrap round your legs and drag you toward the water! (${d} damage)`);
+      if (k.alive()) { k.hold(1, 'constricted'); k.say('You are pulled under the surface and must fight your way back up!'); }
+    } },
+    { id: 'grindy-drown', weight: 100, when: k => k.held(), run: k => {
+      k.strike(0.9, d => `Cold water fills your nose and mouth. You are drowning! (${d} damage)`);
+    } },
+    { id: 'grindy-bite', weight: 65, run: k => { k.strike(1.0, d => `The Grindylow bites with its needle teeth. (${d} damage)`); } },
+  ] },
+
+  'Black Annis': { moves: [
+    { id: 'annis-claws', weight: 50, run: k => {
+      k.strikes(2, 0.7, (d, i) => `Her iron claws ${i === 0 ? 'rake' : 'rake again'}! (${d} damage)`);
+      if (k.alive() && k.rng.float() < 0.4) { k.status({ type: 'bleeding', value: 3, turns: 6 }); k.say('The iron has cut deep. You are bleeding!'); }
+    } },
+    { id: 'annis-flay', weight: 20, run: k => {
+      k.strike(1.4, d => `She catches you and tries to peel your skin like a fruit! You suffer ${d} damage.`);
+    } },
+    { id: 'annis-vanish', weight: 15, run: k => {
+      k.monster.caughtOffGuard = false;
+      k.say('She steps back into the dark and is gone. Then a claw comes out of nowhere:');
+      k.strike(1.2, d => `She strikes from the shadows! (${d} damage)`);
+    } },
+    { id: 'annis-bite', weight: 15, run: k => { k.strike(1.0, d => `Black Annis bites with teeth like a horse's. (${d} damage)`); } },
+  ] },
+
+  'Barghest': { moves: [
+    { id: 'barghest-howl', weight: 25, when: k => !has(k.char, 'death-mark'), run: k => {
+      k.say('The Barghest lifts its head and HOWLS. The sound goes into you and stays there.');
+      const s = k.save(15, ['wisdom', 'charisma']);
+      if (s.ok) { k.say(`You hold on to yourself, and the omen slides off you. ${s.text}`); return; }
+      k.status({ type: 'death-mark', value: 1, turns: 400 });
+      k.say(`You are MARKED for death. Until an altar lifts it, a blow that leaves you near death will kill you. ${s.text}`);
+    } },
+    { id: 'barghest-bite', weight: 55, run: k => { k.strike(1.1, d => `The black dog's jaws close on you! (${d} damage)`); } },
+    { id: 'barghest-shadow', weight: 20, run: k => {
+      k.say('It is not where it was. It is behind you.');
+      k.strike(1.3, d => `The Barghest bears you down from behind! (${d} damage)`);
+    } },
+  ] },
+
+  'Nuckelavee': { moves: [
+    { id: 'nuck-breath', weight: 30, run: k => {
+      k.strike(0.8, d => `It breathes on you. Every sickness there is. (${d} damage)`);
+      if (k.alive()) {
+        const s = k.save(15, ['constitution']);
+        if (!s.ok) { k.status({ type: 'poison', value: 3, turns: 10 }); k.status({ type: 'fiend-venom', value: 1, turns: 40 }); k.say(`The plague takes hold: you are poisoned, and healing works at half strength. ${s.text}`); }
+        else k.say(`You retch, but the sickness doesn't take. ${s.text}`);
+      }
+    } },
+    { id: 'nuck-arms', weight: 45, run: k => {
+      k.strikes(2, 0.75, (d, i) => i === 0 ? `The rider's long skinless arms lash you! (${d} damage)` : `And again! (${d} damage)`);
+    } },
+    { id: 'nuck-trample', weight: 25, run: k => { k.strike(1.4, d => `The horse rears and comes down on you! (${d} damage)`); } },
+  ] },
+
+  // The longer it fights, the bigger it gets: +12% to its blows each turn.
+  'Draugr': {
+    before: k => {
+      k.monster.swell = (k.monster.swell ?? 0) + 1;
+      if (k.monster.swell % 2 === 0) k.say(`The Draugr swells larger. Its grave-clothes split. (Its blows grow heavier: +${k.monster.swell * 12}%)`);
+      return false;
+    },
+    moves: [
+      { id: 'draugr-blow', weight: 60, run: k => { k.strike(1.0 + 0.12 * (k.monster.swell ?? 0), d => `The Draugr's fist comes down like a stone. (${d} damage)`); } },
+      { id: 'draugr-grip', weight: 25, when: k => !k.held(), run: k => {
+        k.strike(0.8 + 0.12 * (k.monster.swell ?? 0), d => `It grips you in arms like tree trunks and squeezes! (${d} damage)`);
+        if (k.alive()) k.hold(1, 'constricted');
+      } },
+      { id: 'draugr-chill', weight: 15, run: k => {
+        k.strike(0.7, d => `The cold of the grave comes off it. (${d} damage)`);
+        k.status({ type: 'strength-reduced', value: 2, turns: 20 }); k.say('Your strength drains into the cold. (-2 Strength)');
+      } },
+    ],
+  },
+
+  // Its hidden body keeps it whole: 8% back each turn, unless seared.
+  'Penanggalan': {
+    before: k => {
+      if ((k.monster.searedTurns ?? 0) > 0) { k.monster.searedTurns!--; return false; }
+      const h = k.heal(Math.round(k.monster.maxHp * 0.08));
+      if (h > 0) k.say(`Somewhere in the dark, its body waits, and the Penanggalan draws strength from it. (+${h} HP; fire or holy light would stop it)`);
+      return false;
+    },
+    moves: [
+      { id: 'pen-drink', weight: 45, run: k => {
+        const d = k.strike(1.0, x => `The head flies at your throat and drinks! (${x} damage)`);
+        const h = k.heal(Math.round(d / 2)); if (h > 0) k.say(`Its cheeks flush red. (+${h} HP)`);
+      } },
+      { id: 'pen-coil', weight: 30, when: k => !k.held(), run: k => {
+        k.strike(0.7, d => `Its trailing gut whips round your neck! (${d} damage)`);
+        if (k.alive()) k.hold(1, 'choked');
+      } },
+      { id: 'pen-shriek', weight: 25, run: k => {
+        k.strike(0.8, d => `It shrieks with a sound no throat could make. (${d} damage)`);
+        if (k.alive() && k.rng.float() < 0.3) { k.hold(1, 'feared'); k.say('Terror roots you to the spot!'); }
+      } },
+    ],
+  },
+
+  // Cut pieces crawl back and rejoin: it gets back 60% of what blows took
+  // since its last turn, unless it was seared by fire or you fight with a
+  // spiked mace.
+  'Lambton Worm': {
+    before: k => {
+      const lost = Math.max(0, (k.monster.lastHp ?? k.monster.maxHp) - k.monster.hp);
+      const mace = bestWeapon(k.char)?.kind === 'mace';
+      if (lost > 0) {
+        if ((k.monster.searedTurns ?? 0) > 0) k.say('The seared ends will not knit. The pieces twitch and lie still.');
+        else if (mace) k.say('Your mace\u2019s spikes have torn the pieces past mending. They twitch and lie still.');
+        else { const h = k.heal(Math.round(lost * 0.6)); if (h > 0) k.say(`The cut pieces crawl back across the floor and JOIN the worm again! (+${h} HP)`); }
+      }
+      if ((k.monster.searedTurns ?? 0) > 0) k.monster.searedTurns!--;
+      k.monster.lastHp = k.monster.hp;
+      return false;
+    },
+    moves: [
+      { id: 'lambton-coil', weight: 35, when: k => !k.held(), run: k => {
+        k.strike(1.1, d => `The worm throws a coil around you and crushes! (${d} damage)`);
+        if (k.alive()) k.hold(1, 'constricted');
+      } },
+      { id: 'lambton-bite', weight: 45, run: k => { k.strike(1.3, d => `The sideways mouth closes on you. (${d} damage)`); } },
+      { id: 'lambton-poison', weight: 20, run: k => {
+        k.strike(0.8, d => `It breathes a foul, poisonous reek. (${d} damage)`);
+        if (k.alive()) { k.status({ type: 'poison', value: 4, turns: 8 }); k.say('You are poisoned!'); }
       } },
     ],
   },

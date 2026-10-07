@@ -552,6 +552,123 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['grave-chill', 'barrow-dark', 'call-the-wight', 'barrow-blade'],
   },
+  // ── From folklore ──────────────────────────────────────────────────────────
+  // A Grindylow (English water-demon): long green arms that drag children
+  // into ponds. It lurks in pools and fountains, and drowns what it catches.
+  'Grindylow': {
+    type: 'Grindylow', isUndead: false, isUnique: false,
+    minLevel: 1, maxLevel: 10, naturalTier: 2, minDungeonLevel: 1, speed: 1.1,
+    baseHpPerLevel: 7, baseAttackPerLevel: 2.2, baseDefensePerLevel: 1.2,
+    fireballResistance: 0.8, coldResistance: 0.6,
+    encounterIntro: [
+      'Water slops over the stones. A thin green thing hauls itself out of the pool:',
+      'arms far too long, fingers like wet roots, a wide mouth full of needle teeth.',
+      '',
+      'You have encountered a Level {LVL} Grindylow!',
+    ],
+    specialAbilities: [],
+  },
+  // Black Annis (English cave-hag): blue-faced, iron-clawed; she hangs the
+  // skins of her victims at her cave mouth and keeps what they carried.
+  'Black Annis': {
+    type: 'Black Annis', isUndead: false, isUnique: false,
+    minLevel: 10, maxLevel: 30, naturalTier: 4, minDungeonLevel: 3, speed: 1.0,
+    baseHpPerLevel: 11, baseAttackPerLevel: 3.8, baseDefensePerLevel: 2.4,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'Skins hang from the walls here, dry and stiff. Some of them are not animal.',
+      'A tall hag unfolds from the dark: blue-faced, one eye, and long iron claws',
+      'that she drags along the stone as she comes.',
+      '',
+      'You have encountered a Level {LVL} Black Annis!',
+    ],
+    specialAbilities: [],
+  },
+  // A Barghest (Yorkshire black dog): to see it is an omen of death. Its
+  // howl marks you: until an altar lifts it, a blow that leaves you near
+  // death kills you instead.
+  'Barghest': {
+    type: 'Barghest', isUndead: false, isUnique: false,
+    minLevel: 10, maxLevel: 30, naturalTier: 4, minDungeonLevel: 3, speed: 1.3,
+    baseHpPerLevel: 10, baseAttackPerLevel: 3.6, baseDefensePerLevel: 2.6,
+    fireballResistance: 0.9,
+    encounterIntro: [
+      'A black dog the size of a calf stands in the passage. You did not hear it come.',
+      'Its eyes are the size of saucers and burn like coals. It does not bark.',
+      'It only looks at you, as if it already knows how this ends.',
+      '',
+      'You have encountered a Level {LVL} Barghest!',
+    ],
+    specialAbilities: [],
+  },
+  // The Nuckelavee (Orkney): a skinless horse and rider grown into one,
+  // raw muscle and black blood; its breath brings plague. It will not cross
+  // running water, so running from it is easier than most.
+  'Nuckelavee': {
+    type: 'Nuckelavee', isUndead: false, isUnique: false,
+    minLevel: 20, maxLevel: 45, naturalTier: 6, minDungeonLevel: 4, speed: 1.2,
+    baseHpPerLevel: 13, baseAttackPerLevel: 4.6, baseDefensePerLevel: 3.0,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'The air turns foul. Into the torchlight comes a horse with no skin, and growing',
+      'out of its back, a rider with no skin either, arms trailing to the ground.',
+      'Black blood runs in the yellow veins you can see through the meat of it.',
+      'It breathes, and the breath stinks of every sickness there is.',
+      '',
+      'You have encountered a Level {LVL} Nuckelavee!',
+    ],
+    specialAbilities: [],
+  },
+  // A Draugr (Norse barrow-dead): it swells, larger and stronger, the longer
+  // it fights. Kill it fast.
+  'Draugr': {
+    type: 'Draugr', isUndead: true, isUnique: false,
+    minLevel: 25, maxLevel: 50, naturalTier: 6, minDungeonLevel: 5, speed: 0.9,
+    baseHpPerLevel: 14, baseAttackPerLevel: 4.4, baseDefensePerLevel: 3.6,
+    fireballResistance: 1.0, coldResistance: 0.5,
+    encounterIntro: [
+      'A dead warrior sits up in its grave-clothes, blue-black and bloated, and stands.',
+      'It is bigger standing than it was lying down. As you watch, it is bigger still.',
+      '',
+      'You have encountered a Level {LVL} Draugr!',
+    ],
+    specialAbilities: [],
+  },
+  // A Penanggalan (Malaysian): a woman's head that flies free of its body,
+  // trailing its entrails, to drink blood. Its hidden body keeps it whole:
+  // it heals as it fights, unless fire or holy light sears it.
+  'Penanggalan': {
+    type: 'Penanggalan', isUndead: true, isUnique: false,
+    minLevel: 30, maxLevel: 55, naturalTier: 7, minDungeonLevel: 6, speed: 1.4,
+    baseHpPerLevel: 10, baseAttackPerLevel: 5.0, baseDefensePerLevel: 4.0,
+    fireballResistance: 1.3,
+    encounterIntro: [
+      'A woman\u2019s head drifts out of the dark at the height of a face, long hair',
+      'floating around it. Below it, where a body should be, hang its heart and',
+      'lungs and a long glistening coil of gut, dripping.',
+      'It smiles at you with a mouth full of blood.',
+      '',
+      'You have encountered a Level {LVL} Penanggalan!',
+    ],
+    specialAbilities: [],
+  },
+  // The Lambton Worm (English legend): a great worm whose cut pieces crawl
+  // back and rejoin. Ordinary blows barely matter; fire, or a spiked weapon
+  // (a mace), stops the rejoining. The one of it lies on level 6, on its hoard.
+  'Lambton Worm': {
+    type: 'Lambton Worm', isUndead: false, isUnique: true,
+    minLevel: 60, maxLevel: 70, naturalTier: 9, minDungeonLevel: 6, speed: 0.9,
+    baseHpPerLevel: 20, baseAttackPerLevel: 6.5, baseDefensePerLevel: 4.5,
+    fireballResistance: 1.2, coldResistance: 0.8,
+    encounterIntro: [
+      'It is coiled nine times around a heap of bones and gold: a worm as thick as a',
+      'barrel, grey and slick, with a mouth that opens sideways. Where old wounds cut',
+      'it, the pieces have crawled back and grown together in lumps and scars.',
+      '',
+      'THE LAMBTON WORM, Level {LVL}, WHICH CANNOT BE CUT!',
+    ],
+    specialAbilities: [],
+  },
   'Giant': {
     type: 'Giant', isUndead: false, isUnique: false,
     minLevel: 5, maxLevel: 20, naturalTier: 4, minDungeonLevel: 2, speed: 0.9,
@@ -1039,7 +1156,7 @@ export const ANCIENT_GHOUL_INTRO = [
 
 export const UNDEAD_TYPES: MonsterType[] = [
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
-  'Death Tyrant', 'Caput Mortuum', 'Barrow-King',
+  'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan',
 ];
 
 export function isUndead(type: MonsterType): boolean {

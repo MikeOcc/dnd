@@ -37,6 +37,12 @@ function placeNear(e: { getLevel: (n: number) => { grid: never; contents: Map<st
       if (!canMove(lvl.grid, x, y, d)) continue;
       const n = { x: x + STEP[d][0], y: y + STEP[d][1] };
       if (lvl.contents.get(`${n.x},${n.y}`)) continue;
+      // Nothing else to deal with around that square (turning on the spot would open it instead).
+      const busy = (['N', 'E', 'S', 'W'] as Direction[]).some(dd => {
+        const q = `${n.x + STEP[dd][0]},${n.y + STEP[dd][1]}`;
+        return q !== k && ['chest', 'altar', 'fountain', 'book', 'shop'].includes(lvl.contents.get(q)?.type ?? '');
+      });
+      if (busy) continue;
       const m = canMove(lvl.grid, n.x, n.y, d) ? { x: n.x + STEP[d][0], y: n.y + STEP[d][1] } : null;
       return { at: { x, y }, n, m: m && !lvl.contents.get(`${m.x},${m.y}`) ? m : null, toward: BACK[d], away: d };
     }

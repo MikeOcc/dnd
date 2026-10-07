@@ -37,6 +37,24 @@ export const LAIRS: Partial<Record<MonsterType, LairText>> = {
     sneak: 'You slip through the smoke, unseen, and strike from the shadows!',
     sneakFail: 'You creep through the smoke... but it was watching all along.',
   },
+  'Lambton Worm': {
+    warning: [
+      'The floor here is slick and stinks of rot. Bones lie everywhere, cracked for',
+      'the marrow, and among them, gold: a great heap of it, half-buried in slime.',
+      '',
+      'Coiled nine times around the heap lies a worm as thick as a barrel.',
+      'Old scars ring its body where it was cut in two, and grew back together.',
+      'One small eye opens.',
+    ],
+    backAway: 'You back away very slowly over the bones.',
+    afterBackAway: 'Behind you, a long, wet sound, as of something uncoiling. Then stillness.',
+    dragged: 'A coil whips out across the floor and drags you in among the bones!',
+    stepIn: 'You step out onto the bones.',
+    charge: 'You charge across the bones before it can uncoil!',
+    chargeFail: 'You charge, but it uncoils faster than anything that size should.',
+    sneak: 'You pick your way between the bones without a sound, and strike!',
+    sneakFail: 'You creep forward... and a bone cracks under your foot.',
+  },
   'Barrow-King': {
     warning: [
       'The passage slopes down between standing stones, and the air goes still and cold.',

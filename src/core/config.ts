@@ -367,7 +367,7 @@ export const HOARD = {
 export const BORAK = {
   PER_LEVEL_MIN: 5, PER_LEVEL_MAX: 10,
   LIGHT: {
-    'Vampire': 1.75, 'Nightwalker': 1.75, 'Spectre': 1.75, 'Wight': 1.75, 'Banshee': 1.75,
+    'Vampire': 1.75, 'Nightwalker': 1.75, 'Penanggalan': 1.75, 'Spectre': 1.75, 'Wight': 1.75, 'Banshee': 1.75,
     'Aboleth': 1.3, 'Mold': 1.3, 'Slime Mold': 1.3, 'Cerebrovore': 1.2,
     'Phoenix': 0.5, 'Unicorn': 0.5, 'Gelatinous Cube': 0.5, 'Hollow Choir': 0.5, 'Djinn': 0.6,
     'Gold Dragon': 0.6, 'Iron Golem': 0.6, 'Pit Fiend': 0.8, 'Balor': 0.8, 'Marilith': 0.8, 'Erinyes': 0.8,
@@ -843,7 +843,7 @@ export const RINGS = {
     'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
     'Hollow Choir', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
     'Lich', 'Caput Mortuum', 'Vampire', 'Death Knight', 'Wizard', 'Medusa', 'Doppelganger',
-    'Orc King', 'Wendigo', 'Banshee', 'Barrow-King',
+    'Orc King', 'Wendigo', 'Banshee', 'Barrow-King', 'Black Annis', 'Nuckelavee', 'Draugr', 'Penanggalan',
   ] as string[],
 } as const;
 

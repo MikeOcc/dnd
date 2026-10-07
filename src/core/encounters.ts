@@ -903,6 +903,12 @@ export const CARRIERS: Record<string, CarryRule> = {
     stones(c, L, rng, out, 2, 5, 'Jewels');
     if (rng.float() < 0.3) magicGem(c, rng, out, ['moonstone', 'opal']);
   } },
+  'Black Annis': { chance: 0.5, find: (c, L, rng, out) => {
+    out.messages.push('In her cave, behind the hanging skins: what her victims carried.');
+    coins(c, rng.int(15, 35) * L, out, 'Purses, still knotted.');
+    if (rng.float() < 0.3) gear(c, rng, out);
+    if (rng.float() < 0.2) magicGem(c, rng, out);
+  } },
   'Goblin': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(3, 10) * L + 5, out, 'A greasy purse of stolen coins, and a tin whistle.'); } },
   'Kobold': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(3, 10) * L + 5, out, 'A pouch of shiny things: copper coins, a brass button, a glass bead.'); } },
   'Bugbear': { chance: 0.3, find: (c, L, rng, out) => { coins(c, rng.int(4, 12) * L + 5, out, 'A sack of loot from its last ambush.'); if (rng.float() < 0.15) gear(c, rng, out); } },

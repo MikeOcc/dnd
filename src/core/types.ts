@@ -81,7 +81,8 @@ export type StatusEffectType =
   | 'flesh-rot'    // a ghoul's disease: value = damage per step; healing works at half strength while it lasts
   | 'corroded'     // a Rust Monster's touch: value = % less weapon damage, until it wears off
   | 'lycanthropy'  // a Werewolf's bite: now and then the beast takes over (doesn't tick with steps)
-  | 'fiend-venom'; // a Pit Fiend's bite: healing works at half strength while it lasts
+  | 'fiend-venom'  // a Pit Fiend's bite: healing works at half strength while it lasts
+  | 'death-mark';  // a Barghest's howl: a blow that leaves you near death kills you instead, until an altar lifts it
 
 export interface StatusEffect {
   type: StatusEffectType;
@@ -205,6 +206,13 @@ export type MonsterType =
   | 'Death Tyrant'
   | 'Caput Mortuum'
   | 'Barrow-King'
+  | 'Grindylow'
+  | 'Black Annis'
+  | 'Barghest'
+  | 'Nuckelavee'
+  | 'Draugr'
+  | 'Penanggalan'
+  | 'Lambton Worm'
   | 'Chimera'
   | 'Pit Fiend'
   | 'Balor'
@@ -295,6 +303,8 @@ export interface Monster {
   witherTurns?: number;      // ...and the monster is withered for this many more turns
   darkTurns?: number;        // the Barrow-King's barrow-dark: your blows land less often
   wight?: boolean;           // the Barrow-King's summoned barrow-wight fights beside him
+  swell?: number;            // a Draugr: how far it has swollen (it grows stronger every turn)
+  searedTurns?: number;      // fire (or holy light) has seared it: no healing or rejoining for a while
   physicalOnlyTurns?: number;  // Asmodeus after a sapphire: his next turns are claws and tail only, no spells
   burnedTurns?: number;
   burrowed?: boolean;      // Mongolian Death Worm: under the floor (blades can't reach it); it erupts on its next turn

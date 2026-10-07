@@ -18,7 +18,7 @@ import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, cur
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
-import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair } from './lairs.js';
+import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
 import { buildStock, cannotBuy, buy, sellables, outpostHours } from './shop.js';
 import { treasureById } from '../content/treasures.js';
@@ -2725,6 +2725,12 @@ export class GameEngine {
       const monster = this.combat!.monster;
       return this.handleDeath(result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`, result.killingBlow, monster.type);
     }
+    // The Barghest's mark: a blow that leaves you near death kills you instead.
+    if (this.char.hp > 0 && this.char.hp < this.char.maxHp * 0.1 && this.char.statusEffects.some(e => e.type === 'death-mark') && result.monsterDamage > 0) {
+      this.char.hp = 0;
+      this.messages.push('', 'Far off, a black dog howls. The omen comes true.');
+      return this.handleDeath('Marked for death by a Barghest, and the omen came true.');
+    }
 
     // Flesh rot keeps eating through a fight, a stage each round.
     const rot = this.char.statusEffects.find(e => e.type === 'flesh-rot');
@@ -2830,7 +2836,7 @@ export class GameEngine {
     }
 
     // A dragon sometimes leaves its hoard (the great ones always do).
-    if ((monster.type.includes('Dragon') || ['Tiamat', 'Dracolich'].includes(monster.type))
+    if ((monster.type.includes('Dragon') || ['Tiamat', 'Dracolich', 'Lambton Worm'].includes(monster.type))
         && (def.isUnique || this.rng.float() < HOARD.CHANCE)) {
       this.messages.push(...this.leaveHoard(monster));
     }
@@ -3300,6 +3306,10 @@ export class GameEngine {
 
     this.dungeonState.usedAltars.add(id);
     const result = resolveAltar(this.char, this.rng);
+    if (this.char.statusEffects.some(e => e.type === 'death-mark')) {
+      this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'death-mark');
+      result.messages.unshift('Light pours over you, and the Barghest\u2019s mark burns away. You feel the omen let go.', '');
+    }
     this.fx.objectArt = { kind: 'altar', moment: 'blessed' };
     const uncursed = breakAmuletCurse(this.char, 'Light pours from the altar and finds the curse at your throat.');
     this.messages = [...result.messages, ...(uncursed.length ? ['', ...uncursed] : []), ...this.levelUp()];
@@ -3314,6 +3324,15 @@ export class GameEngine {
       return this.closeInteraction('You leave the fountain untouched.');
     }
 
+    // On the shallow levels, a Grindylow may be waiting in the water.
+    if (this.char.dungeonLevel <= 3 && this.rng.float() < 0.12) {
+      const lvl = Math.max(1, Math.min(10, this.char.level + this.rng.int(-1, 2)));
+      this.interaction = null;
+      const s = this.beginCombat(createMonster('Grindylow', lvl + this.worldBoost(), `grindy-${Date.now()}`, this.worldBoost() > 0));
+      s.messages = ['As you bend to drink, the water bulges and long green arms burst out of it!', '', ...s.messages];
+      this.messages = s.messages;
+      return s;
+    }
     this.dungeonState.usedFountains.add(id);
     const result = resolveFountain(this.char, this.rng);
     const tainted = !!(result.damageDealt || result.statusAdded || (result.statChanged && result.statChanged.delta < 0));
@@ -3466,6 +3485,7 @@ export class GameEngine {
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
+    if (levelNum === 6) placeLambtonWorm(grid, entrance, exit, contents);
     if (levelNum === 7) centerAsmodeusLair(grid, contents);
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);

@@ -254,7 +254,15 @@ export function playerSpellBackfire(char: Character, monster: Monster, rng: RNG,
 
 // ─── Fireball ────────────────────────────────────────────────────────────────
 
+/** Fire (or holy light) sears these: no healing or rejoining for a few turns. */
+function sear(monster: Monster, messages?: string[]): void {
+  if (monster.type !== 'Penanggalan' && monster.type !== 'Lambton Worm') return;
+  monster.searedTurns = 3;
+  messages?.push(monster.type === 'Penanggalan' ? 'The trailing gut blackens and curls: it cannot draw on its body now.' : 'The flesh chars and blisters where it was cut. Those wounds will not rejoin.');
+}
+
 export function playerFireball(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
+  sear(monster);
   const eff = getEffectiveStats(char);
 
   const base = Math.max(char.level * COMBAT.FIREBALL_LEVEL_MULT, COMBAT.FIREBALL_MIN_LEVEL_POWER)
@@ -1526,12 +1534,13 @@ export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRo
     - (monster.definition.speed - 1.0) * COMBAT.SPEED_RUN_MODIFIER;
   if (mummified) chance -= 0.2;
   if (monster.type === 'Tarrasque') chance -= 0.3;
+  if (monster.type === 'Nuckelavee') chance += 0.3;   // it will not cross running water
   chance = Math.max(0.05, Math.min(0.90, chance));
 
   const messages: string[] = [];
 
   if (rng.float() < chance) {
-    messages.push('You turn and flee!');
+    messages.push(monster.type === 'Nuckelavee' ? 'You turn and flee, splashing across a running stream. It stops dead at the water\u2019s edge and SCREAMS.' : 'You turn and flee!');
     return {
       messages,
       playerDamage: 0,
@@ -2421,6 +2430,7 @@ export function lightFactor(monster: Monster): number {
 /** The Borak fires: the monster's level × d6+4, by how it takes light. Once a fight. */
 export function playerBorak(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   monster.borakUsed = true;
+  sear(monster);
   const roll = rng.int(BORAK.PER_LEVEL_MIN, BORAK.PER_LEVEL_MAX);
   const f = lightFactor(monster);
   const dmg = Math.max(1, Math.round(monster.level * roll * f));

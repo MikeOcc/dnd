@@ -74,6 +74,7 @@ describe('Pictures for chests, altars and fountains', () => {
     e.phase = 'playing';
     expect(e.resolveAltarChoice('a', 'alt-1').fx?.objectArt).toEqual({ kind: 'altar', moment: 'blessed' });
     const moments = new Set<string>();
+    e.char.dungeonLevel = 4;   // (deeper than the Grindylows that lurk in shallow fountains)
     for (let i = 0; i < 300; i++) { e.phase = 'playing'; moments.add(e.resolveFountainChoice('a', `f-${i}`).fx?.objectArt?.moment); }
     expect([...moments].sort()).toEqual(['refreshed', 'tainted']);
     void engine;

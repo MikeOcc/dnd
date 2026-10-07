@@ -2450,6 +2450,200 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  // ── From folklore ──────────────────────────────────────────────────────────
+  // Grindylow: a thin green water-thing, arms far too long, needle teeth,
+  // rising from a pool with weed hanging off it.
+  'Grindylow': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grindylow">
+    <defs>
+    <radialGradient id="gl-skin" cx="45%" cy="30%" r="75%"><stop offset="0" stop-color="#8ab890"/><stop offset="0.6" stop-color="#3a6a48"/><stop offset="1" stop-color="#12261a"/></radialGradient>
+    <linearGradient id="gl-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a5a6a"/><stop offset="1" stop-color="#06141a"/></linearGradient>
+    </defs>
+    <path d="M 0 122 C 30 116, 50 126, 80 120 C 110 116, 130 126, 160 120 L 160 160 L 0 160 Z" fill="url(#gl-water)"/>
+    <path d="M 20 128 q 10 -3 20 0 M 100 130 q 10 -3 20 0 M 60 140 q 8 -2 16 0" stroke="#6aa8b8" stroke-width="0.8" fill="none" opacity="0.6"/>
+    <!-- arms far too long, reaching out of the water -->
+    <path d="M 62 78 C 46 70, 30 60, 16 44 L 22 40 C 34 54, 48 64, 66 70 Z M 98 78 C 114 70, 130 60, 144 44 L 138 40 C 126 54, 112 64, 94 70 Z" fill="url(#gl-skin)" stroke="#0a1a10" stroke-width="0.8"/>
+    <g stroke="#3a6a48" stroke-width="2" stroke-linecap="round" fill="none"><path d="M 16 44 l -8 -6 M 16 44 l -9 0 M 17 42 l -4 -8 M 144 44 l 8 -6 M 144 44 l 9 0 M 143 42 l 4 -8"/></g>
+    <!-- body rising from the pool, weed hanging off it -->
+    <path d="M 60 120 C 56 100, 58 82, 66 72 L 94 72 C 102 82, 104 100, 100 120 Z" fill="url(#gl-skin)" stroke="#0a1a10" stroke-width="1"/>
+    <path d="M 66 74 C 64 90, 66 104, 62 118 M 92 76 C 96 92, 92 106, 96 118" stroke="#2a4a20" stroke-width="2.4" fill="none"/>
+    <path d="M 70 86 Q 80 82 90 86 M 70 94 Q 80 90 90 94" stroke="#1a3a24" stroke-width="1" fill="none"/>
+    <!-- the head: flat, wide-mouthed, round black eyes -->
+    <path d="M 58 52 C 58 36, 68 30, 80 30 C 92 30, 102 36, 102 52 C 102 64, 92 74, 80 74 C 68 74, 58 64, 58 52 Z" fill="url(#gl-skin)" stroke="#0a1a10" stroke-width="1"/>
+    <circle cx="70" cy="48" r="6" fill="#0a0e0c"/><circle cx="90" cy="48" r="6" fill="#0a0e0c"/>
+    <circle cx="68" cy="46" r="1.6" fill="#c8e8d0"/><circle cx="88" cy="46" r="1.6" fill="#c8e8d0"/>
+    <path d="M 64 60 Q 80 72 96 60 Q 80 66 64 60 Z" fill="#100606"/>
+    <path d="M 66 61 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4" stroke="#e8e0c8" stroke-width="0.8" fill="none"/>
+    <path d="M 62 40 C 58 34, 60 28, 66 30 M 98 40 C 102 34, 100 28, 94 30" stroke="#2a4a20" stroke-width="2" fill="none"/>
+    </svg>
+  `,
+
+  // Black Annis: a tall blue-faced hag with one eye and long iron claws,
+  // in front of the skins hung at her cave mouth.
+  'Black Annis': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Black Annis">
+    <defs>
+    <radialGradient id="ba-skin" cx="45%" cy="30%" r="75%"><stop offset="0" stop-color="#7a8ac8"/><stop offset="0.6" stop-color="#3a4a88"/><stop offset="1" stop-color="#10163a"/></radialGradient>
+    <linearGradient id="ba-rags" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2e2a"/><stop offset="1" stop-color="#0e0a08"/></linearGradient>
+    <linearGradient id="ba-iron" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9aa0a8"/><stop offset="1" stop-color="#3a3e46"/></linearGradient>
+    </defs>
+    <!-- skins hung behind her -->
+    <path d="M 14 10 L 30 10 L 32 70 L 24 64 L 16 72 Z M 130 10 L 146 10 L 144 72 L 136 64 L 128 70 Z" fill="#a8906a" opacity="0.5"/>
+    <path d="M 22 10 L 22 4 M 138 10 L 138 4" stroke="#5a4a3a" stroke-width="1"/>
+    <!-- rags -->
+    <path d="M 52 60 C 44 90, 40 122, 36 154 L 124 154 C 120 122, 116 90, 108 60 Z" fill="url(#ba-rags)" stroke="#060404" stroke-width="1"/>
+    <path d="M 46 140 l 6 14 M 66 136 l 2 18 M 92 136 l -2 18 M 112 140 l -6 14" stroke="#060404" stroke-width="2"/>
+    <!-- arms ending in long iron claws -->
+    <path d="M 54 64 C 42 76, 34 92, 30 108 L 38 110 C 42 96, 50 82, 60 74 Z M 106 64 C 118 76, 126 92, 130 108 L 122 110 C 118 96, 110 82, 100 74 Z" fill="url(#ba-skin)" stroke="#0a0e20" stroke-width="0.8"/>
+    <g fill="url(#ba-iron)" stroke="#1a1c20" stroke-width="0.5">
+      <path d="M 30 108 L 18 132 L 24 132 Z M 33 110 L 26 138 L 31 137 Z M 37 110 L 36 140 L 40 138 Z"/>
+      <path d="M 130 108 L 142 132 L 136 132 Z M 127 110 L 134 138 L 129 137 Z M 123 110 L 124 140 L 120 138 Z"/>
+    </g>
+    <!-- the head: blue face, one great eye, wild grey hair -->
+    <path d="M 54 30 C 44 40, 42 60, 46 76 M 106 30 C 116 40, 118 60, 114 76 M 60 22 C 50 30, 46 44, 48 56 M 100 22 C 110 30, 114 44, 112 56" stroke="#b8b8b0" stroke-width="2.4" fill="none"/>
+    <path d="M 62 40 C 60 24, 70 16, 80 16 C 90 16, 100 24, 98 40 C 98 54, 92 64, 80 66 C 68 64, 62 54, 62 40 Z" fill="url(#ba-skin)" stroke="#0a0e20" stroke-width="1"/>
+    <ellipse cx="80" cy="36" rx="8" ry="6" fill="#f0e8c0"/><circle cx="80" cy="36" r="3.4" fill="#a01010"/><circle cx="80" cy="36" r="1.4" fill="#000"/>
+    <path d="M 70 32 Q 80 26 90 32" stroke="#0a0e20" stroke-width="2" fill="none"/>
+    <path d="M 80 42 L 78 50 L 82 50 Z" fill="#1a2250"/>
+    <path d="M 70 56 Q 80 62 90 56 Q 80 60 70 56 Z" fill="#100406"/>
+    <path d="M 72 56 l 1 4 l 2 -3 M 84 57 l 2 3 l 1 -4" stroke="#e8dcb8" stroke-width="1" fill="none"/>
+    </svg>
+  `,
+
+  // Barghest: a huge black dog, eyes like burning coals, standing very still.
+  'Barghest': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Barghest">
+    <defs>
+    <radialGradient id="bg-fur" cx="45%" cy="30%" r="80%"><stop offset="0" stop-color="#2a2628"/><stop offset="0.6" stop-color="#121012"/><stop offset="1" stop-color="#040304"/></radialGradient>
+    <radialGradient id="bg-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.4" stop-color="#ff6010"/><stop offset="1" stop-color="#600800" stop-opacity="0"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="56" ry="5" fill="#000" opacity="0.6"/>
+    <!-- legs and body, the hackles up -->
+    <path d="M 42 100 L 38 150 L 48 150 L 52 108 Z M 60 104 L 58 150 L 68 150 L 70 108 Z M 100 104 L 102 150 L 112 150 L 108 104 Z M 116 100 L 122 150 L 132 150 L 126 98 Z" fill="url(#bg-fur)"/>
+    <path d="M 36 84 C 34 100, 44 112, 62 114 L 118 112 C 134 108, 138 94, 132 82 C 116 70, 52 70, 36 84 Z" fill="url(#bg-fur)" stroke="#000" stroke-width="1"/>
+    <path d="M 52 72 l 2 -6 l 3 6 l 3 -7 l 3 7 l 3 -6 l 3 6 l 3 -7 l 3 7 l 3 -6 l 3 6" stroke="#2a2628" stroke-width="2" fill="none"/>
+    <path d="M 132 86 C 142 80, 148 70, 146 60" stroke="#121012" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- the head, low and still -->
+    <path d="M 30 70 L 24 50 L 38 62 Z M 62 66 L 66 46 L 56 60 Z" fill="#121012"/>
+    <path d="M 24 76 C 22 62, 34 54, 48 56 C 62 58, 68 66, 66 78 C 64 90, 54 96, 40 96 C 28 94, 24 86, 24 76 Z" fill="url(#bg-fur)" stroke="#000" stroke-width="1"/>
+    <path d="M 24 84 C 18 86, 14 90, 16 96 C 22 100, 32 98, 38 94 Z" fill="#121012" stroke="#000" stroke-width="0.8"/>
+    <circle cx="36" cy="72" r="7" fill="url(#bg-eye)"/><circle cx="54" cy="72" r="7" fill="url(#bg-eye)"/>
+    <circle cx="36" cy="72" r="2.4" fill="#fff8d0"/><circle cx="54" cy="72" r="2.4" fill="#fff8d0"/>
+    <ellipse cx="16" cy="90" rx="2.4" ry="1.6" fill="#000"/>
+    <path d="M 22 96 l 2 4 l 2 -4 M 28 97 l 2 4 l 2 -4" stroke="#e8e0c8" stroke-width="1" fill="none"/>
+    </svg>
+  `,
+
+  // Nuckelavee: a skinless horse with a skinless rider grown out of its
+  // back, long arms trailing, black blood in yellow veins.
+  'Nuckelavee': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nuckelavee">
+    <defs>
+    <radialGradient id="nk-meat" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="#d86a5a"/><stop offset="0.6" stop-color="#8a2a22"/><stop offset="1" stop-color="#3a0a08"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="64" ry="5" fill="#000" opacity="0.6"/>
+    <!-- horse legs -->
+    <path d="M 36 100 L 32 150 L 42 150 L 46 104 Z M 52 104 L 52 150 L 62 150 L 62 104 Z M 104 104 L 106 150 L 116 150 L 114 104 Z M 120 100 L 126 150 L 136 150 L 128 98 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="0.8"/>
+    <!-- the horse body, skinless -->
+    <path d="M 28 80 C 26 98, 40 110, 60 110 L 116 110 C 134 108, 140 96, 134 80 C 118 66, 44 66, 28 80 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="1"/>
+    <g stroke="#e0c040" stroke-width="1" fill="none" opacity="0.8"><path d="M 40 84 C 60 80, 80 90, 110 84"/><path d="M 46 96 C 66 92, 90 100, 122 94"/></g>
+    <g stroke="#100404" stroke-width="1.4" fill="none"><path d="M 40 84 C 60 80, 80 90, 110 84"/></g>
+    <path d="M 52 90 q 8 -4 16 0 M 90 94 q 8 -4 16 0" stroke="#5a0a0a" stroke-width="1.4" fill="none"/>
+    <!-- the horse's head, one burning eye, a great mouth -->
+    <path d="M 30 82 C 20 70, 14 56, 18 44 C 26 40, 34 50, 40 62 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="1"/>
+    <circle cx="22" cy="50" r="3" fill="#ff4010"/>
+    <path d="M 16 46 C 12 50, 12 56, 16 58" stroke="#100404" stroke-width="2" fill="none"/>
+    <!-- the rider, grown out of the back, arms trailing to the ground -->
+    <path d="M 84 74 C 80 56, 82 40, 90 32 C 98 40, 100 56, 96 74 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="1"/>
+    <path d="M 86 46 C 74 66, 66 96, 62 140 L 66 140 C 70 100, 78 70, 90 52 Z M 94 46 C 106 66, 114 96, 118 140 L 114 140 C 110 100, 102 70, 90 52 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="0.8"/>
+    <path d="M 82 30 C 78 18, 84 10, 90 10 C 96 10, 102 18, 98 30 C 96 36, 92 40, 90 40 C 88 40, 84 36, 82 30 Z" fill="url(#nk-meat)" stroke="#2a0606" stroke-width="1"/>
+    <circle cx="86" cy="24" r="2.2" fill="#f0e8c0"/><circle cx="94" cy="24" r="2.2" fill="#f0e8c0"/>
+    <path d="M 86 32 Q 90 36 94 32" stroke="#100404" stroke-width="1.4" fill="none"/>
+    <!-- its breath, sickly -->
+    <g fill="#8aa040" opacity="0.3"><circle cx="10" cy="62" r="6"/><circle cx="6" cy="70" r="5"/></g>
+    </svg>
+  `,
+
+  // Draugr: a bloated, blue-black dead warrior in grave-clothes, swelling.
+  'Draugr': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Draugr">
+    <defs>
+    <radialGradient id="dr-skin" cx="45%" cy="30%" r="80%"><stop offset="0" stop-color="#5a6a8a"/><stop offset="0.6" stop-color="#2a344a"/><stop offset="1" stop-color="#0a0e18"/></radialGradient>
+    <linearGradient id="dr-cloth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8470"/><stop offset="1" stop-color="#2a2820"/></linearGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="54" ry="5" fill="#000" opacity="0.6"/>
+    <path d="M 54 112 L 50 152 L 66 152 L 70 116 Z M 90 116 L 94 152 L 110 152 L 106 112 Z" fill="url(#dr-skin)"/>
+    <!-- a bloated body bursting its grave-clothes -->
+    <path d="M 40 60 C 28 84, 32 108, 50 118 L 110 118 C 128 108, 132 84, 120 60 C 104 48, 56 48, 40 60 Z" fill="url(#dr-skin)" stroke="#05070c" stroke-width="1"/>
+    <path d="M 46 64 L 60 118 M 114 64 L 100 118" stroke="url(#dr-cloth)" stroke-width="10"/>
+    <path d="M 52 70 l 6 6 M 108 72 l -6 6 M 66 100 l 4 4" stroke="#05070c" stroke-width="1.2"/>
+    <!-- arms like logs, a rusted sword -->
+    <path d="M 42 64 C 28 76, 22 94, 26 110 L 38 108 C 36 94, 40 80, 52 72 Z M 118 64 C 132 76, 138 94, 134 110 L 122 108 C 124 94, 120 80, 108 72 Z" fill="url(#dr-skin)" stroke="#05070c" stroke-width="0.8"/>
+    <path d="M 128 108 L 150 60" stroke="#7a5a3a" stroke-width="4"/><path d="M 122 112 L 134 104" stroke="#3a2a1a" stroke-width="4"/>
+    <!-- the head: bloated, dead-eyed, hair and beard still on it -->
+    <path d="M 60 40 C 58 22, 68 14, 80 14 C 92 14, 102 22, 100 40 C 100 52, 92 60, 80 62 C 68 60, 60 52, 60 40 Z" fill="url(#dr-skin)" stroke="#05070c" stroke-width="1"/>
+    <path d="M 62 26 C 66 16, 94 16, 98 26" stroke="#c8c0a0" stroke-width="3" fill="none"/>
+    <circle cx="72" cy="36" r="4" fill="#d8dcd0"/><circle cx="88" cy="36" r="4" fill="#d8dcd0"/>
+    <circle cx="72" cy="36" r="1.2" fill="#8a9088"/><circle cx="88" cy="36" r="1.2" fill="#8a9088"/>
+    <path d="M 66 50 C 70 64, 90 64, 94 50 C 92 70, 68 70, 66 50 Z" fill="#c8c0a0"/>
+    <path d="M 72 50 Q 80 54 88 50" stroke="#05070c" stroke-width="1.4" fill="none"/>
+    </svg>
+  `,
+
+  // Penanggalan: a woman's head flying free, long hair floating, its
+  // heart and lungs and a coil of gut hanging below.
+  'Penanggalan': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Penanggalan">
+    <defs>
+    <radialGradient id="pn-skin" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#f0d8c8"/><stop offset="1" stop-color="#9a7060"/></radialGradient>
+    <radialGradient id="pn-gut" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#e88a8a"/><stop offset="0.6" stop-color="#9a2a3a"/><stop offset="1" stop-color="#3a0610"/></radialGradient>
+    </defs>
+    <!-- long black hair floating up and out -->
+    <path d="M 64 30 C 50 18, 36 16, 24 22 C 38 24, 48 32, 56 44 M 96 30 C 110 18, 124 16, 136 22 C 122 24, 112 32, 104 44 M 70 22 C 64 8, 54 2, 44 4 M 90 22 C 96 8, 106 2, 116 4" stroke="#0a0806" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- the head -->
+    <path d="M 62 40 C 60 24, 70 16, 80 16 C 90 16, 100 24, 98 40 C 98 54, 90 64, 80 66 C 70 64, 62 54, 62 40 Z" fill="url(#pn-skin)" stroke="#3a2018" stroke-width="1"/>
+    <path d="M 64 26 C 70 18, 90 18, 96 26 C 90 22, 70 22, 64 26 Z" fill="#0a0806"/>
+    <ellipse cx="72" cy="38" rx="4.4" ry="3" fill="#fff"/><ellipse cx="88" cy="38" rx="4.4" ry="3" fill="#fff"/>
+    <circle cx="72" cy="38" r="2" fill="#2a0606"/><circle cx="88" cy="38" r="2" fill="#2a0606"/>
+    <path d="M 80 42 L 78 48 L 82 48 Z" fill="#9a7060"/>
+    <path d="M 72 54 Q 80 60 88 54 Q 80 57 72 54 Z" fill="#6a0a10"/>
+    <path d="M 74 56 q 0 4 -1 7 M 86 56 q 1 5 0 8" stroke="#a00a18" stroke-width="1.4" fill="none"/>
+    <!-- hanging below: heart, lungs, a long coil of gut, dripping -->
+    <ellipse cx="72" cy="78" rx="7" ry="10" fill="url(#pn-gut)"/><ellipse cx="88" cy="78" rx="7" ry="10" fill="url(#pn-gut)"/>
+    <path d="M 80 74 C 74 76, 74 86, 80 90 C 86 86, 86 76, 80 74 Z" fill="#a01020"/>
+    <path d="M 80 90 C 70 100, 92 108, 78 118 C 64 128, 92 134, 80 146 C 74 152, 82 156, 80 160" stroke="url(#pn-gut)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <g fill="#a00a18"><circle cx="76" cy="124" r="1.4"/><circle cx="86" cy="140" r="1.2"/><circle cx="72" cy="100" r="1.2"/></g>
+    </svg>
+  `,
+
+  // The Lambton Worm: a vast grey worm coiled on a heap of bones and gold,
+  // old scars ringing it where it was cut and grew back together.
+  'Lambton Worm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lambton Worm">
+    <defs>
+    <linearGradient id="lw-hide" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a9a8a"/><stop offset="0.5" stop-color="#5a5a4c"/><stop offset="1" stop-color="#1e1e18"/></linearGradient>
+    <radialGradient id="lw-gold" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#f0d080"/><stop offset="1" stop-color="#6a4a10"/></radialGradient>
+    </defs>
+    <!-- the hoard and the bones -->
+    <ellipse cx="80" cy="146" rx="62" ry="12" fill="url(#lw-gold)"/>
+    <g stroke="#d8ccaa" stroke-width="2.4" stroke-linecap="round"><path d="M 26 146 l 14 -4 M 120 148 l 16 -2 M 60 152 l 12 2"/></g>
+    <path d="M 96 140 C 94 134, 100 130, 106 132 C 110 134, 110 140, 108 144 Z" fill="#d8ccaa"/>
+    <!-- coils -->
+    <path d="M 20 136 C 20 116, 140 116, 140 136 C 140 150, 20 150, 20 136 Z" fill="url(#lw-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <path d="M 30 116 C 30 98, 130 98, 130 116 C 130 128, 30 128, 30 116 Z" fill="url(#lw-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <!-- old scars where it was cut and grew back -->
+    <g stroke="#3a3a30" stroke-width="2" fill="none"><path d="M 50 120 q 2 -8 0 -16 M 104 120 q -2 -8 0 -16 M 70 140 q 2 -8 0 -14"/></g>
+    <g stroke="#c8a0a0" stroke-width="0.8" fill="none" opacity="0.7"><path d="M 52 120 q 2 -8 0 -16 M 106 120 q -2 -8 0 -16"/></g>
+    <!-- the neck rising, and the head with its sideways mouth -->
+    <path d="M 100 104 C 112 84, 110 60, 96 44 L 76 44 C 84 60, 86 82, 80 104 Z" fill="url(#lw-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <path d="M 90 64 q 4 -4 8 0 M 88 80 q 4 -4 8 0" stroke="#3a3a30" stroke-width="2" fill="none"/>
+    <path d="M 70 46 C 66 26, 76 12, 88 12 C 100 12, 108 26, 104 46 C 100 54, 74 54, 70 46 Z" fill="url(#lw-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <path d="M 74 24 C 80 34, 84 40, 86 50 L 92 50 C 90 40, 86 32, 80 22 Z" fill="#2a0606"/>
+    <path d="M 76 26 l 4 2 M 79 32 l 4 1 M 82 38 l 4 1 M 84 44 l 4 0" stroke="#e8e0c8" stroke-width="1.2"/>
+    <circle cx="96" cy="26" r="2.6" fill="#e8c040"/><circle cx="96" cy="26" r="1" fill="#000"/>
+    </svg>
+  `,
+
   // The Barrow-King: a tall dead king in rotted mail and a rusted crown,
   // cold stars for eyes, an ancient sword, frost spreading at his feet.
   'Barrow-King': `
@@ -5463,6 +5657,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Grindylow': 0.95, 'Black Annis': 1.15, 'Barghest': 1.15, 'Nuckelavee': 1.3, 'Draugr': 1.25, 'Penanggalan': 1.0, 'Lambton Worm': 1.5,
   'Barrow-King': 1.3,
   'Mongolian Death Worm': 1.3,
   'Giant Leech': 1.1,

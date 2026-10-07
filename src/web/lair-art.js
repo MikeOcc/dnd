@@ -140,6 +140,32 @@ const LAIR_ART = {
   // An empty throne built of a hundred captured shields, in a towering hall
   // hung with red-eye banners, lit by torches, with war drums at the sides.
   // The Orc King is not shown.
+  // The Lambton Worm's lair: bones and a heap of slimed gold, and a worm
+  // coiled nine times around it, scarred where it was cut and grew back.
+  'Lambton Worm': `
+    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A cave floor strewn with bones and slimed gold, and coiled around it a vast scarred grey worm, one small eye open">
+    <defs>
+      <radialGradient id="lwl-glow" cx="50%" cy="70%" r="60%"><stop offset="0" stop-color="#6a5a20" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="lwl-hide" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8a7a"/><stop offset="1" stop-color="#1e1e18"/></linearGradient>
+      <radialGradient id="lwl-gold" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#f0d080"/><stop offset="1" stop-color="#6a4a10"/></radialGradient>
+    </defs>
+    <rect width="400" height="240" fill="#060605"/>
+    <rect width="400" height="240" fill="url(#lwl-glow)"/>
+    <path d="M 0 60 C 60 30, 120 50, 200 36 C 280 24, 340 50, 400 40 L 400 0 L 0 0 Z" fill="#0e0e0c"/>
+    <ellipse cx="200" cy="184" rx="110" ry="22" fill="url(#lwl-gold)" opacity="0.9"/>
+    <g fill="#d8ccaa" stroke="#3a3020" stroke-width="0.6">
+      <path d="M 70 210 l 30 -6 l 2 4 l -30 6 Z"/><path d="M 300 212 l 30 4 l -1 4 l -30 -4 Z"/><path d="M 120 220 l 20 2 l 0 4 l -20 -2 Z"/>
+      <path d="M 250 190 C 248 180, 258 174, 266 178 C 272 180, 272 190, 268 196 Z"/>
+    </g>
+    ${[0, 1, 2].map(i => `<ellipse cx="200" cy="${178 - i * 22}" rx="${140 - i * 22}" ry="${26 - i * 3}" fill="none" stroke="url(#lwl-hide)" stroke-width="${22 - i * 3}"/>`).join('')}
+    <g stroke="#3a3a30" stroke-width="2.4" fill="none"><path d="M 96 170 q 4 -12 0 -24 M 300 170 q -4 -12 0 -24 M 150 130 q 3 -10 0 -18 M 250 130 q -3 -10 0 -18"/></g>
+    <path d="M 236 112 C 250 90, 252 70, 240 52 L 222 54 C 230 70, 230 90, 220 112 Z" fill="url(#lwl-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <ellipse cx="232" cy="48" rx="22" ry="14" fill="url(#lwl-hide)" stroke="#0e0e0a" stroke-width="1"/>
+    <path d="M 216 44 C 222 50, 230 54, 240 56" stroke="#2a0606" stroke-width="3" fill="none"/>
+    <circle cx="242" cy="42" r="2.4" fill="#e8c040"/><circle cx="242" cy="42" r="1" fill="#000"/>
+    </svg>
+  `,
+
   // The Barrow-King's barrow: a low dome of piled stones, grave-goods
   // glinting, a tall figure on a stone bier, frost creeping across the floor.
   'Barrow-King': `
