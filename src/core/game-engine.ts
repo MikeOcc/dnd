@@ -10,7 +10,7 @@ import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.j
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
 import type { SpellId } from './spells.js';
-import type { RingId, SceneData, SceneObject, Amulet, AmuletStat } from './types.js';
+import type { RingId, SceneData, SceneObject, Amulet, AmuletStat, Weapon, Armor } from './types.js';
 import { playerAttack, playerFireball, playerAcid, playerLightning, playerFrost, playerPoison, playerOpal, playerHeal, playerPray, playerRun, playerHeld, playerBanish, playerSapphireOnAsmodeus, playerReadyRing, playerBackfireRing, playerSpellBackfire, spellBackfireChance, calculateXPReward, playerPowerAttack, playerShieldBash, playerCleave, playerBattleCry, playerWhirlwind, attacksPerRound, playerPotion, monsterFirstStrike, playerScare, petUnicorn, playerStilledHour, playerBorak, playerWitherRing } from './combat.js';
 import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } from './spells.js';
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
@@ -431,40 +431,60 @@ export class GameEngine {
     const c = this.char;
     this.phase = 'inventory';
 
-    const rows: { name: string; type: string; qty: string }[] = [
-      { name: 'Healing Potion', type: 'Consumable', qty: `x${c.inventory.potions}` },
-      { name: 'Gold', type: 'Currency', qty: `${c.gold}` },
-      { name: 'Magic Tome', type: 'Consumable — Arcane Tome', qty: `x${c.inventory.books}` },
-      { name: 'Ruby', type: 'Gem — Teleport Away', qty: `x${c.inventory.gems.ruby}` },
-      { name: 'Sapphire', type: 'Gem — Banish Monster', qty: `x${c.inventory.gems.sapphire}` },
-      { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${c.inventory.gems.diamond}` },
-      { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${c.inventory.gems.opal}` },
-      { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${c.inventory.gems.emerald}` },
-      ...(c.inventory.gems.moonstone ? [{ name: 'Moonstone', type: 'Gem — Planar Step, once (Y)', qty: `x${c.inventory.gems.moonstone}` }] : []),
-      ...(c.inventory.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
-      ...(c.inventory.weapons ?? []).map(w => ({ name: `${gearName(w)}${bestWeapon(c) === w ? ' (wielded)' : ''}`, type: `Weapon: ${w.kind}${w.bonus ? `, +${w.bonus} to hit and damage` : ''}${canUseGear(c, w.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
-      ...(c.inventory.armor ?? []).map(a => ({ name: `${gearName(a)}${wornArmor(c).body === a || wornArmor(c).shield === a ? ' (worn)' : ''}`, type: `Armour: ${a.kind}${a.bonus ? ` +${a.bonus}` : ''}${canUseGear(c, a.kind) ? '' : ' (warriors only)'}`, qty: 'x1' })),
-      ...(c.inventory.amulets ?? []).map(a => ({ name: `${amuletName(a, false)}${a.worn ? ' (worn)' : ''}`, type: a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown', qty: 'x1' })),
-      ...this.ringsOwned().map(r => {
-        const info = RINGS_INFO[r];
-        const state = isProtectionRing(r) ? (c.inventory.wornRings?.includes(r) ? ' (worn)' : ' (carried)') : (c.inventory.readiedRing === r ? ' (readied)' : '');
-        const name = `${r === 'borak' ? 'The Borak' : info.name[0].toUpperCase() + info.name.slice(1)}${state}`;
-        const qty = r === 'escape' ? `x${c.inventory.starRings} (${c.inventory.starCharges} use${c.inventory.starCharges === 1 ? '' : 's'} left)` : 'x1';
-        return { name, type: `Ring: ${info.power}`, qty };
-      }),
-    ];
-    const nameW = Math.max(...rows.map(r => r.name.length), 'ITEM'.length) + 2;
-    const typeW = Math.max(...rows.map(r => r.type.length), 'TYPE'.length) + 2;
+    type Row = { name: string; type: string; qty: string };
+    const inv = c.inventory;
+    const weapon = bestWeapon(c);
+    const armour = wornArmor(c);
+    const ringName = (r: RingId) => r === 'borak' ? 'The Borak' : RINGS_INFO[r].name[0].toUpperCase() + RINGS_INFO[r].name.slice(1);
+    const ringQty = (r: RingId) => r === 'escape' ? `x${inv.starRings} (${inv.starCharges} use${inv.starCharges === 1 ? '' : 's'} left)` : 'x1';
+    const weaponType = (w: Weapon) => `Weapon: ${w.kind}${w.bonus ? `, +${w.bonus} to hit and damage` : ''}${canUseGear(c, w.kind) ? '' : ' (warriors only)'}`;
+    const armourType = (a: Armor) => `Armour: ${a.kind}${a.bonus ? ` +${a.bonus}` : ''}${canUseGear(c, a.kind) ? '' : ' (warriors only)'}`;
+    const amuletType = (a: Amulet) => a.known ? `Amulet: ${amuletDelta(a) > 0 ? '+' : ''}${amuletDelta(a)} ${a.stat}${a.cursed ? ', CURSED' : ''}` : 'Amulet: unknown';
+    const owned = this.ringsOwned();
 
-    const noGems = Object.values(c.inventory.gems).every(n => n === 0);
+    // ► Worn and in use: what is actually working for you right now.
+    const using: Row[] = [
+      ...(weapon ? [{ name: `${gearName(weapon)}`, type: `WIELDED  ${weaponType(weapon)}`, qty: 'x1' }] : []),
+      ...[armour.body, armour.shield].filter(Boolean).map(a => ({ name: gearName(a!), type: `WORN     ${armourType(a!)}`, qty: 'x1' })),
+      ...(inv.amulets ?? []).filter(a => a.worn).map(a => ({ name: amuletName(a, false), type: `WORN     ${amuletType(a)}`, qty: 'x1' })),
+      ...owned.filter(r => isProtectionRing(r) && inv.wornRings?.includes(r)).map(r => ({ name: ringName(r), type: `WORN     Ring: ${RINGS_INFO[r].power}`, qty: ringQty(r) })),
+      ...owned.filter(r => !isProtectionRing(r) && inv.readiedRing === r).map(r => ({ name: ringName(r), type: `READIED  Ring: ${RINGS_INFO[r].power}`, qty: ringQty(r) })),
+    ];
+    // Carried, not in use.
+    const carried: Row[] = [
+      ...(inv.weapons ?? []).filter(w => w !== weapon).map(w => ({ name: gearName(w), type: weaponType(w), qty: 'x1' })),
+      ...(inv.armor ?? []).filter(a => a !== armour.body && a !== armour.shield).map(a => ({ name: gearName(a), type: armourType(a), qty: 'x1' })),
+      ...(inv.amulets ?? []).filter(a => !a.worn).map(a => ({ name: amuletName(a, false), type: amuletType(a), qty: 'x1' })),
+      ...owned.filter(r => isProtectionRing(r) ? !inv.wornRings?.includes(r) : inv.readiedRing !== r).map(r => ({ name: ringName(r), type: `Ring: ${RINGS_INFO[r].power}`, qty: ringQty(r) })),
+      ...(inv.treasures ?? []).map(id => ({ name: treasureById(id)?.name ?? id, type: 'Treasure of Zork', qty: 'x1' })),
+    ];
+    const supplies: Row[] = [
+      { name: 'Healing Potion', type: 'Consumable', qty: `x${inv.potions}` },
+      { name: 'Gold', type: 'Currency', qty: `${c.gold}` },
+      { name: 'Magic Tome', type: 'Consumable — Arcane Tome', qty: `x${inv.books}` },
+      { name: 'Ruby', type: 'Gem — Teleport Away', qty: `x${inv.gems.ruby}` },
+      { name: 'Sapphire', type: 'Gem — Banish Monster', qty: `x${inv.gems.sapphire}` },
+      { name: 'Diamond', type: 'Gem — Reveal Map', qty: `x${inv.gems.diamond}` },
+      { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${inv.gems.opal}` },
+      { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${inv.gems.emerald}` },
+      ...(inv.gems.moonstone ? [{ name: 'Moonstone', type: 'Gem — Planar Step, once (Y)', qty: `x${inv.gems.moonstone}` }] : []),
+    ];
+    const all = [...using, ...carried, ...supplies];
+    const nameW = Math.max(...all.map(r => r.name.length), 'ITEM'.length) + 4;
+    const typeW = Math.max(...all.map(r => r.type.length), 'TYPE'.length) + 2;
+    const line = (r: Row, mark: string) => `${(mark + r.name).padEnd(nameW)}${r.type.padEnd(typeW)}${r.qty}`;
+
     this.messages = [
       `══ INVENTORY ═════════════════════════════`,
-      `${'ITEM'.padEnd(nameW)}${'TYPE'.padEnd(typeW)}QTY`,
-      `${'-'.repeat(nameW - 1)} ${'-'.repeat(typeW - 1)} ---`,
-      ...rows.map(r => `${r.name.padEnd(nameW)}${r.type.padEnd(typeW)}${r.qty}`),
-      ...(c.inventory.potions === 0 && c.inventory.books === 0 && noGems
-        ? [``, `Your pack holds nothing but your coin purse.`]
-        : []),
+      ``,
+      `── WORN & IN USE ──`,
+      ...(using.length ? using.map(r => line(r, '► ')) : ['  (nothing: you fight bare-handed, unarmoured, no rings or amulet)']),
+      ...(carried.length ? [``, `── CARRIED, NOT IN USE ──  (K: gear, J: rings, A: amulets)`, ...carried.map(r => line(r, '  '))] : []),
+      ``,
+      `── SUPPLIES ──`,
+      ...supplies.map(r => line(r, '  ')),
+      ...(inv.potions === 0 && inv.books === 0 && Object.values(inv.gems).every(n => n === 0)
+        ? [``, `Your pack holds nothing but your coin purse.`] : []),
     ];
     return this.getState();
   }

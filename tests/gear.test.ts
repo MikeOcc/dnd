@@ -196,3 +196,30 @@ describe('Choosing gear by hand', () => {
     expect(bestWeapon(repo.loadCharacter(e.char.id)!)!.bonus).toBe(0);
   });
 });
+
+describe('The inventory screen', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('lists what is worn and in use first, marked, apart from what is only carried', () => {
+    const engine = new GameEngine(new Repository(db));
+    engine.startNameEntry(); engine.submitName('Kit'); engine.acceptCharacter('warrior');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro(); e.phase = 'playing';
+    e.char.inventory.weapons = [w('sword', 2), w('mace', 0)];
+    e.char.inventory.armor = [a('chain', 1)];
+    e.char.inventory.rings = ['fire', 'cold', 'wither']; e.char.inventory.wornRings = ['fire']; e.char.inventory.readiedRing = 'wither';
+    const text = engine.showInventory().messages.join('\n');
+    const [using, rest] = text.split('CARRIED, NOT IN USE');
+    expect(using).toMatch(/► .*sword.*WIELDED/);
+    expect(using).toMatch(/► .*chain.*WORN/);
+    expect(using).toMatch(/► Ruby ring .*WORN/);
+    expect(using).toMatch(/► Bloodstone ring .*READIED/);
+    expect(rest).toContain('mace');
+    expect(rest).toContain('Aquamarine ring');
+    expect(rest).not.toContain('►');
+  });
+});

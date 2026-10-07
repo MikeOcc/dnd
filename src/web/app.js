@@ -186,7 +186,8 @@ function applyState(state) {
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
-  viewContainer.classList.toggle('hidden', !isPlaying || !state.view || phase === 'map');
+  // The inventory and status screens get the whole panel too, so nothing is hidden below the view.
+  viewContainer.classList.toggle('hidden', !isPlaying || !state.view || ['map', 'inventory', 'status'].includes(phase));
   movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase) && !(phase === 'map' && arrowsShown));
   movementControls.classList.toggle('map-walk', phase === 'map');
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
@@ -319,7 +320,9 @@ function applyState(state) {
   msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
   msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
   document.getElementById('message-area').classList.toggle('map-mode', phase === 'map');
+  document.getElementById('message-area').classList.toggle('sheet-mode', phase === 'inventory' || phase === 'status');
   if (phase === 'map') centerMapOnPlayer();
+  else if (phase === 'inventory' || phase === 'status') { const a = document.getElementById('message-area'); a.scrollTop = 0; requestAnimationFrame(() => { a.scrollTop = 0; }); }   // read from the top
   else scrollMessagesToEnd();
   updatePannable();
 

@@ -938,3 +938,6 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 /* The Stilled Hour: the monster hangs in stopped time. */
 #monster-portrait.time-stopped svg { filter: grayscale(0.85) sepia(0.2) hue-rotate(180deg) brightness(0.9) contrast(1.1); transition: filter 600ms ease; }
 #monster-portrait.time-stopped *, #monster-portrait.time-stopped { animation-play-state: paused !important; }
+
+/* The inventory and status screens: the whole panel, read from the top. */
+#message-area.sheet-mode { min-height: 50vh; max-height: 72vh; overflow: auto; }
