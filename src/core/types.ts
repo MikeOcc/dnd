@@ -213,6 +213,8 @@ export type MonsterType =
   | 'Draugr'
   | 'Penanggalan'
   | 'Lambton Worm'
+  | 'Fetch'
+  | 'Bone Vortex'
   | 'Chimera'
   | 'Pit Fiend'
   | 'Balor'

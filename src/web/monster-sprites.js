@@ -2450,6 +2450,74 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  // The Fetch: your double, carrying a light toward you: dressed as you,
+  // your face, but the eyes flat as paint and hairline cracks across it
+  // like a mirror about to break.
+  'Fetch': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fetch">
+    <defs>
+    <linearGradient id="ft-cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a5a"/><stop offset="1" stop-color="#0c1218"/></linearGradient>
+    <radialGradient id="ft-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#e8e4dc"/><stop offset="1" stop-color="#8a8680"/></radialGradient>
+    <radialGradient id="ft-light" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8f4ff" stop-opacity="0.9"/><stop offset="1" stop-color="#a8c8e8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ft-sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.2"/></linearGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="40" ry="5" fill="#000" opacity="0.6"/>
+    <!-- the cloak, as yours is -->
+    <path d="M 52 54 C 44 84, 40 118, 38 150 L 122 150 C 120 118, 116 84, 108 54 C 98 46, 62 46, 52 54 Z" fill="url(#ft-cloak)" stroke="#05080a" stroke-width="1"/>
+    <path d="M 80 56 L 80 150" stroke="#05080a" stroke-width="1" opacity="0.6"/>
+    <!-- one hand holding up a pale light -->
+    <path d="M 106 64 C 118 70, 124 80, 126 90 L 120 92 C 116 82, 110 76, 102 72 Z" fill="url(#ft-cloak)"/>
+    <circle cx="124" cy="96" r="16" fill="url(#ft-light)"/>
+    <path d="M 120 92 L 128 92 L 127 102 L 121 102 Z" fill="#c8d8e8" stroke="#5a6a7a" stroke-width="0.6"/>
+    <!-- your face, the eyes flat as paint -->
+    <path d="M 64 34 C 62 18, 70 10, 80 10 C 90 10, 98 18, 96 34 C 96 46, 90 56, 80 58 C 70 56, 64 46, 64 34 Z" fill="url(#ft-face)" stroke="#3a3a3a" stroke-width="1"/>
+    <path d="M 64 22 C 68 12, 92 12, 96 22 C 90 16, 70 16, 64 22 Z" fill="#3a2a1a"/>
+    <ellipse cx="72" cy="32" rx="4.6" ry="2.6" fill="#a8b0b8"/><ellipse cx="88" cy="32" rx="4.6" ry="2.6" fill="#a8b0b8"/>
+    <path d="M 68 28 Q 72 26 76 28 M 84 28 Q 88 26 92 28" stroke="#3a3a3a" stroke-width="1.2" fill="none"/>
+    <path d="M 80 34 L 78 42 L 82 42" stroke="#6a6660" stroke-width="1" fill="none"/>
+    <path d="M 73 48 Q 80 52 87 48" stroke="#6a4a44" stroke-width="1.4" fill="none"/>
+    <!-- the cracks, as in a mirror about to break -->
+    <path d="M 66 20 L 74 30 L 70 40 L 78 50 M 74 30 L 84 26 L 94 34 M 84 26 L 88 14" stroke="#ffffff" stroke-width="0.6" fill="none" opacity="0.8"/>
+    <path d="M 64 34 C 62 18, 70 10, 80 10 C 90 10, 98 18, 96 34 C 96 46, 90 56, 80 58 C 70 56, 64 46, 64 34 Z" fill="url(#ft-sheen)"/>
+    </svg>
+  `,
+
+  // The Bone Vortex: a storm of skulls, ribs and long bones whirling in a
+  // spiral, pulling together into a shape at its heart.
+  'Bone Vortex': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bone Vortex">
+    <defs>
+    <radialGradient id="bv-heart" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2a2418"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bv-skull" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#f0e8cc"/><stop offset="1" stop-color="#8a7a58"/></radialGradient>
+    </defs>
+    <circle cx="80" cy="80" r="74" fill="url(#bv-heart)"/>
+    <!-- the spiral of whirling bones -->
+    <g stroke="#d8ccaa" stroke-linecap="round" fill="none">
+      ${Array.from({ length: 34 }, (_, i) => {
+        const a = i * 0.62, r = 10 + i * 1.9;
+        const x = 80 + Math.cos(a) * r, y = 82 + Math.sin(a) * r * 0.8;
+        const len = 6 + (i % 4) * 2, ang = a + Math.PI / 2;
+        const dx = Math.cos(ang) * len, dy = Math.sin(ang) * len * 0.8;
+        return `<path d="M ${(x - dx).toFixed(1)} ${(y - dy).toFixed(1)} L ${(x + dx).toFixed(1)} ${(y + dy).toFixed(1)}" stroke-width="${(2.6 - i * 0.03).toFixed(2)}" opacity="${(0.95 - i * 0.012).toFixed(2)}"/>`;
+      }).join('')}
+    </g>
+    <!-- skulls caught in the whirl -->
+    ${[[40, 50, 0.8], [124, 60, 0.9], [118, 118, 0.7], [44, 116, 0.75], [80, 28, 0.6]].map(([x, y, s]) => `
+    <g transform="translate(${x} ${y}) scale(${s})">
+      <path d="M -10 0 C -10 -12, 10 -12, 10 0 C 10 6, 6 9, 4 11 L -4 11 C -6 9, -10 6, -10 0 Z" fill="url(#bv-skull)" stroke="#3a3020" stroke-width="0.8"/>
+      <circle cx="-4" cy="-1" r="2.6" fill="#0a0806"/><circle cx="4" cy="-1" r="2.6" fill="#0a0806"/>
+      <path d="M 0 3 l -1.4 3 l 2.8 0 Z" fill="#0a0806"/>
+    </g>`).join('')}
+    <!-- the shape it pulls into at the heart: a great skull of many bones -->
+    <path d="M 64 76 C 62 60, 70 54, 80 54 C 90 54, 98 60, 96 76 C 96 84, 92 88, 90 92 L 70 92 C 68 88, 64 84, 64 76 Z" fill="url(#bv-skull)" stroke="#3a3020" stroke-width="1"/>
+    <path d="M 70 60 L 74 70 M 90 60 L 86 70 M 80 54 L 80 64" stroke="#5a4a30" stroke-width="0.8"/>
+    <circle cx="72" cy="74" r="5" fill="#0a0806"/><circle cx="88" cy="74" r="5" fill="#0a0806"/>
+    <circle cx="72" cy="74" r="1.4" fill="#a8d0ff"/><circle cx="88" cy="74" r="1.4" fill="#a8d0ff"/>
+    <path d="M 80 80 l -2 6 l 4 0 Z" fill="#0a0806"/>
+    <path d="M 70 92 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4 l 2 4 l 2 -4" stroke="#d8ccaa" stroke-width="1.2" fill="none"/>
+    </svg>
+  `,
+
   // ── From folklore ──────────────────────────────────────────────────────────
   // Grindylow: a thin green water-thing, arms far too long, needle teeth,
   // rising from a pool with weed hanging off it.
@@ -5657,7 +5725,7 @@ const MONSTER_SPRITES = {
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
-  'Grindylow': 0.95, 'Black Annis': 1.15, 'Barghest': 1.15, 'Nuckelavee': 1.3, 'Draugr': 1.25, 'Penanggalan': 1.0, 'Lambton Worm': 1.5,
+  'Fetch': 1.05, 'Bone Vortex': 1.4, 'Grindylow': 0.95, 'Black Annis': 1.15, 'Barghest': 1.15, 'Nuckelavee': 1.3, 'Draugr': 1.25, 'Penanggalan': 1.0, 'Lambton Worm': 1.5,
   'Barrow-King': 1.3,
   'Mongolian Death Worm': 1.3,
   'Giant Leech': 1.1,

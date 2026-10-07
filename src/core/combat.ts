@@ -91,7 +91,9 @@ function swing(char: Character, monster: Monster, rng: RNG, messages: string[], 
   // The Orc King's black plate turns aside part of every blow; stone and
   // unholy flesh shrug off half of it; rust on your blade costs you too.
   // Stone, werewolf hide and a Caput Mortuum's dust shrug off ordinary steel, but not an enchanted blade.
-  const plate = monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
+  // A Bone Vortex: blades pass through the gaps between the bones; a mace smashes them.
+  const plate = monster.type === 'Bone Vortex' && weapon?.kind !== 'mace' ? 0.6
+    : monster.type === 'Orc King' ? 1 - ORC_KING.ARMOR
     : (monster.type === 'Gargoyle' || monster.type === 'Werewolf' || monster.type === 'Caput Mortuum') && plus === 0 ? 0.5 : 1;
   // A Rakshasa is truly harmed only by a +3 weapon.
   const rakshasa = monster.type === 'Rakshasa' ? GEAR.RAKSHASA_BY_PLUS[Math.min(3, plus)] : 1;

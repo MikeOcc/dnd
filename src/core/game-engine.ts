@@ -1573,6 +1573,12 @@ export class GameEngine {
 
     const monsterId = `rand-${Date.now()}-${this.rng.int(100, 999)}`;
     const monster = createMonster(type, clampedLvl + boost, monsterId, boost > 0);
+    // Your Fetch is you: your level, and most of your health.
+    if (type === 'Fetch') {
+      monster.level = this.char.level;
+      monster.hp = monster.maxHp = Math.max(10, Math.round(this.char.maxHp * 0.75));
+      monster.lastHp = monster.hp;
+    }
     return this.beginCombat(monster);
   }
 

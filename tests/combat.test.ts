@@ -1583,7 +1583,7 @@ describe('Ghouls: flesh rot, and the ancient ones below', () => {
       for (let i = 0; i < 20000; i++) if (pickRandomMonsterType(depth, rng) === 'Ghoul') n++;
       return n / 20000;
     };
-    for (const d of [2, 3, 4, 5]) expect(share(d)).toBeGreaterThan(0.025);   // about 1 in 30-35 (one of many types)
+    for (const d of [2, 3, 4, 5]) expect(share(d)).toBeGreaterThan(0.018);   // about 1 in 35-50 (one of many types, more as the bestiary grows)
     for (const d of [6, 7]) {
       expect(share(d)).toBeGreaterThan(0);
       expect(share(d)).toBeLessThan(share(5));

@@ -561,6 +561,63 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     ],
   },
 
+  // The Fetch: your own blows and spells; what you do to it, you feel too.
+  'Fetch': {
+    before: k => {
+      const lost = Math.max(0, (k.monster.lastHp ?? k.monster.maxHp) - k.monster.hp);
+      if (lost > 0) {
+        const back = Math.max(1, Math.round(lost * 0.2));
+        k.char.hp = Math.max(0, k.char.hp - back);
+        k.say(`Where you wounded it, a wound opens on you too. (${back} damage)`);
+      }
+      k.monster.lastHp = k.monster.hp;
+      return !k.alive();
+    },
+    moves: [
+      { id: 'fetch-strike', weight: 55, run: k => {
+        const dmg = Math.max(1, k.mirror(0.9));
+        k.char.hp = Math.max(0, k.char.hp - dmg);
+        k.say(`It strikes exactly as you would, the same feint, the same follow-through. You suffer ${dmg} damage.`);
+      } },
+      { id: 'fetch-spell', weight: 30, run: k => {
+        const dmg = Math.max(1, k.mirror(1.2));
+        k.char.hp = Math.max(0, k.char.hp - dmg);
+        k.say(k.char.charClass === 'warrior'
+          ? `It roars your own war-cry and hits with your own Power Attack! You suffer ${dmg} damage.`
+          : `It speaks your words, in your voice, and your Fireball comes back at you! You suffer ${dmg} damage.`);
+      } },
+      { id: 'fetch-omen', weight: 15, run: k => {
+        k.say('It smiles at you with your own mouth, and says your name the way your mother did.');
+        const s = k.save(14, ['wisdom']);
+        if (!s.ok) { k.hold(1, 'feared'); k.say(`Cold certainty floods you: this is how you die. ${s.text}`); }
+        else k.say(`You tell yourself it is only a story. ${s.text}`);
+      } },
+    ],
+  },
+
+  // The Bone Vortex: a new shape each turn.
+  'Bone Vortex': { moves: [
+    { id: 'vortex-serpent', weight: 25, when: k => !k.held(), run: k => {
+      k.say('The bones whirl and knit into a SERPENT of vertebrae, and it strikes!');
+      k.strike(0.9, d => `Coils of spine wrap you and squeeze. (${d} damage)`);
+      if (k.alive()) k.hold(1, 'constricted');
+    } },
+    { id: 'vortex-hand', weight: 25, run: k => {
+      k.say('The bones knit into a GREAT HAND, fingers of femurs, and it closes on you!');
+      k.strike(1.5, d => `It crushes you in its fist. (${d} damage)`);
+    } },
+    { id: 'vortex-storm', weight: 30, run: k => {
+      k.say('The bones burst apart into a STORM of splinters and teeth!');
+      k.strikes(4, 0.35, (d, i) => i === 0 ? `Shards slash at you from every side. (${d} damage)` : `And more. (${d} damage)`);
+      if (k.alive() && k.rng.float() < 0.4) { k.status({ type: 'bleeding', value: 3, turns: 5 }); k.say('You are bleeding from a dozen cuts!'); }
+    } },
+    { id: 'vortex-wall', weight: 20, run: k => {
+      k.say('The bones slam together into a WALL of skulls, and behind it the broken ones knit whole.');
+      const h = k.heal(Math.round(k.monster.maxHp * 0.06));
+      if (h > 0) k.say(`(+${h} HP)`);
+    } },
+  ] },
+
   // Weapons only half bite on it (combat.ts).
   'Caput Mortuum': { moves: [
     { id: 'soul-howl', weight: 20, run: k => {

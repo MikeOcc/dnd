@@ -669,6 +669,42 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: [],
   },
+  // The Fetch (Irish folklore): your double, met before you die. It wears
+  // your face, your level, most of your strength; it fights with your own
+  // blows and spells, and what you do to it, you feel too.
+  'Fetch': {
+    type: 'Fetch', isUndead: false, isUnique: false,
+    minLevel: 1, maxLevel: 120, naturalTier: 6, minDungeonLevel: 5, speed: 1.0,
+    baseHpPerLevel: 10, baseAttackPerLevel: 4.0, baseDefensePerLevel: 3.0,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'Someone is coming toward you down the passage, carrying a light.',
+      'They walk the way you walk. They are dressed as you are dressed.',
+      'They have your face, but the eyes are wrong: flat, like a painting\u2019s.',
+      'In the old stories, you meet your Fetch before you die.',
+      '',
+      'You have met your Fetch!',
+    ],
+    specialAbilities: [],
+  },
+  // The Bone Vortex: the loose bones of a hundred dead, whirling, knitting
+  // into whatever shape kills best this moment: a serpent, a great hand, a
+  // wall, a storm of splinters. Blades pass through the gaps; a mace smashes.
+  'Bone Vortex': {
+    type: 'Bone Vortex', isUndead: true, isUnique: false,
+    minLevel: 35, maxLevel: 60, naturalTier: 7, minDungeonLevel: 7, speed: 1.1,
+    baseHpPerLevel: 13, baseAttackPerLevel: 5.0, baseDefensePerLevel: 3.0,
+    fireballResistance: 0.7, coldResistance: 0.5, lightningResistance: 0.8,
+    encounterIntro: [
+      'The bones on the floor begin to move. Then the bones in the walls.',
+      'They rise and whirl around the chamber with a sound like dry rain,',
+      'faster and faster, until the air is a storm of skulls and ribs and teeth.',
+      'Then it pulls together into a shape, and the shape turns toward you.',
+      '',
+      'You have encountered a Level {LVL} Bone Vortex!',
+    ],
+    specialAbilities: [],
+  },
   'Giant': {
     type: 'Giant', isUndead: false, isUnique: false,
     minLevel: 5, maxLevel: 20, naturalTier: 4, minDungeonLevel: 2, speed: 0.9,
@@ -1156,7 +1192,7 @@ export const ANCIENT_GHOUL_INTRO = [
 
 export const UNDEAD_TYPES: MonsterType[] = [
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
-  'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan',
+  'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan', 'Bone Vortex',
 ];
 
 export function isUndead(type: MonsterType): boolean {

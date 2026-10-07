@@ -98,3 +98,31 @@ describe('Folklore monsters in the game', () => {
     expect((e.dungeonState.hoards ?? []).length + (e.messages.join(' ').includes('hoard') ? 0 : 0)).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('The Fetch and the Bone Vortex', () => {
+  it('what you do to your Fetch, you feel too', () => {
+    const c = hero(); c.hp = c.maxHp = 10000;
+    const m = createMonster('Fetch', 40, 'f'); m.hp = m.maxHp = 5000; m.lastHp = 5000;
+    m.hp = 4000;                                  // you hit it for 1000
+    const before = c.hp;
+    const r = monsterFirstStrike(c, m, new RNG(1));
+    expect(r.messages.join(' ')).toContain('a wound opens on you too');
+    expect(before - c.hp).toBeGreaterThanOrEqual(200);
+  });
+
+  it('blades pass through a Bone Vortex; a mace smashes it', () => {
+    const dealt = (kind: 'sword' | 'mace') => {
+      const c = hero(); c.charClass = 'warrior'; c.strength = 18; c.inventory.weapons = [{ kind, bonus: 0, name: kind }];
+      let t = 0; const rng = new RNG(4);
+      for (let i = 0; i < 300; i++) { const m = createMonster('Bone Vortex', 45, 'v' + i); m.hp = m.maxHp = 1e7; playerAttack(c, m, rng); t += 1e7 - m.hp; c.heldRounds = 0; c.hp = c.maxHp; }
+      return t;
+    };
+    expect(dealt('mace')).toBeGreaterThan(dealt('sword') * 1.5);
+  });
+
+  it('they turn up deep: the Fetch from level 5, the Bone Vortex on level 7', () => {
+    const seenAt = (type: MonsterType, depth: number) => { const rng = new RNG(3); for (let i = 0; i < 5000; i++) if (pickRandomMonsterType(depth, rng) === type) return true; return false; };
+    expect(seenAt('Fetch', 4)).toBe(false); expect(seenAt('Fetch', 5)).toBe(true);
+    expect(seenAt('Bone Vortex', 6)).toBe(false); expect(seenAt('Bone Vortex', 7)).toBe(true);
+  });
+});
