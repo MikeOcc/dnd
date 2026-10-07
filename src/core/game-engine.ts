@@ -158,6 +158,7 @@ export class GameEngine {
     if (this.phase === 'playing' && (this.char?.inventory.amulets?.length ?? 0) > 0) state.amuletChoices = this.amuletChoices();
     if (this.phase === 'lair-warning' && this.lair) state.lair = { monster: this.lair.monster };
     if (this.phase === 'asmodeus-scene' && this.lordScene) state.lordScene = this.lordScene.scene;
+    if (this.phase === 'level-intro' && this.char) state.introLevel = this.char.dungeonLevel;
     if (this.phase === 'playing') {
       const seen = this.sightAsmodeus();
       if (seen) state.sighting = seen;
@@ -864,7 +865,7 @@ export class GameEngine {
 
     this.pace = initialPace(this.rng);
     this.phase = 'level-intro';
-    this.messages = getLevelIntro(1);
+    this.messages = this.levelIntroWithJourney(1);
     this.char.introsSeen = [1];
 
     this.repo.saveCharacter(this.char);
@@ -1383,13 +1384,47 @@ export class GameEngine {
     if (!this.char.introsSeen.includes(lvlNum)) {
       this.char.introsSeen.push(lvlNum);
       this.phase = 'level-intro';
-      this.messages = getLevelIntro(lvlNum);
+      this.messages = this.levelIntroWithJourney(lvlNum);
       return this.getState();
     }
 
     this.phase = 'playing';
     this.messages = [`Level ${lvlNum}.`, '', ...this.enterArea()];
     return this.getState();
+  }
+
+  /** A level's first-arrival scene: its own words, then the journey so far,
+   * and a rumour of what waits on this level. (The client draws its picture.) */
+  private levelIntroWithJourney(levelNum: number): string[] {
+    const c = this.char!;
+    const ds = this.dungeonState;
+    const lines = getLevelIntro(levelNum).filter(l => l !== 'PRESS ANY KEY');
+    while (lines.length && lines[lines.length - 1] === '') lines.pop();
+    if (levelNum === 1 && c.monstersDefeated === 0 && c.stepsTaken === 0) return [...lines, '', 'PRESS ANY KEY'];
+    const mins = Math.floor(c.playTime / 60);
+    const time = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+    const alive = (id: string) => !ds?.defeatedUniqueMonsters.has(id);
+    const RUMOURS: Record<number, [string, string][]> = {
+      2: [['', 'They say the goblins here have learned to set traps.']],
+      3: [['', 'Some of the dead here walk. Some of them remember who they were.']],
+      4: [['unique-orc-king', 'War drums. The Orc King holds a hall of shields somewhere on this level.']],
+      5: [['unique-barrow-king', 'Somewhere on this level is a barrow. Something in it has been waiting a thousand years.']],
+      6: [['unique-lambton-worm', 'A worm that cannot be cut lies coiled on its hoard down here.'], ['unique-dracolich', 'A dragon that died and did not stop.'], ['unique-aboleth', 'Something ancient in the black water.']],
+      7: [['unique-asmodeus', 'At the center of this level, on a throne of black iron, Asmodeus waits for you.']],
+    };
+    const rumours = (RUMOURS[levelNum] ?? []).filter(([id]) => !id || alive(id)).map(([, t]) => t);
+    return [
+      ...lines,
+      '',
+      '── YOUR JOURNEY SO FAR ──',
+      `Depth: Level ${levelNum} of 7${levelNum === 7 ? ', the last' : ''}`,
+      `${c.name}: Level ${c.level} ${c.charClass === 'warrior' ? 'Warrior' : 'Wizard'}, ${c.hp}/${c.maxHp} HP`,
+      `Monsters slain: ${c.monstersDefeated}${c.uniqueMonstersDefeated ? `   Great foes felled: ${c.uniqueMonstersDefeated}` : ''}`,
+      `Time below: ${time}   Gold: ${c.gold}${c.deathCount ? `   Deaths: ${c.deathCount}` : ''}`,
+      ...(rumours.length ? ['', ...rumours.map(r => `Rumour: ${r}`)] : []),
+      '',
+      'PRESS ANY KEY',
+    ];
   }
 
   dismissLevelIntro(): GameState {

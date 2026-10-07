@@ -453,6 +453,7 @@ export interface GameState {
   combat?: CombatState;
   interaction?: InteractionState;
   levelIntroText?: string[];
+  introLevel?: number;          // level-intro only: which level's picture to show
   finalScore?: ScoreResult;
   saveSlots?: CharacterSummary[];
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window

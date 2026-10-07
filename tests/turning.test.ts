@@ -85,3 +85,25 @@ describe('Pictures for chests, altars and fountains', () => {
     expect(e.resolveAltarChoice('b', 'alt-2').fx?.objectArt).toBeUndefined();
   });
 });
+
+describe("A level's first-arrival scene", () => {
+  it('tells the journey so far and a rumour of what waits, and names the level for its picture', () => {
+    const { engine, e } = ready();
+    e.char.monstersDefeated = 12; e.char.playTime = 3900;
+    e.char.dungeonLevel = 3; e.char.introsSeen = [1, 2, 3];
+    e.loadLevelIntoCache(4);
+    const p = e.getLevel(3);
+    void p; void engine;
+    e.char.dungeonLevel = 4;
+    const lvl = e.getLevel(4); e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y;
+    const s = e.enterLevel();
+    expect(s.phase).toBe('level-intro');
+    expect(s.introLevel).toBe(4);
+    const text = s.messages.join('\n');
+    expect(text).toContain('THE CAVERNS OF TEETH');
+    expect(text).toContain('Depth: Level 4 of 7');
+    expect(text).toContain('Monsters slain: 12');
+    expect(text).toContain('Time below: 1h 5m');
+    expect(text).toContain('Orc King');
+  });
+});

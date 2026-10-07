@@ -182,7 +182,7 @@ function applyState(state) {
   const movementControls = document.getElementById('movement-controls');
   const nameInputArea = document.getElementById('name-input-area');
 
-  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'resting', 'lair-warning'].includes(phase);
+  const isPlaying = ['playing', 'combat', 'interaction', 'death', 'status', 'map', 'inventory', 'resting', 'lair-warning', 'level-intro'].includes(phase);
 
   statusBar.classList.toggle('hidden', !isPlaying || !state.character);
   // The map screen gives the map the whole panel instead of the corridor view.
@@ -244,13 +244,15 @@ function applyState(state) {
     : inter?.type === 'altar' || inter?.type === 'fountain' ? { kind: inter.type, moment: 'idle' }
     : phase !== 'combat' ? state.fx?.objectArt : null;
   const objArt = objMoment && !lairArt && !shopArt && typeof getObjectArt === 'function' ? getObjectArt(objMoment.kind, objMoment.moment) : null;
-  const sceneArt = lairArt || shopArt || objArt;
+  // A level's first-arrival scene: its picture.
+  const levelArt = phase === 'level-intro' && state.introLevel && typeof getLevelArt === 'function' ? getLevelArt(state.introLevel) : null;
+  const sceneArt = lairArt || shopArt || objArt || levelArt;
   viewContainer.classList.toggle('lair-mode', !!lairArt);
-  viewContainer.classList.toggle('shop-mode', !!(shopArt || objArt));
+  viewContainer.classList.toggle('shop-mode', !!(shopArt || objArt || levelArt));
   portraitEl.classList.toggle('lair', !!sceneArt);
   if (!sceneArt) delete portraitEl.dataset.art;
   if (sceneArt) {
-    const key = lairArt ? `lair:${state.lair.monster}` : shopArt ? `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}` : `obj:${objMoment.kind}:${objMoment.moment}`;
+    const key = lairArt ? `lair:${state.lair.monster}` : shopArt ? `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}` : levelArt ? `level:${state.introLevel}` : `obj:${objMoment.kind}:${objMoment.moment}`;
     if (portraitEl.dataset.art !== key) { portraitEl.innerHTML = sceneArt; portraitEl.dataset.art = key; }
     delete portraitEl.dataset.monster;
     portraitEl.style.removeProperty('--sprite-scale');
@@ -322,7 +324,7 @@ function applyState(state) {
   document.getElementById('message-area').classList.toggle('map-mode', phase === 'map');
   document.getElementById('message-area').classList.toggle('sheet-mode', phase === 'inventory' || phase === 'status');
   if (phase === 'map') centerMapOnPlayer();
-  else if (phase === 'inventory' || phase === 'status') { const a = document.getElementById('message-area'); a.scrollTop = 0; requestAnimationFrame(() => { a.scrollTop = 0; }); }   // read from the top
+  else if (phase === 'inventory' || phase === 'status' || phase === 'level-intro') { const a = document.getElementById('message-area'); a.scrollTop = 0; requestAnimationFrame(() => { a.scrollTop = 0; }); }   // read from the top
   else scrollMessagesToEnd();
   updatePannable();
 
