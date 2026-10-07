@@ -87,7 +87,7 @@ describe('Amulets in play', () => {
   });
 
   for (const [how, act] of [
-    ['a fountain', (e: any) => { e.interaction = { type: 'fountain', contentId: 'f1', choices: [] }; e.phase = 'interaction'; return e.resolveFountainChoice('a', 'f1'); }],
+    ['a fountain', (e: any) => { e.interaction = { type: 'fountain', contentId: 'f1', choices: [] }; e.phase = 'interaction'; return (e.char.dungeonLevel = 4, e.resolveFountainChoice('a', 'f1')); }],
     ['an altar', (e: any) => { e.interaction = { type: 'altar', contentId: 'a1', choices: [] }; e.phase = 'interaction'; return e.resolveAltarChoice('a', 'a1'); }],
     ['an emerald', (e: any) => { e.char.inventory.gems.emerald = 1; e.char.intelligence = 18; return e.useEmeraldExploring(); }],
   ] as const) {
@@ -147,7 +147,7 @@ describe('Dropping amulets, and cursed ones that snap', () => {
   it('a fountain cleanses every cursed amulet carried, worn or not', () => {
     const { e } = ready([amulet({ cursed: true }), amulet({ stat: 'dexterity' })]);
     e.interaction = { type: 'fountain', contentId: 'f1', choices: [] }; e.phase = 'interaction';
-    const s = e.resolveFountainChoice('a', 'f1');
+    const s = (e.char.dungeonLevel = 4, e.resolveFountainChoice('a', 'f1'));
     expect(s.messages.join(' ')).toContain('crumble');
     expect(e.char.inventory.amulets).toEqual([amulet({ stat: 'dexterity' })]);
   });

@@ -559,7 +559,7 @@ describe('GameEngine — gems', () => {
     const e = setupGemUser(engine, 'Kobold');
 
     const before = { ...e.char.inventory.gems };
-    const state = engine.gemAction('f');   // Cancel (E is the emerald)
+    const state = engine.gemAction('g');   // Cancel (E is the emerald, F the Pilgrim's Pearl)
     expect(state.phase).toBe('combat');
     expect(e.char.inventory.gems).toEqual(before);
   });
@@ -1435,6 +1435,9 @@ describe('GameEngine — walking on the map', () => {
   it('an ordinary step keeps the map up', () => {
     const { engine, e, lvl, open, target } = onMap();
     lvl.contents.delete(target);
+    // (and nothing just beyond it that would open as you come up to it)
+    const [tx, ty] = target.split(',').map(Number);
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) lvl.contents.delete(`${tx + dx},${ty + dy}`);
     if (lvl.exit && `${lvl.exit.x},${lvl.exit.y}` === target) lvl.exit = null;
     e.char.facing = open;
     const state = engine.mapMove('forward');

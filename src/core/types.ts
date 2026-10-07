@@ -93,7 +93,7 @@ export interface StatusEffect {
   doom?: number;    // flesh rot: turns left to live once it has gone too far
 }
 
-export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone';
+export type GemType = 'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone' | 'pearl';
 
 export interface Inventory {
   potions: number;
@@ -519,4 +519,4 @@ export interface DungeonState {
 }
 
 /** A dragon's hoard chest, left where it fell (its chest id begins 'hoard-'). */
-export interface Hoard { id: string; level: number; x: number; y: number; monster: string; monsterLevel: number }
+export interface Hoard { id: string; level: number; x: number; y: number; monster: string; monsterLevel: number; kind?: 'chest' | 'fountain' }

@@ -300,6 +300,9 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
         case 'use-emerald':
           state = engine.useEmeraldExploring();
           break;
+        case 'use-pearl':
+          state = engine.usePearlExploring();
+          break;
         case 'wait':
           state = engine.startResting();
           break;

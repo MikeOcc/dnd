@@ -75,7 +75,7 @@ const CHEST_TRAP_ELEMENT: Record<ChestTrapType, FxElement> = {
 };
 
 const GEM_PLURAL: Record<GemType, string> = {
-  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds', moonstone: 'moonstones',
+  ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds', moonstone: 'moonstones', pearl: 'pearls',
 };
 
 interface LevelCache {
@@ -404,7 +404,7 @@ export class GameEngine {
         + (c.charClass === 'warrior' ? `   (${attacksPerRound(c)} attack${attacksPerRound(c) === 1 ? '' : 's'} per round)` : ''),
       `Dungeon Level ${c.dungeonLevel}   XP: ${c.xp}${xpForNext !== null ? ` / ${xpForNext}` : ' (MAX)'}`,
       `HP: ${c.hp} / ${c.maxHp}   Gold: ${c.gold}   Potions: ${c.inventory.potions}   Tomes: ${c.inventory.books}`,
-      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}${c.inventory.gems.moonstone ? `   Moonstone ${c.inventory.gems.moonstone}` : ''}`,
+      `Gems: Ruby ${c.inventory.gems.ruby}   Sapphire ${c.inventory.gems.sapphire}   Diamond ${c.inventory.gems.diamond}   Opal ${c.inventory.gems.opal}   Emerald ${c.inventory.gems.emerald}${c.inventory.gems.moonstone ? `   Moonstone ${c.inventory.gems.moonstone}` : ''}${c.inventory.gems.pearl ? `   Pearl ${c.inventory.gems.pearl}` : ''}`,
       ...(wardFights(c) > 0 ? [`Emerald ward: ${wardFights(c)} fight${wardFights(c) === 1 ? '' : 's'} left`] : []),
       ...(bestWeapon(c) ? [`Weapon: ${gearName(bestWeapon(c)!)}`] : []),
       ...(wornArmor(c).body || wornArmor(c).shield ? [`Armour: ${[wornArmor(c).body, wornArmor(c).shield].filter(Boolean).map(a => gearName(a!)).join(' and ')} (turns aside ${Math.round(armorProtection(c) * 100)}% of a blow)`] : []),
@@ -468,6 +468,7 @@ export class GameEngine {
       { name: 'Opal', type: 'Gem — Chiaroscuro Blast', qty: `x${inv.gems.opal}` },
       { name: 'Emerald', type: 'Gem — Warding (a few fights)', qty: `x${inv.gems.emerald}` },
       ...(inv.gems.moonstone ? [{ name: 'Moonstone', type: 'Gem — Planar Step, once (Y)', qty: `x${inv.gems.moonstone}` }] : []),
+      ...(inv.gems.pearl ? [{ name: 'Pilgrim\u2019s Pearl', type: 'Gem — To the nearest fountain or altar (F)', qty: `x${inv.gems.pearl}` }] : []),
     ];
     const all = [...using, ...carried, ...supplies];
     const nameW = Math.max(...all.map(r => r.name.length), 'ITEM'.length) + 4;
@@ -1668,7 +1669,7 @@ export class GameEngine {
 
   gemAction(key: string): GameState {
     if (!this.char || !this.combat || this.phase !== 'combat') return this.getState();
-    const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal', e: 'emerald' };
+    const types: Record<string, GemType> = { a: 'ruby', b: 'sapphire', c: 'diamond', d: 'opal', e: 'emerald', f: 'pearl' };
     const type = types[key];
     if (type && this.isHeld()) return this.combatHeld();
     if ((type === 'opal' || type === 'sapphire') && this.targetInvisible()) return this.strikeAtNothing();
@@ -1690,7 +1691,8 @@ export class GameEngine {
       { key: 'c', text: 'Diamond — Reveal Map' },
       { key: 'd', text: 'Opal — Chiaroscuro Blast' },
       { key: 'e', text: 'Emerald — Warding' },
-      { key: 'f', text: 'Cancel' },
+      { key: 'f', text: 'Pilgrim\u2019s Pearl — To the nearest fountain or altar' },
+      { key: 'g', text: 'Cancel' },
     ];
     state.phase = 'combat';
     return state;
@@ -1703,6 +1705,8 @@ export class GameEngine {
       this.messages = [`You have no ${GEM_PLURAL[type]}.`];
       return this.getState();
     }
+    // The Pilgrim's Pearl answers anyone in need: no gift for magic required.
+    if (type === 'pearl') { this.cue('gem-ruby'); return this.usePearl(); }
     if (this.char.charClass === 'warrior' && this.char.level < WARRIOR.GEM_LEVEL) {
       this.messages = [
         `The ${type} sits inert in your calloused palm.`,
@@ -1749,6 +1753,88 @@ export class GameEngine {
       `An emerald ward protects you for the next ${fights} fight${fights === 1 ? '' : 's'}.`,
       '(It turns most blows aside, but not all.)',
     ];
+    return this.getState();
+  }
+
+  /** F while exploring (or from the gem menu in a fight): the Pilgrim's Pearl. */
+  usePearlExploring(): GameState {
+    if (!this.char || this.phase !== 'playing') return this.getState();
+    return this.useGem('pearl');
+  }
+
+  /** The Pilgrim's Pearl: for the desperate. It carries you to the nearest
+   * unused fountain or altar on this level (out of a fight, if you're in one)
+   * and sets you before it. If none is left on the level, a fountain wells up
+   * in another room, and it takes you there. */
+  private usePearl(): GameState {
+    const c = this.char!;
+    const lvl = this.getLevel(c.dungeonLevel);
+    if (!lvl || !this.dungeonState) return this.getState();
+    const ds = this.dungeonState;
+    c.inventory.gems.pearl--;
+    const STEP: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+    const BACK: Record<Direction, Direction> = { N: 'S', S: 'N', E: 'W', W: 'E' };
+    const unused = (k: string) => {
+      const ct = lvl.contents.get(k);
+      return !!ct && ((ct.type === 'fountain' && !ds.usedFountains.has(ct.id)) || (ct.type === 'altar' && !ds.usedAltars.has(ct.id)));
+    };
+    // Walking distance from here to every square you could reach.
+    const dist = new Map<string, number>([[`${c.x},${c.y}`, 0]]);
+    const queue: [number, number][] = [[c.x, c.y]];
+    while (queue.length) {
+      const [x, y] = queue.shift()!;
+      for (const [d, dx, dy] of STEP) {
+        const k = `${x + dx},${y + dy}`;
+        if (!dist.has(k) && canMove(lvl.grid, x, y, d)) { dist.set(k, dist.get(`${x},${y}`)! + 1); queue.push([x + dx, y + dy]); }
+      }
+    }
+    // A square beside it, on an open side, with nothing else on it.
+    const standBeside = (k: string): { x: number; y: number; facing: Direction } | null => {
+      const [tx, ty] = k.split(',').map(Number);
+      for (const [d, dx, dy] of STEP) {
+        const sx = tx + dx, sy = ty + dy;
+        if (!canMove(lvl.grid, tx, ty, d) || lvl.contents.has(`${sx},${sy}`)) continue;
+        return { x: sx, y: sy, facing: BACK[d] };
+      }
+      return null;
+    };
+    let target = [...dist.keys()].filter(unused).sort((a, b) => dist.get(a)! - dist.get(b)!).find(k => standBeside(k));
+    const lines = ['You close your hand on the Pilgrim\u2019s Pearl. It glows like a lamp in fog, and pulls you along a road that isn\u2019t there...'];
+    if (!target) {
+      // None left here: a fountain wells up in another room.
+      const here = lvl.areas ? areaAtCell(lvl.areas, c.x, c.y) : undefined;
+      lvl.areas ??= mapAreas(lvl.grid);
+      const spots = [...dist.keys()].filter(k => {
+        if (lvl.contents.has(k)) return false;
+        const [x, y] = k.split(',').map(Number);
+        const area = areaAtCell(lvl.areas!, x, y);
+        return area?.kind === 'room' && area !== here && !!standBeside(k);
+      });
+      const pool = spots.length ? spots : [...dist.keys()].filter(k => !lvl.contents.has(k) && k !== `${c.x},${c.y}` && standBeside(k));
+      const k = pool.length ? this.rng.pick(pool) : null;
+      if (k) {
+        const [fx, fy] = k.split(',').map(Number);
+        const id = `pearl-fountain-${c.dungeonLevel}-${fx}-${fy}`;
+        ds.hoards = [...(ds.hoards ?? []), { id, level: c.dungeonLevel, x: fx, y: fy, monster: 'pearl', monsterLevel: 0, kind: 'fountain' }];
+        lvl.contents.set(k, { type: 'fountain', id });
+        target = k;
+        lines.push('There is no blessed water left on this level, so the Pearl makes some: a spring breaks out of the stones ahead.');
+      }
+    }
+    if (this.combat) this.endCombat(false);
+    if (!target) {
+      this.messages = [...lines, 'But the road leads nowhere. The Pearl crumbles, its light spent.'];
+      return this.getState();
+    }
+    const spot = standBeside(target)!;
+    c.x = spot.x; c.y = spot.y; c.facing = spot.facing;
+    this.lightAround();
+    this.lastArea = null;
+    this.approached = null;
+    const kind = lvl.contents.get(target)!.type;
+    this.messages = [...lines, `...and sets you down before ${kind === 'altar' ? 'an altar' : 'a fountain'}. The Pearl dissolves into the air.`];
+    const opened = this.approachAhead();
+    if (opened) { opened.messages = [...lines, `...and sets you down before ${kind === 'altar' ? 'an altar' : 'a fountain'}.`, '', ...opened.messages]; this.messages = opened.messages; return opened; }
     return this.getState();
   }
 
@@ -3350,8 +3436,9 @@ export class GameEngine {
       return this.closeInteraction('You leave the fountain untouched.');
     }
 
-    // On the shallow levels, a Grindylow may be waiting in the water.
-    if (this.char.dungeonLevel <= 3 && this.rng.float() < 0.12) {
+    // On the shallow levels, a Grindylow may be waiting in the water (not for someone dying of rot).
+    const rotting = this.char.statusEffects.some(e => e.type === 'flesh-rot');
+    if (!rotting && this.char.dungeonLevel <= 3 && this.rng.float() < 0.12) {
       const lvl = Math.max(1, Math.min(10, this.char.level + this.rng.int(-1, 2)));
       this.interaction = null;
       const s = this.beginCombat(createMonster('Grindylow', lvl + this.worldBoost(), `grindy-${Date.now()}`, this.worldBoost() > 0));
@@ -3360,7 +3447,11 @@ export class GameEngine {
       return s;
     }
     this.dungeonState.usedFountains.add(id);
+    // Clean water washes out a ghoul's rot, if it hasn't gone too far.
+    const rot = this.char.statusEffects.find(e => e.type === 'flesh-rot' && e.doom === undefined);
+    if (rot) this.char.statusEffects = this.char.statusEffects.filter(e => e !== rot);
     const result = resolveFountain(this.char, this.rng);
+    if (rot) result.messages.unshift(`You plunge your ${rot.part ?? 'wound'} into the water. The rot hisses, blackens, and washes away. Clean flesh beneath.`, '');
     const tainted = !!(result.damageDealt || result.statusAdded || (result.statChanged && result.statChanged.delta < 0));
     this.fx.objectArt = { kind: 'fountain', moment: tainted ? 'tainted' : 'refreshed' };
     const uncursed = breakAmuletCurse(this.char, 'The water runs over the amulet at your throat and hisses like acid on iron.');
@@ -3524,11 +3615,12 @@ export class GameEngine {
   private placeHoards(levelNum: number): void {
     const lvl = this.levelCache.get(levelNum);
     if (!lvl || !this.dungeonState) return;
-    for (const [k, c] of lvl.contents) if (c.id.startsWith(HOARD_PREFIX)) lvl.contents.delete(k);
+    for (const [k, c] of lvl.contents) if (c.id.startsWith(HOARD_PREFIX) || c.id.startsWith('pearl-fountain-')) lvl.contents.delete(k);
     for (const h of this.dungeonState.hoards ?? []) {
-      if (h.level !== levelNum || this.dungeonState.openedChests.has(h.id)) continue;
+      if (h.level !== levelNum) continue;
+      if (h.kind === 'fountain' ? this.dungeonState.usedFountains.has(h.id) : this.dungeonState.openedChests.has(h.id)) continue;
       const k = `${h.x},${h.y}`;
-      if (!lvl.contents.has(k)) lvl.contents.set(k, { type: 'chest', id: h.id });
+      if (!lvl.contents.has(k)) lvl.contents.set(k, { type: h.kind === 'fountain' ? 'fountain' : 'chest', id: h.id });
     }
   }
 

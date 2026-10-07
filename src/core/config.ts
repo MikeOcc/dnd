@@ -858,6 +858,7 @@ export const GEMS = {
     opal: 250,
     emerald: 300,
     moonstone: 500,
+    pearl: 300,
   },
 
   // Emerald: a ward that lasts a few fights and deflects most, not all,
@@ -868,7 +869,8 @@ export const GEMS = {
   EMERALD_MAX_FIGHTS: 10,             // wards stack up to this
   EMERALD_FIND_BASE: 0.08,            // share of gem finds that are emeralds, plus...
   EMERALD_FIND_PER_LEVEL: 0.04,       // ...this per dungeon level
-  MOONSTONE_FIND_SHARE: 0.06,         // share of gem finds that are moonstones (Planar Step, once)
+  MOONSTONE_FIND_SHARE: 0.06,
+  PEARL_FIND_SHARE: 0.07,             // share of gem finds that are Pilgrim's Pearls (to the nearest fountain or altar)         // share of gem finds that are moonstones (Planar Step, once)
 
   // The game has no character-class system yet, so "only magicians and
   // wizards" is stood in with an INT threshold instead — about the top
@@ -886,7 +888,7 @@ export const GEMS = {
 
   // A character never carries more than this many of these gems. While
   // they have the most they can carry, chests mysteriously never hold more.
-  CARRY_CAP: { opal: 3, emerald: 3 } as Partial<Record<'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone', number>>,
+  CARRY_CAP: { opal: 3, emerald: 3, pearl: 3 } as Partial<Record<'ruby' | 'sapphire' | 'diamond' | 'opal' | 'emerald' | 'moonstone' | 'pearl', number>>,
   // Opals are semi-common: a chest holds one this often, on top of the
   // general gem find (where they're also weighted up).
   OPAL_CHEST_CHANCE: 0.05,

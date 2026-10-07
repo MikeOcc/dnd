@@ -127,7 +127,7 @@ export interface ChestResult {
 
 const GEM_TYPES: GemType[] = ['ruby', 'sapphire', 'diamond', 'opal'];
 const GEM_NAMES: Record<GemType, string> = {
-  ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal', emerald: 'emerald', moonstone: 'moonstone',
+  ruby: 'ruby', sapphire: 'sapphire', diamond: 'diamond', opal: 'opal', emerald: 'emerald', moonstone: 'moonstone', pearl: 'pearl',
 };
 
 function findGem(char: Character, type: GemType): ChestResult {
@@ -246,6 +246,7 @@ export function resolveChest(char: Character, rng: RNG): ChestResult {
     const emeraldShare = Math.min(0.4, GEMS.EMERALD_FIND_BASE + GEMS.EMERALD_FIND_PER_LEVEL * char.dungeonLevel);
     const pool = GEM_TYPES.filter(canHold).flatMap(t => Array<GemType>(t === 'opal' ? GEMS.OPAL_GEM_WEIGHT : 1).fill(t));
     const type: GemType = rng.float() < GEMS.MOONSTONE_FIND_SHARE ? 'moonstone'
+      : canHold('pearl') && rng.float() < GEMS.PEARL_FIND_SHARE ? 'pearl'
       : canHold('emerald') && rng.float() < emeraldShare ? 'emerald' : rng.pick(pool);
     return findGem(char, type);
   }

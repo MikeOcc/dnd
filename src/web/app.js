@@ -521,7 +521,7 @@ async function openHelp() {
     <p class="help-note"><b>Saving.</b> The game keeps your place while you play, even if you close the tab and come back later.
       But anything since your last save is lost if you quit to the menu, stay away for 3 hours, or the game is updated, so press <b>S</b> now and then.
       ${guest ? 'You\u2019re playing as a guest: your characters belong to this browser. Sign up from the main menu to keep them on any device.' : 'Your characters are kept with your account, on any device.'}</p>
-    <details><summary>All the keys</summary><p class="help-all">Arrows: move &amp; turn · U/D: stairs · W: rest · P: potion · B: tome · G: diamond · E: emerald · Y: Planar Step · J: rings · A: amulets · K: gear · L: view · M: map · T: status · I: inventory · S: save · R: restore last save · N: sound · V: on-screen arrows · O: settings · X: more · H: help · Q: quit</p>
+    <details><summary>All the keys</summary><p class="help-all">Arrows: move &amp; turn · U/D: stairs · W: rest · P: potion · B: tome · G: diamond · E: emerald · F: Pilgrim's Pearl (to the nearest fountain or altar) · Y: Planar Step · J: rings · A: amulets · K: gear · L: view · M: map · T: status · I: inventory · S: save · R: restore last save · N: sound · V: on-screen arrows · O: settings · X: more · H: help · Q: quit</p>
       <p class="help-all">In a fight, the choices are listed under the messages (attack, spells, run and so on).</p></details>
     <div class="help-done"></div>`;
   const done = makeChoiceBtn('Enter', 'Got it');
@@ -1901,6 +1901,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'b') apiAction('use-book');
     if (key === 'g') apiAction('use-diamond');
     if (key === 'e') apiAction('use-emerald');
+    if (key === 'f') apiAction('use-pearl');
     if (key === 'w') apiAction('wait');
     if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
@@ -1961,7 +1962,7 @@ document.addEventListener('keydown', (e) => {
       return;
     }
     if (gemMenuOpen) {
-      if (['a','b','c','d','e','f'].includes(key)) {
+      if (['a','b','c','d','e','f','g'].includes(key)) {
         gemMenuOpen = false;
         apiAction('gem', { choice: key });
       }
@@ -2046,6 +2047,7 @@ document.getElementById('btn-potion')    ?.addEventListener('click', () => apiAc
 document.getElementById('btn-book')      ?.addEventListener('click', () => apiAction('use-book'));
 document.getElementById('btn-diamond')   ?.addEventListener('click', () => apiAction('use-diamond'));
 document.getElementById('btn-emerald')   ?.addEventListener('click', () => apiAction('use-emerald'));
+document.getElementById('btn-pearl')     ?.addEventListener('click', () => apiAction('use-pearl'));
 document.getElementById('btn-planar')    ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('planar-step'); });
 document.getElementById('btn-view')      ?.addEventListener('click', () => cycleViewMode());
 document.getElementById('btn-more')      ?.addEventListener('click', () => setMore(!moreOpen));

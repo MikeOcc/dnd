@@ -41,6 +41,7 @@ export function buildStock(kind: ShopState['kind'], char: Character, rng: RNG): 
       gearItem(char, rng, rng.float() < 0.25 ? 3 : 2, m),
       gem('emerald', m),
       gem('moonstone', m),
+      gem('pearl', m),
       { label: 'Magic tome', price: Math.round(SHOP.TOME_PRICE * m), qty: 1, goods: { type: 'tome' } },
       { label: 'Healing potion', price: Math.round(SHOP.POTION_PRICE * m), qty: 3, goods: { type: 'potion' } },
     ];
@@ -49,7 +50,7 @@ export function buildStock(kind: ShopState['kind'], char: Character, rng: RNG): 
   const stock: ShopItem[] = [
     { label: 'Healing potion', price: SHOP.POTION_PRICE, qty: deep ? 8 : 10, goods: { type: 'potion' } },
     { label: 'Magic tome', price: SHOP.TOME_PRICE, qty: 1, goods: { type: 'tome' } },
-    gem('ruby'), gem(rng.pick(['sapphire', 'diamond'] as GemType[])),
+    gem('ruby'), gem(rng.pick(['sapphire', 'diamond'] as GemType[])), gem('pearl'),
   ];
   for (let i = 0; i < SHOP.POST_GEAR; i++) {
     const roll = rng.float();

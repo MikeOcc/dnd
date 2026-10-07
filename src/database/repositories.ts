@@ -138,9 +138,10 @@ export class Repository {
   private rowToCharacter(row: Record<string, unknown>): Character {
     const inventory = JSON.parse(row['inventory'] as string || '{"potions":0}') as Character['inventory'];
     // Older saves predate gems/books — backfill so existing characters don't crash.
-    if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0, moonstone: 0 };
+    if (!inventory.gems) inventory.gems = { ruby: 0, sapphire: 0, diamond: 0, opal: 0, emerald: 0, moonstone: 0, pearl: 0 };
     if (inventory.gems.emerald === undefined) inventory.gems.emerald = 0;
     if (inventory.gems.moonstone === undefined) inventory.gems.moonstone = 0;
+    if (inventory.gems.pearl === undefined) inventory.gems.pearl = 0;
     // Rings: protective ones are worn (all at once), one power ring readied.
     if (inventory.wornRings === undefined) {
       const owned: RingId[] = inventory.rings ?? [];
