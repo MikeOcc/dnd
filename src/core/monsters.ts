@@ -705,6 +705,71 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: [],
   },
+  // ── Originals ───────────────────────────────────────────────────────────────
+  // Lantern Moths: a swarm drawn to your torch. They snuff it, and you fight
+  // half-blind; harmless alone, but whatever finds you in the dark strikes first.
+  'Lantern Moths': {
+    type: 'Lantern Moths', isUndead: false, isUnique: false,
+    minLevel: 1, maxLevel: 14, naturalTier: 2, minDungeonLevel: 1, speed: 1.6,
+    baseHpPerLevel: 3.5, baseAttackPerLevel: 0.9, baseDefensePerLevel: 0.8,
+    fireballResistance: 1.6,
+    encounterIntro: [
+      'Something soft brushes your cheek. Then your hand. Then your torch.',
+      'Moths, hundreds of them, pale as ash, pour out of the dark toward the flame,',
+      'and the light begins to gutter.',
+      '',
+      'You have encountered a Level {LVL} swarm of Lantern Moths!',
+    ],
+    specialAbilities: [],
+  },
+  // The Toll-Keeper: a hooded figure on the stairway down from level 2. Pay in
+  // gold or in a finger, or fight it; paying is often smarter. (Met at the
+  // ladder, never at random: see the engine's toll.)
+  'Toll-Keeper': {
+    type: 'Toll-Keeper', isUndead: false, isUnique: true,
+    minLevel: 22, maxLevel: 26, naturalTier: 6, minDungeonLevel: 2, speed: 1.0,
+    baseHpPerLevel: 11, baseAttackPerLevel: 3.6, baseDefensePerLevel: 3.0,
+    fireballResistance: 0.8,
+    encounterIntro: [
+      'The Toll-Keeper closes its ledger and rises. It is taller than you thought.',
+      '',
+      'You have chosen to fight the Level {LVL} Toll-Keeper!',
+    ],
+    specialAbilities: [],
+  },
+  // The Hush: a patch of living silence. Inside it no word makes a sound, so
+  // no spell or prayer works; and after, for a while, you can't hear what's coming.
+  'Hush': {
+    type: 'Hush', isUndead: false, isUnique: false,
+    minLevel: 26, maxLevel: 50, naturalTier: 4, minDungeonLevel: 4, speed: 0.9,
+    baseHpPerLevel: 7, baseAttackPerLevel: 3.0, baseDefensePerLevel: 2.5,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'Your footsteps stop making any sound. Then your breathing.',
+      'You call out, and nothing comes out. The silence has a shape,',
+      'and it is standing in front of you, and it is leaning closer.',
+      '',
+      'You have encountered a Level {LVL} Hush! (No spell or prayer can be heard here.)',
+    ],
+    specialAbilities: [],
+  },
+  // Cartographer's Bane: a pale, eyeless thing that eats memory. Where it
+  // touches you, part of your map of the level is gone.
+  "Cartographer's Bane": {
+    type: "Cartographer's Bane", isUndead: false, isUnique: false,
+    minLevel: 34, maxLevel: 60, naturalTier: 5, minDungeonLevel: 5, speed: 1.1,
+    baseHpPerLevel: 9, baseAttackPerLevel: 3.2, baseDefensePerLevel: 2.2,
+    fireballResistance: 1.0,
+    encounterIntro: [
+      'A pale, hairless thing unfolds from a corner, long and thin as a hatstand.',
+      'It has no eyes. Its fingers are stained with ink to the knuckle.',
+      'It turns its blank face toward you, and you suddenly cannot remember',
+      'which way you came in.',
+      '',
+      "You have encountered a Level {LVL} Cartographer's Bane!",
+    ],
+    specialAbilities: [],
+  },
   'Giant': {
     type: 'Giant', isUndead: false, isUnique: false,
     minLevel: 5, maxLevel: 20, naturalTier: 4, minDungeonLevel: 2, speed: 0.9,

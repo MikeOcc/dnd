@@ -2534,4 +2534,136 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
+  // ─── Lantern Moths ───────────────────────────────────────────────────────
+  // Hundreds of ash-pale moths smothering a torch: furred bodies, dusty
+  // wings with eye-spots, and in the cloud, here and there, a real eye.
+  'Lantern Moths': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lantern Moths: a choking cloud of ash-pale furred moths smothering a dying torch, their wings marked with staring eye-spots">
+    <defs>
+      ${horrorSkinFilter('hlm-dust', { freq: '0.4 0.5', scale: 1.4, seed: 140, k: 1.1 })}
+      <radialGradient id="hlm-glow" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#ffb860" stop-opacity="0.55"/><stop offset="1" stop-color="#401000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hlm-wing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8d0c0"/><stop offset="0.6" stop-color="#8a8070"/><stop offset="1" stop-color="#3a342a"/></linearGradient>
+    </defs>
+    <circle cx="80" cy="84" r="54" fill="url(#hlm-glow)"/>
+    <path d="M 76 160 L 78 100 L 84 100 L 86 160 Z" fill="#2a1a0a"/>
+    <path d="M 81 98 C 78 94, 79 90, 82 86 C 83 90, 85 94, 81 98 Z" fill="#ff8020" opacity="0.6"/>
+    <g filter="url(#hlm-dust)">
+      ${Array.from({ length: 26 }, (_, i) => {
+        const a = i * 2.39996, r = 8 + Math.sqrt(i) * 13, x = 80 + Math.cos(a) * r, y = 82 + Math.sin(a) * r * 0.85;
+        const rot = (a * 57.3) % 360, sc = 1.05 - i * 0.022;
+        return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)}) scale(${sc.toFixed(2)})">
+          <path d="M 0 0 C -9 -13, -24 -12, -21 -1 C -19 7, -8 6, 0 2 Z M 0 0 C 9 -13, 24 -12, 21 -1 C 19 7, 8 6, 0 2 Z" fill="url(#hlm-wing)" stroke="#2a241a" stroke-width="0.5"/>
+          <circle cx="-12" cy="-4" r="3" fill="#2a241a"/><circle cx="12" cy="-4" r="3" fill="#2a241a"/>
+          <circle cx="-12" cy="-4" r="1.3" fill="#c8b890"/><circle cx="12" cy="-4" r="1.3" fill="#c8b890"/>
+          <ellipse cx="0" cy="2" rx="2.4" ry="6" fill="#6a5e4a"/>
+        </g>`;
+      }).join('')}
+    </g>
+    <!-- in the cloud, here and there, a real eye -->
+    <g><ellipse cx="58" cy="60" rx="3" ry="2" fill="#f0e8c0"/><circle cx="58" cy="60" r="1.1" fill="#000"/><ellipse cx="108" cy="104" rx="2.6" ry="1.8" fill="#f0e8c0"/><circle cx="108" cy="104" r="1" fill="#000"/></g>
+    <g fill="#d8d0c0" opacity="0.5">${Array.from({ length: 40 }, (_, i) => `<circle cx="${(20 + (i * 37) % 120).toFixed(0)}" cy="${(20 + (i * 53) % 120).toFixed(0)}" r="0.7"/>`).join('')}</g>
+    </svg>
+  `,
+
+  // ─── Toll-Keeper ─────────────────────────────────────────────────────────
+  // Tall and grey under its hood, a face like a dry riverbed, a ledger
+  // whose pages are written in blood, a string of severed fingers at its belt.
+  'Toll-Keeper': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toll-Keeper: a tall hooded grey figure on a stair, a cracked grey face with pale pinpoint eyes, a ledger written in blood, a string of severed fingers at its belt">
+    <defs>
+      ${horrorSkinFilter('htk-skin', { freq: '0.24 0.3', scale: 2.4, seed: 141, k: 1.3 })}
+      ${horrorSkinFilter('htk-cloth', { freq: '0.05 0.4', scale: 1.6, seed: 142, k: 1.1 })}
+      <linearGradient id="htk-robe" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#3a3430"/><stop offset="1" stop-color="#0a0806"/></linearGradient>
+      <radialGradient id="htk-face" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#9a948a"/><stop offset="1" stop-color="#3a3630"/></radialGradient>
+      <linearGradient id="htk-stair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a443c"/><stop offset="1" stop-color="#14120e"/></linearGradient>
+    </defs>
+    <path d="M 0 150 L 160 150 L 160 160 L 0 160 Z M 10 136 L 150 136 L 150 150 L 10 150 Z" fill="url(#htk-stair)" filter="url(#htk-skin)"/>
+    <path d="M 124 140 L 136 10" stroke="#1a120a" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M 133 16 L 139 16 L 138 6 L 134 6 Z" fill="#4a4a50"/>
+    <path d="M 48 136 C 42 100, 50 64, 62 46 L 98 46 C 110 64, 118 100, 112 136 Z" fill="url(#htk-robe)" filter="url(#htk-cloth)"/>
+    <!-- the string of fingers at its belt -->
+    <path d="M 58 90 Q 80 98 102 90" stroke="#2a2018" stroke-width="1.2" fill="none"/>
+    <g fill="#c8b8a0" stroke="#5a4a3a" stroke-width="0.5">${[62, 68, 74, 80, 86, 92, 98].map((x, i) => `<path d="M ${x} ${92 + Math.sin(i) * 1.6} l -1.6 9 q 1.6 2 3.2 0 Z"/>`).join('')}</g>
+    <g fill="#7a0a10">${[62, 74, 86, 98].map(x => `<circle cx="${x + 0.2}" cy="102" r="0.9"/>`).join('')}</g>
+    <!-- the ledger, written in blood -->
+    <path d="M 54 106 L 80 110 L 106 106 L 106 122 L 80 126 L 54 122 Z" fill="#d8cca8" stroke="#3a2a18" stroke-width="1"/>
+    <path d="M 80 110 L 80 126" stroke="#3a2a18" stroke-width="1"/>
+    <path d="M 58 111 L 76 113 M 58 115 L 74 117 M 58 119 L 76 121 M 84 113 L 102 111 M 84 117 L 100 115 M 84 121 L 98 119" stroke="#8a0a14" stroke-width="0.8"/>
+    <path d="M 100 84 C 106 94, 102 104, 94 110" stroke="#8a847a" stroke-width="3" fill="none" stroke-linecap="round" filter="url(#htk-skin)"/>
+    <!-- the hood; within it a cracked grey face, pinpoint eyes -->
+    <path d="M 54 52 C 50 26, 64 8, 80 6 C 96 8, 110 26, 106 52 C 96 60, 64 60, 54 52 Z" fill="url(#htk-robe)" filter="url(#htk-cloth)"/>
+    <path d="M 66 30 C 66 22, 72 18, 80 18 C 88 18, 94 22, 94 30 C 94 44, 88 54, 80 56 C 72 54, 66 44, 66 30 Z" fill="url(#htk-face)" filter="url(#htk-skin)"/>
+    <path d="M 66 22 C 70 16, 90 16, 94 22 L 94 28 C 88 22, 72 22, 66 28 Z" fill="#000" opacity="0.7"/>
+    <path d="M 70 34 L 76 34 M 84 34 L 90 34" stroke="#1a1814" stroke-width="2.4"/>
+    <circle cx="73" cy="34" r="1" fill="#f0ead0"/><circle cx="87" cy="34" r="1" fill="#f0ead0"/>
+    <path d="M 74 46 Q 80 48 86 46" stroke="#1a1814" stroke-width="1.2" fill="none"/>
+    <path d="M 70 24 L 74 36 L 72 44 M 88 26 L 86 40 L 90 50" stroke="#1a1814" stroke-width="0.6" fill="none"/>
+    </svg>
+  `,
+
+  // ─── The Hush ────────────────────────────────────────────────────────────
+  // Silence with a shape: a tall grey shroud with a stitched-shut mouth, the
+  // air around it gone flat and dead, the floor dust lying perfectly still.
+  'Hush': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hush: a tall grey shroud-like shape with no eyes and a mouth stitched shut, a long finger raised to it, the air around it dead and still">
+    <defs>
+      ${horrorSkinFilter('hhu-cloth', { freq: '0.04 0.3', scale: 1.8, seed: 143, k: 1.15 })}
+      <radialGradient id="hhu-dead" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#8a9aa8" stop-opacity="0.3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hhu-shroud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c0c8"/><stop offset="0.6" stop-color="#5a646e"/><stop offset="1" stop-color="#1a1e22" stop-opacity="0.2"/></linearGradient>
+      <radialGradient id="hhu-face" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#d8dce0"/><stop offset="1" stop-color="#6a7076"/></radialGradient>
+    </defs>
+    <circle cx="80" cy="76" r="76" fill="url(#hhu-dead)"/>
+    <path d="M 52 40 C 50 20, 64 8, 80 8 C 96 8, 110 20, 108 40 C 116 74, 124 116, 116 156 C 106 146, 100 158, 90 148 C 84 158, 76 158, 70 148 C 60 158, 54 146, 44 156 C 36 116, 44 74, 52 40 Z" fill="url(#hhu-shroud)" filter="url(#hhu-cloth)"/>
+    <path d="M 62 60 C 66 90, 64 120, 60 150 M 98 60 C 94 90, 96 120, 100 150 M 80 64 L 80 150" stroke="#2a3036" stroke-width="1" fill="none" opacity="0.5"/>
+    <!-- the face: no eyes, the mouth stitched shut -->
+    <path d="M 64 34 C 62 20, 70 14, 80 14 C 90 14, 98 20, 96 34 C 96 46, 90 54, 80 56 C 70 54, 64 46, 64 34 Z" fill="url(#hhu-face)" filter="url(#hhu-cloth)"/>
+    <ellipse cx="72" cy="32" rx="5" ry="3" fill="#3a4046" opacity="0.6"/><ellipse cx="88" cy="32" rx="5" ry="3" fill="#3a4046" opacity="0.6"/>
+    <path d="M 70 46 Q 80 49 90 46" stroke="#2a1a1a" stroke-width="1.6" fill="none"/>
+    <path d="M 72 43 L 73 49 M 76 44 L 76.6 50 M 80 44.6 L 80 50.6 M 84 44 L 83.4 50 M 88 43 L 87 49" stroke="#1a0a0a" stroke-width="0.8"/>
+    <path d="M 70 47 c 0 3 1 5 0 8" stroke="#6a1a1a" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <!-- a grey hand raised, one long finger upright across the stitched mouth -->
+    <path d="M 100 100 C 98 86, 94 76, 88 68" stroke="#b8bcc0" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#hhu-cloth)"/>
+    <ellipse cx="84" cy="64" rx="7" ry="6" fill="#b8bcc0" filter="url(#hhu-cloth)"/>
+    <path d="M 82 60 L 81 34" stroke="#c8ccd0" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M 79.6 36 L 82.4 36" stroke="#6a7076" stroke-width="1"/>
+    <!-- dust hanging perfectly still in the air -->
+    <g fill="#c8d0d8" opacity="0.5">${Array.from({ length: 30 }, (_, i) => `<circle cx="${(10 + (i * 41) % 140).toFixed(0)}" cy="${(10 + (i * 67) % 140).toFixed(0)}" r="0.8"/>`).join('')}</g>
+    </svg>
+  `,
+
+  // ─── Cartographer's Bane ─────────────────────────────────────────────────
+  // Hairless, eyeless, thin as a hatstand; its skin is covered in faded,
+  // half-erased maps; its fingers are black with ink, and it is licking one.
+  "Cartographer's Bane": `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cartographer's Bane: a tall eyeless hairless thing whose pale skin is tattooed with half-erased maps, its long fingers black with ink, torn maps drifting around it">
+    <defs>
+      ${horrorSkinFilter('hcb-skin', { freq: '0.2 0.26', scale: 2, seed: 144, k: 1.25 })}
+      <linearGradient id="hcb-body" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#e0d8cc"/><stop offset="0.6" stop-color="#9a9084"/><stop offset="1" stop-color="#3a342c"/></linearGradient>
+      <linearGradient id="hcb-paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8c8a0"/><stop offset="1" stop-color="#6a5a3a"/></linearGradient>
+    </defs>
+    ${[[20, 36, -18], [136, 26, 22], [14, 98, 12], [142, 92, -14], [32, 134, 28], [128, 138, -22], [56, 18, 8]].map(([x, y, r]) => `
+      <g transform="translate(${x} ${y}) rotate(${r})">
+        <path d="M -11 -8 L 9 -10 L 12 7 L 3 5 L -1 9 L -10 8 Z" fill="url(#hcb-paper)" stroke="#3a2a18" stroke-width="0.5"/>
+        <path d="M -7 -4 C -2 -7, 2 0, 7 -4 M -6 3 L 6 1 M -2 -8 L 0 6" stroke="#4a2a14" stroke-width="0.5" fill="none" opacity="0.8"/>
+      </g>`).join('')}
+    <ellipse cx="80" cy="154" rx="26" ry="4" fill="#000" opacity="0.6"/>
+    <path d="M 72 46 C 68 82, 68 118, 62 152 L 72 152 L 80 106 L 88 152 L 98 152 C 92 118, 92 82, 88 46 Z" fill="url(#hcb-body)" filter="url(#hcb-skin)"/>
+    <!-- maps inked on its skin, half erased -->
+    <g stroke="#3a2a1a" stroke-width="0.7" fill="none" opacity="0.55">
+      <path d="M 74 60 L 86 60 L 86 72 L 78 72 L 78 80 L 84 80"/><path d="M 72 90 C 76 86, 82 92, 88 88"/><path d="M 76 100 L 76 112 L 84 112"/>
+      <circle cx="80" cy="66" r="1.4"/><path d="M 70 128 L 74 128 M 86 128 L 90 128"/>
+    </g>
+    <!-- arms too long; ink-black fingers, one at its mouth -->
+    <path d="M 74 52 C 58 62, 42 80, 32 100" stroke="url(#hcb-body)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#hcb-skin)"/>
+    <path d="M 38 90 L 32 100 M 32 100 L 20 104 M 32 100 L 22 112 M 32 100 L 30 116 M 32 100 L 40 112" stroke="#060606" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M 86 52 C 104 58, 108 46, 96 40" stroke="url(#hcb-body)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#hcb-skin)"/>
+    <path d="M 96 40 L 88 40 M 96 40 L 90 36" stroke="#060606" stroke-width="2.2" stroke-linecap="round"/>
+    <!-- the head: blank where the eyes should be, a wide wet mouth -->
+    <path d="M 64 28 C 62 12, 70 4, 80 4 C 90 4, 98 12, 96 28 C 96 38, 90 46, 80 46 C 70 46, 64 38, 64 28 Z" fill="url(#hcb-body)" filter="url(#hcb-skin)"/>
+    <path d="M 68 24 Q 74 22 78 24 M 82 24 Q 86 22 92 24" stroke="#7a7268" stroke-width="1.6" fill="none"/>
+    <path d="M 72 36 Q 80 44 88 36 Q 80 40 72 36 Z" fill="#1a0a0a"/>
+    <path d="M 86 38 c 2 1 3 4 2 6" stroke="#0a0a0a" stroke-width="1.4" fill="none"/>
+    </svg>
+  `,
+
 };

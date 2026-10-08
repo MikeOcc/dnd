@@ -859,7 +859,7 @@
     const colW = width / cols;
     const level = opts.level || 1;
     const th = themeFor(level);
-    const lit = (d) => light(d, th.reach);
+    const lit = (d) => light(d, th.reach * (opts.dark ? 0.5 : 1));   // torch out: you see half as far
     const fog = th.fog;
     const fogRGB = `${fog[0]},${fog[1]},${fog[2]}`;
 

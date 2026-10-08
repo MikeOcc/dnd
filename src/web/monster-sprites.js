@@ -5721,10 +5721,119 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  // Lantern Moths: a cloud of pale moths around a guttering torch.
+  'Lantern Moths': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lantern Moths">
+    <defs>
+    <radialGradient id="lm-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd890" stop-opacity="0.7"/><stop offset="1" stop-color="#ff9030" stop-opacity="0"/></radialGradient>
+    <linearGradient id="lm-wing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0e8d8"/><stop offset="1" stop-color="#a89a80"/></linearGradient>
+    </defs>
+    <circle cx="80" cy="76" r="46" fill="url(#lm-glow)"/>
+    <!-- the torch, guttering -->
+    <path d="M 76 150 L 78 92 L 84 92 L 86 150 Z" fill="#5a3a1a" stroke="#2a1a08" stroke-width="1"/>
+    <path d="M 74 92 L 88 92 L 86 86 L 76 86 Z" fill="#3a2a1a"/>
+    <path d="M 81 86 C 76 80, 78 72, 82 66 C 84 72, 88 78, 81 86 Z" fill="#ffb040" opacity="0.8"/>
+    <!-- the moths, wings spread, crowding the flame -->
+    <g>
+      ${[[60, 50, -20, 1], [98, 46, 15, 1.1], [82, 70, 0, 0.9], [46, 76, -35, 0.8], [116, 72, 30, 0.9], [70, 30, -10, 0.7], [104, 98, 20, 0.8], [56, 104, -25, 0.75], [92, 24, 10, 0.65], [132, 40, 25, 0.6], [30, 46, -30, 0.6], [124, 110, 15, 0.6]].map(([x, y, rot, sc]) => `
+        <g transform="translate(${x} ${y}) rotate(${rot}) scale(${sc})">
+          <path d="M 0 0 C -8 -12, -22 -12, -20 -2 C -18 6, -8 6, 0 2 Z M 0 0 C 8 -12, 22 -12, 20 -2 C 18 6, 8 6, 0 2 Z" fill="url(#lm-wing)" stroke="#6a5a40" stroke-width="0.6"/>
+          <path d="M 0 2 C -6 8, -14 12, -12 4 Z M 0 2 C 6 8, 14 12, 12 4 Z" fill="#c8b898" stroke="#6a5a40" stroke-width="0.5"/>
+          <circle cx="-11" cy="-4" r="2" fill="#6a5a40" opacity="0.6"/><circle cx="11" cy="-4" r="2" fill="#6a5a40" opacity="0.6"/>
+          <ellipse cx="0" cy="2" rx="1.6" ry="5" fill="#5a4a30"/>
+          <path d="M -1 -3 C -3 -8, -5 -10, -7 -11 M 1 -3 C 3 -8, 5 -10, 7 -11" stroke="#5a4a30" stroke-width="0.6" fill="none"/>
+        </g>`).join('')}
+    </g>
+    </svg>
+  `,
+
+  // The Toll-Keeper: a hooded figure on a stair, a ledger open on its knees.
+  'Toll-Keeper': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toll-Keeper">
+    <defs>
+    <linearGradient id="tk-robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4038"/><stop offset="1" stop-color="#14100c"/></linearGradient>
+    <linearGradient id="tk-stair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a6258"/><stop offset="1" stop-color="#2a2620"/></linearGradient>
+    <radialGradient id="tk-hood" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#2a221c"/></radialGradient>
+    </defs>
+    <!-- the stair -->
+    <path d="M 0 150 L 160 150 L 160 160 L 0 160 Z M 10 134 L 150 134 L 150 150 L 10 150 Z M 24 118 L 136 118 L 136 134 L 24 134 Z" fill="url(#tk-stair)" stroke="#1a1612" stroke-width="1"/>
+    <!-- the iron-shod staff -->
+    <path d="M 122 132 L 132 16" stroke="#3a2a1a" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M 129 22 L 135 22 L 134 12 L 130 12 Z" fill="#5a5a60"/>
+    <!-- the robed figure, seated, knees up -->
+    <path d="M 50 120 C 46 92, 54 62, 64 48 L 96 48 C 106 62, 114 92, 110 120 Z" fill="url(#tk-robe)" stroke="#0a0806" stroke-width="1"/>
+    <path d="M 46 120 C 50 108, 66 104, 80 106 C 94 104, 110 108, 114 120 Z" fill="#2a2420"/>
+    <!-- the ledger, open on its knees -->
+    <path d="M 56 100 L 80 104 L 104 100 L 104 114 L 80 118 L 56 114 Z" fill="#e8dcc0" stroke="#5a4a30" stroke-width="1"/>
+    <path d="M 80 104 L 80 118" stroke="#5a4a30" stroke-width="1"/>
+    <path d="M 60 104 L 76 106 M 60 108 L 76 110 M 84 106 L 100 104 M 84 110 L 100 108" stroke="#5a4a30" stroke-width="0.6"/>
+    <!-- a long grey finger tapping the page -->
+    <path d="M 98 84 C 102 92, 98 100, 92 106" stroke="#8a8a84" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- the hood, and nothing in it but two pale points -->
+    <path d="M 56 54 C 52 30, 64 14, 80 12 C 96 14, 108 30, 104 54 C 96 60, 64 60, 56 54 Z" fill="url(#tk-robe)" stroke="#0a0806" stroke-width="1"/>
+    <ellipse cx="80" cy="42" rx="16" ry="14" fill="url(#tk-hood)"/>
+    <circle cx="74" cy="42" r="1.6" fill="#d8d0b8"/><circle cx="86" cy="42" r="1.6" fill="#d8d0b8"/>
+    </svg>
+  `,
+
+  // The Hush: a figure made of the absence of sound: a pale, featureless
+  // shape like a shroud, its mouth a finger laid across where lips should be.
+  'Hush': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hush">
+    <defs>
+    <radialGradient id="hu-still" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#c8d0d8" stop-opacity="0.35"/><stop offset="1" stop-color="#506070" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hu-shroud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0e4e8"/><stop offset="0.7" stop-color="#8a929a" stop-opacity="0.8"/><stop offset="1" stop-color="#4a525a" stop-opacity="0"/></linearGradient>
+    </defs>
+    <circle cx="80" cy="76" r="70" fill="url(#hu-still)"/>
+    <!-- rings of stillness spreading out -->
+    <g fill="none" stroke="#c8d0d8" opacity="0.35"><circle cx="80" cy="76" r="40"/><circle cx="80" cy="76" r="54" stroke-dasharray="3 5"/><circle cx="80" cy="76" r="66" stroke-dasharray="2 8"/></g>
+    <!-- the shroud-shape -->
+    <path d="M 56 40 C 54 22, 66 12, 80 12 C 94 12, 106 22, 104 40 C 110 70, 118 110, 112 150 C 104 140, 98 152, 90 142 C 84 152, 76 152, 70 142 C 62 152, 56 140, 48 150 C 42 110, 50 70, 56 40 Z" fill="url(#hu-shroud)"/>
+    <!-- no face: the faint hollows where eyes should be -->
+    <ellipse cx="72" cy="36" rx="5" ry="3" fill="#6a7480" opacity="0.5"/><ellipse cx="88" cy="36" rx="5" ry="3" fill="#6a7480" opacity="0.5"/>
+    <!-- a hand raised, one finger upright across the lips: hush -->
+    <path d="M 74 49 Q 80 51 86 49" stroke="#6a7480" stroke-width="1.4" fill="none"/>
+    <path d="M 96 96 C 94 84, 90 76, 86 70" stroke="#d8dce0" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="82" cy="66" rx="7" ry="6" fill="#d8dce0" stroke="#8a929a" stroke-width="0.8"/>
+    <path d="M 80 62 L 80 40" stroke="#d8dce0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 80 62 L 80 40" stroke="#8a929a" stroke-width="0.6" stroke-dasharray="0 14 4 100"/>
+    </svg>
+  `,
+
+  // Cartographer's Bane: long, thin and eyeless, fingers inked to the
+  // knuckle, scraps of torn maps fluttering around it.
+  "Cartographer's Bane": `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cartographer's Bane">
+    <defs>
+    <linearGradient id="cb-skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8e0d4"/><stop offset="1" stop-color="#9a9288"/></linearGradient>
+    <linearGradient id="cb-paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0e4c0"/><stop offset="1" stop-color="#c0a878"/></linearGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="30" ry="4" fill="#000" opacity="0.5"/>
+    <!-- scraps of torn map drifting around it -->
+    ${[[22, 40, -15], [130, 30, 20], [16, 100, 10], [138, 96, -12], [36, 130, 25], [124, 136, -20]].map(([x, y, r]) => `
+      <g transform="translate(${x} ${y}) rotate(${r})">
+        <path d="M -10 -8 L 10 -9 L 11 8 L 2 6 L -9 9 Z" fill="url(#cb-paper)" stroke="#8a7050" stroke-width="0.6"/>
+        <path d="M -6 -3 C -2 -6, 2 0, 6 -3 M -5 3 L 5 2" stroke="#6a4a2a" stroke-width="0.6" fill="none"/>
+      </g>`).join('')}
+    <!-- the long thin body -->
+    <path d="M 74 46 C 70 80, 70 116, 66 150 L 74 150 L 80 104 L 86 150 L 94 150 C 90 116, 90 80, 86 46 Z" fill="url(#cb-skin)" stroke="#5a544c" stroke-width="1"/>
+    <!-- arms, too long, ink-black to the knuckle -->
+    <path d="M 76 52 C 60 62, 44 78, 34 98" stroke="url(#cb-skin)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 84 52 C 100 62, 116 78, 126 98" stroke="url(#cb-skin)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 40 88 L 34 98 M 34 98 L 24 104 M 34 98 L 26 110 M 34 98 L 32 112 M 34 98 L 40 110" stroke="#101010" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M 120 88 L 126 98 M 126 98 L 136 104 M 126 98 L 134 110 M 126 98 L 128 112 M 126 98 L 120 110" stroke="#101010" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- the head: smooth and blank, no eyes at all -->
+    <path d="M 66 30 C 64 14, 72 6, 80 6 C 88 6, 96 14, 94 30 C 94 40, 88 48, 80 48 C 72 48, 66 40, 66 30 Z" fill="url(#cb-skin)" stroke="#5a544c" stroke-width="1"/>
+    <path d="M 72 26 Q 80 22 88 26" stroke="#b0a89c" stroke-width="1" fill="none"/>
+    <path d="M 73 40 L 87 40" stroke="#2a241c" stroke-width="1.6"/>
+    </svg>
+  `,
+
 };
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Lantern Moths': 1.1, 'Toll-Keeper': 1.2, 'Hush': 1.2, "Cartographer's Bane": 1.3,
   'Fetch': 1.05, 'Bone Vortex': 1.4, 'Grindylow': 0.95, 'Black Annis': 1.15, 'Barghest': 1.15, 'Nuckelavee': 1.3, 'Draugr': 1.25, 'Penanggalan': 1.0, 'Lambton Worm': 1.5,
   'Barrow-King': 1.3,
   'Mongolian Death Worm': 1.3,

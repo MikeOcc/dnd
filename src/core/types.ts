@@ -82,7 +82,9 @@ export type StatusEffectType =
   | 'corroded'     // a Rust Monster's touch: value = % less weapon damage, until it wears off
   | 'lycanthropy'  // a Werewolf's bite: now and then the beast takes over (doesn't tick with steps)
   | 'fiend-venom'  // a Pit Fiend's bite: healing works at half strength while it lasts
-  | 'death-mark';  // a Barghest's howl: a blow that leaves you near death kills you instead, until an altar lifts it
+  | 'death-mark'   // a Barghest's howl: a blow that leaves you near death kills you instead, until an altar lifts it
+  | 'snuffed'      // Lantern Moths put your torch out: value = to-hit lost; whatever you meet in the dark strikes first
+  | 'deafened';    // the Hush: you can't hear what's coming, and whatever you meet strikes first
 
 export interface StatusEffect {
   type: StatusEffectType;
@@ -236,6 +238,10 @@ export type MonsterType =
   | 'Lambton Worm'
   | 'Fetch'
   | 'Bone Vortex'
+  | 'Lantern Moths'
+  | 'Toll-Keeper'
+  | 'Hush'
+  | "Cartographer's Bane"
   | 'Chimera'
   | 'Pit Fiend'
   | 'Balor'
@@ -335,6 +341,7 @@ export interface Monster {
   invisCooldown?: number;   // Banshee: turns until it can vanish again
   reborn?: boolean;         // Phoenix, Troll: has risen again this fight
   heads?: number;           // Hydra: heads left (or grown)
+  mapBites?: number;        // Cartographer's Bane: touches this turn that tear away part of your map (the engine does the tearing)
   lastHp?: number;          // Hydra: HP at its last turn, to spot a severed head
   swallowHp?: number;       // Purple Worm: HP when it swallowed the character (cut out by wounding it from inside)     // Wendigo: turns its regeneration stays stopped after fire
   scareAttempts?: number;   // failed attempts to scare it off this fight: each makes the next harder
@@ -408,7 +415,8 @@ export type InteractionType =
   | 'shop'
   | 'gear'
   | 'teleport'      // Planar Step: choose a level to go to
-  | 'descend';      // a champion's deep descent: choose how deep
+  | 'descend'       // a champion's deep descent: choose how deep
+  | 'toll';         // the Toll-Keeper at the stairs down from level 2: pay, bleed, fight or turn back
 
 export interface InteractionState {
   type: InteractionType;
@@ -419,6 +427,7 @@ export interface InteractionState {
   shop?: ShopState;            // shop: who's trading, which list is showing, what's for sale
   gear?: { mode: 'list' | 'item'; index?: number };
   teleport?: { startedAt: number; source: 'spell' | 'moonstone'; levels: number[] };   // Planar Step
+  toll?: number;        // the Toll-Keeper's price in gold
   descend?: number[];   // a champion's deep descent: the levels on offer   // gear: the list, or one item's options
 }
 

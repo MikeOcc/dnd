@@ -304,6 +304,8 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       if (eff.type === 'intelligence-reduced') messages.push('Your mind clears.');
       if (eff.type === 'dexterity-reduced')    messages.push('Your coordination returns.');
       if (eff.type === 'strength-reduced')     messages.push('Your strength returns.');
+      if (eff.type === 'snuffed')  messages.push('You get your torch lit again. The dark draws back.');
+      if (eff.type === 'deafened') messages.push('Sound comes back: the drip of water, your own breath.');
     }
   }
   char.statusEffects = remaining;

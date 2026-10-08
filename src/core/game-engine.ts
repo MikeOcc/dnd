@@ -16,7 +16,7 @@ import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } fr
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -44,6 +44,8 @@ function isSolidRock(cell: DungeonCell): boolean {
  * square on every level. */
 /** What you deal with from the square in front of it, rather than by stepping on it. */
 const APPROACHABLE = new Set<string>(['chest', 'altar', 'fountain', 'book', 'shop']);
+/** The Toll-Keeper's id: marked settled once paid or beaten. */
+const TOLL_KEEPER_ID = 'toll-keeper';
 
 function visitedKey(level: number, x: number, y: number): string {
   return `${level}:${x},${y}`;
@@ -983,7 +985,8 @@ export class GameEngine {
     let frontier = [{ x: this.char.x, y: this.char.y }];
     this.dungeonState.visitedCells.add(visitedKey(level, this.char.x, this.char.y));
     const steps: [Direction, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
-    for (let d = 0; d < GAMEPLAY.LIGHT_RADIUS; d++) {
+    const radius = this.char.statusEffects.some(e => e.type === 'snuffed') ? 0 : GAMEPLAY.LIGHT_RADIUS;   // no torch, no light
+    for (let d = 0; d < radius; d++) {
       const next: { x: number; y: number }[] = [];
       for (const p of frontier) {
         for (const [dir, dx, dy] of steps) {
@@ -1396,6 +1399,7 @@ export class GameEngine {
       if (this.interaction) this.interaction.contentId = 'descend-ladder';
       return s;
     }
+    if (this.char.dungeonLevel === 2 && !this.tollSettled()) return this.offerToll();
 
     this.char.dungeonLevel++;
     this.loadLevelIntoCache(this.char.dungeonLevel);
@@ -1439,9 +1443,9 @@ export class GameEngine {
     if (levelNum === 1 && c.monstersDefeated === 0 && c.stepsTaken === 0) return [...lines, '', 'PRESS ANY KEY'];
     const mins = Math.floor(c.playTime / 60);
     const time = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-    const alive = (id: string) => !ds?.defeatedUniqueMonsters.has(id);
+    const alive = (id: string) => !ds?.defeatedUniqueMonsters.has(id) && !ds?.defeatedFixedMonsters.has(id);
     const RUMOURS: Record<number, [string, string][]> = {
-      2: [['', 'They say the goblins here have learned to set traps.']],
+      2: [['', 'They say the goblins here have learned to set traps.'], [TOLL_KEEPER_ID, 'Something keeps a toll on the stair down. Bring gold, or bring a spare finger.']],
       3: [['', 'Some of the dead here walk. Some of them remember who they were.']],
       4: [['unique-orc-king', 'War drums. The Orc King holds a hall of shields somewhere on this level.']],
       5: [['unique-barrow-king', 'Somewhere on this level is a barrow. Something in it has been waiting a thousand years.']],
@@ -1706,6 +1710,16 @@ export class GameEngine {
     if (this.char.charClass === 'warrior' && this.char.monstersDefeated === 0 && !this.warriorTipShown) {
       this.warriorTipShown = true;
       this.messages.push('', 'TIP: Power Attack (B, Combat Skill) hits more than twice as hard as a plain Attack.');
+    }
+    // In the dark (Lantern Moths took your torch), or deaf (the Hush), you never see or hear it coming.
+    const blind = this.char.statusEffects.some(e => e.type === 'snuffed');
+    const deaf = this.char.statusEffects.some(e => e.type === 'deafened');
+    if ((blind || deaf) && !monster.definition.isUnique && monster.type !== 'Lantern Moths' && monster.type !== 'Hush') {
+      return this.lairFirstStrike([blind ? 'In the dark, you never see it coming!' : 'You never heard it coming!', '']);
+    }
+    if (monster.type === 'Hush') {
+      this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'deafened');
+      addStatusEffect(this.char, { type: 'deafened', value: 0, turns: HUSH.DEAF_STEPS });
     }
     // A Bugbear may have been waiting in ambush (not for a character on their first level).
     if (monster.type === 'Bugbear' && this.char.level > 1 && this.rng.float() < 0.4) {
@@ -2457,6 +2471,7 @@ export class GameEngine {
     if (this.isHeld()) return this.combatHeld();
     if (spell !== 'heal' && this.targetInvisible()) return this.strikeAtNothing();
     if (spell !== 'heal' && isMagic(spell) && this.combat.monster.type === 'Rakshasa') return this.spellWashesOff();
+    if (isMagic(spell) && this.combat.monster.type === 'Hush') return this.silenced('spell');
     if (isMagic(spell)) {
       this.fx.cast = spell === 'heal' ? 'heal' : 'attack';
     }
@@ -2548,6 +2563,14 @@ export class GameEngine {
     const monster = this.combat!.monster;
     const res = monsterFirstStrike(this.char!, monster, this.rng,
       [`You strike at empty air. The ${monster.type} is invisible, and cannot be attacked!`, '']);
+    return this.processCombatResult(res);
+  }
+
+  /** The Hush: no word makes a sound inside it, so no spell or prayer works; it gets its turn. */
+  private silenced(what: 'spell' | 'prayer'): GameState {
+    const res = monsterFirstStrike(this.char!, this.combat!.monster, this.rng, [
+      what === 'spell' ? 'You speak the words of the spell. No sound comes out, and nothing happens.' : 'You pray aloud, and not a sound leaves your lips. No one hears.',
+      '(No spell or prayer can be heard inside the Hush. Fight it hand to hand, or with gems.)', '']);
     return this.processCombatResult(res);
   }
 
@@ -2664,10 +2687,36 @@ export class GameEngine {
     return 1;
   }
 
-  private noteMonsterTurn(result: { monsterElement?: FxElement }): void {
+  private noteMonsterTurn(result: { monsterElement?: FxElement; messages?: string[] }): void {
+    // Cartographer's Bane: each touch tears away part of the map of this level.
+    const m = this.combat?.monster;
+    if (m?.mapBites) {
+      for (let i = 0; i < m.mapBites; i++) result.messages?.push(...this.tearMap());
+      m.mapBites = 0;
+    }
     if (!result.monsterElement) return;
     this.fx.player = result.monsterElement;
     this.fx.monsterAttacked = true;
+  }
+
+  /** Erases a share of this level's map: the explored squares nearest a
+   * remembered spot away from you (and the diamond's whole-level view). */
+  private tearMap(): string[] {
+    const c = this.char!, ds = this.dungeonState!;
+    const level = c.dungeonLevel;
+    const prefix = `${level}:`;
+    const known = [...ds.visitedCells].filter(k => k.startsWith(prefix)).map(k => {
+      const [x, y] = k.slice(prefix.length).split(',').map(Number);
+      return { k, x, y };
+    });
+    ds.revealedLevels.delete(level);
+    const far = known.filter(p => Math.abs(p.x - c.x) + Math.abs(p.y - c.y) > BANE.SPARE_RADIUS);
+    if (!far.length) return ['', 'Its fingers search your mind for something to take, and find almost nothing.'];
+    const centre = far[this.rng.int(0, far.length - 1)];
+    const take = Math.max(1, Math.round(known.length * BANE.MAP_SHARE));
+    far.sort((a, b) => (Math.abs(a.x - centre.x) + Math.abs(a.y - centre.y)) - (Math.abs(b.x - centre.x) + Math.abs(b.y - centre.y)));
+    for (const p of far.slice(0, take)) ds.visitedCells.delete(p.k);
+    return ['', `Your memory of these halls tears away like wet paper. (Part of your map of Level ${level} is gone.)`];
   }
 
   /** Adds the time since the last action to the character's play time.
@@ -2779,6 +2828,7 @@ export class GameEngine {
   }
 
   private combatPray(): GameState {
+    if (this.combat!.monster.type === 'Hush') return this.silenced('prayer');
     this.fx.monster = 'holy';
     const result = playerPray(this.char!, this.combat!.monster, this.rng);
     return this.processCombatResult(result);
@@ -3153,6 +3203,79 @@ export class GameEngine {
   }
 
   /** A champion's deep descent: choose any deeper level, arriving at its entrance. */
+  // ─── The Toll-Keeper ─────────────────────────────────────────────────────
+  // A hooded figure sits on the stairs down from level 2 with a ledger. Pay
+  // in gold, or a finger (a point of Dexterity, for good), or fight it; once
+  // settled (paid or beaten), your name is in the book and you pass freely.
+
+  /** Paying and beating it both mark it settled (defeatedFixedMonsters / defeatedUniqueMonsters). */
+  private tollSettled(): boolean {
+    const ds = this.dungeonState;
+    return !!ds && (ds.defeatedFixedMonsters.has(TOLL_KEEPER_ID) || ds.defeatedUniqueMonsters.has(TOLL_KEEPER_ID));
+  }
+
+  /** The toll: a quarter of the gold you carry, never less than 50. */
+  private tollPrice(): number {
+    return Math.max(TOLL.MIN_GOLD, Math.round(this.char!.gold * TOLL.SHARE));
+  }
+
+  private offerToll(): GameState {
+    const c = this.char!;
+    const price = this.tollPrice();
+    this.interaction = {
+      type: 'toll', contentId: TOLL_KEEPER_ID, toll: price,
+      choices: [
+        { key: 'a', text: c.gold >= price ? `Pay ${price} gold` : `Pay ${price} gold (you have ${c.gold})` },
+        { key: 'b', text: 'Pay with a finger (-1 Dexterity, for good)' },
+        { key: 'c', text: 'Fight the Toll-Keeper' },
+        { key: 'd', text: 'Turn back' },
+      ],
+    };
+    this.phase = 'interaction';
+    this.messages = [
+      'On the stair, where it turns into the dark, a hooded figure sits with a ledger open on its knees.',
+      'It does not look up. A long grey finger taps the page.',
+      '',
+      `"Toll," it says. "${price} gold. Or a finger: I am not particular which."`,
+    ];
+    return this.getState();
+  }
+
+  private resolveToll(key: string): GameState {
+    const c = this.char!;
+    const price = this.interaction?.toll ?? this.tollPrice();
+    const settle = (lines: string[]) => {
+      this.dungeonState!.defeatedFixedMonsters.add(TOLL_KEEPER_ID);
+      this.interaction = null;
+      this.phase = 'playing';
+      return this.descendTo(c.dungeonLevel + 1, [...lines, '']);
+    };
+    if (key === 'a') {
+      if (c.gold < price) {
+        this.messages = [`You turn out your purse: ${c.gold} gold. The Toll-Keeper does not even look at it.`, '"Toll," it says again.'];
+        return this.getState();
+      }
+      c.gold -= price;
+      return settle([`You count out ${price} gold. It writes your name in the ledger without looking up, and moves its knees aside.`, '"Pass," it says. "You are in the book now."']);
+    }
+    if (key === 'b') {
+      c.dexterity = Math.max(3, c.dexterity - 1);
+      return settle([
+        'It takes your hand almost gently, lays your little finger on the ledger, and the knife is very quick.',
+        'It writes your name in your own blood. (-1 Dexterity, for good)',
+        '"Pass," it says. "You are in the book now."',
+      ]);
+    }
+    if (key === 'c') {
+      this.interaction = null;
+      this.phase = 'playing';
+      const def = getDefinition('Toll-Keeper');
+      const monster = createMonster('Toll-Keeper', this.rng.int(def.minLevel, def.maxLevel) + this.worldBoost(), TOLL_KEEPER_ID, this.worldBoost() > 0);
+      return this.beginCombat(monster);
+    }
+    return this.closeInteraction('You step back from the stair. The Toll-Keeper returns to its ledger.');
+  }
+
   private offerDeepDescent(lead: string[]): GameState {
     const c = this.char!;
     const levels = Array.from({ length: 7 - c.dungeonLevel }, (_, i) => c.dungeonLevel + 1 + i);
@@ -3339,6 +3462,8 @@ export class GameEngine {
         return this.resolvePlanarStep(key);
       case 'descend':
         return this.resolveDeepDescent(key);
+      case 'toll':
+        return this.resolveToll(key);
       default:
         return this.closeInteraction();
     }

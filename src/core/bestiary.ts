@@ -595,6 +595,70 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     ],
   },
 
+  // Lantern Moths: they put out your torch, then batter at you in the dark.
+  'Lantern Moths': { moves: [
+    { id: 'moth-snuff', weight: 45, when: k => !has(k.char, 'snuffed'), run: k => {
+      k.say('The moths smother your torch in a choking, fluttering mass. The flame gutters, and dies.');
+      k.status({ type: 'snuffed', value: 4, turns: 40 });
+      k.say('You fight half-blind. (-4 to hit until you can relight it; anything that finds you in the dark strikes first)');
+    } },
+    { id: 'moth-swarm', weight: 55, run: k => {
+      k.strike(1.0, d => `Dusty wings beat at your eyes and mouth. (${d} damage)`);
+    } },
+  ] },
+
+  // The Toll-Keeper: its staff, and its ledger.
+  'Toll-Keeper': { moves: [
+    { id: 'toll-staff', weight: 55, run: k => {
+      k.strike(1.15, d => `The iron-shod staff comes down like a gate closing. (${d} damage)`);
+    } },
+    { id: 'toll-collect', weight: 25, run: k => {
+      const took = Math.min(k.char.gold, Math.max(5, Math.round(k.char.gold * 0.1)));
+      k.char.gold -= took;
+      k.strike(0.6, d => `A long grey hand finds your purse${took ? ` and takes ${took} gold` : ', finds it empty, and strikes you instead'}. (${d} damage)`);
+    } },
+    { id: 'toll-ledger', weight: 20, run: k => {
+      k.say('It opens the ledger and writes your name. Your hand cramps as if it were writing with you.');
+      k.status({ type: 'dexterity-reduced', value: 3, turns: 20 });
+      k.say('(-3 Dexterity for a while)');
+    } },
+  ] },
+
+  // The Hush: silence that smothers. (No spell or prayer works against it: game-engine.ts.)
+  'Hush': { moves: [
+    { id: 'hush-smother', weight: 55, run: k => {
+      k.strike(1.1, d => `The silence presses into your mouth and fills your lungs. (${d} damage)`);
+    } },
+    { id: 'hush-still', weight: 25, when: k => !k.held(), run: k => {
+      const s = k.save(15, ['wisdom']);
+      if (s.ok) { k.say(`The stillness tries to settle on you. You keep moving. ${s.text}`); return; }
+      k.hold(1, 'paralyzed');
+      k.say(`The stillness settles on you. You forget, for a moment, how to move. ${s.text}`);
+    } },
+    { id: 'hush-press', weight: 20, run: k => {
+      k.strikes(3, 0.45, (d, i) => i === 0 ? `It closes around you from every side at once. (${d} damage)` : `And again, with no sound at all. (${d} damage)`);
+    } },
+  ] },
+
+  // Cartographer's Bane: its touch tears away part of your map (game-engine.ts does the tearing).
+  "Cartographer's Bane": { moves: [
+    { id: 'bane-touch', weight: 45, run: k => {
+      k.strike(0.9, d => `Ink-black fingers press against your forehead. (${d} damage)`);
+      if (k.alive()) k.monster.mapBites = (k.monster.mapBites ?? 0) + 1;
+    } },
+    { id: 'bane-claw', weight: 40, run: k => {
+      k.strike(1.25, d => `Its long fingers rake you. (${d} damage)`);
+    } },
+    { id: 'bane-whisper', weight: 15, run: k => {
+      k.say('It whispers the names of streets in cities that never were.');
+      const s = k.save(15, ['intelligence', 'wisdom']);
+      if (s.ok) { k.say(`You hold on to where you are. ${s.text}`); return; }
+      k.monster.mapBites = (k.monster.mapBites ?? 0) + 1;
+      k.hold(1, 'dazed');
+      k.say(`Your own memories start to sound like his. ${s.text}`);
+    } },
+  ] },
+
   // The Bone Vortex: a new shape each turn.
   'Bone Vortex': { moves: [
     { id: 'vortex-serpent', weight: 25, when: k => !k.held(), run: k => {

@@ -238,6 +238,8 @@ function applyState(state) {
   // At the Trading Post: its clerk close up while you decide, the shop while you browse.
   const shop = phase === 'interaction' && state.interaction?.type === 'shop' ? state.interaction.shop : null;
   const shopArt = shop?.kind === 'post' && typeof getShopArt === 'function' ? getShopArt(shop.mode) : null;
+  // On the stair down from level 2: the Toll-Keeper, waiting for its toll.
+  const tollArt = phase === 'interaction' && state.interaction?.type === 'toll' ? getMonsterPortrait('Toll-Keeper') : null;
   // A chest, altar or fountain: the thing itself while you decide, then how it
   // turned out (until your next move). A fight that breaks out takes over.
   const inter = phase === 'interaction' ? state.interaction : null;
@@ -247,13 +249,13 @@ function applyState(state) {
   const objArt = objMoment && !lairArt && !shopArt && typeof getObjectArt === 'function' ? getObjectArt(objMoment.kind, objMoment.moment) : null;
   // A level's first-arrival scene: its picture.
   const levelArt = phase === 'level-intro' && state.introLevel && typeof getLevelArt === 'function' ? getLevelArt(state.introLevel) : null;
-  const sceneArt = lairArt || shopArt || objArt || levelArt;
+  const sceneArt = lairArt || shopArt || tollArt || objArt || levelArt;
   viewContainer.classList.toggle('lair-mode', !!lairArt);
   viewContainer.classList.toggle('shop-mode', !!(shopArt || objArt || levelArt));
   portraitEl.classList.toggle('lair', !!sceneArt);
   if (!sceneArt) delete portraitEl.dataset.art;
   if (sceneArt) {
-    const key = lairArt ? `lair:${state.lair.monster}` : shopArt ? `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}` : levelArt ? `level:${state.introLevel}` : `obj:${objMoment.kind}:${objMoment.moment}`;
+    const key = lairArt ? `lair:${state.lair.monster}` : shopArt ? `shop:${shop.mode === 'main' ? 'closeup' : 'shop'}` : tollArt ? 'toll' : levelArt ? `level:${state.introLevel}` : `obj:${objMoment.kind}:${objMoment.moment}`;
     if (portraitEl.dataset.art !== key) { portraitEl.innerHTML = sceneArt; portraitEl.dataset.art = key; }
     delete portraitEl.dataset.monster;
     portraitEl.style.removeProperty('--sprite-scale');
@@ -706,7 +708,8 @@ function draw3D(state) {
   const t = now / 1000;
   const camera = cameraFor3D(state, now);
   const extraObjects = monsterShownInScene(state) ? [monsterObject(state, camera, now)] : [];
-  const opts = { sprites: SceneSprites, t, camera, extraObjects, level: state.character?.dungeonLevel || 1 };
+  const snuffed = (state.character?.statusEffects || []).some(e => e.type === 'snuffed');
+  const opts = { sprites: SceneSprites, t, camera, extraObjects, level: state.character?.dungeonLevel || 1, dark: snuffed };
   if (viewMode === 'painted') {
     View3D.renderPainted(canvas, state.scene, opts);
   } else {
@@ -1068,6 +1071,15 @@ function updateStatusBar(char) {
   } else {
     rotEl.className = 'hidden';
   }
+
+  // Lantern Moths took the torch; the Hush took your hearing. Whatever you meet strikes first.
+  const dark = (char.statusEffects || []).find(e => e.type === 'snuffed');
+  const deaf = (char.statusEffects || []).find(e => e.type === 'deafened');
+  const darkEl = document.getElementById('dark-display');
+  darkEl.textContent = [dark ? 'TORCH OUT' : '', deaf ? 'DEAF' : ''].filter(Boolean).join(' · ');
+  darkEl.title = dark ? `Your torch is out: -${dark.value} to hit, and whatever finds you strikes first (${dark.turns} more steps)`
+    : deaf ? `You can't hear what's coming: whatever finds you strikes first (${deaf.turns} more steps)` : '';
+  darkEl.className = dark || deaf ? '' : 'hidden';
 
   // A Manticore's anaphylaxis: count down the time left, between actions too.
   const shock = (char.statusEffects || []).find(e => e.type === 'anaphylaxis');

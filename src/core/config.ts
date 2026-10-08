@@ -494,6 +494,19 @@ export const NEWCOMER = {
   TRACK_TO_LEVEL: 5,
 } as const;
 
+// The Toll-Keeper on the stairs down from level 2.
+export const TOLL = {
+  SHARE: 0.25,      // of the gold you carry...
+  MIN_GOLD: 50,     // ...but never less than this
+} as const;
+
+// The Hush: after meeting it you can't hear what's coming for this many steps.
+export const HUSH = { DEAF_STEPS: 30 } as const;
+
+// Cartographer's Bane: each touch erases this share of the level's explored
+// squares (a patch around a remembered spot, never within this many squares of you).
+export const BANE = { MAP_SHARE: 0.25, SPARE_RADIUS: 3 } as const;
+
 export const WARRIOR = {
   ATTACKS_EVERY_N_LEVELS: 10,      // 1 swing, 2 at level 10, 3 at 20...
   MAX_ATTACKS: 5,
