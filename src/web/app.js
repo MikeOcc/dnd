@@ -706,7 +706,7 @@ function draw3D(state) {
   const t = now / 1000;
   const camera = cameraFor3D(state, now);
   const extraObjects = monsterShownInScene(state) ? [monsterObject(state, camera, now)] : [];
-  const opts = { sprites: SceneSprites, t, camera, extraObjects };
+  const opts = { sprites: SceneSprites, t, camera, extraObjects, level: state.character?.dungeonLevel || 1 };
   if (viewMode === 'painted') {
     View3D.renderPainted(canvas, state.scene, opts);
   } else {

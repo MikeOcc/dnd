@@ -253,8 +253,8 @@
 
   // ─── Shared bits for drawing ─────────────────────────────────────────────
 
-  /** 1 near, falling to 0 at the edge of the torchlight. */
-  const light = (d) => Math.max(0, Math.min(1, 1.12 - d / 8));
+  /** 1 near, falling to 0 at the edge of the torchlight (`reach`: deeper levels see less far). */
+  const light = (d, reach = 8) => Math.max(0, Math.min(1, 1.12 - d / reach));
 
   function lerpColor(a, b, t) {
     const pa = a.match(/\w\w/g).map(h => parseInt(h, 16)), pb = b.match(/\w\w/g).map(h => parseInt(h, 16));
@@ -265,7 +265,7 @@
 
   /** Draws a sprite into `ctx` over its visible column runs only, dimmed by
    * distance, with a soft contact shadow at its base. */
-  function drawSprite(ctx, cast, sprite, width, t, art) {
+  function drawSprite(ctx, cast, sprite, width, t, art, lightOf = light) {
     const runs = visibleRuns(cast, sprite, width);
     if (!runs.length) return;
     const colW = width / cast.columns.length;
@@ -284,7 +284,7 @@
     ctx.fill();
     // Drawn on a canvas of its own first, so the darkening for distance (and
     // a hit's flash) touches only the figure, not the walls behind it.
-    const dim = 1 - light(sprite.depth);
+    const dim = 1 - lightOf(sprite.depth);
     const pad = Math.ceil(Math.max(8, sprite.height * 0.06));
     const ow = Math.ceil(sprite.width + pad * 2), oh = Math.ceil(sprite.height + pad * 2);
     if (ow > 0 && oh > 0 && ow * oh < 16e6) {
@@ -571,6 +571,280 @@
     return (TEXTURES[material] = c);
   }
 
+  // ─── Each level's own look ─────────────────────────────────────────────────
+  // The same geometry, dressed differently on each level (as in the pictures
+  // shown on first arrival): the walls' tint and what grows or is cut into
+  // them, the floor, the colour of the dark and how far the light reaches,
+  // the torches' colour, and what drifts in the air.
+  const THEMES = {
+    1: { tint: '#ffffff', fog: [0, 0, 0], reach: 8, glow: [255, 160, 60], flame: [255, 220, 120], floor: 'flags', ceil: [1, 0.94, 0.88], overlay: null, motes: null },
+    2: { tint: '#c4d6ac', fog: [3, 9, 3], reach: 7.5, glow: [225, 175, 70], flame: [255, 215, 110], floor: 'mould', ceil: [0.8, 0.95, 0.72], overlay: 'mould', motes: 'spores' },
+    3: { tint: '#d8d4cc', fog: [6, 6, 12], reach: 7, glow: [215, 195, 145], flame: [250, 238, 195], floor: 'graves', ceil: [0.9, 0.9, 0.96], overlay: 'ossuary', motes: 'dust' },
+    4: { tint: '#c9a684', fog: [9, 5, 2], reach: 6.6, glow: [255, 150, 50], flame: [255, 210, 110], floor: 'rock', ceil: [1, 0.84, 0.68], overlay: 'veins', motes: null, rough: true },
+    5: { tint: '#aa8474', fog: [16, 6, 2], reach: 6.4, glow: [255, 125, 35], flame: [255, 190, 90], floor: 'ash', ceil: [0.9, 0.68, 0.58], overlay: 'scorch', motes: 'ash' },
+    6: { tint: '#7c98a8', fog: [0, 9, 14], reach: 6, glow: [120, 200, 210], flame: [195, 245, 245], floor: 'water', ceil: [0.68, 0.84, 0.95], overlay: 'wet', motes: 'drips' },
+    7: { tint: '#7e4440', fog: [26, 3, 0], reach: 6, glow: [255, 90, 30], flame: [255, 170, 70], floor: 'obsidian', ceil: [1, 0.48, 0.38], overlay: 'hell', motes: 'embers' },
+  };
+  const themeFor = (level) => THEMES[level] || THEMES[1];
+
+  /** A material's texture as it looks on a level: tinted, with that level's
+   * overlay painted on (and, for the Hells, a second texture of glowing cracks). */
+  function themedTexture(material, level) {
+    const th = themeFor(level);
+    const base = th.rough && material !== 'wood' ? 'rough' : material;
+    const key = `${base}:${level}`;
+    if (TEXTURES[key]) return TEXTURES[key];
+    const src = texture(base);
+    if (!th.overlay) return (TEXTURES[key] = src);
+    const c = document.createElement('canvas');
+    c.width = c.height = TEX;
+    const g = c.getContext('2d');
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = 'multiply';
+    g.fillStyle = th.tint; g.fillRect(0, 0, TEX, TEX);
+    g.globalCompositeOperation = 'source-over';
+    const r = rand(level * 7919 + base.length * 31);
+    const blot = (x, y, rad, color) => {
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, color); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    };
+    const streak = (x, y0, len, width, color) => {
+      g.strokeStyle = color; g.lineWidth = width; g.beginPath(); g.moveTo(x, y0);
+      for (let y = y0; y < y0 + len; y += 8) g.lineTo(x + Math.sin(y / 11 + x) * 1.5, y);
+      g.stroke();
+    };
+    // What belongs at the foot of a wall (tide marks, soot, fungus, a course
+    // of skulls) goes on a second texture, drawn once along the bottom unit
+    // of height, so tall walls don't repeat it halfway up.
+    const foot = document.createElement('canvas');
+    foot.width = foot.height = TEX;
+    const fg = foot.getContext('2d');
+    const footBlot = (x, y, rad, color) => {
+      const gr = fg.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, color); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      fg.fillStyle = gr; fg.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    };
+    let hasFoot = true;
+    if (th.overlay === 'mould') {
+      for (let i = 0; i < 14; i++) blot(r() * TEX, r() * TEX, 8 + r() * 20, `rgba(${80 + r() * 30 | 0},${105 + r() * 30 | 0},${35 + r() * 15 | 0},${(0.15 + r() * 0.2).toFixed(2)})`);
+      for (let i = 0; i < 10; i++) streak(r() * TEX, r() * TEX * 0.5, 30 + r() * 110, 1.2 + r() * 1.8, 'rgba(150,170,60,0.2)');   // slime runs
+      for (let i = 0; i < 30; i++) {                                     // mould thick at the foot
+        footBlot(r() * TEX, TEX * (0.62 + r() * 0.4), 14 + r() * 30, `rgba(${60 + r() * 35 | 0},${95 + r() * 35 | 0},${25 + r() * 15 | 0},${(0.3 + r() * 0.3).toFixed(2)})`);
+      }
+      for (let i = 0; i < 14; i++) {                                     // pale fungus caps
+        const x = r() * TEX, y = TEX * (0.8 + r() * 0.18), w = 3 + r() * 6;
+        fg.fillStyle = 'rgba(205,195,150,0.8)'; fg.beginPath(); fg.ellipse(x, y, w, w * 0.45, 0, Math.PI, 0); fg.fill();
+        fg.fillStyle = 'rgba(120,110,80,0.75)'; fg.fillRect(x - 0.8, y, 1.6, w * 0.7);
+      }
+    } else if (th.overlay === 'ossuary') {
+      // A course of skulls set into the wall at head height, as in a charnel house.
+      const y0 = TEX * 0.1;
+      fg.fillStyle = 'rgba(12,10,10,0.88)'; fg.fillRect(0, y0 - 4, TEX, 38);
+      for (let x = 2; x < TEX; x += 26) {
+        const v = 170 + r() * 40 | 0, wob = (r() - 0.5) * 3;
+        fg.fillStyle = `rgb(${v},${v - 6},${v - 24})`;
+        fg.beginPath(); fg.ellipse(x + 11, y0 + 12 + wob, 11, 12, 0, 0, Math.PI * 2); fg.fill();
+        fg.fillRect(x + 5, y0 + 18 + wob, 12, 8);
+        fg.fillStyle = 'rgba(15,10,8,0.9)';
+        fg.beginPath(); fg.ellipse(x + 7, y0 + 12 + wob, 3, 3.5, 0, 0, Math.PI * 2); fg.ellipse(x + 15, y0 + 12 + wob, 3, 3.5, 0, 0, Math.PI * 2); fg.fill();
+        fg.beginPath(); fg.moveTo(x + 11, y0 + 16 + wob); fg.lineTo(x + 9.5, y0 + 20 + wob); fg.lineTo(x + 12.5, y0 + 20 + wob); fg.fill();
+        for (let k = 0; k < 4; k++) fg.fillRect(x + 6 + k * 3, y0 + 23 + wob, 1, 3);
+      }
+      g.strokeStyle = 'rgba(220,220,220,0.16)'; g.lineWidth = 0.7;          // cobwebs in the corners
+      for (let k = 0; k < 7; k++) { const a = (k / 6) * Math.PI / 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a) * 60, Math.sin(a) * 60); g.stroke(); }
+      for (let rr = 15; rr < 60; rr += 13) { g.beginPath(); g.arc(0, 0, rr, 0, Math.PI / 2); g.stroke(); }
+      for (let i = 0; i < 1200; i++) { g.fillStyle = `rgba(230,225,210,${(r() * 0.08).toFixed(3)})`; g.fillRect(r() * TEX, r() * TEX, 1, 1); }   // dust
+    } else if (th.overlay === 'veins') {
+      for (let i = 0; i < 4; i++) {                                     // thin mineral veins: quartz and iron
+        const iron = r() < 0.4;
+        g.strokeStyle = iron ? 'rgba(130,60,35,0.32)' : 'rgba(215,210,195,0.26)';
+        g.lineWidth = 0.8 + r() * 1.2; g.beginPath();
+        let x = r() * TEX, y = r() * TEX; g.moveTo(x, y);
+        for (let k = 0; k < 14; k++) { x += (r() - 0.35) * 22; y += (r() - 0.5) * 16; g.lineTo(x, y); }
+        g.stroke();
+      }
+      for (let i = 0; i < 30; i++) { g.fillStyle = `rgba(255,240,200,${(0.25 + r() * 0.4).toFixed(2)})`; g.fillRect(r() * TEX, r() * TEX, 1.2, 1.2); }   // glints
+      const dark = fg.createLinearGradient(0, TEX, 0, TEX * 0.5);       // the rock darkens toward the floor
+      dark.addColorStop(0, 'rgba(0,0,0,0.45)'); dark.addColorStop(1, 'rgba(0,0,0,0)');
+      fg.fillStyle = dark; fg.fillRect(0, 0, TEX, TEX);
+    } else if (th.overlay === 'scorch') {
+      for (let i = 0; i < 5; i++) blot(r() * TEX, r() * TEX, 25 + r() * 45, 'rgba(10,6,3,0.45)');
+      for (let i = 0; i < 3; i++) streak(r() * TEX, TEX * (0.1 + r() * 0.3), 30 + r() * 50, 2.5, 'rgba(200,150,40,0.3)');   // melted gold
+      const soot = fg.createLinearGradient(0, TEX, 0, TEX * 0.15);        // soot climbing from the floor
+      soot.addColorStop(0, 'rgba(8,5,3,0.8)'); soot.addColorStop(1, 'rgba(8,5,3,0)');
+      fg.fillStyle = soot; fg.fillRect(0, 0, TEX, TEX);
+    } else if (th.overlay === 'wet') {
+      for (let i = 0; i < 26; i++) streak(r() * TEX, r() * TEX * 0.6, 40 + r() * 140, 1 + r() * 1.5, `rgba(170,220,230,${(0.07 + r() * 0.12).toFixed(2)})`);   // running water
+      fg.fillStyle = 'rgba(0,20,25,0.5)'; fg.fillRect(0, TEX * 0.72, TEX, TEX * 0.28);   // below the tide mark
+      fg.fillStyle = 'rgba(150,200,190,0.3)'; fg.fillRect(0, TEX * 0.715, TEX, 2);
+      for (let i = 0; i < 18; i++) {                                     // weed hanging from the tide mark
+        const x = r() * TEX; fg.strokeStyle = 'rgba(30,70,45,0.75)'; fg.lineWidth = 2; fg.beginPath(); fg.moveTo(x, TEX * 0.72);
+        fg.quadraticCurveTo(x + (r() - 0.5) * 12, TEX * 0.8, x + (r() - 0.5) * 8, TEX * (0.84 + r() * 0.14)); fg.stroke();
+      }
+      for (let i = 0; i < 40; i++) { fg.fillStyle = 'rgba(190,200,185,0.5)'; fg.beginPath(); fg.arc(r() * TEX, TEX * (0.78 + r() * 0.2), 1 + r() * 2, 0, Math.PI * 2); fg.fill(); }   // barnacles
+    } else if (th.overlay === 'hell') {
+      const sheen = g.createLinearGradient(0, 0, TEX, TEX);              // a glassy, obsidian sheen
+      sheen.addColorStop(0, 'rgba(255,255,255,0)'); sheen.addColorStop(0.5, 'rgba(255,200,200,0.08)'); sheen.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = sheen; g.fillRect(0, 0, TEX, TEX);
+      // The cracks, on a texture of their own that glows whatever the light.
+      const glow = document.createElement('canvas');
+      glow.width = glow.height = TEX;
+      const gg = glow.getContext('2d');
+      // Two forked fissures, wandering across as much as down.
+      const fissures = [];
+      for (let i = 0; i < 2; i++) {
+        let x = 30 + r() * (TEX - 60), y = 10 + r() * 60, a = Math.PI / 2 + (r() - 0.5) * 1.6;
+        const main = [[x, y]];
+        for (let k = 0; k < 10; k++) { a += (r() - 0.5) * 1.1; x += Math.cos(a) * 18; y += Math.abs(Math.sin(a)) * 16 + 4; main.push([x, y]); }
+        fissures.push({ pts: main, w: 1 });
+        for (let b = 0; b < 2; b++) {                         // forks off it
+          const at = main[2 + Math.floor(r() * 6)];
+          let bx = at[0], by = at[1], ba = (r() < 0.5 ? -1 : 1) * (0.4 + r() * 0.8);
+          const fork = [[bx, by]];
+          for (let k = 0; k < 4; k++) { ba += (r() - 0.5) * 0.8; bx += Math.cos(ba) * 14; by += Math.abs(Math.sin(ba)) * 12 + 3; fork.push([bx, by]); }
+          fissures.push({ pts: fork, w: 0.6 });
+        }
+      }
+      for (const { pts, w: scale } of fissures) {
+        for (const [w, col] of [[7, 'rgba(255,50,5,0.22)'], [2.6, 'rgba(255,120,30,0.8)'], [1, 'rgba(255,225,150,0.85)']]) {
+          gg.strokeStyle = col; gg.lineWidth = w * scale; gg.lineJoin = 'round'; gg.beginPath();
+          pts.forEach(([px, py], k) => (k ? gg.lineTo(px, py) : gg.moveTo(px, py))); gg.stroke();
+        }
+        g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 4 * scale; g.beginPath();
+        pts.forEach(([px, py], k) => (k ? g.lineTo(px, py) : g.moveTo(px, py))); g.stroke();
+      }
+      TEXTURES[key + ':glow'] = glow;
+      hasFoot = false;
+    }
+    if (hasFoot) TEXTURES[key + ':foot'] = foot;
+    return (TEXTURES[key] = c);
+  }
+
+  /** Smooth noise in 0..1 over the floor (for patches of mould, ash, rock). */
+  function hash2(x, y) {
+    let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function noise(x, y) {
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const a = hash2(ix, iy), b = hash2(ix + 1, iy), c = hash2(ix, iy + 1), d = hash2(ix + 1, iy + 1);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  }
+
+  /** A floor point's colour before the light falls on it, and any glow of its
+   * own (lava, a glint of gold), for each level's kind of floor. */
+  function floorColor(kind, fx, fy, d, t) {
+    // Flagstones half a square across, every other row staggered (levels 1, 2, 5).
+    const flags = () => {
+      const iy = Math.floor(fy * 2), vy = fy * 2 - iy;
+      const sx = fx * 2 + (iy & 1) * 0.5, ix = Math.floor(sx), vx = sx - ix;
+      const seamW = Math.min(0.06, 0.025 + d * 0.003);
+      const seam = vx < seamW || vy < seamW;
+      const stone = (((ix * 73856093) ^ (iy * 19349663)) >>> 0) % 16;
+      const grain = (((Math.floor(fx * 48) * 83492791) ^ (Math.floor(fy * 48) * 2654435761)) >>> 0) % 9 - 4;
+      const bevel = !seam && (vx < seamW + 0.05 || vy < seamW + 0.05) ? 7 : !seam && (vx > 0.94 || vy > 0.94) ? -6 : 0;
+      return { seam, base: seam ? 20 : 50 + stone + grain + bevel, ix, iy };
+    };
+    switch (kind) {
+      case 'mould': {
+        const f = flags();
+        const m = noise(fx * 1.6, fy * 1.6);
+        const k = m > 0.58 ? Math.min(1, (m - 0.58) * 4) : 0;
+        return { rgb: [f.base * 0.84 * (1 - k) + 38 * k, f.base * 0.95 * (1 - k) + 66 * k, f.base * 0.74 * (1 - k) + 24 * k] };
+      }
+      case 'graves': {
+        const ix = Math.floor(fx), iy = Math.floor(fy), vx = fx - ix, vy = fy - iy;
+        const seam = vx < 0.03 || vy < 0.03;
+        const h = hash2(ix, iy);
+        const grave = h < 0.3 && ((vx > 0.18 && vx < 0.2) || (vx > 0.8 && vx < 0.82) || (vy > 0.12 && vy < 0.14) || (vy > 0.86 && vy < 0.88)) && vx > 0.18 && vx < 0.82 && vy > 0.12 && vy < 0.88;
+        const grain = (hash2(Math.floor(fx * 40), Math.floor(fy * 40)) - 0.5) * 10;
+        const b = seam ? 18 : grave ? 30 : 58 + h * 10 + grain;
+        return { rgb: [b * 0.96, b * 0.95, b * 1.0] };
+      }
+      case 'rock': {
+        const n = noise(fx * 2.2, fy * 2.2) * 0.65 + noise(fx * 7, fy * 7) * 0.35;
+        const crack = Math.abs(noise(fx * 2.4 + 9, fy * 2.4) - 0.5) < 0.009;
+        const b = crack ? 14 : 34 + n * 30;
+        return { rgb: [b * 1.0, b * 0.84, b * 0.66] };
+      }
+      case 'ash': {
+        const f = flags();
+        const a = noise(fx * 1.2, fy * 1.2);
+        const b = f.base * 0.72;
+        const ash = a > 0.55 ? Math.min(1, (a - 0.55) * 3) : 0;
+        const rgb = [b * 0.95 * (1 - ash) + 66 * ash, b * 0.82 * (1 - ash) + 62 * ash, b * 0.72 * (1 - ash) + 58 * ash];
+        const g = hash2(Math.floor(fx * 37), Math.floor(fy * 37));
+        const glint = !f.seam && g < 0.008 && Math.sin(t * 2.5 + g * 900) > 0.2 ? [120, 85, 20] : null;   // gold among the ashes
+        return { rgb, glow: glint };
+      }
+      case 'water': {
+        const n = noise(fx * 2.5 + t * 0.15, fy * 2.5 - t * 0.1);
+        const ripple = Math.sin(fx * 11 + n * 6 + t * 1.3) * Math.sin(fy * 9 - n * 5 + t * 0.8);
+        const f = flags();                                   // the flagstones under the water, dimly
+        const under = f.seam ? -5 : 0;
+        const hi = Math.max(0, ripple - 0.75) * 70;          // thin glints where the ripples cross
+        return { rgb: [11 + under + hi * 0.55, 27 + under + hi * 0.9 + n * 6, 33 + under + hi + n * 7] };
+      }
+      case 'obsidian': {
+        const iy = Math.floor(fy * 1.5), sx = fx * 1.5 + (iy & 1) * 0.37 + noise(fx * 3, fy * 3) * 0.25, ix = Math.floor(sx);
+        const vx = sx - ix, vy = fy * 1.5 + noise(fx * 3 + 5, fy * 3) * 0.2 - iy;
+        const seam = vx < 0.05 || vy < 0.05 || vy > 0.98;
+        const gloss = noise(fx * 4, fy * 4) > 0.7 ? 10 : 0;
+        if (vx < 0.03 || vy < 0.03 || vy > 0.99) {
+          const pulse = 0.6 + 0.4 * Math.sin(t * 2 + ix * 1.7 + iy);
+          return { rgb: [30, 8, 4], glow: [170 * pulse, 52 * pulse, 10 * pulse] };
+        }
+        if (seam) return { rgb: [26, 9, 6], glow: [60, 14, 3] };    // the cooling edge of the seam
+        return { rgb: [20 + gloss, 13 + gloss * 0.6, 15 + gloss * 0.6] };
+      }
+      default: {
+        const f = flags();
+        return { rgb: [f.base * 0.97, f.base * 0.92, f.base * 0.84] };
+      }
+    }
+  }
+
+  /** What drifts in the air: spores, dust, falling ash, drips, rising embers. */
+  function drawMotes(ctx, kind, width, height, t, still) {
+    if (!kind) return;
+    const n = Math.round(40 * Math.sqrt((width * height) / (800 * 450)));
+    const u = height / 300;
+    const frac = (x) => x - Math.floor(x);
+    ctx.save();
+    if (kind === 'embers') ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const a = frac(Math.sin(i * 12.9898) * 43758.5453), b = frac(Math.sin(i * 78.233) * 12345.678), c = frac(Math.sin(i * 39.425) * 24634.6345);
+      const tt = still ? 0 : t;
+      let x, y, size, color;
+      if (kind === 'spores') {
+        x = frac(a + 0.02 * Math.sin(tt * 0.3 + i)) * width; y = frac(b - tt * 0.01 * (0.5 + c)) * height;
+        size = (1 + c * 1.5) * u; color = `rgba(200,220,140,${(0.18 + 0.2 * c).toFixed(2)})`;
+      } else if (kind === 'dust') {
+        x = frac(a + 0.01 * Math.sin(tt * 0.2 + i)) * width; y = frac(b + tt * 0.008 * (0.5 + c)) * height;
+        size = (0.8 + c) * u; color = `rgba(225,220,205,${(0.1 + 0.15 * c).toFixed(2)})`;
+      } else if (kind === 'ash') {
+        x = frac(a + 0.03 * Math.sin(tt * 0.6 + i * 2)) * width; y = frac(b + tt * 0.03 * (0.5 + c)) * height;
+        const ember = i % 9 === 0;
+        size = (1 + c * 1.6) * u; color = ember ? `rgba(255,140,50,${(0.5 + 0.4 * Math.sin(tt * 5 + i)).toFixed(2)})` : `rgba(150,140,130,${(0.3 + 0.25 * c).toFixed(2)})`;
+      } else if (kind === 'drips') {
+        if (i % 3) continue;
+        x = a * width; y = frac(b + tt * 0.35 * (0.6 + c)) * height;
+        ctx.strokeStyle = `rgba(190,235,240,${(0.2 + 0.2 * c).toFixed(2)})`; ctx.lineWidth = Math.max(1, u * 0.8);
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 6 * u); ctx.stroke();
+        continue;
+      } else {   // embers, rising
+        x = frac(a + 0.03 * Math.sin(tt * 0.8 + i)) * width; y = frac(b - tt * 0.06 * (0.5 + c)) * height;
+        size = (1 + c * 1.8) * u; color = `rgba(255,${120 + c * 90 | 0},40,${(0.35 + 0.45 * Math.abs(Math.sin(tt * 4 + i))).toFixed(2)})`;
+      }
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   /** Renders the Painted look: textured walls, flagstone floor, dark vaults. */
   function renderPainted(canvas, scene, opts) {
     const ctx = canvas.getContext('2d');
@@ -583,6 +857,11 @@
     const cast = castColumns(world, cam, cols, width, height);
     const { f, horizon } = cast;
     const colW = width / cols;
+    const level = opts.level || 1;
+    const th = themeFor(level);
+    const lit = (d) => light(d, th.reach);
+    const fog = th.fog;
+    const fogRGB = `${fog[0]},${fog[1]},${fog[2]}`;
 
     // Floor and ceiling, cast per pixel.
     const img = ctx.createImageData(cols, height);
@@ -591,22 +870,15 @@
       const y = py + 0.5;
       for (let c = 0; c < cols; c++) {
         const col = cast.columns[c];
-        let rgb = [0, 0, 0];
+        let rgb = fog;
         if (y > horizon) {
           const d = (f * EYE) / (y - horizon);
           if (d < col.depth && d < MAX_DIST) {
             const fx = cam.x + col.rdx * d, fy = cam.y + col.rdy * d;
-            // Flagstones half a square across, every other row staggered.
-            const iy = Math.floor(fy * 2), vy = fy * 2 - iy;
-            const sx = fx * 2 + (iy & 1) * 0.5, ix = Math.floor(sx), vx = sx - ix;
-            const seamW = Math.min(0.06, 0.025 + d * 0.003);
-            const seam = vx < seamW || vy < seamW;
-            const l = light(d);
-            const stone = (((ix * 73856093) ^ (iy * 19349663)) >>> 0) % 16;
-            const grain = (((Math.floor(fx * 48) * 83492791) ^ (Math.floor(fy * 48) * 2654435761)) >>> 0) % 9 - 4;
-            const bevel = !seam && (vx < seamW + 0.05 || vy < seamW + 0.05) ? 7 : !seam && (vx > 0.94 || vy > 0.94) ? -6 : 0;
-            const base = seam ? 20 : 50 + stone + grain + bevel;
-            rgb = [base * l * 0.97, base * l * 0.92, base * l * 0.84];
+            const l = lit(d);
+            const fc = floorColor(th.floor, fx, fy, d, t);
+            rgb = [fc.rgb[0] * l + fog[0] * (1 - l), fc.rgb[1] * l + fog[1] * (1 - l), fc.rgb[2] * l + fog[2] * (1 - l)];
+            if (fc.glow) { const k = 0.45 + 0.55 * l; rgb = [rgb[0] + fc.glow[0] * k, rgb[1] + fc.glow[1] * k, rgb[2] + fc.glow[2] * k]; }
           }
         } else {
           const d = (f * (1 - EYE)) / (horizon - y);
@@ -614,10 +886,10 @@
             const fx = cam.x + col.rdx * d, fy = cam.y + col.rdy * d;
             const cell = cellAt(world, Math.floor(fx), Math.floor(fy));
             if (cell && cell.ceiling === 0) {
-              const l = light(d) * 0.7;
-              const beam = Math.abs(fx - Math.round(fx)) < 0.04 || Math.abs(fy - Math.round(fy)) < 0.04;
-              const base = beam ? 22 : 40;
-              rgb = [base * l, base * l * 0.94, base * l * 0.88];
+              const l = lit(d) * 0.7;
+              const beam = th.rough ? false : Math.abs(fx - Math.round(fx)) < 0.04 || Math.abs(fy - Math.round(fy)) < 0.04;
+              const base = th.rough ? 26 + noise(fx * 3, fy * 3) * 22 : beam ? 22 : 40;
+              rgb = [base * l * th.ceil[0] + fog[0] * (1 - l), base * l * th.ceil[1] + fog[1] * (1 - l), base * l * th.ceil[2] + fog[2] * (1 - l)];
             }
           }
         }
@@ -636,8 +908,8 @@
       const col = cast.columns[c];
       const x = c * colW;
       for (const l of col.lintels) {
-        ctx.drawImage(texture('stone'), TEX / 2, 0, 1, TEX, x, l.top, colW + 0.5, l.bottom - l.top);
-        ctx.fillStyle = `rgba(0,0,0,${(1 - light(l.dist) * 0.85).toFixed(3)})`;
+        ctx.drawImage(themedTexture('stone', level), TEX / 2, 0, 1, TEX, x, l.top, colW + 0.5, l.bottom - l.top);
+        ctx.fillStyle = `rgba(${fogRGB},${(1 - lit(l.dist) * 0.85).toFixed(3)})`;
         ctx.fillRect(x, l.top, colW + 0.5, l.bottom - l.top);
       }
       const w = col.wall;
@@ -647,17 +919,42 @@
       const reps = w.height;                         // the texture repeats once per unit of height
       const srcTop = TEX * reps * ((w.top - fullTop) / (w.bottom - fullTop));
       // Draw the visible part, tiling the texture vertically.
-      let y = w.top, sy = srcTop;
       const pxPerTex = (w.bottom - fullTop) / reps / TEX;
-      while (y < w.bottom - 0.01) {
-        const inTile = sy % TEX;
-        const take = Math.min(TEX - inTile, (w.bottom - y) / pxPerTex);
-        ctx.drawImage(texture(w.material), tx, inTile, 1, take, x, y, colW + 0.5, take * pxPerTex);
-        y += take * pxPerTex; sy += take;
+      const tex = themedTexture(w.material, level);
+      const tile = (img) => {
+        let y = w.top, sy = srcTop;
+        while (y < w.bottom - 0.01) {
+          const inTile = sy % TEX;
+          const take = Math.min(TEX - inTile, (w.bottom - y) / pxPerTex);
+          ctx.drawImage(img, tx, inTile, 1, take, x, y, colW + 0.5, take * pxPerTex);
+          y += take * pxPerTex; sy += take;
+        }
+      };
+      tile(tex);
+      // The foot of the wall: drawn once, over its lowest unit of height.
+      const footTex = TEXTURES[`${th.rough && w.material !== 'wood' ? 'rough' : w.material}:${level}:foot`];
+      if (footTex) {
+        const unitTop = screenY(horizon, f, 1, w.dist);
+        const ya = Math.max(unitTop, w.top);
+        if (w.bottom - ya > 0.5) {
+          const s0 = ((ya - unitTop) / (w.bottom - unitTop)) * TEX;
+          ctx.drawImage(footTex, tx, s0, 1, Math.max(1, TEX - s0), x, ya, colW + 0.5, w.bottom - ya);
+        }
       }
       const side = w.dir === 'N' || w.dir === 'S' ? 0 : 0.18;
-      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.97, 1 - light(w.dist) + side).toFixed(3)})`;
+      const l = lit(w.dist);
+      ctx.fillStyle = `rgba(${fogRGB},${Math.min(0.97, 1 - l).toFixed(3)})`;
       ctx.fillRect(x, w.top, colW + 0.5, w.bottom - w.top);
+      if (side) { ctx.fillStyle = `rgba(0,0,0,${side})`; ctx.fillRect(x, w.top, colW + 0.5, w.bottom - w.top); }
+      // The Hells: cracks that glow whatever the light.
+      const glow = TEXTURES[`${th.rough && w.material !== 'wood' ? 'rough' : w.material}:${level}:glow`];
+      if (glow) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = Math.min(1, (0.35 + 0.65 * l) * (prefersReducedMotion() ? 0.85 : 0.75 + 0.25 * Math.sin(t * 1.7 + w.cellX * 0.9 + w.cellY)));
+        tile(glow);
+        ctx.restore();
+      }
     }
     // Carvings: an etched rune at eye level, drawn once per wall at its middle.
     const carvedDone = new Set();
@@ -667,7 +964,7 @@
       const key = `${w.cellX},${w.cellY},${w.dir}`;
       if (carvedDone.has(key)) continue;
       carvedDone.add(key);
-      const x = (c + 0.5) * colW, y = screenY(horizon, f, 0.55, w.dist), s = f / w.dist, a = light(w.dist);
+      const x = (c + 0.5) * colW, y = screenY(horizon, f, 0.55, w.dist), s = f / w.dist, a = lit(w.dist);
       ctx.save();
       ctx.lineWidth = Math.max(1, s * 0.012);
       ctx.strokeStyle = `rgba(10,8,6,${(0.75 * a).toFixed(3)})`;          // the cut
@@ -691,28 +988,30 @@
       const x = (c + 0.5) * colW, y = screenY(horizon, f, 0.68, w.dist), s = f / w.dist;
       const flick = prefersReducedMotion() ? 1 : 0.9 + 0.1 * Math.sin(t * 9 + w.cellX);
       const glow = ctx.createRadialGradient(x, y, 0, x, y, s * 0.6);
-      glow.addColorStop(0, `rgba(255,160,60,${(0.45 * light(w.dist) * flick).toFixed(3)})`);
-      glow.addColorStop(1, 'rgba(255,120,30,0)');
+      const [gr, gg, gb] = th.glow, [fr, fg, fb] = th.flame;
+      glow.addColorStop(0, `rgba(${gr},${gg},${gb},${(0.45 * lit(w.dist) * flick).toFixed(3)})`);
+      glow.addColorStop(1, `rgba(${gr},${gg},${gb},0)`);
       ctx.fillStyle = glow;
       ctx.fillRect(x - s * 0.6, y - s * 0.6, s * 1.2, s * 1.2);
-      ctx.fillStyle = `rgba(255,${200 + 40 * flick | 0},120,${light(w.dist).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${fr},${(fg - 20 + 40 * flick) | 0},${fb},${lit(w.dist).toFixed(3)})`;
       ctx.beginPath(); ctx.ellipse(x, y - s * 0.02, s * 0.025, s * 0.05 * flick, 0, 0, Math.PI * 2); ctx.fill();
       ctx.save(); ctx.globalCompositeOperation = 'source-over';            // the iron bracket
-      ctx.fillStyle = `rgba(30,26,22,${light(w.dist).toFixed(3)})`;
+      ctx.fillStyle = `rgba(30,26,22,${lit(w.dist).toFixed(3)})`;
       ctx.fillRect(x - s * 0.012, y + s * 0.03, s * 0.024, s * 0.09);
       ctx.fillRect(x - s * 0.03, y + s * 0.025, s * 0.06, s * 0.018);
       ctx.restore();
     }
     ctx.restore();
     for (const s of placeObjects(world, cam, width, height, sprites.sizeOf)) {
-      drawSprite(ctx, cast, s, width, t, sprites.art(s.obj));
+      drawSprite(ctx, cast, s, width, t, sprites.art(s.obj), lit);
     }
+    drawMotes(ctx, th.motes, width, height, t, prefersReducedMotion());
     return { cast, cam, world };
   }
 
   const api = {
     buildWorld, wallBetween, cameraFor, cameraAt, FACING_ANGLE, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
-    renderAscii, renderPainted, prefersReducedMotion,
+    renderAscii, renderPainted, prefersReducedMotion, THEMES, floorColor,
     FOV, EYE, MAX_DIST, NEAR, CEILING_HEIGHTS,
   };
   root.View3D = api;
