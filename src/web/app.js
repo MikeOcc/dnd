@@ -523,7 +523,7 @@ function setMore(open) {
 const INTRO_KEY = 'sevenLevels.introSeen';
 let helpOpen = false;
 /** How to play: the essential keys, how saving works, and the full list. */
-async function openHelp() {
+async function openHelp(section) {
   helpOpen = true;
   setMore(false);
   await accountReady.catch(() => {});   // (the saving note depends on whether you're signed in)
@@ -546,11 +546,23 @@ async function openHelp() {
       ${guest ? 'You\u2019re playing as a guest: your characters belong to this browser. Sign up from the main menu to keep them on any device.' : 'Your characters are kept with your account, on any device.'}</p>
     <details><summary>All the keys</summary><p class="help-all">Arrows: move &amp; turn · U/D: stairs · W: rest · P: potion · B: tome · G: diamond · E: emerald · F: Pilgrim's Pearl (to the nearest fountain or altar) · Y: Planar Step · J: rings · A: amulets · K: gear · L: view · M: map · T: status · I: inventory · S: save · R: restore last save · N: sound · V: on-screen arrows · O: settings · X: more · H: help · Q: quit</p>
       <p class="help-all">In a fight, the choices are listed under the messages (attack, spells, run and so on).</p></details>
+    <details id="help-credits"><summary>Credits &amp; licences</summary>
+      <p class="help-all">THE SEVEN LEVELS is made by Mike Occhipinti.</p>
+      <p class="help-all">This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at
+        <a href="https://dnd.wizards.com/resources/systems-reference-document" target="_blank" rel="noopener">https://dnd.wizards.com/resources/systems-reference-document</a>.
+        The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at
+        <a href="https://creativecommons.org/licenses/by/4.0/legalcode" target="_blank" rel="noopener">https://creativecommons.org/licenses/by/4.0/legalcode</a>.</p>
+      <p class="help-all">Many other creatures come from folklore and myth (the Grindylow, Black Annis, the Barghest, the Nuckelavee, the Draugr, the Penanggalan, the Lambton Worm, the Fetch, the Beithir and more); the rest are the game's own.</p></details>
     <div class="help-done"></div>`;
   const done = makeChoiceBtn('Enter', 'Got it');
   done.onclick = closeHelp;
   document.querySelector('#help-body .help-done').appendChild(done);
   document.getElementById('help-panel').classList.remove('hidden');
+  if (section === 'credits') {
+    const c = document.getElementById('help-credits');
+    c.open = true;
+    c.scrollIntoView({ block: 'start' });
+  }
 }
 function closeHelp() {
   helpOpen = false;
@@ -1508,6 +1520,11 @@ function renderMainMenuChoices(area, state) {
     signup.onclick = () => openAccount('signup');
     area.append(login, signup);
   }
+
+  // Credits (and the SRD 5.1 licence notice)
+  const credits = makeChoiceBtn('R', 'CREDITS');
+  credits.onclick = () => openHelp('credits');
+  area.appendChild(credits);
 }
 
 /** The ring menu (R in a fight, J while exploring), from the engine's ringChoices. */
@@ -1927,6 +1944,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'l' && !account.user) openAccount('login');
     if (key === 'u' && !account.user) openAccount('signup');
     if (key === 'd') showSaveList('delete');
+    if (key === 'r') openHelp('credits');
     return;
   }
 

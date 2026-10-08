@@ -920,6 +920,7 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 .help-keys { min-width: 82px; color: var(--terminal-green-dim); }
 .help-keys b { color: var(--terminal-green-bright); font-weight: normal; }
 .help-note { margin: 10px 0 0; line-height: 1.45; color: var(--terminal-green); }
+.help-all a { color: var(--terminal-amber); overflow-wrap: anywhere; }
 #help-panel details { margin-top: 10px; color: var(--terminal-green-dim); }
 #help-panel summary { cursor: pointer; color: var(--terminal-green); }
 .help-all { font-size: 12px; line-height: 1.6; }
