@@ -1,4 +1,4 @@
-// Timelock (once The Stilled Hour): wizards of level 80+ stop time for a monster, 3-6
+// Timelock (once The Stilled Hour): wizards of level 80+ stop time for a monster, 2-4
 // turns. It can't act and every blow lands. The caster ages; once an hour.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { RNG } from '../src/core/random.js';
@@ -23,7 +23,7 @@ describe('Timelock', () => {
     expect(knownSpells(100, 'warrior').some(s => s.id === 'stilled-hour')).toBe(false);
   });
 
-  it('freezes the monster 3 to 6 turns, and it does not answer the casting', () => {
+  it('freezes the monster 2 to 4 turns (rolled), and it does not answer the casting', () => {
     const seen = new Set<number>();
     for (let i = 0; i < 200; i++) {
       const m = createMonster('Troll', 30, 't' + i);
@@ -31,7 +31,7 @@ describe('Timelock', () => {
       expect(r.playerDamage).toBe(0);
       seen.add(m.frozenTurns!);
     }
-    expect([...seen].sort()).toEqual([3, 4, 5, 6]);
+    expect([...seen].sort()).toEqual([2, 3, 4]);
   });
 
   it('while frozen it cannot act and every blow lands; it takes no other harm; then time starts again', () => {
@@ -39,8 +39,8 @@ describe('Timelock', () => {
     const m = createMonster('Minotaur', 30, 'm'); m.hp = m.maxHp = 100000;
     const rng = new RNG(7);
     playerStilledHour(c, m, rng);
-    m.frozenTurns = 6;
-    for (let t = 1; t <= 6; t++) {
+    m.frozenTurns = 4;
+    for (let t = 1; t <= 4; t++) {
       const before = c.hp;
       const hpBefore = m.hp;
       const r = playerAttack(c, m, rng);
@@ -68,7 +68,7 @@ describe('Timelock', () => {
       if (!m.frozenTurns) resisted++; else held.push(m.frozenTurns);
     }
     expect(resisted).toBeGreaterThan(70); expect(resisted).toBeLessThan(130);
-    expect(Math.max(...held)).toBeLessThanOrEqual(3);
+    expect(Math.max(...held)).toBeLessThanOrEqual(2);
   });
 });
 

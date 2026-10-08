@@ -2482,7 +2482,7 @@ export function playerStilledHour(char: Character, monster: Monster, rng: RNG): 
     const res = monsterAction(char, monster, rng, messages);
     return { ...res, playerDamage: 0, monsterDied: false };
   }
-  const turns = monster.type === 'Asmodeus' ? Math.max(2, Math.floor(rolled / 2)) : rolled;
+  const turns = monster.type === 'Asmodeus' ? Math.max(1, Math.floor(rolled / 2)) : rolled;
   monster.frozenTurns = turns;
   messages.push(`The ${monster.type} hangs motionless, caught between one heartbeat and the next. (${rolled} turns${turns !== rolled ? `; he fights it, and is held only ${turns}` : ''})`);
   // The price: time takes it out of you.
