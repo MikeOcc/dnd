@@ -40,6 +40,18 @@ describe('Repository — characters', () => {
     expect(loaded!.strength).toBe(char.strength);
   });
 
+  it('keeps a view set on the save, through later saves', () => {
+    const char = makeChar('cv');
+    repo.saveCharacter(char);
+    expect(repo.loadCharacter('cv')!.viewMode).toBeUndefined();
+    db.prepare("UPDATE characters SET view_mode = 'painted' WHERE id = 'cv'").run();
+    const loaded = repo.loadCharacter('cv')!;
+    expect(loaded.viewMode).toBe('painted');
+    loaded.gold = 5;
+    repo.saveCharacter(loaded);
+    expect(repo.loadCharacter('cv')!.viewMode).toBe('painted');
+  });
+
   it('returns null for non-existent character', () => {
     const result = repo.loadCharacter('does-not-exist');
     expect(result).toBeNull();

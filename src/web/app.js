@@ -175,6 +175,7 @@ function applyState(state) {
   } else if (phase === 'main-menu' || phase === 'title') {
     localStorage.removeItem(CHAR_ID_KEY);
   }
+  applySaveViewMode(state);
 
   // Status bar
   const statusBar = document.getElementById('status-bar');
@@ -470,6 +471,24 @@ function cycleViewMode() {
   try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* per-viewer nicety only */ }
   updateViewButton();
   applyState(currentState);
+}
+
+/** A save made ready for someone can name the view it opens in. It's applied
+ * the first time this browser plays that character; after that the player's
+ * own switching sticks. */
+const VIEW_SET_FOR_KEY = 'sevenLevels.viewSetFor';
+function applySaveViewMode(state) {
+  const wanted = state.character?.viewMode;
+  if (!wanted || !characterId || !VIEW_MODES.includes(wanted)) return;
+  let done = [];
+  try { done = JSON.parse(localStorage.getItem(VIEW_SET_FOR_KEY) || '[]'); } catch { /* treat as not yet */ }
+  if (!Array.isArray(done) || done.includes(characterId)) return;
+  viewMode = wanted;
+  try {
+    localStorage.setItem(VIEW_KEY, viewMode);
+    localStorage.setItem(VIEW_SET_FOR_KEY, JSON.stringify([...done, characterId].slice(-50)));
+  } catch { /* per-viewer nicety only */ }
+  updateViewButton();
 }
 
 /** Stairs Up / Down light up only with a ladder in reach (on it or beside it). */

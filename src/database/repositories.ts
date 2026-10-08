@@ -194,6 +194,7 @@ export class Repository {
       elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
       banishCastAt:           (row['banish_cast_at'] as number | null) ?? undefined,
       stilledHourAt:          (row['stilled_hour_at'] as number | null) ?? undefined,
+      viewMode:               (row['view_mode'] as Character['viewMode'] | null) ?? undefined,
       charClass:              (row['char_class'] as Character['charClass']) || 'wizard',
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,

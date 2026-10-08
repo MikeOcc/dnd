@@ -168,6 +168,7 @@ export interface Character {
   heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
   banishCastAt?: number;      // play-time second of the last Banish (one per hour of play)
   stilledHourAt?: number;     // play-time second of the last Stilled Hour (one per hour of play)
+  viewMode?: 'classic' | 'ascii3d' | 'painted'; // the view this save opens in (set by the house; the player can still switch)
   charClass: CharacterClass;
   battleCryRounds?: number;   // warrior: rounds of Battle Cry's damage boost left (in-memory, cleared after combat)
   introsSeen: number[];
