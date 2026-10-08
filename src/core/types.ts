@@ -403,6 +403,7 @@ export interface CombatState {
   nakedActive: boolean;
   preCombatX: number;
   preCombatY: number;
+  powerReadyRound?: number;   // a warrior's Power Attack can't be used again before this round
 }
 
 export type InteractionType =

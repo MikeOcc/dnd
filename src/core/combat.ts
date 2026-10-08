@@ -153,8 +153,15 @@ function finishWarriorRound(char: Character, monster: Monster, rng: RNG, message
   return { ...res, monsterDied, playerDamage: dealt };
 }
 
+/** A young warrior's weapon training: plain Attack hits harder at first, fading by EARLY_ATTACK_FADE_LEVEL. */
+export function earlyAttackMult(char: Character): number {
+  if (char.charClass !== 'warrior') return 1;
+  const fade = Math.max(0, 1 - (char.level - 1) / (WARRIOR.EARLY_ATTACK_FADE_LEVEL - 1));
+  return 1 + WARRIOR.EARLY_ATTACK_BONUS * fade;
+}
+
 export function playerAttack(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
-  return swingRound(char, monster, rng, [], attacksPerRound(char));
+  return swingRound(char, monster, rng, [], attacksPerRound(char), { mult: earlyAttackMult(char) });
 }
 
 // ─── Potion ──────────────────────────────────────────────────────────────────

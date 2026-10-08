@@ -1709,7 +1709,7 @@ export class GameEngine {
     // A warrior's first fight: point them at the blow that matters.
     if (this.char.charClass === 'warrior' && this.char.monstersDefeated === 0 && !this.warriorTipShown) {
       this.warriorTipShown = true;
-      this.messages.push('', 'TIP: Power Attack (B, Combat Skill) hits more than twice as hard as a plain Attack.');
+      this.messages.push('', 'TIP: Power Attack (B, Combat Skill) hits more than twice as hard as a plain Attack, then needs ' + WARRIOR.POWER_ATTACK_COOLDOWN + ' rounds to recover. Attack in between.');
     }
     // In the dark (Lantern Moths took your torch), or deaf (the Hush), you never see or hear it coming.
     const blind = this.char.statusEffects.some(e => e.type === 'snuffed');
@@ -2486,7 +2486,15 @@ export class GameEngine {
       return this.processCombatResult(playerSpellBackfire(this.char, this.combat.monster, this.rng, spell));
     }
     switch (spell) {
-      case 'power-attack': return warriorMove(playerPowerAttack);
+      case 'power-attack': {
+        const wait = this.powerAttackWait();
+        if (wait > 0) {
+          this.messages = [`You're still recovering from your last Power Attack. (Ready in ${wait} round${wait === 1 ? '' : 's'}: Attack, or another skill, meanwhile.)`];
+          return this.getState();
+        }
+        this.combat.powerReadyRound = this.combat.round + 1 + WARRIOR.POWER_ATTACK_COOLDOWN;
+        return warriorMove(playerPowerAttack);
+      }
       case 'shield-bash':  return warriorMove(playerShieldBash);
       case 'cleave':       return warriorMove(playerCleave);
       case 'battle-cry':   return warriorMove(playerBattleCry);
@@ -2750,9 +2758,17 @@ export class GameEngine {
     return `${mins} minute${mins === 1 ? '' : 's'}`;
   }
 
+  /** Rounds before a warrior's Power Attack can be used again (0 = ready). */
+  private powerAttackWait(): number {
+    return Math.max(0, (this.combat?.powerReadyRound ?? 0) - (this.combat?.round ?? 0));
+  }
+
   /** The spell menu, with Banish showing how long it has left to recharge. */
   private spellChoices(): Choice[] {
     const choices = spellMenu(this.char!.level, this.char!.charClass);
+    const wait = this.powerAttackWait();
+    const power = choices.find(c => c.text === 'Power Attack');
+    if (power && wait > 0) power.text = `Power Attack (ready in ${wait} round${wait === 1 ? '' : 's'})`;
     if (this.banishReadyIn() > 0) {
       const banish = choices.find(c => c.text === 'Banish');
       if (banish) banish.text = `Banish (recharging: ${this.banishReadyText()})`;

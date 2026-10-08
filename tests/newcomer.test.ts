@@ -203,3 +203,38 @@ describe("a newcomer's early-game record", () => {
     expect(s.perCharacter.fights).toBe(2);
   });
 });
+
+describe("a warrior's Attack and Power Attack", () => {
+  it('plain Attack hits harder for a young warrior, fading to normal by the fade level', async () => {
+    const { earlyAttackMult } = await import('../src/core/combat.js');
+    const { WARRIOR } = await import('../src/core/config.js');
+    const f = newEngine('warrior');
+    f.char.level = 1;
+    expect(earlyAttackMult(f.char)).toBeCloseTo(1 + WARRIOR.EARLY_ATTACK_BONUS);
+    f.char.level = WARRIOR.EARLY_ATTACK_FADE_LEVEL;
+    expect(earlyAttackMult(f.char)).toBe(1);
+    f.char.level = 40;
+    expect(earlyAttackMult(f.char)).toBe(1);
+    const w = newEngine('wizard');
+    expect(earlyAttackMult(w.char)).toBe(1);
+  });
+
+  it('Power Attack needs rounds to recover, and says so', async () => {
+    const { WARRIOR } = await import('../src/core/config.js');
+    const e = newEngine('warrior');
+    e.char.hp = e.char.maxHp = 1_000_000;
+    e.phase = 'playing'; e.combat = null;
+    e.beginCombat(createMonster('Owlbear', 15, 'ob'));
+    e.combat.monster.hp = e.combat.monster.maxHp = 1_000_000;
+    const first = e.spellAction('a');                       // Power Attack is the first skill
+    expect(first.messages.join(' ')).toContain('Power Attack');
+    const round = e.combat.round;
+    const again = e.spellAction('a');
+    expect(again.messages.join(' ')).toContain('still recovering');
+    expect(e.combat.round).toBe(round);                      // refused: no turn lost
+    expect(e.spellChoices()[0].text).toMatch(/Power Attack \(ready in \d rounds?\)/);
+    for (let i = 0; i < WARRIOR.POWER_ATTACK_COOLDOWN; i++) e.combatAction('a');
+    const ready = e.spellAction('a');
+    expect(ready.messages.join(' ')).not.toContain('still recovering');
+  });
+});

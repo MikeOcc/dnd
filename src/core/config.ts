@@ -521,6 +521,11 @@ export const WARRIOR = {
 
   POWER_ATTACK_MULT: 2.2,
   POWER_ATTACK_HIT_PENALTY: 4,
+  POWER_ATTACK_COOLDOWN: 2,        // rounds to wait after a Power Attack before the next
+  // Weapon training: a young warrior's plain Attack hits this much harder at
+  // level 1, fading to nothing by EARLY_ATTACK_FADE_LEVEL (by then they swing twice).
+  EARLY_ATTACK_BONUS: 0.75,
+  EARLY_ATTACK_FADE_LEVEL: 20,
   SHIELD_BASH_MULT: 0.8,
   SHIELD_BASH_STUN_CHANCE: 0.4,
   CLEAVE_MULT: 1.3,
