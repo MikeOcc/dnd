@@ -308,7 +308,7 @@ const LAIR_ART = {
       <path d="M 152 192 L 248 192 L 244 206 L 156 206 Z" fill="#140e08" stroke="#5a4020" stroke-width="1"/>
       <ellipse cx="146" cy="172" rx="14" ry="16" fill="url(#okl-iron)" stroke="#0c0d10" stroke-width="1"/>
       <ellipse cx="254" cy="172" rx="14" ry="16" fill="url(#okl-iron)" stroke="#0c0d10" stroke-width="1"/>
-      <!-- the red eye of Gruumsh painted on the central shield -->
+      <!-- the red eye of Vragathok painted on the central shield -->
       <circle cx="200" cy="86" r="13" fill="#3a0806"/>
       <ellipse cx="200" cy="86" rx="9" ry="6" fill="url(#okl-eye)"/><ellipse cx="200" cy="86" rx="1.6" ry="4.6" fill="#140202"/>
     </g>

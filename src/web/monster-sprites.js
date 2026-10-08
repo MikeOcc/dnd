@@ -2818,7 +2818,7 @@ const MONSTER_SPRITES = {
     <path d="M 104 118 C 110 130 110 140 108 148 L 88 148 C 88 138 86 128 84 120 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.2"/>
     <path d="M 54 132 L 74 132 M 86 132 L 106 132" stroke="#8a8e98" stroke-width="0.7" opacity="0.6"/>
 
-    <!-- breastplate: black plate with gold trim and a red eye of Gruumsh -->
+    <!-- breastplate: black plate with gold trim and a red eye of Vragathok -->
     <path d="M 46 70 C 40 92 44 112 54 122 L 106 122 C 116 112 120 92 114 70 Z" fill="url(#okg-plate)" stroke="#060608" stroke-width="1.5"/>
     <path d="M 80 72 L 80 120" stroke="#5a5e68" stroke-width="0.8" opacity="0.6"/>
     <path d="M 48 76 Q 80 88 112 76" stroke="url(#okg-gold)" stroke-width="2" fill="none"/>
@@ -5058,8 +5058,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Dracolich': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dracolich">
+  'Bone Sovereign': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bone Sovereign">
     <defs>
     <linearGradient id="dl-bone" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#f4ecd4"/>

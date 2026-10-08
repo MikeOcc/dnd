@@ -2197,11 +2197,11 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
-  // ─── Dracolich ───────────────────────────────────────────────────────────
+  // ─── Bone Sovereign ───────────────────────────────────────────────────────────
   // A dead dragon that will not stay dead: bare skull and ribs, rags of wing
   // membrane, green soul-fire in the sockets and in the cage of its chest.
-  'Dracolich': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dracolich: a skeletal dragon, horned skull with green fire in its sockets, rib cage glowing, tattered wing membranes">
+  'Bone Sovereign': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bone Sovereign: a skeletal dragon, horned skull with green fire in its sockets, rib cage glowing, tattered wing membranes">
     <defs>
       ${horrorSkinFilter('hdl-bone', { freq: '0.2 0.26', scale: 1.8, seed: 132, k: 1.2 })}
       <linearGradient id="hdl-b" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#e8dcc0"/><stop offset="0.6" stop-color="#9a8a68"/><stop offset="1" stop-color="#3a3020"/></linearGradient>
@@ -2319,7 +2319,7 @@ const HORROR_SPRITES = {
   `,
 
   // ─── Orc King ────────────────────────────────────────────────────────────
-  // Gruumsh's chosen: a scarred mountain of an orc in black plate, an iron
+  // Vragathok's chosen: a scarred mountain of an orc in black plate, an iron
   // crown of spikes, one eye put out for his god, tusks, a great axe.
   'Orc King': `
     <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Orc King: a scarred huge orc in black plate, an iron crown of spikes, one eye put out, great tusks, a notched great axe">

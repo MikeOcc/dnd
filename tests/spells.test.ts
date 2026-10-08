@@ -54,7 +54,7 @@ describe('Banish', () => {
 
   it('very powerful monsters resist on a d12, more so by tier', () => {
     expect(banishFailFaces(createMonster('Lich', 20, 'l'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[8]);
-    expect(banishFailFaces(createMonster('Dracolich', 65, 'd'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[9]);
+    expect(banishFailFaces(createMonster('Bone Sovereign', 65, 'd'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[9]);
     expect(banishFailFaces(createMonster('Tiamat', 85, 't'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
   });
 

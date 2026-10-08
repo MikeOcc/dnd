@@ -728,9 +728,9 @@ export function prayerBanishChance(char: Character, monster: Monster, wisdom: nu
 // ─── The Orc King ────────────────────────────────────────────────────────────
 
 /** The Orc King's turn: a flurry of axe blows, a shield slam that can daze,
- * a heavy single blow, or one of Gruumsh's gifts: a war-chant that closes
+ * a heavy single blow, or one of Vragathok's gifts: a war-chant that closes
  * his wounds (only when hurt), a curse that saps strength, or the Eye of
- * Gruumsh, a bolt of red fire. */
+ * Vragathok, a bolt of red fire. */
 function orcKingAction(
   char: Character, monster: Monster, rng: RNG, messages: string[], naked: boolean,
   out: { acted?: boolean; ability?: string },
@@ -780,7 +780,7 @@ function orcKingAction(
       const heal = Math.min(monster.maxHp - monster.hp,
         Math.round(monster.maxHp * (K.WAR_CHANT_HEAL_MIN + rng.float() * (K.WAR_CHANT_HEAL_MAX - K.WAR_CHANT_HEAL_MIN))));
       monster.hp += heal;
-      messages.push('The Orc King beats his axe on his shield and roars a war-chant to Gruumsh.',
+      messages.push('The Orc King beats his axe on his shield and roars a war-chant to Vragathok.',
         `Red light pours into his wounds. (The Orc King heals ${heal} HP)`);
       return done(0, { monsterHealed: heal });
     }
@@ -788,7 +788,7 @@ function orcKingAction(
       const dmg = hit(0.5);
       char.hp = Math.max(0, char.hp - dmg);
       addStatusEffect(char, { type: 'strength-reduced', value: K.CURSE_STRENGTH, turns: K.CURSE_TURNS });
-      messages.push(`The Orc King spits a curse in the name of Gruumsh. Black fire crawls over you for ${dmg} damage,`,
+      messages.push(`The Orc King spits a curse in the name of Vragathok. Black fire crawls over you for ${dmg} damage,`,
         `and your arms turn to lead. (-${K.CURSE_STRENGTH} Strength)`);
       return done(dmg);
     }
@@ -1857,8 +1857,8 @@ const ATTACK_NAMES: Record<string, string> = {
   'axe-flurry': 'whirling axe',
   'shield-slam': 'spiked shield',
   'heavy-blow': 'axe',
-  'curse-of-gruumsh': 'curse of Gruumsh',
-  'eye-of-gruumsh': 'Eye of Gruumsh',
+  'curse-of-gruumsh': 'curse of Vragathok',
+  'eye-of-gruumsh': 'Eye of Vragathok',
 };
 
 /** The death screen's cause line, naming the attack that did the character in. */

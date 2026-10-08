@@ -699,7 +699,7 @@ export const ORC_KING = {
   SHIELD_SLAM_WEIGHT: 15, SHIELD_SLAM_MULT: 0.8, SHIELD_SLAM_DAZE_CHANCE: 0.5,
   WAR_CHANT_WEIGHT: 12, WAR_CHANT_BELOW: 0.6, WAR_CHANT_HEAL_MIN: 0.10, WAR_CHANT_HEAL_MAX: 0.18,
   CURSE_WEIGHT: 10, CURSE_STRENGTH: 4, CURSE_TURNS: 20,
-  EYE_WEIGHT: 10, EYE_MULT: 1.3,   // the Eye of Gruumsh: a bolt of searing red fire
+  EYE_WEIGHT: 10, EYE_MULT: 1.3,   // the Eye of Vragathok: a bolt of searing red fire
   BLOW_WEIGHT: 30,                 // a plain, heavy axe blow
   ARMOR: 0.30,                     // his black plate turns aside this share of every hit's damage
 } as const;
@@ -882,7 +882,7 @@ export const RINGS = {
   // Who counts as evil, for the onyx ring.
   EVIL_MONSTERS: [
     'Asmodeus', 'Tiamat', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes', 'Rakshasa',
-    'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Dracolich',
+    'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Bone Sovereign',
     'Hollow Choir', 'Death Tyrant', 'Cerebrovore', 'Aboleth', 'Elder Oblex', 'Nightwalker',
     'Lich', 'Caput Mortuum', 'Vampire', 'Undead Knight', 'Wizard', 'Medusa', 'Doppelganger',
     'Orc King', 'Wendigo', 'Banshee', 'Barrow-King', 'Black Annis', 'Nuckelavee', 'Draugr', 'Penanggalan',

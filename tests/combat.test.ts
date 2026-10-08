@@ -1398,7 +1398,7 @@ describe('Scare', () => {
 });
 
 describe('The Orc King in combat', () => {
-  it('fights with axe flurries, shield slams and the gifts of Gruumsh, and his plate blunts weapons', () => {
+  it('fights with axe flurries, shield slams and the gifts of Vragathok, and his plate blunts weapons', () => {
     const c = createCharacter('t', 'Hero', rollCharacter(new RNG(1)));
     c.level = 45; c.hp = c.maxHp = 1_000_000;
     const seen = new Set<string>();

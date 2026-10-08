@@ -2,7 +2,7 @@
 // voice reaches every level, and from level 4 down he lashes out from afar,
 // harder the deeper you are and the nearer his lair. The others are felt on
 // their own level (Tiamat faintly on the level above), more strongly the
-// closer you are. The Dracolich sends remote fear. Everything stops once
+// closer you are. The Bone Sovereign sends remote fear. Everything stops once
 // that monster is defeated. Nothing here can kill.
 
 import type { Character, Direction, FxElement, MonsterType } from './types.js';
@@ -24,8 +24,8 @@ export interface PresenceContext {
 export interface PresenceEvent {
   messages: string[];
   fx?: FxElement;
-  flee?: boolean;                 // Dracolich fear: bolt to a random far spot
-  turnTo?: Direction;             // Dracolich fear: spun around
+  flee?: boolean;                 // Bone Sovereign fear: bolt to a random far spot
+  turnTo?: Direction;             // Bone Sovereign fear: spun around
   voice?: boolean;                // Asmodeus spoke
 }
 
@@ -164,7 +164,7 @@ function asmodeusAtTheDoor(ctx: PresenceContext, rng: RNG): PresenceEvent | null
 export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
   'Orc King': {
     far:  ['Far off, war drums beat, slow and steady, like a giant\'s heart.',
-           'A distant chant of many rough voices rises and falls: "GRUUMSH! GRUUMSH!"',
+           'A distant chant of many rough voices rises and falls: "VRAGATHOK! VRAGATHOK!"',
            'The faint clang of hammers on iron drifts through the stone. Something is being forged.',
            'A smell of smoke, sweat and old blood drifts down the passage.'],
     mid:  ['War drums pound somewhere ahead. Dust shivers down from the ceiling with every beat.',
@@ -217,7 +217,7 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
            'Your torch sputters and nearly dies. Something tall blots out the corridor ahead.',
            'Cold fingers of dark brush the back of your neck, then withdraw.'],
   },
-  Dracolich: {
+  'Bone Sovereign': {
     far:  ['A grave-cold wind moves through the corridor, carrying a fine grey dust. Bone dust.',
            'Somewhere far off, a great rattling, like a cartload of bones overturned.',
            'The torchlight turns faintly green, then back again.',
@@ -267,7 +267,7 @@ function lairFlavor(ctx: PresenceContext, rng: RNG): PresenceEvent | null {
 
 function dracolichFear(ctx: PresenceContext, rng: RNG): PresenceEvent {
   const { char } = ctx;
-  const messages = ['A wave of cold, bottomless terror rolls out of the dark. The Dracolich knows you are here.'];
+  const messages = ['A wave of cold, bottomless terror rolls out of the dark. The Bone Sovereign knows you are here.'];
   const resist = Math.min(PRESENCE.FEAR_RESIST_MAX, PRESENCE.FEAR_RESIST_BASE + char.wisdom * PRESENCE.FEAR_RESIST_PER_WIS);
   if (rng.float() < resist) {
     messages.push('You grit your teeth and hold your ground.');
@@ -304,7 +304,7 @@ export function rollPresence(ctx: PresenceContext, rng: RNG): PresenceEvent | nu
     if (rng.float() < chance) return asmodeusStrike(ctx, rng);
   }
 
-  const dracolich = ctx.lairs.find(l => l.type === 'Dracolich');
+  const dracolich = ctx.lairs.find(l => l.type === 'Bone Sovereign');
   if (dracolich) {
     const r = rangeOf(dist(char, dracolich));
     const mult = r === 'near' ? 3 : r === 'mid' ? 2 : 1;

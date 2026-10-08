@@ -1099,7 +1099,7 @@ export class GameEngine {
   }
 
   /** A quiet step may bring word of the uniques: Asmodeus's voice or fury,
-   * the Dracolich's fear, or the others' sounds from their lairs. */
+   * the Bone Sovereign's fear, or the others' sounds from their lairs. */
   /** A new character hears Asmodeus once early on level 1: somewhere between
    * NEWCOMER.FIRST_VOICE_FROM_STEP and _BY_STEP (evenly, and certainly by the last). */
   private firstVoiceDue(): boolean {
@@ -1123,7 +1123,7 @@ export class GameEngine {
       for (const [k, c] of lvl.contents) {
         if (c.type !== 'unique-monster' || !c.monsterId || !alive(c.id)) continue;
         const [x, y] = k.split(',').map(Number);
-        out.push({ type: c.monsterId as Lair['type'], x, y });
+        out.push({ type: currentMonsterType(c.monsterId), x, y });   // (old saves may use an old name)
       }
       return out;
     };
@@ -3118,7 +3118,7 @@ export class GameEngine {
     }
 
     // A dragon sometimes leaves its hoard (the great ones always do).
-    if ((monster.type.includes('Dragon') || ['Tiamat', 'Dracolich', 'Lambton Worm'].includes(monster.type))
+    if ((monster.type.includes('Dragon') || ['Tiamat', 'Bone Sovereign', 'Lambton Worm'].includes(monster.type))
         && (def.isUnique || this.rng.float() < HOARD.CHANCE)) {
       this.messages.push(...this.leaveHoard(monster));
     }
@@ -3576,9 +3576,9 @@ export class GameEngine {
       return this.closeInteractionWithSave();
     }
     if (hoard) {
-      const loot = dragonHoardLoot(this.char, hoard.monster, hoard.monsterLevel, this.rng);
+      const loot = dragonHoardLoot(this.char, currentMonsterType(hoard.monster), hoard.monsterLevel, this.rng);
       messages.push(...loot.messages);
-      const unique = ['Tiamat', 'Dracolich'].includes(hoard.monster);
+      const unique = ['Tiamat', 'Bone Sovereign'].includes(currentMonsterType(hoard.monster));   // (an old hoard may say Dracolich)
       if (unique || (hoard.monsterLevel >= HOARD.ITEM_FROM_LEVEL && this.rng.float() < HOARD.ITEM_CHANCE)) messages.push(...this.hoardItem());
       this.dungeonState.hoards = this.dungeonState.hoards!.filter(h => h.id !== id);
       this.cue('victory-4');

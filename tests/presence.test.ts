@@ -68,9 +68,9 @@ describe('Asmodeus from afar', () => {
   });
 });
 
-describe('The Dracolich’s fear', () => {
+describe('The Bone Sovereign’s fear', () => {
   const near = (over: Partial<PresenceContext> = {}) =>
-    base({ level: 6, asmodeusAlive: false, lairs: [{ type: 'Dracolich', x: 12, y: 10 }], ...over });
+    base({ level: 6, asmodeusAlive: false, lairs: [{ type: 'Bone Sovereign', x: 12, y: 10 }], ...over });
 
   it('can send the character fleeing, spin them around, or shake their hands', () => {
     // floats: [fear fires, resist fails]; rng.int picks the effect

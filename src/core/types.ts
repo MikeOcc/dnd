@@ -283,7 +283,7 @@ export type MonsterType =
   | 'Red Dragon'
   | 'Gold Dragon'
   | 'Aboleth'
-  | 'Dracolich'
+  | 'Bone Sovereign'
   | 'Nightwalker'
   | 'Tarrasque'
   | 'Tiamat'

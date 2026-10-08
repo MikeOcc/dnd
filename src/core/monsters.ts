@@ -515,7 +515,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     specialAbilities: ["fury-arrows", "fury-rope", "fury-sword"],
   },
   // The one Orc King, on level 4: a towering warlord in black plate, a
-  // veteran of a hundred wars, who calls on Gruumsh for a few dark gifts.
+  // veteran of a hundred wars, who calls on Vragathok for a few dark gifts.
   // His fighting is in combat.ts (orcKingAction).
   'Orc King': {
     type: 'Orc King', isUndead: false, isUnique: true,
@@ -529,7 +529,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       '',
       '"I HAVE KILLED A HUNDRED OF YOUR HEROES. YOU WILL BE A HUNDRED AND ONE."',
       '',
-      'THE ORC KING, Level {LVL}, CHOSEN OF GRUUMSH!',
+      'THE ORC KING, Level {LVL}, CHOSEN OF VRAGATHOK!',
     ],
     specialAbilities: ['axe-flurry', 'shield-slam', 'war-chant', 'curse-of-gruumsh', 'eye-of-gruumsh'],
   },
@@ -1049,8 +1049,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['psychic-attack', 'slime-disease', 'mind-control', 'high-hp'],
   },
-  'Dracolich': {
-    type: 'Dracolich', isUndead: true, isUnique: true,
+  'Bone Sovereign': {
+    type: 'Bone Sovereign', isUndead: true, isUnique: true,
     minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 6, speed: 0.9,
     baseHpPerLevel: 18, baseAttackPerLevel: 9.5, baseDefensePerLevel: 5.5,
     fireballResistance: 0.9,
@@ -1060,7 +1060,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       'Dragon bones knit together and rise.',
       'Cold blue light fills empty eye sockets.',
       '',
-      'THE DRACOLICH OPENS ITS JAWS.',
+      'THE BONE SOVEREIGN OPENS ITS JAWS.',
     ],
     specialAbilities: ['dragon-breath', 'necromantic-magic', 'life-drain', 'strong-defense'],
   },
@@ -1129,7 +1129,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight', 'Dracolich': 'Bone Sovereign' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1263,7 +1263,7 @@ export const ANCIENT_GHOUL_INTRO = [
 ];
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Dracolich', 'Nightwalker',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Bone Sovereign', 'Nightwalker',
   'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan', 'Bone Vortex',
 ];
 
