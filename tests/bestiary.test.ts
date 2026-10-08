@@ -41,7 +41,7 @@ describe('The great bestiary', () => {
     expect(turns('Chimera', 10, 4)).toContain("dragon's head breathes fire");
     expect(turns('Marilith', 10, 5)).toContain('whirl of steel');
     expect(turns('Death Tyrant', 120, 6)).toContain('DEATH RAY');
-    expect(turns('Behir', 60, 7)).toContain('bolt of lightning');
+    expect(turns('Beithir', 60, 7)).toContain('bolt of lightning');
   });
 
   it('a Rust Monster corrodes your weapon, and rusty blows do less', () => {

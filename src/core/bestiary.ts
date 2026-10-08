@@ -332,19 +332,19 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     } },
   ] },
 
-  'Behir': {
+  'Beithir': {
     before: k => {
       if (k.char.heldBy === 'constricted' && (k.char.heldRounds ?? 0) > 0) {
-        k.strike(1.0, d => `The Behir's coils squeeze, and lightning crackles through them! You suffer ${d} damage.`);
+        k.strike(1.0, d => `The Beithir's coils squeeze, and lightning crackles through them! You suffer ${d} damage.`);
         return true;
       }
       return false;
     },
     moves: [
-      { id: 'behir-lightning', weight: 35, run: k => { k.strike(1.6, d => `The Behir opens its jaws and a bolt of lightning blasts you! You suffer ${d} damage.`); } },
-      { id: 'behir-bite', weight: 35, run: k => { k.strike(1.1, d => `The Behir's horned head strikes, jaws snapping! You suffer ${d} damage.`); } },
+      { id: 'behir-lightning', weight: 35, run: k => { k.strike(1.6, d => `The Beithir opens its jaws and a bolt of lightning blasts you! You suffer ${d} damage.`); } },
+      { id: 'behir-bite', weight: 35, run: k => { k.strike(1.1, d => `The Beithir's horned head strikes, jaws snapping! You suffer ${d} damage.`); } },
       { id: 'behir-coils', weight: 30, when: k => !k.held(), run: k => {
-        k.strike(0.7, d => `The Behir wraps its long body around you! (${d} damage)`);
+        k.strike(0.7, d => `The Beithir wraps its long body around you! (${d} damage)`);
         if (k.alive()) k.hold(2, 'constricted');
       } },
     ],

@@ -1962,8 +1962,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Behir': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Behir">
+  'Beithir': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beithir">
     <defs>
     <linearGradient id="bhr-scale" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a8ae8"/><stop offset="0.6" stop-color="#2a4aa8"/><stop offset="1" stop-color="#0a1a4a"/></linearGradient>
     <radialGradient id="bhr-head" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#7aa8ff"/><stop offset="1" stop-color="#1a2a6a"/></radialGradient>
@@ -5867,7 +5867,7 @@ const MONSTER_SPRITE_SCALE = {
   'Doppelganger': 1.15,
   'Purple Worm': 1.45,
   'Iron Golem': 1.4,
-  'Behir': 1.4,
+  'Beithir': 1.4,
   'Rakshasa': 1.2,
   'Death Tyrant': 1.35,
   'Caput Mortuum': 1.1,

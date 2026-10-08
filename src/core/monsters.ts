@@ -397,8 +397,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ["iron-fists", "poison-gas"],
   },
-  "Behir": {
-    type: "Behir", isUndead: false, isUnique: false,
+  "Beithir": {
+    type: "Beithir", isUndead: false, isUnique: false,
     minLevel: 40, maxLevel: 60, naturalTier: 7, minDungeonLevel: 5, speed: 1.2,
     baseHpPerLevel: 16, baseAttackPerLevel: 4.2, baseDefensePerLevel: 3.5,
     fireballResistance: 1.0, lightningResistance: 0.0,
@@ -406,7 +406,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       "Something long and blue skitters along the ceiling on a dozen legs.",
       "It drops to the floor, a horned serpent the length of a wagon train, crackling with lightning.",
       '',
-      'You have encountered a Level {LVL} Behir!',
+      'You have encountered a Level {LVL} Beithir!',
     ],
     specialAbilities: ["behir-lightning", "behir-bite", "behir-coils"],
   },
@@ -1129,7 +1129,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1274,7 +1274,7 @@ export function isUndead(type: MonsterType): boolean {
 export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Kobold', 'Goblin', 'Orc', 'Giant', 'Owlbear', 'Manticore', 'Titanoboa', 'Wendigo',
   'Djinn', 'Phoenix', 'Banshee', 'Unicorn', 'Frost Giant', 'Displacer Beast', 'Basilisk',
-  'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Behir', 'Rakshasa', 'Death Tyrant', 'Caput Mortuum', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
+  'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Beithir', 'Rakshasa', 'Death Tyrant', 'Caput Mortuum', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
   'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
   'Wizard', 'Hollow Choir', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',

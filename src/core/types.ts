@@ -224,7 +224,7 @@ export type MonsterType =
   | 'Doppelganger'
   | 'Purple Worm'
   | 'Iron Golem'
-  | 'Behir'
+  | 'Beithir'
   | 'Rakshasa'
   | 'Death Tyrant'
   | 'Caput Mortuum'
