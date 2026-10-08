@@ -1812,6 +1812,9 @@ describe('GameEngine — room and corridor descriptions', () => {
       }
     }
     expect(found).not.toBeNull();
+    // Nothing beside the room square to open when walking up to it.
+    const [rdx, rdy] = ({ N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] } as const)[found!.dir];
+    for (const [, dx, dy] of steps) lvl.contents.delete(`${found!.x + rdx + dx},${found!.y + rdy + dy}`);
     e.char.x = found!.x; e.char.y = found!.y;
     e.lastArea = null;
     e.enterArea();
@@ -2318,6 +2321,7 @@ describe('GameEngine — the great bestiary', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
     e.char.hp = e.char.maxHp = 1_000_000;
+    e.char.level = 2;   // (never against a character on their first level)
     let ambushed = false;
     for (let i = 0; i < 40 && !ambushed; i++) {
       e.phase = 'playing'; e.combat = null;
@@ -2325,6 +2329,19 @@ describe('GameEngine — the great bestiary', () => {
       ambushed = state.messages.join(' ').includes('springs out of the shadows');
     }
     expect(ambushed).toBe(true);
+  });
+
+  it('a Bugbear never ambushes a level-1 character', () => {
+    const engine = makeReadyEngine(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.char.level = 1;
+    e.char.hp = e.char.maxHp = 1_000_000;
+    for (let i = 0; i < 60; i++) {
+      e.phase = 'playing'; e.combat = null;
+      const state = e.beginCombat(createMonster('Bugbear', 3, 'b' + i));
+      expect(state.messages.join(' ')).not.toContain('springs out of the shadows');
+    }
   });
 });
 

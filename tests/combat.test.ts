@@ -300,10 +300,10 @@ describe('Prayer — tiered targets', () => {
 });
 
 describe('Sanguinid', () => {
-  it('is eligible to appear on any dungeon level', () => {
+  it('stays off the first two dungeon levels', () => {
     const def = getDefinition('Sanguinid');
     expect(def.isUnique).toBe(false);
-    expect(def.minDungeonLevel).toBe(1);
+    expect(def.minDungeonLevel).toBe(3);
   });
 
   it('never has an artificial forced floor above the dungeon-1 level range (regression)', () => {

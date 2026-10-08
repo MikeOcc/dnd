@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { DUNGEON, CONTENT_PER_LEVEL } from './config.js';
+import { DUNGEON, CONTENT_PER_LEVEL, NEWCOMER } from './config.js';
 import type { SerializedDungeon, DungeonCell, WallEdges, CellContent, MonsterType } from './types.js';
 import {
   LEVEL_FIXED_MONSTERS, LEVEL_UNIQUE_MONSTERS, trapVariants, descriptionIds,
@@ -310,7 +310,48 @@ function placeContent(
     contents.set(k, { type: 'description', id: `desc-${levelNum}-${dx}-${dy}`, descriptionId: descId });
   }
 
+  if (levelNum === 1) setChestNearEntrance(grid, rooms, contents, entrance, rng);
   return contents;
+}
+
+/** Steps from (x, y) to every cell it can reach. */
+function stepsFrom(grid: DungeonCell[][], x: number, y: number): Map<string, number> {
+  const dist = new Map<string, number>([[key(x, y), 0]]);
+  const queue = [{ x, y }];
+  const moves: [keyof WallEdges, number, number][] = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]];
+  while (queue.length) {
+    const c = queue.shift()!;
+    const d = dist.get(key(c.x, c.y))!;
+    for (const [wall, dx, dy] of moves) {
+      if (grid[c.y][c.x].walls[wall]) continue;
+      const k = key(c.x + dx, c.y + dy);
+      if (dist.has(k)) continue;
+      dist.set(k, d + 1);
+      queue.push({ x: c.x + dx, y: c.y + dy });
+    }
+  }
+  return dist;
+}
+
+/** A newcomer's first discovery: on level 1, if no chest lies within a short
+ * walk of the entrance, one of the level's chests is set there (in a room if
+ * one is that close, else along the way). */
+function setChestNearEntrance(
+  grid: DungeonCell[][], rooms: Room[], contents: ContentMap, entrance: { x: number; y: number }, rng: RNG,
+): void {
+  const dist = stepsFrom(grid, entrance.x, entrance.y);
+  const near = (k: string) => { const d = dist.get(k); return d !== undefined && d >= NEWCOMER.CHEST_NEAR_ENTRANCE_MIN && d <= NEWCOMER.CHEST_NEAR_ENTRANCE_MAX; };
+  if ([...contents].some(([k, c]) => c.type === 'chest' && near(k))) return;
+  const chest = [...contents].find(([, c]) => c.type === 'chest');
+  if (!chest) return;
+  const inRoom = new Set<string>();
+  for (const r of rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) inRoom.add(key(x, y));
+  const free = [...dist.keys()].filter(k => near(k) && !contents.has(k));
+  const spots = free.filter(k => inRoom.has(k));
+  const pool = spots.length ? spots : free;
+  if (!pool.length) return;
+  contents.delete(chest[0]);
+  contents.set(rng.pick(pool), chest[1]);
 }
 
 // ─── Main generator ──────────────────────────────────────────────────────────

@@ -466,6 +466,22 @@ export const SPELLS = {
 
 // Warriors trade most spells for more swings and combat skills, and are
 // tougher. Their skills unlock by level (SPELLS.WARRIOR_UNLOCK_LEVEL).
+// A new character's first steps: the dungeon is no gentler, but the first
+// few fights are chosen from the gentler kinds, nothing ambushes a level-1
+// character, a starter kit comes with them, and something worth finding lies
+// near the level-1 entrance. Keyed to monsters slain, which is saved with the
+// character, so it ends on its own and can't be reset.
+export const NEWCOMER = {
+  // Highest monster tier for a random fight on level 1, by monsters slain so
+  // far (0, 1, 2); from the 4th fight on, anything level 1 holds.
+  FIRST_FIGHT_TIERS: [1, 2, 3],
+  STARTING_POTIONS: 2,
+  STARTING_GOLD: 40,
+  // Level 1 sets a chest within this many steps of the entrance (but not at the door).
+  CHEST_NEAR_ENTRANCE_MIN: 5,
+  CHEST_NEAR_ENTRANCE_MAX: 15,
+} as const;
+
 export const WARRIOR = {
   ATTACKS_EVERY_N_LEVELS: 10,      // 1 swing, 2 at level 10, 3 at 20...
   MAX_ATTACKS: 5,

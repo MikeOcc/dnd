@@ -16,7 +16,7 @@ import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } fr
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -117,6 +117,7 @@ export class GameEngine {
   private pace: EncounterPace;
   private rng: RNG;
   private sessionStart: number = Date.now();
+  private warriorTipShown = false;   // the Power Attack tip, once a session
   private restTicks: number = 0;
 
   constructor(repo: Repository) {
@@ -835,7 +836,12 @@ export class GameEngine {
     if (charClass === 'warrior') {
       this.char.maxHp += WARRIOR.HP_BONUS_START;
       this.char.hp = this.char.maxHp;
+      // A warrior goes down with a blade, not bare hands.
+      this.char.inventory.weapons = [{ kind: 'sword', bonus: 0, name: 'Plain longsword' }];
     }
+    // Everyone goes down with a little to start: potions, and coin for the Trading Post.
+    this.char.inventory.potions = NEWCOMER.STARTING_POTIONS;
+    this.char.gold = NEWCOMER.STARTING_GOLD;
     this.sessionStart = Date.now();  // play time starts now, not while rolling stats
     this.char.playTime = 0;
 
@@ -1621,7 +1627,10 @@ export class GameEngine {
   private startRandomEncounter(): GameState {
     if (!this.char) return this.getState();
 
-    const type = pickRandomMonsterType(this.char.dungeonLevel, this.rng);
+    // A newcomer's first fights on level 1 come from the gentler kinds.
+    const won = this.char.monstersDefeated;
+    const maxTier = this.char.dungeonLevel === 1 && won < NEWCOMER.FIRST_FIGHT_TIERS.length ? NEWCOMER.FIRST_FIGHT_TIERS[won] : Infinity;
+    const type = pickRandomMonsterType(this.char.dungeonLevel, this.rng, maxTier);
     const def = getDefinition(type);
     const lvl = randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, type);
     const clampedLvl = Math.max(def.minLevel, Math.min(def.maxLevel, Math.max(1, lvl)));
@@ -1662,8 +1671,13 @@ export class GameEngine {
       line.replace('{LVL}', String(monster.level))
     );
     this.messages = intro;
-    // A Bugbear may have been waiting in ambush.
-    if (monster.type === 'Bugbear' && this.rng.float() < 0.4) {
+    // A warrior's first fight: point them at the blow that matters.
+    if (this.char.charClass === 'warrior' && this.char.monstersDefeated === 0 && !this.warriorTipShown) {
+      this.warriorTipShown = true;
+      this.messages.push('', 'TIP: Power Attack (B, Combat Skill) hits more than twice as hard as a plain Attack.');
+    }
+    // A Bugbear may have been waiting in ambush (not for a character on their first level).
+    if (monster.type === 'Bugbear' && this.char.level > 1 && this.rng.float() < 0.4) {
       return this.lairFirstStrike(['The Bugbear springs out of the shadows before you can react!', '']);
     }
     return this.getState();
