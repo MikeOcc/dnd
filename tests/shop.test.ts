@@ -121,13 +121,12 @@ describe('Shops in the game', () => {
     s = engine.interactionChoice(potionKey);
     expect(e.char.inventory.potions).toBe(potions + 1);
     expect(e.char.gold).toBe(500 - SHOP.POTION_PRICE);
-    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Back
-    s = engine.interactionChoice('b');                       // Sell
+    s = engine.interactionChoice(s.choices!.find((c: { text: string }) => c.text === 'Sell instead')!.key);
     s = engine.interactionChoice(s.choices!.find((c: { text: string }) => c.text.includes('Ruby'))!.key);
     expect(e.char.inventory.gems.ruby).toBe(0);
     expect(e.char.gold).toBe(500 - SHOP.POTION_PRICE + GEMS.VALUES.ruby);
-    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Back
-    s = engine.interactionChoice('c');                       // Leave
+    expect(s.choices!.at(-1)!.text).toBe('Done trading (Esc)');
+    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Done trading
     expect(s.phase).toBe('playing');
   });
 

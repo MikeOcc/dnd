@@ -2196,14 +2196,16 @@ export class GameEngine {
     if (shop.mode === 'buy') {
       const items = shop.stock;
       this.messages = [...head, '', 'FOR SALE:', ...items.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold${it.qty > 1 ? ` (${it.qty} left)` : it.qty === 0 ? ' (sold out)' : ''}`)];
-      this.interaction!.choices = [...items.map((it, i) => ({ key: letter(i), text: `${it.label} (${it.price}g)` })), { key: letter(items.length), text: 'Back' }];
+      this.interaction!.choices = [...items.map((it, i) => ({ key: letter(i), text: `${it.label} (${it.price}g)` })),
+        { key: letter(items.length), text: 'Sell instead' }, { key: letter(items.length + 1), text: 'Done trading (Esc)' }];
     } else if (shop.mode === 'sell') {
       const list = sellables(this.char).slice(0, 20);
       this.messages = [...head, '', list.length ? 'WILL BUY:' : 'You have nothing they want.', ...list.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold`)];
-      this.interaction!.choices = [...list.map((it, i) => ({ key: letter(i), text: `Sell ${it.label} (${it.price}g)` })), { key: letter(list.length), text: 'Back' }];
+      this.interaction!.choices = [...list.map((it, i) => ({ key: letter(i), text: `Sell ${it.label} (${it.price}g)` })),
+        { key: letter(list.length), text: 'Buy instead' }, { key: letter(list.length + 1), text: 'Done trading (Esc)' }];
     } else {
       this.messages = head;
-      this.interaction!.choices = [{ key: 'a', text: 'Buy' }, { key: 'b', text: 'Sell' }, { key: 'c', text: 'Leave' }];
+      this.interaction!.choices = [{ key: 'a', text: 'Buy' }, { key: 'b', text: 'Sell' }, { key: 'c', text: 'Done trading (Esc)' }];
     }
     return this.getState();
   }
@@ -2212,16 +2214,18 @@ export class GameEngine {
     const shop = this.interaction?.shop;
     if (!this.char || !shop) return this.closeInteraction();
     const i = key.charCodeAt(0) - 97;
+    const done = () => this.closeInteraction(shop.kind === 'peddler'
+      ? 'You turn to go. When you glance back, the peddler is gone.'
+      : 'You leave the stall behind.');
     if (shop.mode === 'main') {
       if (key === 'a') { shop.mode = 'buy'; return this.showShop(); }
       if (key === 'b') { shop.mode = 'sell'; return this.showShop(); }
-      return this.closeInteraction(shop.kind === 'peddler'
-        ? 'You turn to go. When you glance back, the peddler is gone.'
-        : 'You leave the stall behind.');
+      return done();
     }
     if (shop.mode === 'buy') {
       const item = shop.stock[i];
-      if (!item) { shop.mode = 'main'; return this.showShop(); }
+      if (i === shop.stock.length) { shop.mode = 'sell'; return this.showShop(); }
+      if (!item) return done();
       const no = cannotBuy(this.char, item);
       if (no) return this.showShop([no]);
       this.cue('gem-diamond');
@@ -2229,7 +2233,8 @@ export class GameEngine {
     }
     const list = sellables(this.char).slice(0, 20);
     const it = list[i];
-    if (!it) { shop.mode = 'main'; return this.showShop(); }
+    if (i === list.length) { shop.mode = 'buy'; return this.showShop(); }
+    if (!it) return done();
     it.sell();
     this.char.gold += it.price;
     return this.showShop([`You sell the ${it.label.replace(/ \(.*\)$/, '')} for ${it.price} gold.`]);

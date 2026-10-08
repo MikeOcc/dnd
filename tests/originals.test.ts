@@ -137,6 +137,7 @@ describe('the Hush', () => {
     const cast = e.spellAction('a');
     expect(cast.messages.join(' ')).toContain('No sound comes out');
     expect(e.combat.monster.hp).toBe(hp);
+    e.char.heldRounds = 0; delete e.char.heldBy;   // (its stillness may have held you a round)
     const pray = e.combatAction('c');
     expect(pray.messages.join(' ')).toContain('not a sound leaves your lips');
     expect(e.combat.monster.hp).toBe(hp);
