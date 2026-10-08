@@ -1953,12 +1953,12 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
-  // ─── Death Knight ────────────────────────────────────────────────────────
+  // ─── Undead Knight ────────────────────────────────────────────────────────
   // A fallen paladin, rotted inside his blackened plate: the helm's visor
   // shows only a skull and two hellfire points; the armour is fused to the
   // corpse, cracked, leaking green light; a great sword dripping cold fire.
-  'Death Knight': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Death Knight: a skeletal knight in blackened, cracked plate leaking green light, hellfire eyes behind the visor, a greatsword dripping cold fire">
+  'Undead Knight': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Undead Knight: a skeletal knight in blackened, cracked plate leaking green light, hellfire eyes behind the visor, a greatsword dripping cold fire">
     <defs>
       ${horrorSkinFilter('hdk-plate', { freq: '0.3 0.3', scale: 2.4, seed: 119, k: 1.3 })}
       <linearGradient id="hdk-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a4c52"/><stop offset="0.5" stop-color="#1e2024"/><stop offset="1" stop-color="#08090a"/></linearGradient>

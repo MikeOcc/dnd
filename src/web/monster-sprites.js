@@ -4375,8 +4375,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Death Knight': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Death Knight">
+  'Undead Knight': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Undead Knight">
     <defs>
     <linearGradient id="dk-plate" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#6a6e78"/>

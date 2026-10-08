@@ -266,7 +266,7 @@ export type MonsterType =
   | 'Wight'
   | 'Spectre'
   | 'Vampire'
-  | 'Death Knight'
+  | 'Undead Knight'
   | 'Lich'
   | 'Wizard'
   | 'Hollow Choir'

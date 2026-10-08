@@ -891,12 +891,12 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     encounterIntro: ['A pale figure steps from the shadow, its eyes red as garnets.', '', 'You have encountered a Level {LVL} Vampire!'],
     specialAbilities: ['life-drain', 'charm'],
   },
-  'Death Knight': {
-    type: 'Death Knight', isUndead: true, isUnique: false,
+  'Undead Knight': {
+    type: 'Undead Knight', isUndead: true, isUnique: false,
     minLevel: 10, maxLevel: 30, naturalTier: 7, minDungeonLevel: 4, speed: 1.0,
     baseHpPerLevel: 13, baseAttackPerLevel: 6.0, baseDefensePerLevel: 4.0,
     fireballResistance: 0.75,
-    encounterIntro: ['Blackened armor scrapes the stone as the figure turns to face you.', '', 'You have encountered a Level {LVL} Death Knight!'],
+    encounterIntro: ['Blackened armor scrapes the stone as the figure turns to face you.', '', 'You have encountered a Level {LVL} Undead Knight!'],
     specialAbilities: ['hellfire', 'terror'],
   },
   'Lich': {
@@ -1129,7 +1129,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1186,9 +1186,9 @@ export function randomMonsterLevel(
 // (not NODE_ENV=production) they still do.
 export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Death Tyrant', 'Displacer Beast', 'Elder Oblex'];
 /** What stands in for a hidden monster placed on the map as a guard. */
-const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' };   // the closest in strength (others: a Death Knight)
+const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' };   // the closest in strength (others: a Undead Knight)
 export function hiddenStandIn(type: MonsterType): MonsterType {
-  return STAND_INS[type] ?? 'Death Knight';
+  return STAND_INS[type] ?? 'Undead Knight';
 }
 
 // Built but not in play yet (the owner's call): they never turn up at random.
@@ -1263,7 +1263,7 @@ export const ANCIENT_GHOUL_INTRO = [
 ];
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Death Knight', 'Lich', 'Dracolich', 'Nightwalker',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Dracolich', 'Nightwalker',
   'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan', 'Bone Vortex',
 ];
 
@@ -1276,7 +1276,7 @@ export const RANDOM_MONSTER_POOL: MonsterType[] = [
   'Djinn', 'Phoenix', 'Banshee', 'Unicorn', 'Frost Giant', 'Displacer Beast', 'Basilisk',
   'Giant Spider', 'Stirge Swarm', 'Rust Monster', 'Bugbear', 'Troll', 'Minotaur', 'Werewolf', 'Gargoyle', 'Harpy', 'Hydra', 'Medusa', 'Doppelganger', 'Purple Worm', 'Iron Golem', 'Beithir', 'Rakshasa', 'Death Tyrant', 'Caput Mortuum', 'Chimera', 'Pit Fiend', 'Balor', 'Marilith', 'Erinyes',
   'Mold', 'Slime Mold', 'Gelatinous Cube', 'Mimic',
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Death Knight', 'Lich',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Vampire', 'Undead Knight', 'Lich',
   'Wizard', 'Hollow Choir', 'Cerebrovore', 'Elder Oblex', 'Sanguinid',
   'Black Dragon', 'Green Dragon', 'Blue Dragon', 'White Dragon', 'Red Dragon', 'Gold Dragon',
 ];
