@@ -366,6 +366,7 @@ export const HOARD = {
 // shrug much of it off).
 export const BORAK = {
   PER_LEVEL_MIN: 5, PER_LEVEL_MAX: 10,
+  COOLDOWN_SECONDS: 15 * 60,   // and then it needs 15 minutes of play to burn again
   LIGHT: {
     'Vampire': 1.75, 'Nightwalker': 1.75, 'Penanggalan': 1.75, 'Spectre': 1.75, 'Wight': 1.75, 'Banshee': 1.75,
     'Aboleth': 1.3, 'Mold': 1.3, 'Slime Mold': 1.3, 'Cerebrovore': 1.2,
@@ -488,6 +489,17 @@ export const NEWCOMER = {
   // The early-game record kept per new character (for the admin's summary),
   // until they reach this level.
   TRACK_TO_LEVEL: 5,
+} as const;
+
+// The Aboleth (level 6): its lair is dangerous to walk near. Within
+// SENSE_RADIUS squares you smell it (a line now and then); any step that
+// close, it may come for you on its wings; within SOUND_RADIUS you hear it.
+export const ABOLETH = {
+  SENSE_RADIUS: 6,
+  STINK_CHANCE: 0.35,       // a line about it, per step that close
+  POUNCE_CHANCE: 0.02,      // per step that close: it swoops on you and strikes first
+  SOUND_RADIUS: 3,
+  SOUND_CHANCE: 0.5,        // per step that close
 } as const;
 
 // The Toll-Keeper on the stairs down from level 2.

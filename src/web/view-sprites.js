@@ -292,12 +292,39 @@
     return (monsterImages[key] = img);
   }
 
+  // Winged monsters whose wings are their own parts of the art (m-wing-l / m-wing-r):
+  // in the scene the body is drawn without them, and each wing is flapped about
+  // its shoulder (in the portrait's 160-unit frame, per art style).
+  const WINGS = {
+    Aboleth: { classic: { l: [84, 70], r: [116, 70] }, horror: { l: [66, 74], r: [110, 74] }, speed: 4.2, lift: 0.32 },
+  };
+  const wingImages = {};
+  /** One wing alone, as an image (the art's defs kept, everything else left out). */
+  function wingImage(type, side) {
+    const style = typeof monsterArtStyle === 'string' ? monsterArtStyle : 'classic';
+    const key = `${type}|${side}|${style}`;
+    if (wingImages[key]) return wingImages[key];
+    let svg = typeof getMonsterSprite === 'function' ? getMonsterSprite(type) : '';
+    if (svg && typeof DOMParser === 'function') {
+      const doc = new DOMParser().parseFromString(svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'), 'image/svg+xml');
+      const root = doc.documentElement;
+      for (const el of [...root.children]) if (el.tagName !== 'defs' && !el.classList.contains(`m-wing-${side}`)) el.remove();
+      root.querySelectorAll('animateTransform').forEach(el => el.remove());
+      svg = new XMLSerializer().serializeToString(root);
+    }
+    const img = new Image();
+    img.onload = () => onReady();
+    if (svg) img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    return (wingImages[key] = img);
+  }
+
   /** A monster figure: breathes slowly (unless motion is reduced), flashes
    * the colour of a blow when struck, and all but vanishes when invisible. */
   function monsterArt(obj) {
     return {
       draw(ctx, x, y, w, h, t, sprite) {
-        const img = monsterImage(obj.type, obj.hide, obj.monster);
+        const wings = WINGS[obj.type];
+        const img = monsterImage(obj.type, wings ? [...(obj.hide || []), 'wing-l', 'wing-r'] : obj.hide, obj.monster);
         if (!img.complete || !img.naturalWidth) return;
         const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
         // A great foe in its room is seen from wherever you stand: turned (narrower,
@@ -309,8 +336,26 @@
         const x0 = x + (w - ww) / 2, y0 = y + (h - hh);
         ctx.save();
         if (obj.alpha !== undefined) ctx.globalAlpha = obj.alpha;
-        if (back) { ctx.translate(x0 + ww, y0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, ww, hh); }
-        else ctx.drawImage(img, x0, y0, ww, hh);
+        ctx.translate(back ? x0 + ww : x0, y0);
+        if (back) ctx.scale(-1, 1);
+        if (wings) {
+          // The wings beat slowly about the shoulders, behind the body.
+          const style = typeof monsterArtStyle === 'string' && wings[monsterArtStyle] ? monsterArtStyle : 'classic';
+          const lift = still() ? 0.1 : (0.5 + 0.5 * Math.sin(t * wings.speed)) * wings.lift - 0.06;
+          for (const side of ['l', 'r']) {
+            const wimg = wingImage(obj.type, side);
+            if (!wimg.complete || !wimg.naturalWidth) continue;
+            const [px, py] = wings[style][side];
+            const sx = (px / 160) * ww, sy = (py / 160) * hh;
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(side === 'l' ? lift : -lift);
+            ctx.translate(-sx, -sy);
+            ctx.drawImage(wimg, 0, 0, ww, hh);
+            ctx.restore();
+          }
+        }
+        ctx.drawImage(img, 0, 0, ww, hh);
         ctx.restore();
         if (v !== 'front') {
           ctx.save();

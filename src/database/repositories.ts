@@ -27,14 +27,14 @@ export class Repository {
         strength, constitution, intelligence, wisdom, dexterity, charisma, resistance,
         death_count, steps_taken, monsters_defeated, unique_monsters_defeated,
         asmodeus_defeated, status_effects, intros_seen, reroll_used, inventory, elemental_warnings,
-        banish_cast_at, stilled_hour_at, char_class, created_at, play_time, last_saved
+        banish_cast_at, stilled_hour_at, borak_at, char_class, created_at, play_time, last_saved
       ) VALUES (
         @id, @name, @level, @xp, @dungeon_level, @x, @y, @facing,
         @hp, @max_hp, @gold,
         @strength, @constitution, @intelligence, @wisdom, @dexterity, @charisma, @resistance,
         @death_count, @steps_taken, @monsters_defeated, @unique_monsters_defeated,
         @asmodeus_defeated, @status_effects, @intros_seen, @reroll_used, @inventory, @elemental_warnings,
-        @banish_cast_at, @stilled_hour_at, @char_class, @created_at, @play_time, @last_saved
+        @banish_cast_at, @stilled_hour_at, @borak_at, @char_class, @created_at, @play_time, @last_saved
       )
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name, level = excluded.level, xp = excluded.xp,
@@ -49,7 +49,7 @@ export class Repository {
         asmodeus_defeated = excluded.asmodeus_defeated, status_effects = excluded.status_effects,
         intros_seen = excluded.intros_seen, reroll_used = excluded.reroll_used,
         inventory = excluded.inventory, elemental_warnings = excluded.elemental_warnings,
-        banish_cast_at = excluded.banish_cast_at, stilled_hour_at = excluded.stilled_hour_at, char_class = excluded.char_class,
+        banish_cast_at = excluded.banish_cast_at, stilled_hour_at = excluded.stilled_hour_at, borak_at = excluded.borak_at, char_class = excluded.char_class,
         play_time = excluded.play_time, last_saved = excluded.last_saved
     `).run({
       id: char.id,
@@ -83,6 +83,7 @@ export class Repository {
       elemental_warnings: JSON.stringify(char.elementalWarnings),
       banish_cast_at: char.banishCastAt ?? null,
       stilled_hour_at: char.stilledHourAt ?? null,
+      borak_at: char.borakAt ?? null,
       char_class: char.charClass,
       created_at: char.createdAt,
       play_time: char.playTime,
@@ -205,6 +206,7 @@ export class Repository {
       elementalWarnings:      JSON.parse(row['elemental_warnings'] as string || '[]'),
       banishCastAt:           (row['banish_cast_at'] as number | null) ?? undefined,
       stilledHourAt:          (row['stilled_hour_at'] as number | null) ?? undefined,
+      borakAt:                (row['borak_at'] as number | null) ?? undefined,
       viewMode:               (row['view_mode'] as Character['viewMode'] | null) ?? undefined,
       firstSteps:             row['first_steps'] ? JSON.parse(row['first_steps'] as string) : undefined,
       charClass:              (row['char_class'] as Character['charClass']) || 'wizard',

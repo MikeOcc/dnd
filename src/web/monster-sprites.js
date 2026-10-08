@@ -4995,6 +4995,18 @@ const MONSTER_SPRITES = {
     <filter id="ab-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
     </defs>
     
+    <!-- great wings of wet membrane (they beat; the 3D view flaps them itself) -->
+    <g class="m-wing-l"><g>
+    <animateTransform attributeName="transform" type="rotate" values="-6 84 70; 14 84 70; -6 84 70" dur="1.5s" repeatCount="indefinite"/>
+    <path d="M 84 70 C 70 42, 48 18, 22 8 C 28 20, 24 30, 32 38 C 24 44, 26 54, 36 58 C 32 66, 40 72, 52 70 C 54 78, 66 80, 76 76 Z" fill="#1e4a44" stroke="#041614" stroke-width="1.2"/>
+    <path d="M 84 70 L 22 8 M 84 70 L 32 38 M 84 70 L 36 58 M 84 70 L 52 70" stroke="#4a8a80" stroke-width="1.2"/>
+    </g></g>
+    <g class="m-wing-r"><g transform="translate(200 0) scale(-1 1)"><g>
+    <animateTransform attributeName="transform" type="rotate" values="-6 84 70; 14 84 70; -6 84 70" dur="1.5s" repeatCount="indefinite"/>
+    <path d="M 84 70 C 70 42, 48 18, 22 8 C 28 20, 24 30, 32 38 C 24 44, 26 54, 36 58 C 32 66, 40 72, 52 70 C 54 78, 66 80, 76 76 Z" fill="#1e4a44" stroke="#041614" stroke-width="1.2"/>
+    <path d="M 84 70 L 22 8 M 84 70 L 32 38 M 84 70 L 36 58 M 84 70 L 52 70" stroke="#4a8a80" stroke-width="1.2"/>
+    </g></g></g>
+    
     <!-- tail arching out of the water behind -->
     <path d="M 40 110 C 26 92 20 70 30 50 C 36 40 44 38 46 44 C 36 56 36 76 50 96 Z" fill="url(#ab-skin)" stroke="#041614" stroke-width="1.1"/>
     <path d="M 30 50 L 18 34 L 34 44 L 28 26 L 42 42 Z" fill="#2a5a54" stroke="#041614" stroke-width="0.8"/>

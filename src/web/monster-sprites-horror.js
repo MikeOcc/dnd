@@ -2238,44 +2238,76 @@ const HORROR_SPRITES = {
   `,
 
   // ─── Aboleth ─────────────────────────────────────────────────────────────
-  // An ancient thing of the drowned dark: a vast eel-fish body, three red
-  // eyes stacked down its brow, four tentacles, a caul of grey slime.
+  // An ancient thing of the drowned dark, and it flies: a vast swollen
+  // eel-fish body crusted with barnacles and old scars, great tattered wings
+  // of wet black membrane, three red slit-pupilled eyes stacked down its brow,
+  // a maw of needle teeth strung with mucus, tentacles reaching for you.
+  // (The wings are their own groups, m-wing-l / m-wing-r: they beat here, and
+  // the 3D view flaps them itself.)
   'Aboleth': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth: a vast slimy fish-like horror, three red eyes stacked down its brow, four long tentacles, a cloud of grey mucus">
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth: a vast slimy winged horror, a swollen eel-fish body crusted with barnacles, great tattered black wings, three red slit eyes stacked down its brow, a maw of needle teeth strung with mucus, tentacles reaching for you">
     <defs>
-      ${wetSkinFilter('hab-skin', { freq: '0.1 0.16', seed: 133, shine: 0.3 })}
-      <linearGradient id="hab-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a7a80"/><stop offset="0.5" stop-color="#2a4048"/><stop offset="1" stop-color="#0a1418"/></linearGradient>
-      <linearGradient id="hab-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8a888"/><stop offset="1" stop-color="#4a4a38"/></linearGradient>
-      <radialGradient id="hab-eye" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#ffd0c0"/><stop offset="0.3" stop-color="#ff2020"/><stop offset="1" stop-color="#400000"/></radialGradient>
-      <radialGradient id="hab-mucus" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#9ab0a0" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      ${wetSkinFilter('hab-skin', { freq: '0.12 0.18', seed: 133, shine: 0.35 })}
+      ${horrorSkinFilter('hab-mem', { freq: '0.05 0.22', scale: 1.6, seed: 134, k: 1.15 })}
+      <linearGradient id="hab-body" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#5a7a7c"/><stop offset="0.5" stop-color="#22383e"/><stop offset="1" stop-color="#070e12"/></linearGradient>
+      <linearGradient id="hab-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a49c7c"/><stop offset="1" stop-color="#3e3a2a"/></linearGradient>
+      <linearGradient id="hab-wing" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1a1c22" stop-opacity="0.97"/><stop offset="0.7" stop-color="#2a1e28" stop-opacity="0.92"/><stop offset="1" stop-color="#3a2030" stop-opacity="0.85"/></linearGradient>
+      <radialGradient id="hab-eye" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#fff0c0"/><stop offset="0.25" stop-color="#ff4020"/><stop offset="0.7" stop-color="#8a0408"/><stop offset="1" stop-color="#200000"/></radialGradient>
+      <radialGradient id="hab-mucus" cx="50%" cy="60%" r="55%"><stop offset="0" stop-color="#7a9a90" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hab-maw" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#0a0000"/><stop offset="0.7" stop-color="#4a0610"/><stop offset="1" stop-color="#9a3040"/></radialGradient>
+      <filter id="hab-gl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
-    <ellipse cx="80" cy="96" rx="80" ry="58" fill="url(#hab-mucus)"/>
-    <!-- the tail, curling away -->
-    <path d="M 120 100 C 146 96, 158 120, 150 144 C 144 130, 134 120, 118 120 Z" fill="url(#hab-body)" filter="url(#hab-skin)"/>
-    <path d="M 150 144 l 8 8 l -12 -2 Z" fill="#1a2a30"/>
-    <!-- the body -->
-    <path d="M 26 92 C 22 60, 50 40, 84 42 C 114 44, 132 66, 128 98 C 124 124, 96 134, 70 132 C 44 128, 28 114, 26 92 Z" fill="url(#hab-body)" filter="url(#hab-skin)"/>
-    <path d="M 40 110 C 60 126, 100 128, 120 108 C 104 118, 60 120, 40 110 Z" fill="url(#hab-belly)" opacity="0.7"/>
-    <!-- fins along the back -->
-    <path d="M 60 44 L 66 26 L 72 42 L 80 22 L 86 42 L 96 26 L 98 46" fill="#3a5058" stroke="#1a2a30" stroke-width="0.8"/>
-    <!-- three eyes stacked down the brow -->
-    <g>
-      <ellipse cx="54" cy="58" rx="6" ry="4.4" fill="url(#hab-eye)"/><ellipse cx="50" cy="72" rx="6.4" ry="4.6" fill="url(#hab-eye)"/><ellipse cx="48" cy="86" rx="6" ry="4.4" fill="url(#hab-eye)"/>
-      <path d="M 54 55 l 0 6 M 50 69 l 0 6.4 M 48 83 l 0 6" stroke="#000" stroke-width="1.6"/>
-      <circle cx="52" cy="56.4" r="1" fill="#fff" opacity="0.8"/><circle cx="48" cy="70.4" r="1" fill="#fff" opacity="0.8"/><circle cx="46" cy="84.4" r="1" fill="#fff" opacity="0.8"/>
+    <ellipse cx="80" cy="100" rx="80" ry="60" fill="url(#hab-mucus)"/>
+
+    <!-- the wings: wet black membrane on long finger-bones, torn, dripping -->
+    <g class="m-wing-l"><g>
+      <animateTransform attributeName="transform" type="rotate" values="-6 66 74; 16 66 74; -6 66 74" dur="1.5s" repeatCount="indefinite"/>
+      <path d="M 66 74 C 50 44, 26 18, 2 10 C 8 22, 4 32, 12 40 C 4 46, 6 56, 16 60 C 10 68, 16 78, 28 78 C 26 86, 36 92, 46 88 C 52 92, 60 90, 64 84 Z" fill="url(#hab-wing)" filter="url(#hab-mem)"/>
+      <path d="M 66 74 L 2 10 M 66 74 L 12 40 M 66 74 L 16 60 M 66 74 L 28 78 M 66 74 L 46 88" stroke="#4a3a40" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M 30 30 c 4 2 6 6 4 10 c -4 -1 -6 -5 -4 -10 Z M 20 52 c 3 1 4 4 2 6 c -3 -1 -4 -3 -2 -6 Z" fill="#000" opacity="0.85"/>
+      <path d="M 12 40 c 0 5 1 8 0 12 M 28 78 c 0 4 1 7 0 10 M 46 88 c 1 4 0 7 1 10" stroke="#8aa098" stroke-width="1" fill="none" opacity="0.5"/>
+    </g></g>
+    <g class="m-wing-r"><g transform="translate(176 0) scale(-1 1)"><g>
+      <animateTransform attributeName="transform" type="rotate" values="-6 66 74; 16 66 74; -6 66 74" dur="1.5s" repeatCount="indefinite"/>
+      <path d="M 66 74 C 50 44, 26 18, 2 10 C 8 22, 4 32, 12 40 C 4 46, 6 56, 16 60 C 10 68, 16 78, 28 78 C 26 86, 36 92, 46 88 C 52 92, 60 90, 64 84 Z" fill="url(#hab-wing)" filter="url(#hab-mem)"/>
+      <path d="M 66 74 L 2 10 M 66 74 L 12 40 M 66 74 L 16 60 M 66 74 L 28 78 M 66 74 L 46 88" stroke="#4a3a40" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M 24 24 c 4 2 6 6 4 10 c -4 -1 -6 -5 -4 -10 Z M 34 66 c 3 1 4 4 2 6 c -3 -1 -4 -3 -2 -6 Z" fill="#000" opacity="0.85"/>
+      <path d="M 16 60 c 0 5 1 8 0 12 M 46 88 c 1 4 0 7 1 10" stroke="#8aa098" stroke-width="1" fill="none" opacity="0.5"/>
+    </g></g></g>
+
+    <!-- the tail, curling away behind -->
+    <path d="M 116 116 C 142 112, 158 132, 150 154 C 144 140, 132 132, 116 134 Z" fill="url(#hab-body)" filter="url(#hab-skin)"/>
+    <path d="M 150 154 l 8 6 l -14 0 Z" fill="#14222a"/>
+    <!-- the swollen body -->
+    <path d="M 34 112 C 30 82, 52 62, 82 60 C 110 60, 130 78, 128 106 C 126 130, 100 142, 74 140 C 50 138, 36 128, 34 112 Z" fill="url(#hab-body)" filter="url(#hab-skin)"/>
+    <path d="M 46 124 C 64 138, 102 138, 120 116 C 104 128, 64 130, 46 124 Z" fill="url(#hab-belly)" opacity="0.75"/>
+    <!-- old scars, barnacles, slime sheen -->
+    <path d="M 98 74 L 112 92 M 102 72 L 116 88 M 58 118 L 72 112" stroke="#0a1418" stroke-width="1.4" opacity="0.8"/>
+    <g fill="#b8b4a0" stroke="#3a3628" stroke-width="0.4">${Array.from({ length: 16 }, (_, i) => `<circle cx="${(96 + (i * 37) % 26).toFixed(0)}" cy="${(96 + (i * 23) % 24).toFixed(0)}" r="${(1 + (i % 3) * 0.6).toFixed(1)}"/>`).join('')}</g>
+    <path d="M 52 86 C 64 70, 88 64, 112 70" stroke="#d0eae4" stroke-width="1.4" fill="none" opacity="0.35"/>
+    <!-- the dorsal crest -->
+    <path d="M 62 64 L 66 46 L 72 62 L 80 40 L 86 60 L 96 44 L 98 64" fill="#2a3a42" stroke="#0a1418" stroke-width="0.8" filter="url(#hab-mem)"/>
+    <!-- three red eyes, stacked down the brow, slit-pupilled and glowing -->
+    <g filter="url(#hab-gl)">
+      <ellipse cx="56" cy="70" rx="6.4" ry="4.6" fill="url(#hab-eye)"/><ellipse cx="51" cy="85" rx="7" ry="5" fill="url(#hab-eye)"/><ellipse cx="49" cy="100" rx="6.4" ry="4.6" fill="url(#hab-eye)"/>
     </g>
-    <!-- the mouth, low and wide, slime hanging -->
-    <path d="M 30 98 C 38 106, 52 108, 62 104" stroke="#0a0a0a" stroke-width="2.4" fill="none"/>
-    <path d="M 36 102 c 0 6 1 10 0 16 M 46 105 c 1 5 0 8 1 12 M 56 105 c 0 4 1 7 0 10" stroke="#b8c8b0" stroke-width="1.6" fill="none" opacity="0.7"/>
-    <!-- four tentacles -->
+    <path d="M 56 66 l 0 8 M 51 80.5 l 0 9 M 49 96 l 0 8" stroke="#000" stroke-width="1.8"/>
+    <path d="M 48 64 Q 56 60 64 66 M 42 79 Q 51 74 60 81 M 40 94 Q 49 90 58 96" stroke="#0a1418" stroke-width="1.6" fill="none"/>
+    <!-- the maw: needle teeth, strings of mucus between the jaws -->
+    <path d="M 28 106 C 36 122, 58 126, 70 116 C 62 112, 40 110, 28 106 Z" fill="url(#hab-maw)"/>
+    <g>${needleTeeth(31, 68, 108.2, 14, 3.4, 1, '#ece4cc', 0.35)}</g>
+    <g>${needleTeeth(36, 66, 119.4, 10, 3, -1, '#ece4cc', 0.35)}</g>
+    <path d="M 40 110 c 1 5 0 8 1 12 M 52 112 c -1 4 0 7 -1 10 M 62 113 c 1 3 0 5 0 7" stroke="#c8dcd0" stroke-width="0.9" fill="none" opacity="0.7"/>
+    <path d="M 34 118 c 0 8 2 14 0 22 M 46 124 c 1 6 0 10 1 16" stroke="#a8c0b4" stroke-width="1.4" fill="none" opacity="0.6"/>
+    <!-- tentacles reaching for you -->
     <g fill="none" stroke-linecap="round" filter="url(#hab-skin)">
-      <path d="M 44 112 C 30 130, 20 140, 8 150" stroke="#2a4048" stroke-width="7"/>
-      <path d="M 60 122 C 54 138, 52 148, 46 158" stroke="#2a4048" stroke-width="6"/>
-      <path d="M 86 126 C 92 140, 96 150, 104 158" stroke="#2a4048" stroke-width="6"/>
-      <path d="M 40 96 C 20 90, 10 76, 6 60" stroke="#2a4048" stroke-width="6"/>
+      <path d="M 52 128 C 40 142, 24 150, 6 156" stroke="#1a2c32" stroke-width="7"/>
+      <path d="M 70 136 C 66 148, 62 154, 56 160" stroke="#1a2c32" stroke-width="6"/>
+      <path d="M 92 136 C 98 148, 104 154, 112 160" stroke="#1a2c32" stroke-width="6"/>
+      <path d="M 38 116 C 22 120, 12 132, 4 142" stroke="#1a2c32" stroke-width="5"/>
     </g>
-    <g stroke="#a8c0b0" stroke-width="0.8" fill="none" opacity="0.5"><path d="M 44 112 C 30 130, 20 140, 8 150 M 40 96 C 20 90, 10 76, 6 60"/></g>
-    <g fill="#b8c8b0" opacity="0.6"><circle cx="8" cy="150" r="1.6"/><circle cx="46" cy="158" r="1.4"/><circle cx="104" cy="158" r="1.4"/><circle cx="20" cy="124" r="1"/></g>
+    <g stroke="#9ab4aa" stroke-width="0.8" fill="none" opacity="0.45"><path d="M 52 128 C 40 142, 24 150, 6 156 M 38 116 C 22 120, 12 132, 4 142"/></g>
+    <g fill="#c8dcd0" opacity="0.6"><circle cx="6" cy="156" r="1.6"/><circle cx="56" cy="160" r="1.4"/><circle cx="112" cy="160" r="1.4"/><circle cx="20" cy="130" r="1"/></g>
     </svg>
   `,
 

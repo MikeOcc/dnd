@@ -16,7 +16,7 @@ import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } fr
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE, ABOLETH, BORAK } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -44,6 +44,21 @@ function isSolidRock(cell: DungeonCell): boolean {
  * square on every level. */
 /** What you deal with from the square in front of it, rather than by stepping on it. */
 const APPROACHABLE = new Set<string>(['chest', 'altar', 'fountain', 'book', 'shop']);
+/** What you notice near the Aboleth's lair, close and very close. */
+const ABOLETH_SENSE_LINES = [
+  'The stink of evil is here.',
+  'The air turns thick and wet. You taste salt, and rot, and something older than both.',
+  'Something huge and patient is watching you through the stone.',
+  'Slime drips from the ceiling onto your neck, warm as breath.',
+  'Far off in the dark, something heavy beats its wings once, and is still.',
+];
+const ABOLETH_NEAR_LINES = [
+  'The stink of evil is overpowering. It is very close now.',
+  'Wet wings rustle in the dark just ahead. Three red eyes open, one above another.',
+  '"I see you," says a voice inside your skull, "and I remember you, though we have never met."',
+  'The floor is slick with slime, and the slime is moving toward you.',
+];
+
 /** The Toll-Keeper's id: marked settled once paid or beaten. */
 const TOLL_KEEPER_ID = 'toll-keeper';
 
@@ -1094,8 +1109,42 @@ export class GameEngine {
       return this.openShop('peddler');
     }
 
+    const swoop = this.nearTheAboleth();
+    if (swoop) return swoop;
     this.feelPresences();
     return this.getState();
+  }
+
+  /** Walking near the Aboleth's lair: you smell it, you hear it, and now and
+   * then it comes for you on its wings and strikes before you can act. */
+  private nearTheAboleth(): GameState | null {
+    const c = this.char, ds = this.dungeonState;
+    if (!c || !ds || c.dungeonLevel !== 6) return null;
+    const lvl = this.getLevel(6);
+    if (!lvl) return null;
+    let lair: { content: CellContent; x: number; y: number } | null = null;
+    for (const [k, v] of lvl.contents) {
+      if (v.type !== 'unique-monster' || !v.monsterId || currentMonsterType(v.monsterId) !== 'Aboleth' || ds.defeatedUniqueMonsters.has(v.id)) continue;
+      const [x, y] = k.split(',').map(Number);
+      lair = { content: v, x, y };
+    }
+    if (!lair) return null;
+    const d = Math.abs(lair.x - c.x) + Math.abs(lair.y - c.y);
+    if (d === 0 || d > ABOLETH.SENSE_RADIUS) return null;
+    if (this.rng.float() < ABOLETH.POUNCE_CHANCE) {
+      this.cue('aboleth');
+      this.startFixedEncounter(lair.content, 'Aboleth');
+      return this.lairFirstStrike([
+        'Wings like wet black sails crack open in the dark above you.',
+        'Before you can raise a hand, the Aboleth drops out of the air and is upon you!', '']);
+    }
+    if (d <= ABOLETH.SOUND_RADIUS && this.rng.float() < ABOLETH.SOUND_CHANCE) this.cue('aboleth');
+    if (this.rng.float() < ABOLETH.STINK_CHANCE) {
+      const lines = d <= ABOLETH.SOUND_RADIUS ? ABOLETH_NEAR_LINES : ABOLETH_SENSE_LINES;
+      this.messages = [...this.messages, ...(this.messages.length ? [''] : []), this.rng.pick(lines)];
+      this.presenceFelt = true;
+    }
+    return null;
   }
 
   /** A quiet step may bring word of the uniques: Asmodeus's voice or fury,
@@ -2366,8 +2415,10 @@ export class GameEngine {
       } else {
         const m = this.combat?.monster;
         const spent = (r === 'backfire' && m?.backfireUsed) || (r === 'borak' && m?.borakUsed) || (r === 'wither' && m?.witherUsed);
-        text += inv.readiedRing === r ? (inCombat ? (spent ? ' [READIED, spent this fight]' : ' [READIED: use it]') : ' [READIED]')
+        const dim = r === 'borak' ? this.borakReadyIn() : 0;
+        text += inv.readiedRing === r ? (inCombat ? (spent ? ' [READIED, spent this fight]' : dim > 0 ? ` [READIED: dim, ${Math.ceil(dim / 60)} min]` : ' [READIED: use it]') : ' [READIED]')
           : (inCombat ? ' (ready it: costs your turn)' : ' (ready it)');
+        if (dim > 0 && !inCombat) text += ` (recharging: ${Math.ceil(dim / 60)} min)`;
       }
       return { key: String.fromCharCode(97 + i), text };
     });
@@ -2397,6 +2448,13 @@ export class GameEngine {
       if (ring === 'escape') return this.useStarSapphire();
       if (ring === 'borak') {
         if (m.borakUsed) { this.messages = ['The Borak\u2019s star has gone dark. It will burn again in your next fight.']; return this.getState(); }
+        const wait = this.borakReadyIn();
+        if (wait > 0) {
+          const mins = Math.ceil(wait / 60);
+          this.messages = [`The star in The Borak is still dim, gathering its light. (Ready in ${mins} minute${mins === 1 ? '' : 's'} of play.)`];
+          return this.getState();
+        }
+        this.char.borakAt = this.char.playTime;
         this.fx.monster = 'holy';
         return this.processCombatResult(playerBorak(this.char, m, this.rng));
       }
@@ -2763,6 +2821,13 @@ export class GameEngine {
   private banishReadyIn(): number {
     if (!this.char || this.char.banishCastAt === undefined) return 0;
     return Math.max(0, this.char.banishCastAt + SPELLS.BANISH_COOLDOWN_SECONDS - this.char.playTime);
+  }
+
+  /** Seconds of play until The Borak can fire again. */
+  private borakReadyIn(): number {
+    if (!this.char || this.char.borakAt === undefined) return 0;
+    this.bankPlayTime();
+    return Math.max(0, this.char.borakAt + BORAK.COOLDOWN_SECONDS - this.char.playTime);
   }
 
   /** Seconds of play until Timelock can be cast again. */

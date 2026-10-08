@@ -869,6 +869,7 @@ function playSounds(prev, state) {
   // (which wait for the monster's death to finish).
   for (const cue of fx.cues || []) {
     if (cue === 'gulp') SFX.gulp();
+    else if (cue === 'aboleth') SFX.aboleth();
     else if (cue === 'scare') SFX.scare();
     else if (cue.startsWith('gem-')) SFX.gem(cue.slice(4));
     else if (cue.startsWith('victory-')) setTimeout(() => SFX.victory(Number(cue.slice(8))), after + 1100);

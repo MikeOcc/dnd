@@ -54,6 +54,9 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN stilled_hour_at INTEGER`);
   } catch { /* column already exists */ }
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN borak_at INTEGER`);
+  } catch { /* column already exists */ }
   // The dungeon view a character starts in ('classic' | 'ascii3d' | 'painted'),
   // set by the house for a character made ready for someone; NULL = the
   // browser's own choice. Saves never write it, so it stays as set.

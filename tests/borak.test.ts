@@ -52,4 +52,24 @@ describe('The Borak in a fight', () => {
     expect(m.hp).toBeLessThan(1e6);
     expect(engine.ringAction(key).messages.join(' ')).toContain('gone dark');
   });
+
+  it('then needs 15 minutes of play before it burns again, even in a new fight', () => {
+    const engine = new GameEngine(new Repository(db));
+    engine.startNameEntry(); engine.submitName('Balzor'); engine.acceptCharacter('wizard');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = engine as any;
+    e.dismissLevelIntro(); e.char.hp = e.char.maxHp = 1e6;
+    e.char.inventory.rings = ['borak']; e.char.inventory.readiedRing = 'borak';
+    const fight = () => { const m = createMonster('Giant', 30, 'g' + Math.random()); m.hp = m.maxHp = 1e6; e.combat = { monster: m, round: 1 }; e.phase = 'combat'; return m; };
+    fight();
+    const key = engine.getState().ringChoices!.find((c: { text: string }) => c.text.includes('Borak'))!.key;
+    engine.ringAction(key);
+    const m2 = fight();
+    const s = engine.ringAction(key);
+    expect(s.messages.join(' ')).toContain('still dim');
+    expect(m2.hp).toBe(1e6);
+    expect(engine.getState().ringChoices!.find((c: { text: string }) => c.text.includes('Borak'))!.text).toMatch(/dim, 15 min/);
+    e.char.borakAt -= 15 * 60;   // fifteen minutes of play later
+    expect(engine.ringAction(key).messages.join(' ')).toContain('beam of white-hot light');
+  });
 });

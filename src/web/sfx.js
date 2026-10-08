@@ -207,6 +207,23 @@ const SFX = (() => {
       noise(t + 0.2, { dur: 0.6, freq: 7000, q: 0.5, type: 'highpass', gain: 0.04, attack: 0.2 });
     },
 
+    /** The Aboleth, close by: a deep wet drone, bubbles rising, two slow beats of
+     * great wet wings, and a whisper just under hearing. */
+    aboleth() {
+      if (!audio()) return;
+      const t = ctx.currentTime + 0.01;
+      tone(t, { type: 'sawtooth', freq: 46, freqTo: 36, dur: 2.4, gain: 0.14, attack: 0.5, filter: 260 });
+      tone(t + 0.2, { type: 'sine', freq: 73, freqTo: 61, dur: 2.0, gain: 0.08, attack: 0.4 });
+      for (let i = 0; i < 7; i++) {
+        const at = t + 0.15 + Math.random() * 1.6, f = 110 + Math.random() * 120;
+        tone(at, { freq: f, freqTo: f * 1.9, dur: 0.07, gain: 0.07, attack: 0.01 });
+      }
+      for (const at of [t + 0.7, t + 1.35]) {
+        noise(at, { dur: 0.45, freq: 260, q: 0.7, type: 'lowpass', gain: 0.4, attack: 0.08, sweepTo: 120 });
+      }
+      noise(t + 0.3, { dur: 1.6, freq: 3200, q: 0.8, gain: 0.025, attack: 0.5, sweepTo: 1800 });
+    },
+
     /** Drinking a potion: three gulps and a sigh of relief. */
     gulp() {
       if (!audio()) return;

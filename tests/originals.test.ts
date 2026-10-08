@@ -185,3 +185,52 @@ describe('great foes in their rooms', () => {
     expect(seen()).toBeUndefined();
   });
 });
+
+describe('near the Aboleth', () => {
+  function nearIt(distance: number) {
+    const e = engine();
+    e.char.dungeonLevel = 6;
+    e.loadLevelIntoCache(6);
+    const lvl = e.getLevel(6);
+    const [k] = [...lvl.contents].find(([, v]: [string, { type: string; monsterId?: string }]) => v.type === 'unique-monster' && v.monsterId === 'Aboleth')!;
+    const [x, y] = k.split(',').map(Number);
+    // Walk `distance` open steps out from its lair (or as far as the passages allow).
+    let at = { x, y };
+    const seen = new Set([`${x},${y}`]);
+    const steps = [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]] as const;
+    for (let i = 0; i < distance; i++) {
+      const next = steps.map(([d, dx, dy]) => ({ d, x: at.x + dx, y: at.y + dy }))
+        .find(p => !lvl.grid[at.y][at.x].walls[p.d] && !seen.has(`${p.x},${p.y}`)
+          && Math.abs(p.x - x) + Math.abs(p.y - y) > Math.abs(at.x - x) + Math.abs(at.y - y));
+      if (!next) break;
+      at = { x: next.x, y: next.y }; seen.add(`${at.x},${at.y}`);
+    }
+    if (distance >= 20) at = { x: lvl.entrance.x, y: lvl.entrance.y };
+    e.char.x = at.x; e.char.y = at.y;
+    e.phase = 'playing';
+    return e;
+  }
+
+  it('you smell it, hear it close by, and now and then it swoops on you and strikes first', () => {
+    let smelt = false, heard = false, swooped = false;
+    const e = nearIt(2);
+    const spot = { x: e.char.x, y: e.char.y };
+    for (let i = 0; i < 1500 && !(smelt && heard && swooped); i++) {
+      e.combat = null; e.phase = 'playing'; e.char.x = spot.x; e.char.y = spot.y;
+      e.messages = []; e.fx = {};
+      const s = e.nearTheAboleth() ?? e.getState();
+      if (s.messages.join(' ').match(/stink of evil|Three red eyes|I see you|slime is moving|wet wings/i)) smelt = true;
+      if ((s.fx?.cues || []).includes('aboleth')) heard = true;
+      if (s.phase === 'combat') { swooped = true; expect(e.combat.monster.type).toBe('Aboleth'); expect(s.messages.join(' ')).toContain('drops out of the air'); }
+    }
+    expect(smelt && heard && swooped).toBe(true);
+  });
+
+  it('is quiet far from it, and once it is beaten', () => {
+    const far = nearIt(20);
+    for (let i = 0; i < 100; i++) expect(far.nearTheAboleth()).toBeNull();
+    const done = nearIt(2);
+    done.dungeonState.defeatedUniqueMonsters.add('unique-aboleth');
+    for (let i = 0; i < 200; i++) { done.fx = {}; expect(done.nearTheAboleth()).toBeNull(); expect(done.getState().fx?.cues ?? []).not.toContain('aboleth'); }
+  });
+});
