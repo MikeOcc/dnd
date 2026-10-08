@@ -130,6 +130,19 @@ describe('Shops in the game', () => {
     expect(s.phase).toBe('playing');
   });
 
+  it('the Peddler, too: Done trading (Esc) on every list, and Sell instead / Buy instead', () => {
+    const { engine, e } = ready();
+    let s = e.openShop('peddler');
+    expect(s.choices!.at(-1)!.text).toBe('Done trading (Esc)');
+    s = engine.interactionChoice('a');                       // Buy
+    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Sell instead', 'Done trading (Esc)']);
+    s = engine.interactionChoice(s.choices!.at(-2)!.key);    // Sell instead
+    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Buy instead', 'Done trading (Esc)']);
+    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Done trading
+    expect(s.phase).toBe('playing');
+    expect(s.messages.join(' ')).toContain('the peddler is gone');
+  });
+
   it('the Outpost, when shut, says why and when it opens, and lets you walk on', () => {
     const { e } = ready();
     e.char.playTime = SHOP.SHIFT_OPEN_SECONDS + 10;            // between shifts
