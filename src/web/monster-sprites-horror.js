@@ -3039,4 +3039,600 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
+  // ─── Titanoboa ───────────────────────────────────────────────────────────
+  // Coils as thick as a barrel, scale over scale, filling the passage; a head
+  // the size of a horse rearing over you, tongue tasting the air.
+  'Titanoboa': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Titanoboa: a colossal snake, coils as thick as barrels filling the passage, its huge head rearing with the tongue out, cold slit eyes">
+    <defs>
+      ${horrorSkinFilter('hto-hide', { freq: '0.18 0.22', scale: 2.2, seed: 170, k: 1.25 })}
+      ${scalePattern('hto-sc', 3.4, '#0c1006', '#9aa060')}
+      <linearGradient id="hto-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a6a34"/><stop offset="0.5" stop-color="#3a3a18"/><stop offset="1" stop-color="#121206"/></linearGradient>
+      <linearGradient id="hto-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8b880"/><stop offset="1" stop-color="#6a5a30"/></linearGradient>
+      <radialGradient id="hto-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff2a0"/><stop offset="0.5" stop-color="#c8a020"/><stop offset="1" stop-color="#3a2a00"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="76" ry="6" fill="#000" opacity="0.6"/>
+    <!-- the coils, stacked and sliding -->
+    <g filter="url(#hto-hide)">
+      <path d="M 2 150 C 20 120, 60 116, 80 132 C 100 148, 140 146, 158 124 L 158 150 Z" fill="url(#hto-body)"/>
+      <path d="M 4 124 C 30 100, 70 100, 92 114 C 114 128, 140 118, 156 100" stroke="url(#hto-body)" stroke-width="22" fill="none" stroke-linecap="round"/>
+      <path d="M 10 96 C 34 80, 66 84, 84 96" stroke="url(#hto-body)" stroke-width="20" fill="none" stroke-linecap="round"/>
+    </g>
+    <path d="M 2 150 C 20 120, 60 116, 80 132 C 100 148, 140 146, 158 124 L 158 150 Z" fill="url(#hto-sc)" opacity="0.55"/>
+    <path d="M 4 124 C 30 100, 70 100, 92 114 C 114 128, 140 118, 156 100" stroke="url(#hto-sc)" stroke-width="22" fill="none" opacity="0.5"/>
+    <path d="M 14 132 C 36 114, 64 114, 86 126" stroke="url(#hto-belly)" stroke-width="5" fill="none" opacity="0.6"/>
+    <g fill="#1a1a08" opacity="0.6">${[[30, 112], [52, 106], [74, 110], [104, 128], [128, 124], [40, 92], [62, 88]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="3.4"/>`).join('')}</g>
+    <!-- the neck rising, and the head -->
+    <path d="M 84 96 C 100 84, 108 66, 104 46" stroke="url(#hto-body)" stroke-width="18" fill="none" stroke-linecap="round" filter="url(#hto-hide)"/>
+    <path d="M 84 96 C 100 84, 108 66, 104 46" stroke="url(#hto-belly)" stroke-width="6" fill="none" opacity="0.6"/>
+    <path d="M 88 46 C 84 28, 96 14, 114 14 C 132 14, 146 26, 144 40 C 142 52, 128 58, 112 58 C 98 58, 90 54, 88 46 Z" fill="url(#hto-body)" filter="url(#hto-hide)"/>
+    <path d="M 88 46 C 84 28, 96 14, 114 14 C 132 14, 146 26, 144 40 C 142 52, 128 58, 112 58 C 98 58, 90 54, 88 46 Z" fill="url(#hto-sc)" opacity="0.45"/>
+    <ellipse cx="104" cy="30" rx="4.6" ry="3.4" fill="url(#hto-eye)"/><ellipse cx="128" cy="30" rx="4.6" ry="3.4" fill="url(#hto-eye)"/>
+    <path d="M 104 27 l 0 6 M 128 27 l 0 6" stroke="#000" stroke-width="1.6"/>
+    <path d="M 98 26 Q 104 22 110 26 M 122 26 Q 128 22 134 26" stroke="#0c0c04" stroke-width="1.6" fill="none"/>
+    <circle cx="110" cy="44" r="1" fill="#000"/><circle cx="120" cy="44" r="1" fill="#000"/>
+    <path d="M 100 52 Q 115 58 130 52" stroke="#0c0c04" stroke-width="1.4" fill="none"/>
+    <path d="M 115 56 L 115 70 L 110 78 M 115 70 L 120 78" stroke="#8a1018" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </svg>
+  `,
+
+  // ─── Djinn ───────────────────────────────────────────────────────────────
+  // A towering blue spirit of storm and sand, bound in gold, a ruby blazing
+  // in its brow, its lower body a howling twist of smoke.
+  'Djinn': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Djinn: a towering blue-skinned spirit bound in gold, a blazing ruby in its brow, its lower body a howling tail of smoke and stinging sand">
+    <defs>
+      ${horrorSkinFilter('hdj-skin', { freq: '0.16 0.2', scale: 1.8, seed: 171, k: 1.2 })}
+      <linearGradient id="hdj-body" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#4a7ac0"/><stop offset="0.6" stop-color="#1a3a70"/><stop offset="1" stop-color="#081430"/></linearGradient>
+      <linearGradient id="hdj-smoke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a6a9a" stop-opacity="0.9"/><stop offset="1" stop-color="#c8a870" stop-opacity="0"/></linearGradient>
+      <linearGradient id="hdj-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#8a5a10"/></linearGradient>
+      <radialGradient id="hdj-ruby" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0f0"/><stop offset="0.35" stop-color="#ff2030"/><stop offset="1" stop-color="#600008" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hdj-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#a0e0ff"/><stop offset="1" stop-color="#2060a0" stop-opacity="0"/></radialGradient>
+    </defs>
+    <!-- the smoke tail and the sand it carries -->
+    <path d="M 60 96 C 50 120, 76 134, 64 160 L 100 160 C 92 140, 110 124, 100 96 Z" fill="url(#hdj-smoke)"/>
+    <path d="M 64 110 C 84 118, 70 132, 88 140 M 96 104 C 80 116, 98 128, 82 150" stroke="#c8d8f0" stroke-width="1.2" fill="none" opacity="0.4"/>
+    <g fill="#d8c090" opacity="0.6">${Array.from({ length: 40 }, (_, i) => { const h = (n) => Math.abs(Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1; return `<circle cx="${(20 + h(1) * 120).toFixed(0)}" cy="${(90 + h(2) * 70).toFixed(0)}" r="${(0.5 + h(3)).toFixed(1)}"/>`; }).join('')}</g>
+    <!-- the torso, arms crossed and bound in gold -->
+    <path d="M 46 58 C 42 80, 52 98, 62 104 L 98 104 C 108 98, 118 80, 114 58 C 104 48, 56 48, 46 58 Z" fill="url(#hdj-body)" filter="url(#hdj-skin)"/>
+    <path d="M 40 62 C 26 74, 30 92, 52 92 L 108 92 C 130 92, 134 74, 120 62" stroke="url(#hdj-body)" stroke-width="12" fill="none" stroke-linecap="round" filter="url(#hdj-skin)"/>
+    <path d="M 32 78 l 0 10 M 128 78 l 0 10" stroke="url(#hdj-gold)" stroke-width="6"/>
+    <path d="M 56 98 L 104 98" stroke="url(#hdj-gold)" stroke-width="4"/>
+    <path d="M 62 66 Q 80 72 98 66 M 64 78 Q 80 84 96 78" stroke="#081430" stroke-width="1.2" fill="none" opacity="0.6"/>
+    <!-- the head: topknot, ruby, glaring white eyes, a cruel smile -->
+    <path d="M 64 32 C 62 16, 70 8, 80 8 C 90 8, 98 16, 96 32 C 96 44, 90 52, 80 54 C 70 52, 64 44, 64 32 Z" fill="url(#hdj-body)" filter="url(#hdj-skin)"/>
+    <path d="M 80 8 C 76 0, 84 -2, 86 4 C 90 0, 92 6, 86 10 Z" fill="#0a0a14"/>
+    <circle cx="80" cy="19" r="4.4" fill="url(#hdj-ruby)"/>
+    <path d="M 66 28 Q 72 24 78 30 M 82 30 Q 88 24 94 28" stroke="#000" stroke-width="2" fill="none"/>
+    <ellipse cx="72" cy="31" rx="4" ry="2.4" fill="url(#hdj-eye)"/><ellipse cx="88" cy="31" rx="4" ry="2.4" fill="url(#hdj-eye)"/>
+    <path d="M 70 44 Q 80 50 90 44 Q 80 46 70 44 Z" fill="#000"/>
+    <path d="M 70 44 L 72 47 L 74 44 L 76 47 L 78 44 L 80 47 L 82 44 L 84 47 L 86 44 L 88 47 L 90 44" stroke="#f0f0f0" stroke-width="0.6" fill="none"/>
+    <path d="M 58 8 C 52 12, 50 20, 54 26 M 102 8 C 108 12, 110 20, 106 26" stroke="url(#hdj-gold)" stroke-width="2.4" fill="none"/>
+    </svg>
+  `,
+
+  // ─── Phoenix ─────────────────────────────────────────────────────────────
+  // A great bird of living fire, wings from wall to wall, every feather a
+  // tongue of flame, eyes like two small suns; ash and embers falling.
+  'Phoenix': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Phoenix: a great bird of living fire, wings spread wall to wall, every feather a tongue of flame, eyes like two small suns, embers falling">
+    <defs>
+      <radialGradient id="hph-core" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#fffbe0"/><stop offset="0.35" stop-color="#ffc040"/><stop offset="0.75" stop-color="#e04010"/><stop offset="1" stop-color="#400400" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hph-feather" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#8a1004"/><stop offset="0.5" stop-color="#ff6010"/><stop offset="1" stop-color="#ffe080"/></linearGradient>
+      <radialGradient id="hph-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#fff0a0"/><stop offset="1" stop-color="#ff8000" stop-opacity="0"/></radialGradient>
+      <filter id="hph-gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <circle cx="80" cy="80" r="78" fill="url(#hph-core)" opacity="0.5"/>
+    <!-- the wings: feathers of flame, fanned wall to wall -->
+    <g filter="url(#hph-gl)">
+      ${Array.from({ length: 9 }, (_, i) => { const a = -0.1 - i * 0.16, len = 70 - i * 3; const x = 64 + Math.cos(Math.PI - a) * len, y = 70 - Math.sin(Math.PI - a) * len * 0.9; return `<path d="M 66 74 Q ${(66 + x) / 2 - 6} ${(74 + y) / 2 - 10}, ${x.toFixed(1)} ${y.toFixed(1)} Q ${(66 + x) / 2 + 4} ${(74 + y) / 2 + 2}, 66 80 Z" fill="url(#hph-feather)" opacity="${(0.95 - i * 0.05).toFixed(2)}"/>`; }).join('')}
+      ${Array.from({ length: 9 }, (_, i) => { const a = -0.1 - i * 0.16, len = 70 - i * 3; const x = 96 + Math.cos(a) * len, y = 70 + Math.sin(a) * len * 0.9; return `<path d="M 94 74 Q ${(94 + x) / 2 + 6} ${(74 + y) / 2 - 10}, ${x.toFixed(1)} ${y.toFixed(1)} Q ${(94 + x) / 2 - 4} ${(74 + y) / 2 + 2}, 94 80 Z" fill="url(#hph-feather)" opacity="${(0.95 - i * 0.05).toFixed(2)}"/>`; }).join('')}
+    </g>
+    <!-- the body, white-hot at the heart, and the tail of fire -->
+    <path d="M 70 70 C 64 90, 70 110, 80 118 C 90 110, 96 90, 90 70 C 86 62, 74 62, 70 70 Z" fill="url(#hph-core)" filter="url(#hph-gl)"/>
+    <path d="M 74 116 C 66 132, 58 144, 50 158 M 80 118 C 80 136, 78 148, 80 160 M 86 116 C 94 132, 102 144, 110 158" stroke="url(#hph-feather)" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#hph-gl)"/>
+    <!-- the head: a crest of flame, a hooked beak, eyes like suns -->
+    <path d="M 72 52 C 70 40, 76 32, 80 32 C 84 32, 90 40, 88 52 C 86 60, 74 60, 72 52 Z" fill="#ff8020" filter="url(#hph-gl)"/>
+    <path d="M 76 34 C 72 20, 78 10, 84 6 C 82 16, 88 22, 84 34 Z M 82 32 C 88 22, 96 20, 100 16 C 96 26, 92 30, 86 36 Z" fill="url(#hph-feather)" filter="url(#hph-gl)"/>
+    <path d="M 78 52 L 80 62 L 82 52 Z" fill="#3a1004"/>
+    <circle cx="76" cy="44" r="3" fill="url(#hph-eye)" filter="url(#hph-gl)"/><circle cx="84" cy="44" r="3" fill="url(#hph-eye)" filter="url(#hph-gl)"/>
+    <g fill="#ffb040">${Array.from({ length: 24 }, (_, i) => `<circle cx="${(16 + (i * 41) % 128).toFixed(0)}" cy="${(100 + (i * 29) % 58).toFixed(0)}" r="${(0.7 + (i % 3) * 0.4).toFixed(1)}" opacity="0.7"/>`).join('')}</g>
+    </svg>
+  `,
+
+  // ─── Unicorn ─────────────────────────────────────────────────────────────
+  // Not a gentle thing: a war-horse of cold white, a spiral horn like a drawn
+  // blade, eyes that have weighed you and not yet decided.
+  'Unicorn': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unicorn: a tall cold-white war-horse with a silver mane, a long spiral horn shining like a drawn blade, dark judging eyes, silver light around it">
+    <defs>
+      ${horrorSkinFilter('hun-coat', { freq: '0.3 0.12', scale: 1.4, seed: 172, k: 1.1 })}
+      <radialGradient id="hun-light" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#e8f0ff" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hun-coatg" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#c8ccd8"/><stop offset="1" stop-color="#6a7080"/></linearGradient>
+      <linearGradient id="hun-horn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c8c0a0"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+    </defs>
+    <circle cx="80" cy="70" r="76" fill="url(#hun-light)"/>
+    <ellipse cx="80" cy="154" rx="50" ry="5" fill="#000" opacity="0.5"/>
+    <!-- the body, three-quarter, a war-horse's bulk -->
+    <path d="M 40 96 C 40 78, 58 68, 80 70 L 118 74 C 134 78, 138 96, 128 108 C 118 116, 60 118, 48 112 Z" fill="url(#hun-coatg)" filter="url(#hun-coat)"/>
+    <path d="M 52 110 L 48 152 L 58 152 L 60 112 Z M 70 114 L 70 152 L 80 152 L 78 114 Z M 112 112 L 114 152 L 124 152 L 120 110 Z M 124 106 L 132 150 L 140 148 L 130 104 Z" fill="url(#hun-coatg)" filter="url(#hun-coat)"/>
+    <path d="M 46 150 l 14 0 l 0 4 l -14 0 Z M 68 150 l 14 0 l 0 4 l -14 0 Z M 112 150 l 14 0 l 0 4 l -14 0 Z" fill="#8a8a90"/>
+    <path d="M 132 80 C 146 84, 150 100, 144 116 C 142 104, 138 94, 130 90 Z" fill="#e8ecf4" opacity="0.9"/>
+    <!-- the neck and head, lowered, regarding you -->
+    <path d="M 46 90 C 38 70, 40 48, 48 36 L 66 40 C 64 56, 66 72, 72 80 Z" fill="url(#hun-coatg)" filter="url(#hun-coat)"/>
+    <path d="M 40 40 C 34 36, 28 40, 26 50 C 24 62, 30 70, 38 72 C 46 74, 54 66, 56 54 C 58 44, 50 36, 40 40 Z" fill="url(#hun-coatg)" filter="url(#hun-coat)"/>
+    <path d="M 48 36 C 56 30, 66 34, 70 46 C 72 60, 70 74, 74 84" stroke="#e8ecf4" stroke-width="5" fill="none" opacity="0.9"/>
+    <path d="M 52 34 C 60 28, 68 36, 72 50 M 56 34 C 66 32, 72 44, 74 60" stroke="#c8d0e0" stroke-width="2" fill="none"/>
+    <!-- the horn, like a drawn blade -->
+    <path d="M 38 40 L 20 2 L 44 38 Z" fill="url(#hun-horn)"/>
+    <path d="M 40 36 L 37 30 M 36 30 L 33 24 M 33 22 L 30 16 M 30 14 L 27 9" stroke="#8a8270" stroke-width="1.2"/>
+    <ellipse cx="44" cy="48" rx="3" ry="2.4" fill="#0a0a14"/><circle cx="43" cy="47" r="0.8" fill="#c8d8ff"/>
+    <path d="M 40 44 Q 44 42 48 45" stroke="#6a7080" stroke-width="1" fill="none"/>
+    <ellipse cx="30" cy="64" rx="2" ry="1.4" fill="#4a4a54"/>
+    </svg>
+  `,
+
+  // ─── Frost Giant ─────────────────────────────────────────────────────────
+  // Blue-white skin, a beard of icicles, black iron armour rimed with frost,
+  // an axe of ice; your breath freezes as it ducks into view.
+  'Frost Giant': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Frost Giant: a huge blue-white giant with a beard of icicles, black iron armour rimed with frost, pale cruel eyes, an axe of ice">
+    <defs>
+      ${horrorSkinFilter('hfg-skin', { freq: '0.16 0.2', scale: 2.2, seed: 173, k: 1.25 })}
+      <radialGradient id="hfg-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#d8e8f4"/><stop offset="0.6" stop-color="#7a98b0"/><stop offset="1" stop-color="#2a3a4a"/></radialGradient>
+      <linearGradient id="hfg-iron" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0" stop-color="#4a525a"/><stop offset="1" stop-color="#0a0c10"/></linearGradient>
+      <linearGradient id="hfg-ice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/><stop offset="1" stop-color="#6ab0e0" stop-opacity="0.8"/></linearGradient>
+      <radialGradient id="hfg-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#a0e0ff"/><stop offset="1" stop-color="#2080c0" stop-opacity="0"/></radialGradient>
+    </defs>
+    <!-- the ice axe -->
+    <path d="M 132 158 L 140 30" stroke="#2a3038" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 136 34 C 154 24, 160 44, 156 64 C 150 56, 144 52, 134 52 Z M 140 34 C 124 22, 114 34, 112 50 C 120 46, 128 46, 136 50 Z" fill="url(#hfg-ice)" stroke="#a8d8f8" stroke-width="0.6"/>
+    <!-- black iron armour rimed with frost -->
+    <path d="M 10 160 C 12 118, 36 94, 80 92 C 124 94, 148 118, 150 160 Z" fill="url(#hfg-iron)"/>
+    <path d="M 20 124 C 30 104, 52 96, 66 100 L 62 118 C 46 116, 30 120, 20 124 Z M 140 124 C 130 104, 108 96, 94 100 L 98 118 C 114 116, 130 120, 140 124 Z" fill="#3a4048" stroke="#a8c8e0" stroke-width="0.8"/>
+    <g stroke="#d8eaf8" stroke-width="1" opacity="0.7"><path d="M 24 128 l 6 -4 M 32 120 l 4 -6 M 128 128 l -6 -4 M 120 120 l -4 -6 M 60 140 l 8 0 M 92 140 l 8 0"/></g>
+    <!-- the head: blue-white, icicle beard, cold eyes -->
+    <path d="M 54 50 C 50 28, 62 16, 80 16 C 98 16, 110 28, 106 50 C 106 66, 96 80, 80 82 C 64 80, 54 66, 54 50 Z" fill="url(#hfg-face)" filter="url(#hfg-skin)"/>
+    <path d="M 54 32 C 60 14, 100 14, 106 32 C 96 22, 64 22, 54 32 Z" fill="#c8d8e8"/>
+    <path d="M 60 40 L 77 46 M 83 46 L 100 40" stroke="#1a2a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="70" cy="48" rx="4.2" ry="2.6" fill="url(#hfg-eye)"/><ellipse cx="90" cy="48" rx="4.2" ry="2.6" fill="url(#hfg-eye)"/>
+    <path d="M 78 52 L 76 62 L 82 62" stroke="#3a5060" stroke-width="1" fill="none"/>
+    <!-- the beard of icicles -->
+    <g fill="url(#hfg-ice)" stroke="#a8d8f8" stroke-width="0.4">
+      ${Array.from({ length: 11 }, (_, i) => { const x = 60 + i * 4, len = 18 + ((i * 7) % 5) * 6; return `<path d="M ${x} 66 L ${x + 4} 66 L ${x + 2} ${66 + len} Z"/>`; }).join('')}
+    </g>
+    <path d="M 66 72 Q 80 66 94 72" stroke="#1a2a3a" stroke-width="1.8" fill="none"/>
+    <g fill="#e8f4ff" opacity="0.7">${Array.from({ length: 34 }, (_, i) => { const h = (n) => Math.abs(Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1; return `<circle cx="${(6 + h(1) * 148).toFixed(0)}" cy="${(4 + h(2) * 110).toFixed(0)}" r="${(0.5 + h(3) * 1.1).toFixed(1)}"/>`; }).join('')}</g>
+    </svg>
+  `,
+
+  // ─── Rust Monster ────────────────────────────────────────────────────────
+  // A scuttling armoured insect the size of a hound, feathery antennae
+  // quivering at the smell of your iron, rust flaking where it has fed.
+  'Rust Monster': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rust Monster: a hound-sized armoured insect with a plated rust-red shell, long feathery antennae reaching for your iron, rust flaking from a half-eaten sword">
+    <defs>
+      ${horrorSkinFilter('hrm-shell', { freq: '0.2 0.26', scale: 2.4, seed: 174, k: 1.3 })}
+      <linearGradient id="hrm-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b0582a"/><stop offset="0.6" stop-color="#6a2a10"/><stop offset="1" stop-color="#200a04"/></linearGradient>
+      <linearGradient id="hrm-under" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a7050"/><stop offset="1" stop-color="#3a2a18"/></linearGradient>
+    </defs>
+    <ellipse cx="80" cy="150" rx="66" ry="6" fill="#000" opacity="0.6"/>
+    <!-- a half-eaten sword, rusting to flakes -->
+    <path d="M 14 148 L 54 128" stroke="#8a4a20" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 54 128 L 62 124" stroke="#4a3018" stroke-width="7"/>
+    <g fill="#a0501c" opacity="0.8"><circle cx="22" cy="142" r="1.6"/><circle cx="30" cy="140" r="1.2"/><circle cx="18" cy="150" r="1.4"/><circle cx="40" cy="134" r="1"/></g>
+    <!-- legs -->
+    <g stroke="#3a1a08" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M 56 118 L 40 136 L 34 150"/><path d="M 70 122 L 62 140 L 60 152"/><path d="M 104 122 L 112 140 L 114 152"/><path d="M 118 118 L 132 136 L 138 150"/>
+    </g>
+    <!-- the plated body -->
+    <path d="M 40 112 C 36 88, 56 72, 86 72 C 116 72, 136 88, 132 112 C 128 126, 48 126, 40 112 Z" fill="url(#hrm-body)" filter="url(#hrm-shell)"/>
+    <path d="M 56 80 Q 86 70 118 82 M 50 92 Q 86 82 124 94 M 46 104 Q 86 94 128 106" stroke="#2a0e04" stroke-width="1.6" fill="none"/>
+    <path d="M 46 116 C 60 124, 112 124, 126 116 C 112 120, 60 120, 46 116 Z" fill="url(#hrm-under)"/>
+    <!-- the tail, ending in a paddle -->
+    <path d="M 130 104 C 146 100, 154 88, 150 74" stroke="url(#hrm-body)" stroke-width="7" fill="none" stroke-linecap="round" filter="url(#hrm-shell)"/>
+    <path d="M 150 74 C 158 70, 158 62, 150 60 C 144 64, 144 70, 150 74 Z" fill="#6a2a10"/>
+    <!-- the head, low, and the feathery antennae reaching for you -->
+    <path d="M 34 100 C 26 92, 28 80, 40 78 C 50 78, 54 88, 52 98 C 48 104, 40 104, 34 100 Z" fill="url(#hrm-body)" filter="url(#hrm-shell)"/>
+    <g fill="#0a0402"><circle cx="38" cy="86" r="1.8"/><circle cx="42" cy="84" r="1.4"/><circle cx="46" cy="86" r="1.8"/><circle cx="40" cy="89" r="1.2"/><circle cx="45" cy="89" r="1.2"/></g>
+    <g fill="#ffb070" opacity="0.8"><circle cx="37.6" cy="85.6" r="0.5"/><circle cx="45.6" cy="85.6" r="0.5"/></g>
+    <path d="M 38 80 C 30 60, 20 46, 8 40 M 46 80 C 50 58, 46 40, 38 28" stroke="#5a2a10" stroke-width="2" fill="none"/>
+    ${[[8, 40, 30, 60], [38, 28, 46, 54]].map(([x1, y1, x2, y2]) => Array.from({ length: 10 }, (_, i) => { const t = i / 10, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t; return `<path d="M ${x.toFixed(1)} ${y.toFixed(1)} l -5 -2 M ${x.toFixed(1)} ${y.toFixed(1)} l 5 -3" stroke="#a0582a" stroke-width="0.8"/>`; }).join('')).join('')}
+    <path d="M 36 96 C 32 100, 32 106, 38 108 L 40 104 Z M 48 96 C 52 100, 52 106, 46 108 L 44 104 Z" fill="#2a0e04" stroke="#0a0402" stroke-width="0.6"/>
+    <path d="M 40 100 L 44 100 L 42 106 Z" fill="#0a0402"/>
+    </svg>
+  `,
+
+  // ─── Doppelganger ────────────────────────────────────────────────────────
+  // Halfway through becoming you: one side your face and clothes, the other
+  // grey, hairless and long-fingered, the true face showing through.
+  'Doppelganger': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Doppelganger: a figure caught halfway through becoming you, one side your face, the other grey, hairless and blank-eyed with long fingers, your own weapon in its hand">
+    <defs>
+      ${horrorSkinFilter('hdp-skin', { freq: '0.2 0.26', scale: 1.6, seed: 175, k: 1.15 })}
+      <radialGradient id="hdp-you" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#e8c8b0"/><stop offset="1" stop-color="#8a6a58"/></radialGradient>
+      <radialGradient id="hdp-it" cx="60%" cy="35%" r="70%"><stop offset="0" stop-color="#b8bcc0"/><stop offset="1" stop-color="#4a5054"/></radialGradient>
+      <linearGradient id="hdp-cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a4a"/><stop offset="1" stop-color="#0a0a10"/></linearGradient>
+      <clipPath id="hdp-left"><rect x="0" y="0" width="80" height="160"/></clipPath>
+      <clipPath id="hdp-right"><rect x="80" y="0" width="80" height="160"/></clipPath>
+    </defs>
+    <ellipse cx="80" cy="154" rx="40" ry="5" fill="#000" opacity="0.6"/>
+    <!-- your cloak on one side; grey skin on the other -->
+    <path d="M 50 60 C 42 90, 40 120, 38 152 L 122 152 C 120 120, 118 90, 110 60 C 100 52, 60 52, 50 60 Z" fill="url(#hdp-cloak)" clip-path="url(#hdp-left)"/>
+    <path d="M 50 60 C 42 90, 40 120, 38 152 L 122 152 C 120 120, 118 90, 110 60 C 100 52, 60 52, 50 60 Z" fill="url(#hdp-it)" filter="url(#hdp-skin)" clip-path="url(#hdp-right)"/>
+    <path d="M 82 64 C 90 90, 96 120, 100 150 M 94 70 C 100 92, 106 110, 110 130" stroke="#2a2e32" stroke-width="1" fill="none" opacity="0.7"/>
+    <!-- your weapon, in its long grey fingers -->
+    <path d="M 112 80 C 124 90, 130 102, 132 114" stroke="url(#hdp-it)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 130 112 l 6 10 M 132 114 l 2 12 M 134 112 l 8 8" stroke="#8a9094" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M 128 118 L 148 60" stroke="#c8ccd4" stroke-width="3"/>
+    <path d="M 124 120 L 134 116" stroke="#4a3018" stroke-width="4"/>
+    <!-- the face, half yours, half its own -->
+    <g clip-path="url(#hdp-left)">
+      <path d="M 64 34 C 62 18, 70 10, 80 10 C 90 10, 98 18, 96 34 C 96 46, 90 56, 80 58 C 70 56, 64 46, 64 34 Z" fill="url(#hdp-you)" filter="url(#hdp-skin)"/>
+      <path d="M 64 22 C 68 12, 92 12, 96 22 C 90 16, 70 16, 64 22 Z" fill="#3a2a1a"/>
+      <ellipse cx="72" cy="32" rx="4" ry="2.6" fill="#fff"/><circle cx="72" cy="32" r="1.8" fill="#3a5a7a"/>
+      <path d="M 73 48 Q 77 50 80 49" stroke="#7a4a40" stroke-width="1.4" fill="none"/>
+    </g>
+    <g clip-path="url(#hdp-right)">
+      <path d="M 64 34 C 62 18, 70 8, 80 8 C 92 8, 100 18, 98 36 C 98 50, 90 60, 80 62 C 70 56, 64 46, 64 34 Z" fill="url(#hdp-it)" filter="url(#hdp-skin)"/>
+      <ellipse cx="88" cy="32" rx="5" ry="3.4" fill="#e8ecf0"/><circle cx="88" cy="32" r="0.8" fill="#000"/>
+      <path d="M 80 49 Q 88 54 94 46" stroke="#1a1e22" stroke-width="1.4" fill="none"/>
+    </g>
+    <path d="M 80 8 L 80 62" stroke="#000" stroke-width="0.8" opacity="0.6" stroke-dasharray="2 2"/>
+    </svg>
+  `,
+
+  // ─── Purple Worm ─────────────────────────────────────────────────────────
+  // A wall of purple flesh bursting up through the rock, all mouth, ringed
+  // with teeth row behind row, wide enough to swallow a horse whole.
+  'Purple Worm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Purple Worm: a vast purple worm bursting up through shattered rock, all mouth, ringed with rows of teeth, wide enough to swallow a horse">
+    <defs>
+      ${wetSkinFilter('hpw-skin', { freq: '0.08 0.22', seed: 176, shine: 0.4 })}
+      <linearGradient id="hpw-body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a0a30"/><stop offset="0.5" stop-color="#7a2a8a"/><stop offset="1" stop-color="#2a0a30"/></linearGradient>
+      <radialGradient id="hpw-maw" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000"/><stop offset="0.5" stop-color="#3a0010"/><stop offset="0.85" stop-color="#8a2040"/><stop offset="1" stop-color="#c06070"/></radialGradient>
+    </defs>
+    <!-- shattered rock around it -->
+    <g fill="#2a2622" stroke="#0a0806" stroke-width="0.8">
+      <path d="M 0 132 L 22 122 L 30 138 L 12 160 L 0 160 Z"/><path d="M 160 128 L 136 120 L 128 140 L 146 160 L 160 160 Z"/>
+      <path d="M 40 150 L 54 140 L 62 160 L 36 160 Z"/><path d="M 120 148 L 104 140 L 98 160 L 126 160 Z"/>
+    </g>
+    <!-- the body, rising, segmented -->
+    <path d="M 30 160 C 26 110, 32 70, 46 46 L 114 46 C 128 70, 134 110, 130 160 Z" fill="url(#hpw-body)" filter="url(#hpw-skin)"/>
+    <g stroke="#1a0420" stroke-width="2" fill="none" opacity="0.7"><path d="M 34 140 Q 80 150 126 140"/><path d="M 34 118 Q 80 128 126 118"/><path d="M 38 96 Q 80 106 122 96"/><path d="M 42 74 Q 80 84 118 74"/></g>
+    <!-- the mouth, the whole front of it, ring behind ring of teeth -->
+    <ellipse cx="80" cy="44" rx="40" ry="30" fill="url(#hpw-maw)"/>
+    ${[[40, 30, 7], [30, 22, 6], [20, 14, 5]].map(([rx, ry, tl]) => `<g fill="#f0e4d0">${Array.from({ length: 18 }, (_, i) => { const a = (i / 18) * Math.PI * 2, x = 80 + Math.cos(a) * rx, y = 44 + Math.sin(a) * ry, ix = 80 + Math.cos(a) * (rx - tl), iy = 44 + Math.sin(a) * (ry - tl * 0.75); return `<path d="M ${(x + Math.sin(a) * 1.8).toFixed(1)} ${(y - Math.cos(a) * 1.8).toFixed(1)} L ${ix.toFixed(1)} ${iy.toFixed(1)} L ${(x - Math.sin(a) * 1.8).toFixed(1)} ${(y + Math.cos(a) * 1.8).toFixed(1)} Z"/>`; }).join('')}</g>`).join('')}
+    <path d="M 56 70 c 0 6 1 10 0 16 M 104 70 c 1 5 0 9 1 14" stroke="#c8a0c0" stroke-width="1.2" fill="none" opacity="0.5"/>
+    <g fill="#5a4a40">${Array.from({ length: 14 }, (_, i) => `<circle cx="${(30 + (i * 37) % 100).toFixed(0)}" cy="${(6 + (i * 13) % 20).toFixed(0)}" r="${(1 + (i % 3)).toFixed(0)}"/>`).join('')}</g>
+    </svg>
+  `,
+
+  // ─── Iron Golem ──────────────────────────────────────────────────────────
+  // A giant of black iron ducking through the arch, green fire behind its
+  // visor, steam hissing from every joint, rivets and old dents.
+  'Iron Golem': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Iron Golem: a giant of riveted black iron, green fire burning behind its visor, steam hissing from its joints, massive fists">
+    <defs>
+      ${horrorSkinFilter('hig-metal', { freq: '0.12 0.14', scale: 1.8, seed: 177, k: 1.2 })}
+      <linearGradient id="hig-iron" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0" stop-color="#5a5e66"/><stop offset="0.5" stop-color="#2a2c30"/><stop offset="1" stop-color="#08090a"/></linearGradient>
+      <radialGradient id="hig-fire" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e0ffd0"/><stop offset="0.4" stop-color="#40ff60"/><stop offset="1" stop-color="#004010" stop-opacity="0"/></radialGradient>
+      <filter id="hig-gl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <ellipse cx="80" cy="154" rx="56" ry="5" fill="#000" opacity="0.6"/>
+    <!-- legs like pillars -->
+    <path d="M 54 116 L 50 152 L 72 152 L 72 116 Z M 88 116 L 88 152 L 110 152 L 106 116 Z" fill="url(#hig-iron)" filter="url(#hig-metal)"/>
+    <!-- the torso: plates, rivets, the green fire in the chest grille -->
+    <path d="M 40 50 C 36 76, 44 104, 54 120 L 106 120 C 116 104, 124 76, 120 50 C 108 40, 52 40, 40 50 Z" fill="url(#hig-iron)" filter="url(#hig-metal)"/>
+    <path d="M 66 70 L 94 70 L 94 92 L 66 92 Z" fill="#050605"/>
+    <rect x="66" y="70" width="28" height="22" fill="url(#hig-fire)" opacity="0.7" filter="url(#hig-gl)"/>
+    <path d="M 66 76 L 94 76 M 66 82 L 94 82 M 66 88 L 94 88" stroke="#1a1c1e" stroke-width="2"/>
+    <g fill="#8a8e96">${[[46, 56], [114, 56], [50, 100], [110, 100], [60, 50], [100, 50], [80, 106], [62, 112], [98, 112]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6"/>`).join('')}</g>
+    <path d="M 44 66 Q 52 72 48 82" stroke="#0a0a0c" stroke-width="1.4" fill="none"/>
+    <!-- arms and fists -->
+    <path d="M 40 54 C 26 66, 20 86, 22 108 L 36 108 C 36 90, 40 76, 48 66 Z M 120 54 C 134 66, 140 86, 138 108 L 124 108 C 124 90, 120 76, 112 66 Z" fill="url(#hig-iron)" filter="url(#hig-metal)"/>
+    <path d="M 16 106 L 42 106 L 42 126 L 16 126 Z M 118 106 L 144 106 L 144 126 L 118 126 Z" fill="#2a2c30" stroke="#0a0a0c" stroke-width="1"/>
+    <path d="M 16 113 L 42 113 M 16 119 L 42 119 M 118 113 L 144 113 M 118 119 L 144 119" stroke="#0a0a0c" stroke-width="0.8"/>
+    <!-- steam from the joints -->
+    <g fill="#d8dcdc" opacity="0.35">${[[36, 54], [124, 54], [52, 118], [108, 118]].map(([x, y]) => `<circle cx="${x}" cy="${y - 6}" r="5"/><circle cx="${x + 3}" cy="${y - 13}" r="4"/><circle cx="${x - 2}" cy="${y - 19}" r="3"/>`).join('')}</g>
+    <!-- the helm, the visor slit, green fire behind -->
+    <path d="M 60 40 C 58 22, 66 12, 80 12 C 94 12, 102 22, 100 40 L 96 48 L 64 48 Z" fill="url(#hig-iron)" filter="url(#hig-metal)"/>
+    <path d="M 66 28 L 94 28 L 92 34 L 68 34 Z" fill="#050605"/>
+    <path d="M 68 30 L 92 30" stroke="url(#hig-fire)" stroke-width="3.4" filter="url(#hig-gl)"/>
+    <path d="M 80 12 L 80 26" stroke="#1a1c1e" stroke-width="2"/>
+    </svg>
+  `,
+
+  // ─── Beithir ─────────────────────────────────────────────────────────────
+  // The lightning-serpent of the Highlands: a horned blue serpent the length
+  // of a wagon train on a dozen clawed legs, lightning crawling over its coils.
+  'Beithir': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beithir: a huge horned blue serpent on a dozen clawed legs, lightning crawling over its coils and crackling from its open jaws">
+    <defs>
+      ${horrorSkinFilter('hbe-hide', { freq: '0.18 0.22', scale: 2.2, seed: 180, k: 1.25 })}
+      ${scalePattern('hbe-sc', 3, '#040a18', '#8ab8f0')}
+      <linearGradient id="hbe-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6ab0"/><stop offset="0.6" stop-color="#14305a"/><stop offset="1" stop-color="#040a18"/></linearGradient>
+      <radialGradient id="hbe-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#a0e0ff"/><stop offset="1" stop-color="#2060c0" stop-opacity="0"/></radialGradient>
+      <filter id="hbe-gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <ellipse cx="80" cy="152" rx="76" ry="6" fill="#000" opacity="0.6"/>
+    <!-- the long body, snaking back, legs all along it -->
+    <path d="M 150 140 C 120 150, 96 120, 70 128 C 50 134, 40 120, 44 100" stroke="url(#hbe-body)" stroke-width="22" fill="none" stroke-linecap="round" filter="url(#hbe-hide)"/>
+    <path d="M 150 140 C 120 150, 96 120, 70 128 C 50 134, 40 120, 44 100" stroke="url(#hbe-sc)" stroke-width="22" fill="none" opacity="0.5"/>
+    <g stroke="#0a1a30" stroke-width="2.4" stroke-linecap="round" fill="none">
+      ${[[136, 148], [120, 146], [104, 136], [88, 128], [72, 136], [58, 130]].map(([x, y]) => `<path d="M ${x} ${y} l -4 8 l -3 2 M ${x} ${y} l 4 8 l 3 2"/>`).join('')}
+    </g>
+    <!-- the neck rising, head lunging -->
+    <path d="M 44 100 C 46 76, 60 60, 76 50" stroke="url(#hbe-body)" stroke-width="18" fill="none" stroke-linecap="round" filter="url(#hbe-hide)"/>
+    <path d="M 70 54 C 64 38, 76 24, 94 24 C 112 24, 126 34, 128 46 C 128 54, 118 60, 104 62 L 120 58 C 116 70, 96 74, 82 68 C 74 66, 70 60, 70 54 Z" fill="url(#hbe-body)" filter="url(#hbe-hide)"/>
+    <path d="M 82 28 C 78 14, 84 4, 92 0 C 90 10, 92 18, 90 28 Z M 96 26 C 98 12, 108 6, 116 4 C 110 12, 106 20, 102 30 Z" fill="#c8d0e0" stroke="#3a4a6a" stroke-width="0.6"/>
+    <ellipse cx="96" cy="40" rx="4" ry="2.8" fill="url(#hbe-eye)" filter="url(#hbe-gl)"/>
+    <path d="M 90 36 L 102 38" stroke="#000" stroke-width="2"/>
+    <path d="M 104 62 L 128 50 L 120 58 Z" fill="#0a0410"/>
+    <g>${needleTeeth(104, 124, 58.6, 6, 3, 1, '#e8ecf8', 0.3)}</g>
+    <!-- lightning crawling over it and from its jaws -->
+    <g stroke="#e0f4ff" stroke-width="1.4" fill="none" filter="url(#hbe-gl)">
+      <path d="M 124 54 L 136 50 L 132 58 L 146 54 L 140 64 L 158 60"/>
+      <path d="M 56 118 L 64 110 L 62 120 L 74 112"/><path d="M 108 132 L 116 124 L 116 134 L 126 128"/><path d="M 50 92 L 58 86 L 56 96"/>
+    </g>
+    </svg>
+  `,
+
+  // ─── Chimera ─────────────────────────────────────────────────────────────
+  // A lion's body, three heads on three necks (lion, goat and dragon), bat
+  // wings spread; roaring, bleating and hissing all at once.
+  'Chimera': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chimera: a lion-bodied beast with three heads, a roaring lion, a mad-eyed goat and a hissing dragon, bat wings spread, a serpent for a tail">
+    <defs>
+      ${horrorSkinFilter('hch-fur', { freq: '0.4 0.14', scale: 2.2, seed: 181, k: 1.25 })}
+      <linearGradient id="hch-lion" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#c8903a"/><stop offset="0.6" stop-color="#6a4410"/><stop offset="1" stop-color="#201004"/></linearGradient>
+      <linearGradient id="hch-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a1a14"/><stop offset="1" stop-color="#140604"/></linearGradient>
+      <linearGradient id="hch-goat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8070"/><stop offset="1" stop-color="#3a3428"/></linearGradient>
+      <linearGradient id="hch-drag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a2a1a"/><stop offset="1" stop-color="#2a0804"/></linearGradient>
+      <radialGradient id="hch-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff8c0"/><stop offset="0.5" stop-color="#e0a020"/><stop offset="1" stop-color="#600" stop-opacity="0"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="152" rx="66" ry="5" fill="#000" opacity="0.6"/>
+    <path d="M 70 70 C 50 40, 22 30, 2 36 C 12 46, 8 56, 16 62 C 28 60, 34 72, 30 82 Z M 96 70 C 116 40, 144 30, 158 36 C 148 46, 152 56, 144 62 C 132 60, 126 72, 130 82 Z" fill="url(#hch-wing)"/>
+    <!-- lion body, serpent tail -->
+    <path d="M 34 120 C 30 96, 50 80, 80 80 C 110 80, 132 96, 130 120 L 118 126 L 46 126 Z" fill="url(#hch-lion)" filter="url(#hch-fur)"/>
+    <path d="M 40 122 L 36 150 L 50 150 L 52 124 Z M 64 126 L 62 150 L 74 150 L 74 126 Z M 100 126 L 102 150 L 114 150 L 112 124 Z M 118 120 L 128 148 L 140 146 L 126 116 Z" fill="url(#hch-lion)" filter="url(#hch-fur)"/>
+    <path d="M 128 110 C 146 110, 152 128, 146 140 C 156 140, 160 132, 158 124" stroke="#3a5a20" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- three heads -->
+    <!-- the dragon's, left -->
+    <path d="M 52 84 C 40 72, 30 66, 20 66" stroke="url(#hch-drag)" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 26 58 C 14 56, 4 62, 4 70 L 18 72 L 6 76 C 12 82, 24 80, 30 74 C 34 68, 32 60, 26 58 Z" fill="url(#hch-drag)" filter="url(#hch-fur)"/>
+    <circle cx="22" cy="64" r="1.8" fill="url(#hch-eye)"/>
+    <path d="M 4 72 C -2 72, -2 74, 0 76" stroke="#ff7020" stroke-width="2" fill="none"/>
+    <!-- the lion's, centre, roaring -->
+    <path d="M 60 66 C 50 50, 58 30, 80 28 C 102 30, 110 50, 100 66 C 100 80, 92 90, 80 90 C 68 90, 60 80, 60 66 Z" fill="#6a3a10" filter="url(#hch-fur)"/>
+    <path d="M 66 54 C 64 42, 72 36, 80 36 C 88 36, 96 42, 94 54 C 94 66, 88 74, 80 76 C 72 74, 66 66, 66 54 Z" fill="url(#hch-lion)" filter="url(#hch-fur)"/>
+    <path d="M 68 50 Q 73 46 78 52 M 82 52 Q 87 46 92 50" stroke="#1a0c04" stroke-width="2" fill="none"/>
+    <ellipse cx="73" cy="53" rx="2.6" ry="1.8" fill="url(#hch-eye)"/><ellipse cx="87" cy="53" rx="2.6" ry="1.8" fill="url(#hch-eye)"/>
+    <path d="M 72 64 Q 80 76 88 64 Q 80 68 72 64 Z" fill="#2a0404"/>
+    <path d="M 73 64 L 74 69 L 76 64 M 84 64 L 86 69 L 87 64" fill="#f0e8d0"/>
+    <!-- the goat's, right, mad-eyed -->
+    <path d="M 108 82 C 118 70, 126 60, 134 56" stroke="url(#hch-goat)" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 130 50 C 140 46, 152 50, 154 60 C 154 68, 146 72, 138 70 C 132 68, 128 60, 130 50 Z" fill="url(#hch-goat)" filter="url(#hch-fur)"/>
+    <path d="M 134 50 C 128 38, 134 30, 142 32 C 138 38, 138 44, 140 48 M 144 50 C 146 38, 154 34, 158 40 C 152 42, 150 46, 148 50" stroke="#2a241c" stroke-width="2.4" fill="none"/>
+    <ellipse cx="146" cy="56" rx="2.6" ry="2" fill="#e8d870"/><path d="M 144.4 56 L 147.6 56" stroke="#000" stroke-width="1.2"/>
+    <path d="M 146 70 c 0 5 1 8 0 12" stroke="#8a8070" stroke-width="2" fill="none"/>
+    </svg>
+  `,
+
+  // ─── Marilith ────────────────────────────────────────────────────────────
+  // A demon general: a woman's torso rising from a great serpent's tail,
+  // six arms, a sword in every one, all of them already moving.
+  'Marilith': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Marilith: a demon with a woman's torso rising from a great green serpent's coils, six arms with a sword in every hand, cold golden eyes">
+    <defs>
+      ${horrorSkinFilter('hma-skin', { freq: '0.16 0.2', scale: 1.8, seed: 182, k: 1.2 })}
+      ${scalePattern('hma-sc', 3, '#041006', '#8ac080')}
+      <linearGradient id="hma-tail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6a3a"/><stop offset="1" stop-color="#0a1a0a"/></linearGradient>
+      <radialGradient id="hma-body" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#7aa070"/><stop offset="0.6" stop-color="#3a5a34"/><stop offset="1" stop-color="#142014"/></radialGradient>
+      <linearGradient id="hma-steel" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#5a5e66"/><stop offset="1" stop-color="#e8ecf4"/></linearGradient>
+      <radialGradient id="hma-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fffbe0"/><stop offset="0.5" stop-color="#e0b020"/><stop offset="1" stop-color="#604000" stop-opacity="0"/></radialGradient>
+    </defs>
+    <!-- the coils -->
+    <path d="M 20 150 C 30 124, 70 120, 80 132 C 92 146, 130 146, 146 124 C 154 112, 146 100, 132 104" stroke="url(#hma-tail)" stroke-width="20" fill="none" stroke-linecap="round" filter="url(#hma-skin)"/>
+    <path d="M 20 150 C 30 124, 70 120, 80 132 C 92 146, 130 146, 146 124" stroke="url(#hma-sc)" stroke-width="20" fill="none" opacity="0.5"/>
+    <path d="M 66 118 C 62 104, 66 92, 72 84 L 88 84 C 94 92, 98 104, 94 118 C 88 128, 72 128, 66 118 Z" fill="url(#hma-tail)" filter="url(#hma-skin)"/>
+    <!-- the torso -->
+    <path d="M 66 86 C 62 70, 64 56, 70 48 L 90 48 C 96 56, 98 70, 94 86 Z" fill="url(#hma-body)" filter="url(#hma-skin)"/>
+    <path d="M 70 62 C 74 66, 78 66, 80 62 C 82 66, 86 66, 90 62" stroke="#142014" stroke-width="1" fill="none"/>
+    <!-- six arms, six swords -->
+    ${[[-1, 52, 20, 30, -0.5], [-1, 62, 14, 60, 0.2], [-1, 74, 22, 92, 0.8], [1, 52, 140, 30, 0.5], [1, 62, 146, 60, -0.2], [1, 74, 138, 92, -0.8]].map(([s, y, hx, hy, tilt]) => {
+      const sx = s < 0 ? 68 : 92;
+      const bx = hx + Math.cos(-Math.PI / 2 + tilt) * 34 * (s < 0 ? -0.6 : 0.6), by = hy + Math.sin(-Math.PI / 2 + tilt) * 34;
+      return `<path d="M ${sx} ${y} Q ${(sx + hx) / 2} ${y - 6}, ${hx} ${hy}" stroke="url(#hma-body)" stroke-width="4.4" fill="none" stroke-linecap="round"/>
+        <path d="M ${hx} ${hy} L ${bx.toFixed(1)} ${by.toFixed(1)}" stroke="url(#hma-steel)" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M ${hx - 4} ${hy + 2} L ${hx + 4} ${hy - 2}" stroke="#8a6a20" stroke-width="2.4"/>`;
+    }).join('')}
+    <!-- the head: crowned, cold golden eyes, serpent hair -->
+    <path d="M 70 32 C 68 18, 74 10, 80 10 C 86 10, 92 18, 90 32 C 90 42, 86 48, 80 50 C 74 48, 70 42, 70 32 Z" fill="url(#hma-body)" filter="url(#hma-skin)"/>
+    <path d="M 70 20 C 62 10, 66 2, 72 4 M 76 12 C 74 2, 80 -2, 84 2 M 88 16 C 94 8, 100 10, 98 18" stroke="#2a4a24" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M 70 14 L 74 6 L 78 12 L 80 4 L 82 12 L 86 6 L 90 14" fill="#c8a040" stroke="#5a4010" stroke-width="0.6"/>
+    <ellipse cx="75" cy="30" rx="2.8" ry="1.8" fill="url(#hma-eye)"/><ellipse cx="85" cy="30" rx="2.8" ry="1.8" fill="url(#hma-eye)"/>
+    <path d="M 75 29 l 0 2 M 85 29 l 0 2" stroke="#000" stroke-width="1"/>
+    <path d="M 76 41 Q 80 43 84 41" stroke="#0a1a08" stroke-width="1.2" fill="none"/>
+    </svg>
+  `,
+
+  // ─── Erinyes ─────────────────────────────────────────────────────────────
+  // A Fury of the Hells: black-feathered wings, a beautiful terrible face
+  // weeping blood, a burning longbow drawn and aimed at you.
+  'Erinyes': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Erinyes: a Fury of the Hells with great black-feathered wings, a beautiful terrible face weeping blood, a burning longbow drawn and aimed at you">
+    <defs>
+      ${horrorSkinFilter('hfu-skin', { freq: '0.2 0.26', scale: 1.4, seed: 183, k: 1.1 })}
+      <radialGradient id="hfu-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#e8d4cc"/><stop offset="0.7" stop-color="#9a7a74"/><stop offset="1" stop-color="#3a2a28"/></radialGradient>
+      <linearGradient id="hfu-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1418"/><stop offset="1" stop-color="#040304"/></linearGradient>
+      <linearGradient id="hfu-armor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1a1e"/><stop offset="1" stop-color="#0a0406"/></linearGradient>
+      <filter id="hfu-gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <!-- black-feathered wings -->
+    ${[-1, 1].map(s => `<g transform="${s > 0 ? 'translate(160 0) scale(-1 1)' : ''}">${Array.from({ length: 7 }, (_, i) => `<path d="M 66 60 Q ${46 - i * 4} ${30 + i * 6}, ${8 + i * 3} ${18 + i * 16} Q ${40 - i * 2} ${44 + i * 6}, 68 ${70 + i * 2} Z" fill="url(#hfu-wing)" stroke="#2a2228" stroke-width="0.5"/>`).join('')}</g>`).join('')}
+    <!-- the body, in dark scale armour -->
+    <path d="M 62 60 C 58 86, 60 116, 66 156 L 94 156 C 100 116, 102 86, 98 60 C 90 52, 70 52, 62 60 Z" fill="url(#hfu-armor)" filter="url(#hfu-skin)"/>
+    <g stroke="#5a2a30" stroke-width="0.8" fill="none" opacity="0.8">${Array.from({ length: 8 }, (_, i) => `<path d="M ${64 + (i % 2) * 2} ${70 + i * 10} Q 80 ${74 + i * 10} ${96 - (i % 2) * 2} ${70 + i * 10}"/>`).join('')}</g>
+    <!-- the burning longbow, drawn at you -->
+    <path d="M 30 50 C 46 70, 46 110, 30 130" stroke="#3a1a10" stroke-width="3.4" fill="none"/>
+    <path d="M 30 50 C 46 70, 46 110, 30 130" stroke="#ff6a20" stroke-width="1.4" fill="none" filter="url(#hfu-gl)" opacity="0.9"/>
+    <path d="M 30 50 L 60 90 L 30 130" stroke="#d8c8a0" stroke-width="0.8" fill="none"/>
+    <path d="M 60 90 L 18 90" stroke="#2a1a10" stroke-width="2"/>
+    <path d="M 18 90 L 24 86 L 24 94 Z" fill="#ff8030" filter="url(#hfu-gl)"/>
+    <path d="M 60 90 C 66 86, 70 80, 70 72" stroke="url(#hfu-face)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 40 92 C 34 92, 34 88, 40 88" stroke="url(#hfu-face)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- the face: beautiful, terrible, weeping blood -->
+    <path d="M 70 38 C 68 24, 74 16, 80 16 C 86 16, 92 24, 90 38 C 90 48, 86 56, 80 58 C 74 56, 70 48, 70 38 Z" fill="url(#hfu-face)" filter="url(#hfu-skin)"/>
+    <path d="M 68 30 C 64 18, 72 8, 82 8 C 92 8, 98 18, 94 30 C 92 22, 70 22, 68 30 Z" fill="#0a0606"/>
+    <path d="M 68 30 C 62 44, 62 58, 66 70 M 94 30 C 98 44, 98 58, 94 70" stroke="#0a0606" stroke-width="3" fill="none"/>
+    <path d="M 72 34 L 78 36 M 82 36 L 88 34" stroke="#2a1414" stroke-width="1.6"/>
+    <ellipse cx="75" cy="38" rx="2.4" ry="1.6" fill="#ffb060" filter="url(#hfu-gl)"/><ellipse cx="85" cy="38" rx="2.4" ry="1.6" fill="#ffb060" filter="url(#hfu-gl)"/>
+    <path d="M 75 40 c 0 4 1 8 0 12 M 85 40 c 0 5 -1 8 0 11" stroke="#8a0a14" stroke-width="1.2" fill="none"/>
+    <path d="M 76 49 Q 80 51 84 49" stroke="#5a1a1e" stroke-width="1.4" fill="none"/>
+    </svg>
+  `,
+
+  // ─── Giant ───────────────────────────────────────────────────────────────
+  // A hill giant ducking under the arch: lumpen, filthy, a club of a whole
+  // tree, small mean eyes in a vast slack face, a sack that moves.
+  'Giant': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Giant: a lumpen, filthy hill giant stooping under the arch, small mean eyes in a vast slack face, a club made of a whole tree, a sack over his shoulder that moves">
+    <defs>
+      ${horrorSkinFilter('hgi-skin', { freq: '0.12 0.16', scale: 2.4, seed: 184, k: 1.3 })}
+      <radialGradient id="hgi-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#c89a78"/><stop offset="0.6" stop-color="#8a5a40"/><stop offset="1" stop-color="#3a2014"/></radialGradient>
+      <linearGradient id="hgi-hide" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a5a3a"/><stop offset="1" stop-color="#1a140a"/></linearGradient>
+      <linearGradient id="hgi-wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2a14"/><stop offset="0.5" stop-color="#6a5030"/><stop offset="1" stop-color="#2a1a0a"/></linearGradient>
+    </defs>
+    <!-- the arch he stoops under -->
+    <path d="M 0 0 L 160 0 L 160 14 C 120 6, 40 6, 0 14 Z" fill="#2a2622" stroke="#0a0806" stroke-width="1"/>
+    <!-- the club, a whole young tree -->
+    <path d="M 120 160 L 150 40" stroke="url(#hgi-wood)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 146 46 C 150 34, 158 30, 160 22 M 148 56 C 156 52, 160 46, 160 40" stroke="#3a2a14" stroke-width="3" fill="none"/>
+    <!-- the body: vast, slumped, in stinking hides -->
+    <path d="M 6 160 C 8 112, 34 84, 80 82 C 126 84, 150 112, 152 160 Z" fill="url(#hgi-face)" filter="url(#hgi-skin)"/>
+    <path d="M 20 160 C 26 128, 48 112, 80 112 C 112 112, 134 128, 140 160 Z" fill="url(#hgi-hide)" filter="url(#hgi-skin)"/>
+    <path d="M 40 128 L 46 160 M 80 112 L 80 160 M 120 128 L 114 160" stroke="#0a0804" stroke-width="1.4" opacity="0.7"/>
+    <!-- the sack over his shoulder; something in it moves -->
+    <path d="M 14 96 C 0 100, -2 128, 14 136 C 30 140, 40 124, 36 106 C 32 96, 22 92, 14 96 Z" fill="#6a5a3a" filter="url(#hgi-skin)"/>
+    <path d="M 20 112 C 22 108, 28 108, 28 114" stroke="#2a2014" stroke-width="1.6" fill="none"/>
+    <path d="M 18 132 l -4 6 M 24 134 l -2 7" stroke="#c8a088" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 30 98 C 40 92, 48 90, 54 92" stroke="#3a2a14" stroke-width="3" fill="none"/>
+    <!-- the head: vast and slack, tiny mean eyes -->
+    <path d="M 44 54 C 40 26, 58 14, 80 14 C 102 14, 120 26, 116 54 C 116 76, 102 92, 80 94 C 58 92, 44 76, 44 54 Z" fill="url(#hgi-face)" filter="url(#hgi-skin)"/>
+    <path d="M 50 30 C 60 18, 100 18, 110 30 C 100 26, 60 26, 50 30 Z" fill="#3a2a1a"/>
+    <path d="M 58 46 L 74 50 M 86 50 L 102 46" stroke="#2a140a" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="68" cy="54" r="2" fill="#000"/><circle cx="92" cy="54" r="2" fill="#000"/>
+    <circle cx="67.4" cy="53.4" r="0.6" fill="#ffe0a0"/><circle cx="91.4" cy="53.4" r="0.6" fill="#ffe0a0"/>
+    <path d="M 76 56 C 72 66, 74 70, 80 70 C 86 70, 88 66, 84 56" fill="#a06a50" stroke="#3a2014" stroke-width="0.8"/>
+    <path d="M 62 80 Q 80 86 98 80 Q 80 90 62 80 Z" fill="#1a0804"/>
+    <path d="M 68 82 l 2 3 M 78 84 l 1 3 M 88 83 l 1 3" stroke="#d8c8a0" stroke-width="1.6"/>
+    <path d="M 64 84 c -1 5 0 8 -1 12" stroke="#c8d0c0" stroke-width="1" fill="none" opacity="0.6"/>
+    </svg>
+  `,
+
+  // ─── Wizard ──────────────────────────────────────────────────────────────
+  // A gaunt old wizard stepping from the shadows: a silver beard to the
+  // floor, hollow eyes lit from inside, a staff topped with a skull, and
+  // green fire already gathering in his free hand.
+  'Wizard': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wizard: a gaunt old wizard in a tattered robe, a silver beard reaching nearly to the floor, hollow eyes lit from inside, a skull-topped staff, green fire gathering in his hand">
+    <defs>
+      ${horrorSkinFilter('hwz-cloth', { freq: '0.05 0.36', scale: 1.6, seed: 185, k: 1.1 })}
+      <linearGradient id="hwz-robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2440"/><stop offset="1" stop-color="#08060e"/></linearGradient>
+      <radialGradient id="hwz-face" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#d8c4b4"/><stop offset="0.7" stop-color="#8a7464"/><stop offset="1" stop-color="#3a2e26"/></radialGradient>
+      <linearGradient id="hwz-beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8ecf0"/><stop offset="1" stop-color="#8a9098"/></linearGradient>
+      <radialGradient id="hwz-fire" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8ffd8"/><stop offset="0.4" stop-color="#50ff70"/><stop offset="1" stop-color="#004010" stop-opacity="0"/></radialGradient>
+    </defs>
+    <ellipse cx="80" cy="154" rx="40" ry="5" fill="#000" opacity="0.6"/>
+    <!-- the staff, a skull at its head -->
+    <path d="M 120 156 L 126 30" stroke="#2a1e14" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M 118 26 C 118 16, 134 16, 134 26 L 132 34 L 120 34 Z" fill="#d8ccaa"/>
+    <circle cx="123" cy="26" r="2" fill="#0a0806"/><circle cx="129" cy="26" r="2" fill="#0a0806"/>
+    <path d="M 122 33 l 1 2 l 1 -2 l 1 2 l 1 -2 l 1 2 l 1 -2 l 1 2" stroke="#0a0806" stroke-width="0.6" fill="none"/>
+    <!-- the robe, tattered at the hem -->
+    <path d="M 54 56 C 46 90, 42 124, 40 152 L 46 148 L 52 154 L 60 148 L 68 154 L 76 148 L 84 154 L 92 148 L 100 154 L 108 148 L 116 152 C 116 124, 112 90, 106 56 C 96 48, 64 48, 54 56 Z" fill="url(#hwz-robe)" filter="url(#hwz-cloth)"/>
+    <!-- the beard, nearly to the floor -->
+    <path d="M 68 52 C 64 80, 70 110, 76 146 L 84 146 C 90 110, 96 80, 92 52 Z" fill="url(#hwz-beard)" filter="url(#hwz-cloth)"/>
+    <path d="M 74 60 C 72 90, 76 118, 78 140 M 80 58 L 80 144 M 86 60 C 88 90, 84 118, 82 140" stroke="#9aa0a8" stroke-width="0.8" fill="none"/>
+    <!-- the free hand, green fire gathering in it -->
+    <path d="M 56 62 C 44 70, 36 80, 32 90" stroke="url(#hwz-robe)" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 32 90 l -4 6 M 32 90 l -1 8 M 32 90 l 3 7" stroke="#b8a494" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="28" cy="84" r="12" fill="url(#hwz-fire)"/>
+    <path d="M 24 84 C 26 78, 30 76, 32 80 C 34 76, 38 80, 34 86" stroke="#d0ffd0" stroke-width="0.8" fill="none" opacity="0.8"/>
+    <!-- the head: gaunt, the hood, hollow eyes lit from within -->
+    <path d="M 56 50 C 52 24, 64 6, 80 4 C 96 6, 108 24, 104 50 C 96 56, 64 56, 56 50 Z" fill="url(#hwz-robe)" filter="url(#hwz-cloth)"/>
+    <path d="M 68 36 C 66 22, 72 16, 80 16 C 88 16, 94 22, 92 36 C 92 46, 88 54, 80 56 C 72 54, 68 46, 68 36 Z" fill="url(#hwz-face)" filter="url(#hwz-cloth)"/>
+    <ellipse cx="74" cy="34" rx="3.4" ry="2.6" fill="#0a0806"/><ellipse cx="86" cy="34" rx="3.4" ry="2.6" fill="#0a0806"/>
+    <circle cx="74" cy="34" r="1.2" fill="#80ff90"/><circle cx="86" cy="34" r="1.2" fill="#80ff90"/>
+    <path d="M 70 30 L 77 32 M 83 32 L 90 30" stroke="#d8dce0" stroke-width="1.6"/>
+    <path d="M 80 36 L 78 44 L 82 44" stroke="#5a4a3e" stroke-width="0.8" fill="none"/>
+    </svg>
+  `,
+
+  // ─── Mongolian Death Worm ────────────────────────────────────────────────
+  // The olgoi-khorkhoi: a blood-red worm as thick as a horse heaving out of
+  // the stone, blotched and spined, with no face at all; the air crackles.
+  'Mongolian Death Worm': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mongolian Death Worm: a blood-red, blotched worm as thick as a horse heaving up out of cracked stone, spined, with no face at all, acid dripping, the air crackling">
+    <defs>
+      ${wetSkinFilter('hmd-skin', { freq: '0.1 0.18', seed: 186, shine: 0.4 })}
+      <linearGradient id="hmd-body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#400406"/><stop offset="0.5" stop-color="#b01a1a"/><stop offset="1" stop-color="#400406"/></linearGradient>
+      <radialGradient id="hmd-hole" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#3a0404"/></radialGradient>
+      <filter id="hmd-gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <!-- the cracked stone it bursts from -->
+    <path d="M 0 136 L 30 128 L 50 140 L 80 132 L 110 140 L 130 128 L 160 136 L 160 160 L 0 160 Z" fill="#3a3028"/>
+    <path d="M 30 128 L 44 150 M 130 128 L 118 152 M 80 132 L 82 160" stroke="#120e0a" stroke-width="1.4"/>
+    <!-- the worm: no eyes, no face, just the end of it -->
+    <path d="M 52 140 C 48 100, 56 60, 70 30 C 74 20, 90 20, 94 30 C 106 60, 112 100, 108 140 Z" fill="url(#hmd-body)" filter="url(#hmd-skin)"/>
+    <g stroke="#2a0204" stroke-width="1.6" fill="none" opacity="0.7">${[44, 60, 76, 92, 108, 124].map(y => `<path d="M ${56 + (140 - y) * 0.05} ${y} Q 80 ${y + 6} ${104 - (140 - y) * 0.05} ${y}"/>`).join('')}</g>
+    <g fill="#5a1a10" opacity="0.8"><ellipse cx="66" cy="70" rx="5" ry="3"/><ellipse cx="94" cy="96" rx="6" ry="3.4"/><ellipse cx="70" cy="114" rx="4" ry="2.4"/><ellipse cx="90" cy="54" rx="3.4" ry="2"/></g>
+    <!-- spines -->
+    <g fill="#e8d8b0">${[[64, 38, -1], [96, 38, 1], [58, 56, -1], [102, 58, 1], [56, 80, -1], [106, 82, 1]].map(([x, y, s]) => `<path d="M ${x} ${y} l ${s * 10} -6 l ${-s * 4} 8 Z"/>`).join('')}</g>
+    <!-- the blind end: a puckered opening dripping acid -->
+    <ellipse cx="82" cy="28" rx="8" ry="5" fill="url(#hmd-hole)"/>
+    <path d="M 74 28 l -3 -1 M 90 28 l 3 -1 M 82 23 l 0 -3 M 77 25 l -2 -2 M 87 25 l 2 -2" stroke="#2a0204" stroke-width="1.2"/>
+    <path d="M 78 32 c 0 5 1 9 0 14 M 86 32 c 1 4 0 8 1 12" stroke="#d8e040" stroke-width="1.4" fill="none" filter="url(#hmd-gl)"/>
+    <!-- the air crackling around it -->
+    <g stroke="#ffe8a0" stroke-width="1" fill="none" filter="url(#hmd-gl)" opacity="0.85">
+      <path d="M 42 40 L 48 46 L 44 50 L 52 56"/><path d="M 118 46 L 112 52 L 118 56 L 110 62"/><path d="M 60 12 L 66 18 L 62 22"/>
+    </g>
+    </svg>
+  `,
+
+  // ─── Cerebrovore ─────────────────────────────────────────────────────────
+  // A hunched robed figure with a swollen bare skull, the brain beneath
+  // pulsing and veined, a round mouth of tiny teeth; its thoughts press on yours.
+  'Cerebrovore': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cerebrovore: a hunched robed figure with a swollen bare skull, the brain beneath pulsing and veined, milky eyes, a round mouth of tiny teeth, long thin fingers reaching">
+    <defs>
+      ${wetSkinFilter('hcv-skin', { freq: '0.14 0.2', seed: 187, shine: 0.45 })}
+      <radialGradient id="hcv-head" cx="45%" cy="30%" r="70%"><stop offset="0" stop-color="#e8c8c8"/><stop offset="0.5" stop-color="#b07a84"/><stop offset="1" stop-color="#4a2a34"/></radialGradient>
+      <linearGradient id="hcv-robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a30"/><stop offset="1" stop-color="#08040c"/></linearGradient>
+      <radialGradient id="hcv-mouth" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000"/><stop offset="0.7" stop-color="#3a0a14"/><stop offset="1" stop-color="#8a3a4a"/></radialGradient>
+      <radialGradient id="hcv-aura" cx="50%" cy="30%" r="50%"><stop offset="0" stop-color="#c080ff" stop-opacity="0.3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    </defs>
+    <circle cx="80" cy="44" r="60" fill="url(#hcv-aura)"/>
+    <ellipse cx="80" cy="154" rx="40" ry="5" fill="#000" opacity="0.6"/>
+    <!-- the robe, hunched -->
+    <path d="M 50 74 C 40 100, 38 128, 36 154 L 124 154 C 122 128, 120 100, 110 74 C 98 64, 62 64, 50 74 Z" fill="url(#hcv-robe)"/>
+    <path d="M 56 84 C 42 92, 32 104, 26 118" stroke="url(#hcv-robe)" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 104 84 C 118 92, 128 104, 134 118" stroke="url(#hcv-robe)" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 26 118 l -6 10 M 26 118 l -2 13 M 26 118 l 2 12 M 134 118 l 6 10 M 134 118 l 2 13 M 134 118 l -2 12" stroke="#c8a0a8" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- the swollen skull, the brain showing through, veined -->
+    <path d="M 48 50 C 42 22, 60 4, 80 4 C 100 4, 118 22, 112 50 C 110 60, 104 66, 96 70 L 64 70 C 56 66, 50 60, 48 50 Z" fill="url(#hcv-head)" filter="url(#hcv-skin)"/>
+    <g stroke="#7a3a4a" stroke-width="1.2" fill="none" opacity="0.8">
+      <path d="M 58 20 C 64 26, 60 32, 66 36 C 72 40, 68 46, 74 48"/><path d="M 80 8 C 82 16, 78 22, 82 28 C 86 34, 82 40, 86 44"/>
+      <path d="M 102 20 C 96 26, 100 32, 94 36 C 88 40, 92 46, 86 48"/><path d="M 52 40 C 58 38, 62 42, 66 40"/><path d="M 108 40 C 102 38, 98 42, 94 40"/>
+    </g>
+    <g stroke="#3a1a8a" stroke-width="0.8" fill="none" opacity="0.6"><path d="M 64 14 C 70 22, 66 28, 70 34"/><path d="M 96 14 C 90 22, 94 28, 90 34"/></g>
+    <!-- milky eyes, the round mouth of tiny teeth -->
+    <ellipse cx="70" cy="52" rx="4.6" ry="3.2" fill="#e8e4f0"/><ellipse cx="90" cy="52" rx="4.6" ry="3.2" fill="#e8e4f0"/>
+    <circle cx="70" cy="52" r="1.6" fill="#8a8aa0" opacity="0.7"/><circle cx="90" cy="52" r="1.6" fill="#8a8aa0" opacity="0.7"/>
+    <circle cx="80" cy="64" r="6" fill="url(#hcv-mouth)"/>
+    <g fill="#f0e8e0">${Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2, x = 80 + Math.cos(a) * 5.2, y = 64 + Math.sin(a) * 5.2, ix = 80 + Math.cos(a) * 3, iy = 64 + Math.sin(a) * 3; return `<path d="M ${(x + Math.sin(a) * 0.9).toFixed(1)} ${(y - Math.cos(a) * 0.9).toFixed(1)} L ${ix.toFixed(1)} ${iy.toFixed(1)} L ${(x - Math.sin(a) * 0.9).toFixed(1)} ${(y + Math.cos(a) * 0.9).toFixed(1)} Z"/>`; }).join('')}</g>
+    </svg>
+  `,
+
 };
