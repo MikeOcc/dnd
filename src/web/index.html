@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Seven Levels — Play My D&amp;D Adventure">
   <meta name="twitter:image" content="https://playsevenlevels.com/og-image.jpg">
-  <link rel="stylesheet" href="styles.css?v=69">
+  <link rel="stylesheet" href="styles.css?v=70">
 </head>
 <body>
   <div id="terminal">
@@ -95,6 +95,14 @@
         <button class="ctrl-btn arrow-btn" id="btn-backward"  data-tip="Step back one square, still facing the same way. (Down arrow)" aria-label="Step back one square, still facing the same way. (Down arrow)">↓</button>
         <button class="ctrl-btn arrow-btn" id="btn-turn-right" data-tip="Turn to face right, without moving. (Right arrow)" aria-label="Turn to face right, without moving. (Right arrow)">▷</button>
       </div>
+      <!-- On a phone: a small bar of the essentials; everything else slides up in a sheet. -->
+      <div class="quick-bar">
+        <button class="ctrl-btn" id="btn-q-map" aria-label="Map">Map</button>
+        <button class="ctrl-btn" id="btn-q-potion" aria-label="Drink a potion">Potion</button>
+        <button class="ctrl-btn" id="btn-q-actions" aria-expanded="false" aria-controls="action-sheet" aria-label="All actions">☰ Actions</button>
+      </div>
+      <div id="action-sheet" role="dialog" aria-label="Actions">
+      <div class="sheet-head"><span>ACTIONS</span><button class="ctrl-btn" id="btn-sheet-close" aria-label="Close">✕</button></div>
       <div class="command-bar">
         <span class="cmd-group">
           <button class="ctrl-btn" id="btn-climb-up" data-tip="Climb up to the level above. Works only when you stand on a ladder going up. (U)" aria-label="Climb up to the level above. Works only when you stand on a ladder going up. (U)">Stairs Up <span class="key">[U]</span></button>
@@ -139,7 +147,10 @@
           <button class="ctrl-btn" id="btn-quit" data-tip="Back to the main menu. (Q)" aria-label="Back to the main menu. (Q)">Quit <span class="key">[Q]</span></button>
         </div>
       </div>
+      </div>
     </div>
+
+    <div id="sheet-backdrop" class="hidden"></div>
 
     <!-- How to play: shown once on a first visit, and any time with H -->
     <div id="help-panel" class="hidden" role="dialog" aria-labelledby="help-title">
@@ -178,6 +189,6 @@
   <script src="view3d.js?v=9"></script>
   <script src="view-sprites.js?v=11"></script>
   <script src="sfx.js?v=8"></script>
-  <script src="app.js?v=102"></script>
+  <script src="app.js?v=103"></script>
 </body>
 </html>

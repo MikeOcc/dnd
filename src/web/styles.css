@@ -961,3 +961,53 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 
 /* The inventory and status screens: the whole panel, read from the top. */
 #message-area.sheet-mode { min-height: 50vh; max-height: 72vh; overflow: auto; }
+
+
+/* ─── Phones: the essentials in a bar, the rest in a sheet that slides up ───
+   On wider screens the sheet is just the command bar and More, in place. */
+.quick-bar, .sheet-head, #sheet-backdrop { display: none; }
+#action-sheet { display: contents; }
+
+@media (max-width: 700px) {
+  /* The height Safari actually shows (100vh runs under its toolbars). */
+  #terminal { height: 100vh; height: 100dvh; padding: 4px 6px; gap: 4px; overflow-x: hidden; }
+  #game-title { font-size: 12px; }
+  /* The dungeon view shrinks to the phone's width (79 columns of text). */
+  #dungeon-view { font-size: min(13px, calc((100vw - 26px) / 47.6)); padding: 3px 4px; }
+  #message-area { flex: 1 1 auto; min-height: 48px; max-height: none; }
+  #message-area.map-mode { flex: 1 1 auto; min-height: 0; max-height: none; }
+  .choice-btn { font-size: 12px; padding: 6px 8px; }
+
+  /* The bottom bar: arrows, and Map / Potion / Actions. */
+  #movement-controls { flex-wrap: nowrap; gap: 8px; padding: 6px; justify-content: space-between; align-items: center; }
+  .dpad { grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(2, 40px); }
+  .quick-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; min-width: 0; }
+  .quick-bar .ctrl-btn { height: 40px; font-size: 14px; }
+  #btn-q-actions { grid-column: span 2; }
+  #movement-controls.map-walk { justify-content: center; }
+  #movement-controls.map-walk .quick-bar { display: none; }
+  #btn-more { display: none; }
+  #help-line { display: none; }   /* (keyboard hints: no use on a phone) */
+
+  /* The sheet: everything else, big enough for a finger. */
+  #action-sheet {
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    max-height: 78dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: var(--panel); border-top: 1px solid var(--terminal-green);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
+    padding: 8px 12px calc(14px + env(safe-area-inset-bottom));
+    transform: translateY(105%); visibility: hidden;
+    transition: transform 240ms ease, visibility 0s linear 240ms;
+  }
+  #action-sheet.open { transform: none; visibility: visible; transition: transform 240ms ease; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: var(--terminal-green-bright); letter-spacing: 0.1em; }
+  #action-sheet .command-bar, #action-sheet .cmd-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  #action-sheet .command-bar { margin-bottom: 4px; }
+  #action-sheet .bar-sep, #action-sheet .key { display: none; }
+  #action-sheet .ctrl-btn { height: 42px; padding: 4px 12px; font-size: 14px; }
+  #action-sheet #more-actions, #action-sheet #more-actions.hidden { display: flex; }
+  #sheet-backdrop:not(.hidden) { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 59; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  #action-sheet, #action-sheet.open { transition: none; }
+}

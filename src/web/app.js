@@ -191,6 +191,7 @@ function applyState(state) {
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view || ['map', 'inventory', 'status'].includes(phase));
   movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase) && !(phase === 'map' && arrowsShown));
   movementControls.classList.toggle('map-walk', phase === 'map');
+  if (sheetOpen && !['playing', 'status', 'inventory'].includes(phase)) setSheet(false);
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
   if (state.character) {
@@ -523,6 +524,26 @@ function updateViewButton() {
 // ─── More, Help, the strip under the view ────────────────────────────────────
 
 let moreOpen = false;
+// ─── Phones: the action sheet (see styles.css). Map, Potion and Actions sit in a
+// small bar; Actions slides up a sheet with every other command. Picking one,
+// tapping outside, ✕ or Esc closes it.
+let sheetOpen = false;
+function setSheet(open) {
+  sheetOpen = open;
+  document.getElementById('action-sheet')?.classList.toggle('open', open);
+  document.getElementById('sheet-backdrop')?.classList.toggle('hidden', !open);
+  document.getElementById('btn-q-actions')?.setAttribute('aria-expanded', String(open));
+}
+document.getElementById('btn-q-actions')?.addEventListener('click', () => setSheet(!sheetOpen));
+document.getElementById('btn-sheet-close')?.addEventListener('click', () => setSheet(false));
+document.getElementById('sheet-backdrop')?.addEventListener('click', () => setSheet(false));
+document.getElementById('btn-q-map')?.addEventListener('click', () => document.getElementById('btn-map')?.click());
+document.getElementById('btn-q-potion')?.addEventListener('click', () => document.getElementById('btn-potion')?.click());
+document.getElementById('action-sheet')?.addEventListener('click', (e) => {
+  const b = e.target.closest?.('.ctrl-btn');
+  if (sheetOpen && b && b.id !== 'btn-sheet-close') setTimeout(() => setSheet(false), 0);
+});
+
 function setMore(open) {
   moreOpen = open;
   document.getElementById('more-actions').classList.toggle('hidden', !open);
@@ -1876,6 +1897,7 @@ function submitName() {
 // ─── Keyboard events ──────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
+  if (sheetOpen && e.key === 'Escape') { e.preventDefault(); setSheet(false); return; }
   const phase = currentState.phase;
 
   // The help panel: Enter, Esc, H or Space puts it away.
