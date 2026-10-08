@@ -211,6 +211,20 @@
     return vx > 0 ? 'faces-left' : 'faces-right';   // from the east it faces your left
   }
 
+  /** For a figure facing `facing`, which side the camera sees, in eight:
+   * 'front', 'front-left', 'left', 'back-left', 'back', 'back-right', 'right',
+   * 'front-right' (left/right as the viewer sees it on screen). */
+  function viewOf8(cam, o) {
+    const [fx, fy] = FORWARD[o.facing];
+    const vx = cam.x - (o.x + 0.5), vy = cam.y - (o.y + 0.5);
+    // Angle from the figure's facing to the viewer, clockwise (map y runs south).
+    let a = Math.atan2(vy, vx) - Math.atan2(fy, fx);
+    while (a <= -Math.PI) a += 2 * Math.PI;
+    while (a > Math.PI) a -= 2 * Math.PI;
+    const names = ['front', 'front-left', 'left', 'back-left', 'back', 'back-right', 'right', 'front-right'];
+    return names[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
+  }
+
   /** Visible objects, farthest first, with their on-screen boxes. `sizeOf`
    * gives each kind's size in world units ({ w, h }), given the side seen. */
   function placeObjects(world, cam, width, height, sizeOf) {
@@ -223,7 +237,7 @@
       const w = size.w * p.scale, h = size.h * p.scale;
       const left = p.screenX - w / 2;
       if (left > width || left + w < 0) continue;
-      placed.push({ obj: o, view, depth: p.depth, left, top: p.baseY - h, width: w, height: h, baseY: p.baseY, screenX: p.screenX, scale: p.scale });
+      placed.push({ obj: o, view, view8: o.facing ? viewOf8(cam, o) : undefined, depth: p.depth, left, top: p.baseY - h, width: w, height: h, baseY: p.baseY, screenX: p.screenX, scale: p.scale });
     }
     return placed.sort((a, b) => b.depth - a.depth);
   }
@@ -1010,7 +1024,7 @@
   }
 
   const api = {
-    buildWorld, wallBetween, cameraFor, cameraAt, FACING_ANGLE, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
+    buildWorld, wallBetween, cameraFor, viewOf8, cameraAt, FACING_ANGLE, castRay, castColumns, clipAt, projectObject, placeObjects, visibleRuns, focalFor, sideSeen,
     renderAscii, renderPainted, prefersReducedMotion, THEMES, floorColor,
     FOV, EYE, MAX_DIST, NEAR, CEILING_HEIGHTS,
   };

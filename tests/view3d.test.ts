@@ -180,3 +180,17 @@ describe('3D view: smooth movement and the monster in the scene', () => {
     expect(runs).toHaveLength(1);                   // the whole figure, though the wall is nearer
   });
 });
+
+describe('a great foe seen from afar', () => {
+  it('shows the side the camera stands on, in eight directions', () => {
+    const o = { x: 5, y: 5, facing: 'S' as const };
+    const at = (dx: number, dy: number) => V.viewOf8(V.cameraAt(5.5 + dx, 5.5 + dy, 0), o);
+    expect(at(0, 3)).toBe('front');        // it faces south; you stand south of it
+    expect(at(0, -3)).toBe('back');
+    expect(['left', 'right']).toContain(at(3, 0));
+    expect(['left', 'right']).toContain(at(-3, 0));
+    expect(at(3, 0)).not.toBe(at(-3, 0));
+    expect(at(2, 2)).toMatch(/^front-/);
+    expect(at(2, -2)).toMatch(/^back-/);
+  });
+});

@@ -296,15 +296,42 @@
    * the colour of a blow when struck, and all but vanishes when invisible. */
   function monsterArt(obj) {
     return {
-      draw(ctx, x, y, w, h, t) {
+      draw(ctx, x, y, w, h, t, sprite) {
         const img = monsterImage(obj.type, obj.hide, obj.monster);
         if (!img.complete || !img.naturalWidth) return;
         const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
-        const hh = h * (1 + breathe), ww = w * (1 - breathe * 0.5);
+        // A great foe in its room is seen from wherever you stand: turned (narrower,
+        // its far side in shadow), side-on, or from behind (mirrored, dark).
+        const v = sprite?.view8 || 'front';
+        const back = v.startsWith('back');
+        const turn = v === 'left' || v === 'right' ? 0.58 : v === 'front' || v === 'back' ? 1 : 0.82;
+        const hh = h * (1 + breathe), ww = w * turn * (1 - breathe * 0.5);
+        const x0 = x + (w - ww) / 2, y0 = y + (h - hh);
         ctx.save();
         if (obj.alpha !== undefined) ctx.globalAlpha = obj.alpha;
-        ctx.drawImage(img, x + (w - ww) / 2, y + (h - hh), ww, hh);
+        if (back) { ctx.translate(x0 + ww, y0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, ww, hh); }
+        else ctx.drawImage(img, x0, y0, ww, hh);
         ctx.restore();
+        if (v !== 'front') {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          if (back) {
+            ctx.fillStyle = 'rgba(4,3,3,0.88)';                    // from behind: a dark shape, no face
+            ctx.fillRect(x0 - 2, y0 - 2, ww + 4, hh + 4);
+          }
+          if (v !== 'back') {
+            // The side turned away from you falls into shadow.
+            const awayLeft = v.endsWith('right');                     // facing toward screen-right, its left is away
+            const g = ctx.createLinearGradient(x0, 0, x0 + ww, 0);
+            const deep = v === 'left' || v === 'right' ? 0.55 : 0.4;
+            g.addColorStop(awayLeft ? 0 : 1, `rgba(0,0,0,${deep})`);
+            g.addColorStop(0.5, 'rgba(0,0,0,0.1)');
+            g.addColorStop(awayLeft ? 1 : 0, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(x0 - 2, y0 - 2, ww + 4, hh + 4);
+          }
+          ctx.restore();
+        }
         if (obj.flash) {
           ctx.save();
           ctx.globalCompositeOperation = 'source-atop';
@@ -336,7 +363,14 @@
     };
   }
 
-  const sizeOf = (obj, view) => (obj.kind === 'monster' ? obj.size : SIZES[kindOf(obj, view)] || { w: 0.6, h: 0.6 });
+  /** A monster's size in the scene: the one you fight carries its own; one waiting in its
+   * room (a great foe seen from afar) is sized by its portrait scale, as in a fight. */
+  const monsterSize = (obj) => {
+    if (obj.size) return obj.size;
+    const h = Math.min(2.6, 0.85 * (typeof getMonsterSpriteScale === 'function' ? getMonsterSpriteScale(obj.type) : 1));
+    return { w: h, h };
+  };
+  const sizeOf = (obj, view) => (obj.kind === 'monster' ? monsterSize(obj) : SIZES[kindOf(obj, view)] || { w: 0.6, h: 0.6 });
 
   /** Whether anything in a scene is animated (so the view needs redrawing over time). */
   const animates = (objects) => objects.some(o => ANIMATE[o.kind] || o.kind === 'monster') && !still();

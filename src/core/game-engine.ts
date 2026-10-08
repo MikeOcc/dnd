@@ -268,6 +268,14 @@ export class GameEngine {
         else if (c.type === 'book' && !ds.readBooks.has(c.id)) objects.push({ x, y, kind: 'book' });
         else if (c.type === 'ladder-up' || c.type === 'ladder-down') objects.push({ x, y, kind: c.type });
         else if (c.type === 'unique-monster' && (c.monsterId === 'Asmodeus' || c.monsterId === 'Orc King')) objects.push({ x, y, kind: 'throne', variant: c.monsterId });
+        // The other great foes can be seen from afar, waiting in their rooms (until beaten).
+        else if (c.type === 'unique-monster' && c.monsterId && !ds.defeatedUniqueMonsters.has(c.id)) {
+          const t = currentMonsterType(c.monsterId);
+          // It watches the way in: faces the level's entrance, along the longer axis.
+          const ex = lvl.entrance.x - x, ey = lvl.entrance.y - y;
+          const facing: Direction = Math.abs(ex) >= Math.abs(ey) ? (ex >= 0 ? 'E' : 'W') : (ey >= 0 ? 'S' : 'N');
+          objects.push({ x, y, kind: 'monster', type: isHiddenMonster(t) ? hiddenStandIn(t) : t, facing });
+        }
         else if (c.type === 'shop') objects.push({ x, y, kind: 'shop' });
       }
     }

@@ -468,8 +468,10 @@ export interface SceneData {
 export interface SceneObject {
   x: number;
   y: number;
-  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop';
+  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop' | 'monster';
   variant?: string;   // throne: whose ('Asmodeus', 'Orc King')
+  type?: string;      // monster: a great foe waiting in its room
+  facing?: Direction; // monster: the way it faces (toward the way into the level)
 }
 
 export interface GameState {

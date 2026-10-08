@@ -167,3 +167,21 @@ describe("Cartographer's Bane", () => {
     expect(e.combat.monster.mapBites).toBe(0);
   });
 });
+
+describe('great foes in their rooms', () => {
+  it('stand in the 3D scene, facing the way in, until beaten', () => {
+    const e = engine();
+    e.char.dungeonLevel = 6;
+    e.loadLevelIntoCache(6);
+    const lvl = e.getLevel(6);
+    const [k, c] = [...lvl.contents].find(([, v]: [string, { type: string; monsterId?: string }]) => v.type === 'unique-monster' && v.monsterId === 'Lambton Worm')!;
+    const [x, y] = k.split(',').map(Number);
+    e.char.x = x; e.char.y = y + 1;
+    const seen = () => e.getState().scene.objects.find((o: { kind: string; type?: string }) => o.kind === 'monster' && o.type === 'Lambton Worm');
+    const obj = seen();
+    expect(obj).toBeDefined();
+    expect(['N', 'E', 'S', 'W']).toContain(obj.facing);
+    e.dungeonState.defeatedUniqueMonsters.add(c.id);
+    expect(seen()).toBeUndefined();
+  });
+});
