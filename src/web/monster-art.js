@@ -23,6 +23,8 @@
 //   scene: the vignette for the 3D views, as fractions of the image (centre and
 //          radius): what is kept is the creature, the rest fades to nothing
 //   cutout: a transparent cutout (see above); height: its height in a fight, in px
+//   soft: a painting on its own background shown like a cutout (the whole
+//         figure, not cropped to the view), its edges fading into the dark
 
 'use strict';
 
@@ -30,6 +32,14 @@ const MONSTER_ART = {
   Aboleth: { src: 'art/aboleth.jpg?v=1', focus: '50% 52%', scene: { cx: 0.6, cy: 0.52, r: 0.42 } },
   'Bone Sovereign': { src: 'art/bone-sovereign.webp?v=1', cutout: true, height: 330 },
   Rakshasa: { src: 'art/rakshasa.webp?v=1', cutout: true, height: 320 },
+  'Barrow-King': { src: 'art/barrow-king.webp?v=1', cutout: true, height: 340 },
+  'Lambton Worm': { src: 'art/lambton-worm.webp?v=1', cutout: true, height: 270 },
+  Nightwalker: { src: 'art/nightwalker.webp?v=1', cutout: true, height: 350 },
+  'Orc King': { src: 'art/orc-king.webp?v=1', cutout: true, height: 330 },
+  Tarrasque: { src: 'art/tarrasque.webp?v=1', cutout: true, height: 280 },
+  Tiamat: { src: 'art/tiamat.webp?v=1', cutout: true, height: 320 },
+  // Asmodeus, the reptilian lord, on the red smoke of his own background.
+  Asmodeus: { src: 'art/asmodeus.jpg?v=1', soft: true, height: 380, scene: { cx: 0.5, cy: 0.5, r: 0.5 } },
 };
 
 const paintedArtState = {};   // type -> { img, status: 'loading' | 'ok' | 'failed', scene?: canvas }
@@ -68,20 +78,25 @@ function paintedSceneImage(type) {
   if (!art || !st || st.status !== 'ok') return null;
   if (art.cutout) return st.img;   // already the creature alone
   if (st.scene) return st.scene;
+  const { cx, cy, r } = art.scene;
+  // Crop around the creature (keeping the painting's proportions), then fade its edges away.
+  const sw = st.img.naturalWidth * r * 2, sh = st.img.naturalHeight * r * 2;
   const size = 512;
   const c = document.createElement('canvas');
-  c.width = c.height = size;
+  c.width = Math.round(size * Math.min(1, sw / sh));
+  c.height = Math.round(size * Math.min(1, sh / sw));
   const g = c.getContext('2d');
-  const { cx, cy, r } = art.scene;
-  // Crop to the creature's square, then fade its edges away.
-  const sw = st.img.naturalWidth * r * 2, sh = st.img.naturalHeight * r * 2;
-  g.drawImage(st.img, st.img.naturalWidth * cx - sw / 2, st.img.naturalHeight * cy - sh / 2, sw, sh, 0, 0, size, size);
+  g.drawImage(st.img, st.img.naturalWidth * cx - sw / 2, st.img.naturalHeight * cy - sh / 2, sw, sh, 0, 0, c.width, c.height);
   g.globalCompositeOperation = 'destination-in';
-  const fade = g.createRadialGradient(size / 2, size / 2, size * 0.22, size / 2, size / 2, size / 2);
+  g.save();
+  g.translate(c.width / 2, c.height / 2);
+  g.scale(c.width / 2, c.height / 2);   // an ellipse filling the crop
+  const fade = g.createRadialGradient(0, 0, 0.44, 0, 0, 1);
   fade.addColorStop(0, 'rgba(0,0,0,1)');
-  fade.addColorStop(0.7, 'rgba(0,0,0,0.85)');
+  fade.addColorStop(0.55, 'rgba(0,0,0,0.85)');
   fade.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = fade;
-  g.fillRect(0, 0, size, size);
+  g.fillRect(-1, -1, 2, 2);
+  g.restore();
   return (st.scene = c);
 }
