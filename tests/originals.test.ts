@@ -32,14 +32,14 @@ const seenAt = (type: string, depth: number) => {
 };
 
 describe('where they turn up', () => {
-  it('Lantern Moths in the shallows, the Hush from 4, the Bane from 5, the Toll-Keeper never at random', () => {
+  it('Lantern Moths in the shallows; the Toll-Keeper never at random; the Hush and the Bane benched for now', () => {
     expect(seenAt('Lantern Moths', 1)).toBe(true);
     expect(seenAt('Lantern Moths', 5)).toBe(false);
-    expect(seenAt('Hush', 3)).toBe(false);
-    expect(seenAt('Hush', 4)).toBe(true);
-    expect(seenAt("Cartographer's Bane", 4)).toBe(false);
-    expect(seenAt("Cartographer's Bane", 5)).toBe(true);
-    for (let d = 1; d <= 7; d++) expect(seenAt('Toll-Keeper', d)).toBe(false);
+    for (let d = 1; d <= 7; d++) {
+      expect(seenAt('Toll-Keeper', d)).toBe(false);
+      expect(seenAt('Hush', d)).toBe(false);
+      expect(seenAt("Cartographer's Bane", d)).toBe(false);
+    }
   });
 });
 

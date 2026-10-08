@@ -1191,8 +1191,12 @@ export function hiddenStandIn(type: MonsterType): MonsterType {
   return STAND_INS[type] ?? 'Death Knight';
 }
 
+// Built but not in play yet (the owner's call): they never turn up at random.
+// Take one off this list to bring it into the dungeon.
+export const BENCHED: MonsterType[] = ['Hush', "Cartographer's Bane"];
+
 export function isHiddenMonster(type: MonsterType): boolean {
-  return process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type);
+  return BENCHED.includes(type) || (process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type));
 }
 
 /** maxTier: a newcomer's first fights draw only from the gentler kinds (see NEWCOMER). */
