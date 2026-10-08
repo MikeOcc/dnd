@@ -1,11 +1,10 @@
 // Timelock (once The Stilled Hour): wizards of level 80+ stop time for a monster, 3-6
-// turns. It can't act, every blow lands, and from the 4th still turn it
-// suffocates (unless it doesn't breathe). The caster ages; once an hour.
+// turns. It can't act and every blow lands. The caster ages; once an hour.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { rollCharacter, createCharacter, getEffectiveStats } from '../src/core/character.js';
 import { createMonster } from '../src/core/monsters.js';
-import { playerStilledHour, playerAttack, breathes } from '../src/core/combat.js';
+import { playerStilledHour, playerAttack } from '../src/core/combat.js';
 import { knownSpells } from '../src/core/spells.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
@@ -35,28 +34,21 @@ describe('Timelock', () => {
     expect([...seen].sort()).toEqual([3, 4, 5, 6]);
   });
 
-  it('while frozen it cannot act, every blow lands, and from the 4th turn it suffocates, worse each turn', () => {
+  it('while frozen it cannot act and every blow lands; it takes no other harm; then time starts again', () => {
     const c = wizard();
     const m = createMonster('Minotaur', 30, 'm'); m.hp = m.maxHp = 100000;
     const rng = new RNG(7);
     playerStilledHour(c, m, rng);
-    m.frozenTurns = 8;
-    const hpAt: number[] = [];
+    m.frozenTurns = 6;
     for (let t = 1; t <= 6; t++) {
       const before = c.hp;
       const hpBefore = m.hp;
       const r = playerAttack(c, m, rng);
       expect(m.hp, `turn ${t}: the blow lands`).toBeLessThan(hpBefore);
       expect(c.hp).toBe(before);                // it never answers
-      hpAt.push(r.messages.some(x => x.includes('cannot breathe')) ? 1 : 0);
+      expect(r.messages.join(' ')).not.toContain('cannot breathe');
     }
-    expect(hpAt).toEqual([0, 0, 0, 1, 1, 1]);
-  });
-
-  it("things that don't breathe don't suffocate", () => {
-    expect(breathes(createMonster('Skeleton', 5, 's'))).toBe(false);
-    expect(breathes(createMonster('Iron Golem', 20, 'g'))).toBe(false);
-    expect(breathes(createMonster('Red Dragon', 20, 'd'))).toBe(true);
+    expect(m.frozenTurns).toBe(0);
   });
 
   it('the caster ages: Strength and Dexterity fall for a long while', () => {
@@ -76,8 +68,7 @@ describe('Timelock', () => {
       if (!m.frozenTurns) resisted++; else held.push(m.frozenTurns);
     }
     expect(resisted).toBeGreaterThan(70); expect(resisted).toBeLessThan(130);
-    expect(Math.max(...held)).toBeLessThanOrEqual(4);
-    expect(breathes(createMonster('Asmodeus', 60, 'a'))).toBe(false);
+    expect(Math.max(...held)).toBeLessThanOrEqual(3);
   });
 });
 
@@ -87,7 +78,7 @@ describe('Timelock in a fight', () => {
   beforeEach(() => { db = createMemoryDb(); });
   afterEach(() => { db.close(); });
 
-  it('a monster that suffocates dies like any other; and it is once per hour of play', () => {
+  it('it holds a monster still in a real fight, and it is once per hour of play', () => {
     const engine = new GameEngine(new Repository(db));
     engine.startNameEntry(); engine.submitName('Chronos'); engine.acceptCharacter('wizard');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,12 +90,12 @@ describe('Timelock in a fight', () => {
     const key = engine.getState().spellChoices!.find((c: { text: string }) => c.text.includes('Timelock'))!.key;
     engine.spellAction(key);
     expect(m.frozenTurns).toBeGreaterThan(0);
-    m.frozenTurns = 6; m.hp = 15;   // the longest hold, against a weakened foe
-    // Wait it out drinking potions (no blows): from the 4th still turn it suffocates, 6 then 12...
+    // Wait it out drinking potions: it never answers, and takes no harm, until time starts again.
+    const hp = m.hp, held = m.frozenTurns!;
     e.char.inventory.potions = 20;
-    for (let i = 0; i < 8 && e.phase === 'combat'; i++) { e.char.hp = 10; engine.combatAction('p'); }
-    expect(e.phase).not.toBe('combat');
-    expect(e.char.monstersDefeated).toBe(1);
+    for (let i = 0; i < held; i++) { e.char.hp = 10; engine.combatAction('p'); expect(e.char.hp).toBeGreaterThanOrEqual(10); }
+    expect(m.hp).toBe(hp);
+    expect(m.frozenTurns).toBe(0);
     // A second casting so soon is refused.
     e.combat = { monster: createMonster('Troll', 20, 't2'), round: 1 }; e.phase = 'combat';
     expect(engine.spellAction(key).messages.join(' ')).toContain('will not be locked again so soon');

@@ -2396,13 +2396,6 @@ export function calculateXPReward(
 
 // ─── Timelock (once The Stilled Hour) ────────────────────────────────────────────────────────
 
-/** Things with no breath to lose: they don't suffocate in stopped time. */
-const NO_BREATH = ['Mold', 'Slime Mold', 'Gelatinous Cube', 'Elder Oblex', 'Iron Golem', 'Gargoyle', 'Banshee', 'Spectre',
-  'Nightwalker', 'Hollow Choir', 'Djinn', 'Asmodeus', 'Doppelganger'];
-export function breathes(monster: Monster): boolean {
-  return !monster.definition.isUndead && !NO_BREATH.includes(monster.type);
-}
-
 /** Cast: time stops for the monster, TURNS_MIN-TURNS_MAX turns (Asmodeus, half). It doesn't answer this turn. */
 export function playerStilledHour(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   const S = SPELLS.STILLED_HOUR;
@@ -2419,9 +2412,7 @@ export function playerStilledHour(char: Character, monster: Monster, rng: RNG): 
   }
   const turns = monster.type === 'Asmodeus' ? Math.max(2, Math.floor(rolled / 2)) : rolled;
   monster.frozenTurns = turns;
-  monster.frozenElapsed = 0;
   messages.push(`The ${monster.type} hangs motionless, caught between one heartbeat and the next. (${rolled} turns${turns !== rolled ? `; he fights it, and is held only ${turns}` : ''})`);
-  if (!breathes(monster)) messages.push(`(It has no breath to lose: the stillness will not choke it.)`);
   // The price: time takes it out of you.
   addStatusEffect(char, { type: 'strength-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
   addStatusEffect(char, { type: 'dexterity-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });
@@ -2429,19 +2420,10 @@ export function playerStilledHour(char: Character, monster: Monster, rng: RNG): 
   return { messages, playerDamage: 0, monsterDamage: 0, playerDied: false, monsterDied: false };
 }
 
-/** A frozen monster's turn: nothing, and after a while, no breath either. */
+/** A frozen monster's turn: nothing at all. */
 function stilledTurn(monster: Monster, messages: string[]): MonsterActionResult {
-  const S = SPELLS.STILLED_HOUR;
   monster.frozenTurns!--;
-  monster.frozenElapsed = (monster.frozenElapsed ?? 0) + 1;
-  const n = monster.frozenElapsed;
-  if (breathes(monster) && n > S.BREATH_TURNS) {
-    const dmg = Math.max(1, Math.round(monster.maxHp * S.SUFFOCATE_STEP * (n - S.BREATH_TURNS)));
-    monster.hp = Math.max(0, monster.hp - dmg);
-    messages.push(`Frozen mid-breath, the ${monster.type} cannot breathe. Its eyes bulge; its colour darkens. (${dmg} damage)`);
-  } else {
-    messages.push(`The ${monster.type} is still as a painting. Not a hair of it moves.`);
-  }
+  messages.push(`The ${monster.type} is still as a painting. Not a hair of it moves.`);
   if (monster.frozenTurns === 0 && monster.hp > 0) {
     messages.push(`Time lurches back into motion. The ${monster.type} gasps and staggers.`);
   }

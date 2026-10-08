@@ -324,7 +324,6 @@ export interface Monster {
   choirBroken?: ChoirMask[];   // Hollow Choir: the masks shattered so far
   stunnedTurns?: number;  // warrior's Shield Bash: the monster skips this many turns
   frozenTurns?: number;   // The Stilled Hour: still in time for this many more turns
-  frozenElapsed?: number; // ...and has been for this many (it can't breathe after a few)
   backfirePrimed?: boolean;  // green diamond ring: its next attack that touches the character backfires
   backfireUsed?: boolean;    // green diamond ring: already used this fight
   borakUsed?: boolean;       // The Borak: already fired this fight
