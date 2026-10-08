@@ -269,11 +269,18 @@ function applyState(state) {
     const sprite = (typeof getMonsterPortrait === 'function' ? getMonsterPortrait(monster) : getMonsterSprite(monster.type)) || `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${monster.type}"><ellipse cx="80" cy="96" rx="44" ry="52" fill="#120c0c" stroke="#3a1a1a" stroke-width="3"/><circle cx="66" cy="84" r="4" fill="#c33"/><circle cx="94" cy="84" r="4" fill="#c33"/><text x="80" y="156" text-anchor="middle" font-family="monospace" font-size="11" fill="#a99">${monster.type}</text></svg>`;
     // Only redraw for a new monster, so slow animations (the Choir's drift) carry on.
     // Only redraw for a new monster (or a new look as it's hurt), so slow animations carry on.
-    if (portraitEl.dataset.monster !== monster.type || portraitEl._sprite !== sprite || !portraitEl.innerHTML) {
-      portraitEl.innerHTML = sprite || '';
+    // A monster with a painting (monster-art.js) shows it as an illustration filling the view,
+    // fading in once loaded; until then, or if it can't be had, its drawing.
+    const art = typeof paintedArt === 'function' ? paintedArt(monster.type) : null;
+    const st = art ? loadPaintedArt(monster.type, () => { if (currentState?.combat?.monster?.type === monster.type) applyState(currentState); }) : null;
+    const painted = art && st?.status !== 'failed';
+    const html = painted ? `<div class="painted-portrait"><img alt="${esc(monster.type)}" src="${art.src}" style="object-position:${art.focus}"${st.status === 'ok' ? ' class="loaded"' : ''}></div>` : sprite;
+    if (portraitEl.dataset.monster !== monster.type || portraitEl._sprite !== html || !portraitEl.innerHTML) {
+      portraitEl.innerHTML = html || '';
       portraitEl.dataset.monster = monster.type;
-      portraitEl._sprite = sprite;
+      portraitEl._sprite = html;
     }
+    portraitEl.classList.toggle('painted', !!painted);
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
     // The Hollow Choir: shattered masks are gone; a mask gathering a power brightens as the masks align.

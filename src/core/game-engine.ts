@@ -54,7 +54,7 @@ const ABOLETH_SENSE_LINES = [
 ];
 const ABOLETH_NEAR_LINES = [
   'The stink of evil is overpowering. It is very close now.',
-  'Wet wings rustle in the dark just ahead. Three red eyes open, one above another.',
+  'Wet wings rustle in the dark just ahead. Three green eyes open, one above another.',
   '"I see you," says a voice inside your skull, "and I remember you, though we have never met."',
   'The floor is slick with slime, and the slime is moving toward you.',
 ];

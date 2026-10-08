@@ -241,7 +241,7 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
            '"Rest," says a voice behind your eyes. "Rest, and let me in."'],
     near: ['The voice in your mind is very close now: "Come, and I will give you back your memories. All of them."',
            'Slime glistens on the walls, and something vast turns over in dark water just ahead.',
-           'Three red lights, one above another, glow for a moment in the dark, then close.'],
+           'Three green lights, one above another, glow for a moment in the dark, then close.'],
   },
 };
 

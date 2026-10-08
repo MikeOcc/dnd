@@ -323,9 +323,13 @@
   function monsterArt(obj) {
     return {
       draw(ctx, x, y, w, h, t, sprite) {
-        const wings = WINGS[obj.type];
-        const img = monsterImage(obj.type, wings ? [...(obj.hide || []), 'wing-l', 'wing-r'] : obj.hide, obj.monster);
-        if (!img.complete || !img.naturalWidth) return;
+        // A painted monster (monster-art.js) stands as its painting, vignetted; until it
+        // has loaded, as its drawing.
+        const painting = typeof paintedArt === 'function' && paintedArt(obj.type)
+          ? (loadPaintedArt(obj.type, () => onReady()), paintedSceneImage(obj.type)) : null;
+        const wings = painting ? null : WINGS[obj.type];
+        const img = painting || monsterImage(obj.type, wings ? [...(obj.hide || []), 'wing-l', 'wing-r'] : obj.hide, obj.monster);
+        if (!painting && (!img.complete || !img.naturalWidth)) return;
         const breathe = still() ? 0 : Math.sin(t * 2.1 + (obj.type.length % 5)) * 0.018;
         // A great foe in its room is seen from wherever you stand: turned (narrower,
         // its far side in shadow), side-on, or from behind (mirrored, dark).
