@@ -205,7 +205,7 @@ describe('near the Aboleth', () => {
       if (!next) break;
       at = { x: next.x, y: next.y }; seen.add(`${at.x},${at.y}`);
     }
-    if (distance >= 20) at = { x: lvl.entrance.x, y: lvl.entrance.y };
+    if (distance >= 20) at = { x: x < 40 ? 79 : 0, y: y < 30 ? 59 : 0 };   // the far corner: well out of its range
     e.char.x = at.x; e.char.y = at.y;
     e.phase = 'playing';
     return e;
