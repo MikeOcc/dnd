@@ -1,5 +1,5 @@
 import { RNG } from './random.js';
-import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, GEAR, CHOIR, BORAK } from './config.js';
+import { COMBAT, LEVELING, GEMS, SPELLS, WARRIOR, SCARE, ORC_KING, MANTICORE, TITANOBOA, WENDIGO, GHOUL, DJINN, PHOENIX, BANSHEE, UNICORN, FROST_GIANT, GOLD_DRAGON, RINGS, GEAR, CHOIR, BORAK, NEWCOMER } from './config.js';
 import type { Character, Monster, MonsterType, StatusEffect, HeldCondition, FxElement, RingId, ChoirMask, ChoirPower } from './types.js';
 import { RINGS_INFO } from '../content/rings.js';
 import { BESTIARY, type Script, type Kit } from './bestiary.js';
@@ -22,6 +22,7 @@ export interface CombatRoundResult {
   runFailed?: boolean;
   monsterFled?: boolean;       // the monster left the fight (a Djinn vanishing, a Unicorn departing): no XP
   ballOfDooFired?: boolean;
+  spared?: boolean;            // a newcomer's safety net turned a killing blow (left at 1 HP)
 }
 
 // Elemental resistance/vulnerability call-outs ("particularly vulnerable to
@@ -1591,12 +1592,29 @@ export function abilityElement(ability: string | undefined): FxElement {
   return 'physical';
 }
 
-type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[]; monsterFled?: boolean };
+type MonsterActionResult = { messages: string[]; monsterDamage: number; playerDied: boolean; monsterDied: boolean; playerTeleported?: boolean; ballOfDooFired?: boolean; monsterHealed?: number; monsterElement?: FxElement; deathCause?: string; killingBlow?: string[]; monsterFled?: boolean; spared?: boolean };
 
 /** The monster's turn. Also reports the element of whatever it did
  * (monsterElement), or nothing if it didn't get to act; and if it killed
  * the character, which attack did it and the lines describing it. */
+/** A newcomer's safety net: in their first few fights on level 1, a blow that
+ * would kill them from above half their health leaves them at 1 HP instead.
+ * (Only characters made since it began: they carry an early-game record.) */
+export function safetyNetHolds(char: Character, hpBefore: number): boolean {
+  return !!char.firstSteps && char.dungeonLevel === 1 && char.monstersDefeated < NEWCOMER.SAFETY_NET_FIGHTS
+    && hpBefore > char.maxHp * NEWCOMER.SAFETY_NET_ABOVE;
+}
+
 function monsterAction(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
+  const hpBefore = char.hp;
+  const res = monsterActionUnnetted(char, monster, rng, messages);
+  if (!(res.playerDied || char.hp <= 0) || !safetyNetHolds(char, hpBefore)) return res;
+  char.hp = 1;
+  messages.push('', 'The blow should have killed you. Somehow you are still standing, barely. (1 HP)');
+  return { ...res, playerDied: false, deathCause: undefined, killingBlow: undefined, spared: true };
+}
+
+function monsterActionUnnetted(char: Character, monster: Monster, rng: RNG, messages: string[]): MonsterActionResult {
   const start = messages.length;
   const guarding = (char.inventory.wornRings?.length ?? 0) > 0 || monster.backfirePrimed;
   const before = guarding ? snapshotChar(char) : null;

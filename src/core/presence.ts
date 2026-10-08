@@ -18,6 +18,7 @@ export interface PresenceContext {
   lairs: Lair[];                  // living uniques on this level (and Tiamat from level 7 when on 6)
   asmodeusAlive: boolean;
   asmodeusLair: { x: number; y: number } | null;   // on level 7, if known
+  voiceDue?: boolean;             // a new character's first word from Asmodeus is due now
 }
 
 export interface PresenceEvent {
@@ -25,6 +26,7 @@ export interface PresenceEvent {
   fx?: FxElement;
   flee?: boolean;                 // Dracolich fear: bolt to a random far spot
   turnTo?: Direction;             // Dracolich fear: spun around
+  voice?: boolean;                // Asmodeus spoke
 }
 
 type Range = 'far' | 'mid' | 'near';
@@ -76,7 +78,7 @@ export function asmodeusFury(level: number, pos: { x: number; y: number }, lair:
 function asmodeusVoice(ctx: PresenceContext, rng: RNG): PresenceEvent {
   const tier = ctx.level <= 3 ? 'shallow' : ctx.level <= 5 ? 'middle' : 'deep';
   const line = rng.pick(VOICE[tier]).replace(/\{name\}/g, ctx.char.name);
-  return { messages: ['A voice rolls through the stone, from nowhere and everywhere:', `"${line}"`] };
+  return { messages: ['A voice rolls through the stone, from nowhere and everywhere:', `"${line}"`], voice: true };
 }
 
 function asmodeusStrike(ctx: PresenceContext, rng: RNG): PresenceEvent {
@@ -289,6 +291,7 @@ function dracolichFear(ctx: PresenceContext, rng: RNG): PresenceEvent {
 /** At most one presence event per step, or null. */
 export function rollPresence(ctx: PresenceContext, rng: RNG): PresenceEvent | null {
   const { char, level } = ctx;
+  if (ctx.voiceDue && ctx.asmodeusAlive) return asmodeusVoice(ctx, rng);
 
   if (ctx.asmodeusAlive && level === 7 && ctx.asmodeusLair
       && chebyshev(char, ctx.asmodeusLair) <= PRESENCE.ASMODEUS_DOOR_RADIUS) {

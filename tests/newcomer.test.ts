@@ -107,3 +107,99 @@ describe('a newcomer', () => {
     for (const t of ['Kobold', 'Goblin', 'Mold', 'Stirge Swarm'] as const) expect(getDefinition(t).naturalTier).toBe(1);
   });
 });
+
+describe('the safety net', () => {
+  it('turns a killing blow from above half health into 1 HP, for a newcomer only', () => {
+    const e = newEngine('wizard');
+    e.char.hp = e.char.maxHp = 20;
+    e.char.monstersDefeated = 0;
+    // A monster far beyond them, so its first blow would kill outright.
+    e.phase = 'playing'; e.combat = null;
+    e.beginCombat(createMonster('Owlbear', 15, 'o1'));
+    let spared = false;
+    for (let i = 0; i < 40 && !spared; i++) {
+      e.char.hp = e.char.maxHp;
+      const before = e.char.firstSteps.spared;
+      const state = e.combatAction('a');
+      expect(state.phase).not.toBe('death');
+      spared = e.char.firstSteps.spared > before;
+      if (spared) expect(e.char.hp).toBe(1);
+      if (!e.combat) { e.phase = 'playing'; e.beginCombat(createMonster('Owlbear', 15, 'o' + i)); }
+    }
+    expect(spared).toBe(true);
+  });
+
+  it('holds only in the first fights on level 1, from above half health', async () => {
+    const { safetyNetHolds } = await import('../src/core/combat.js');
+    const e = newEngine();
+    const c = e.char;
+    c.maxHp = 20; c.monstersDefeated = 0; c.dungeonLevel = 1;
+    expect(safetyNetHolds(c, 15)).toBe(true);
+    expect(safetyNetHolds(c, 10)).toBe(false);          // not from half or below
+    c.monstersDefeated = NEWCOMER.SAFETY_NET_FIGHTS;
+    expect(safetyNetHolds(c, 20)).toBe(false);          // the cushion has run out
+    c.monstersDefeated = 0; c.dungeonLevel = 2;
+    expect(safetyNetHolds(c, 20)).toBe(false);          // only on level 1
+    c.dungeonLevel = 1; delete c.firstSteps;
+    expect(safetyNetHolds(c, 20)).toBe(false);          // characters made before it began
+  });
+});
+
+describe("a newcomer's first word from Asmodeus", () => {
+  it('comes once on level 1, by the last step of its window', () => {
+    const e = newEngine();
+    e.char.stepsTaken = NEWCOMER.FIRST_VOICE_FROM_STEP - 1;
+    expect(e.firstVoiceDue()).toBe(false);
+    e.char.stepsTaken = NEWCOMER.FIRST_VOICE_BY_STEP;
+    expect(e.firstVoiceDue()).toBe(true);
+    e.messages = [];
+    e.feelPresences();
+    expect(e.messages.join(' ')).toContain('A voice rolls through the stone');
+    expect(e.char.firstSteps.voiceHeard).toBe(true);
+    expect(e.firstVoiceDue()).toBe(false);
+  });
+});
+
+describe("a newcomer's early-game record", () => {
+  it('is written as things happen, without saving', () => {
+    const e = newEngine();
+    const repo = e.repo as Repository;
+    const id = e.char.id;
+    e.char.hp = e.char.maxHp = 1_000_000;
+    e.phase = 'playing'; e.combat = null;
+    e.beginCombat(createMonster('Kobold', 1, 'k1'));
+    for (let i = 0; i < 50 && e.combat; i++) e.combatAction('a');
+    e.char.hp = 10;
+    e.usePot();
+    const rec = repo.loadCharacter(id)!.firstSteps!;
+    expect(rec.fights).toBe(1);
+    expect(rec.wins).toBe(1);
+    expect(rec.firstWinAt).toBeDefined();
+    expect(rec.potions).toBe(1);
+  });
+
+  it('counts a death before level 2', () => {
+    const e = newEngine();
+    e.handleDeath('Test.');
+    const rec = (e.repo as Repository).loadCharacter(e.char.id)!.firstSteps!;
+    expect(rec.deaths).toBe(1);
+    expect(rec.deathsBeforeLevel2).toBe(1);
+  });
+
+  it('sums up for the admin', async () => {
+    const { summarizeFirstSteps, STOPPED_AFTER_MS } = await import('../src/core/first-steps.js');
+    const now = Date.now();
+    const base = { fights: 2, wins: 1, deaths: 0, deathsBeforeLevel2: 0, potions: 1, runs: 0, escapes: 0, spared: 0, levelReached: 2, playSecs: 300, lastAt: now };
+    const s = summarizeFirstSteps([
+      { charClass: 'wizard', createdAt: now, fs: { ...base, firstWinAt: 60, level2At: 120 } },
+      { charClass: 'warrior', createdAt: now, fs: { ...base, wins: 0, deaths: 1, deathsBeforeLevel2: 1, levelReached: 1, lastAt: now - STOPPED_AFTER_MS } },
+    ], now);
+    expect(s.characters).toBe(2);
+    expect(s.wonAFight).toBe(0.5);
+    expect(s.diedBeforeLevel2).toBe(0.5);
+    expect(s.stoppedEarly).toBe(0.5);
+    expect(s.medianMinutesToFirstWin).toBe(1);
+    expect(s.medianMinutesToLevel2).toBe(2);
+    expect(s.perCharacter.fights).toBe(2);
+  });
+});

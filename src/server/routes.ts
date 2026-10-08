@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { Repository } from '../database/repositories.js';
+import { summarizeFirstSteps } from '../core/first-steps.js';
 import { GameEngine } from '../core/game-engine.js';
 import { ACCESS, visitorOf, canUse, canDelete, allowRequest, ownerSignIn, ownerSignOut, useAccounts, type Visitor } from './access.js';
 import { Accounts } from '../database/accounts.js';
@@ -60,6 +61,17 @@ export function setupRoutes(app: Express, db: DatabaseSync): void {
   // ─── The owner signing in (needed when hosted, where everyone is remote) ──
   app.get('/owner', ownerSignIn);
   app.get('/owner/sign-out', ownerSignOut);
+
+  // ─── The admin's early-game summary (how new characters' first stretch goes) ─
+  app.get('/api/admin/first-steps', (req: Request, res: Response) => {
+    try {
+      const v = visitorOf(req, res);
+      if (!v.owner) return res.status(403).json({ error: 'Admins only.' });
+      res.json({ summary: summarizeFirstSteps(repo.allFirstSteps()) });
+    } catch (err) {
+      console.error(err); res.status(500).json({ error: 'Something went wrong on the server.' });
+    }
+  });
 
   // ─── Character management ─────────────────────────────────────────────────
 

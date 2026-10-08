@@ -480,6 +480,18 @@ export const NEWCOMER = {
   // Level 1 sets a chest within this many steps of the entrance (but not at the door).
   CHEST_NEAR_ENTRANCE_MIN: 5,
   CHEST_NEAR_ENTRANCE_MAX: 15,
+  // The safety net: in the first fights on level 1 (while fewer than this
+  // many monsters are slain), a blow that would kill from above this share
+  // of max HP leaves the character at 1 HP. One-round kills, not every blow.
+  SAFETY_NET_FIGHTS: 4,
+  SAFETY_NET_ABOVE: 0.5,
+  // Asmodeus speaks to a new character once, early: on level 1, somewhere in
+  // these steps (a chance each step, certain by the last).
+  FIRST_VOICE_FROM_STEP: 40,
+  FIRST_VOICE_BY_STEP: 120,
+  // The early-game record kept per new character (for the admin's summary),
+  // until they reach this level.
+  TRACK_TO_LEVEL: 5,
 } as const;
 
 export const WARRIOR = {

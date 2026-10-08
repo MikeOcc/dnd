@@ -115,6 +115,25 @@ export interface Inventory {
 export type WeaponKind = 'dagger' | 'sword' | 'axe' | 'mace';
 export type ArmorKind = 'leather' | 'chain' | 'plate' | 'shield';
 /** `equipped`: chosen by hand (otherwise the best is used automatically). */
+/** How a new character's first stretch went, for tuning the early game. Written
+ * as things happen (not on save), so it holds even if they never save or return. */
+export interface FirstSteps {
+  fights: number;
+  wins: number;
+  deaths: number;
+  deathsBeforeLevel2: number;
+  potions: number;          // drunk, in a fight or out of one
+  runs: number;
+  escapes: number;          // runs that got away
+  spared: number;           // times the safety net turned a killing blow
+  firstWinAt?: number;      // play-time seconds
+  level2At?: number;
+  levelReached: number;
+  voiceHeard?: boolean;     // Asmodeus's first word to them
+  playSecs: number;
+  lastAt: number;           // wall clock (ms) of the last thing recorded
+}
+
 export interface Weapon { kind: WeaponKind; bonus: number; name: string; equipped?: boolean }
 export interface Armor { kind: ArmorKind; bonus: number; name: string; equipped?: boolean }
 
@@ -168,6 +187,7 @@ export interface Character {
   heldBy?: HeldCondition;     // why the character is held, for the lost-turn message
   banishCastAt?: number;      // play-time second of the last Banish (one per hour of play)
   stilledHourAt?: number;     // play-time second of the last Stilled Hour (one per hour of play)
+  firstSteps?: FirstSteps;    // the early-game record (characters made since it began); kept apart from saves
   viewMode?: 'classic' | 'ascii3d' | 'painted'; // the view this save opens in (set by the house; the player can still switch)
   charClass: CharacterClass;
   battleCryRounds?: number;   // warrior: rounds of Battle Cry's damage boost left (in-memory, cleared after combat)

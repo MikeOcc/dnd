@@ -3,7 +3,7 @@ import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
-  Fx, FxElement, ChestTrapType, CharacterClass, MonsterType,
+  Fx, FxElement, ChestTrapType, CharacterClass, MonsterType, FirstSteps,
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear, weaponPower, armorShare } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
@@ -118,6 +118,21 @@ export class GameEngine {
   private rng: RNG;
   private sessionStart: number = Date.now();
   private warriorTipShown = false;   // the Power Attack tip, once a session
+
+  /** Adds to a new character's early-game record and writes it at once (not
+   * on save: a player who quits without saving still counts). Kept until they
+   * reach NEWCOMER.TRACK_TO_LEVEL; `always` records past it (the level reached). */
+  private noteFirstSteps(change: (fs: FirstSteps) => void, always = false): void {
+    const c = this.char;
+    const fs = c?.firstSteps;
+    if (!c || !fs || (!always && c.level > NEWCOMER.TRACK_TO_LEVEL)) return;
+    this.bankPlayTime();
+    change(fs);
+    fs.levelReached = Math.max(fs.levelReached, c.level);
+    fs.playSecs = c.playTime;
+    fs.lastAt = Date.now();
+    try { this.repo.recordFirstSteps(c.id, fs); } catch { /* a record, never worth failing a move over */ }
+  }
   private restTicks: number = 0;
 
   constructor(repo: Repository) {
@@ -699,6 +714,7 @@ export class GameEngine {
     }
     this.char.inventory.potions--;
     this.cue('gulp');
+    this.noteFirstSteps(fs => { fs.potions++; });
     const actual = Math.min(potionHealAmount(this.char, this.rng), this.char.maxHp - this.char.hp);
     this.char.hp += actual;
     const beaten = slowFleshRot(this.char, GHOUL.ROT_PUSHBACK_POTION);
@@ -847,6 +863,8 @@ export class GameEngine {
 
     // Character must exist in DB before dungeon levels (foreign key constraint)
     this.repo.saveCharacter(this.char);
+    this.char.firstSteps = { fights: 0, wins: 0, deaths: 0, deathsBeforeLevel2: 0, potions: 0, runs: 0, escapes: 0, spared: 0, levelReached: 1, playSecs: 0, lastAt: Date.now() };
+    this.repo.recordFirstSteps(this.char.id, this.char.firstSteps);
 
     // Generate all 7 dungeon levels
     for (let lvl = 1; lvl <= 7; lvl++) {
@@ -1071,6 +1089,16 @@ export class GameEngine {
 
   /** A quiet step may bring word of the uniques: Asmodeus's voice or fury,
    * the Dracolich's fear, or the others' sounds from their lairs. */
+  /** A new character hears Asmodeus once early on level 1: somewhere between
+   * NEWCOMER.FIRST_VOICE_FROM_STEP and _BY_STEP (evenly, and certainly by the last). */
+  private firstVoiceDue(): boolean {
+    const c = this.char;
+    if (!c?.firstSteps || c.firstSteps.voiceHeard || c.dungeonLevel !== 1) return false;
+    const { FIRST_VOICE_FROM_STEP: from, FIRST_VOICE_BY_STEP: by } = NEWCOMER;
+    if (c.stepsTaken < from) return false;
+    return c.stepsTaken >= by || this.rng.float() < 1 / (by - c.stepsTaken + 1);
+  }
+
   private feelPresences(): void {
     this.presenceFelt = false;
     if (!this.char || !this.dungeonState) return;
@@ -1103,8 +1131,10 @@ export class GameEngine {
       lairs: [...here, ...tiamatBelow],
       asmodeusAlive,
       asmodeusLair: level === 7 && asmodeus ? { x: asmodeus.x, y: asmodeus.y } : null,
+      voiceDue: this.firstVoiceDue(),
     }, this.rng);
     if (!ev) return;
+    if (ev.voice) this.noteFirstSteps(fs => { fs.voiceHeard = true; }, true);
 
     this.presenceFelt = true;
     this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...ev.messages];
@@ -1655,6 +1685,7 @@ export class GameEngine {
 
   private beginCombat(monster: Monster): GameState {
     if (!this.char) return this.getState();
+    this.noteFirstSteps(fs => { fs.fights++; });
 
     this.combat = {
       monster,
@@ -2476,6 +2507,7 @@ export class GameEngine {
     if (!this.char) return [];
     const r = checkLevelUp(this.char, this.rng);
     if (!r.didLevel) return [];
+    this.noteFirstSteps(fs => { if (r.newLevel >= 2) fs.level2At ??= this.char!.playTime; }, true);
     return [
       '',
       `*** YOU HAVE REACHED LEVEL ${r.newLevel}! ***`,
@@ -2737,6 +2769,7 @@ export class GameEngine {
       return this.getState();
     }
     this.cue('gulp');
+    this.noteFirstSteps(fs => { fs.potions++; });
     return this.processCombatResult(playerPotion(this.char!, this.combat!.monster, this.rng));
   }
 
@@ -2756,6 +2789,7 @@ export class GameEngine {
     const result = playerRun(this.char!, monster, this.rng);
     this.noteMonsterTurn(result);
     this.messages = result.messages;
+    this.noteFirstSteps(fs => { fs.runs++; if (result.ran) fs.escapes++; if (result.spared) fs.spared++; });
 
     if (result.playerDied) {
       const cause = result.deathCause ?? `Killed by a Level ${monster.level} ${monster.type}.`;
@@ -2871,6 +2905,7 @@ export class GameEngine {
   private processCombatResult(result: import('./combat.js').CombatRoundResult): GameState {
     if (!this.char || !this.combat) return this.getState();
     this.noteMonsterTurn(result);
+    if (result.spared) this.noteFirstSteps(fs => { fs.spared++; });
 
     this.messages = [...result.messages, ...wearCursedAmulet(this.char, this.rng)];
     this.combat.round++;
@@ -2956,6 +2991,7 @@ export class GameEngine {
 
     this.char.xp += xpGained;
     this.char.monstersDefeated++;
+    this.noteFirstSteps(fs => { fs.wins++; fs.firstWinAt ??= this.char!.playTime; });
 
     // Track fixed/unique defeats
     if (def.isUnique) {
@@ -3054,6 +3090,7 @@ export class GameEngine {
     if (!this.char) return this.getState();
 
     this.endCombat(false);
+    this.noteFirstSteps(fs => { fs.deaths++; if (this.char!.level < 2) fs.deathsBeforeLevel2++; });
     const entrance = this.getLevel(this.char.dungeonLevel)?.entrance ?? { x: 0, y: 0 };
     // Asmodeus takes a level and a little gold, and leaves you at level 7's entrance.
     const toll = killer === 'Asmodeus'

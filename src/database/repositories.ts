@@ -1,7 +1,7 @@
 import type { RingId } from '../core/types.js';
 import { PROTECTION_RINGS, POWER_RINGS } from '../content/rings.js';
 import { DatabaseSync } from 'node:sqlite';
-import type { Character, SerializedDungeon, DungeonState, CharacterSummary } from '../core/types.js';
+import type { Character, SerializedDungeon, DungeonState, CharacterSummary, FirstSteps } from '../core/types.js';
 import { CHARACTER, GEMS, RINGS } from '../core/config.js';
 
 // ─── Repository class ────────────────────────────────────────────────────────
@@ -103,6 +103,17 @@ export class Repository {
     return row ? row.owner : undefined;
   }
 
+  /** A character's early-game record, written on its own (saves never touch it). */
+  recordFirstSteps(id: string, fs: FirstSteps): void {
+    this.db.prepare('UPDATE characters SET first_steps = ? WHERE id = ?').run(JSON.stringify(fs), id);
+  }
+
+  /** Every early-game record, with the character's class and when it was made. */
+  allFirstSteps(): { charClass: string; createdAt: number; fs: FirstSteps }[] {
+    const rows = this.db.prepare('SELECT char_class, created_at, first_steps FROM characters WHERE first_steps IS NOT NULL').all() as Record<string, unknown>[];
+    return rows.map(r => ({ charClass: r['char_class'] as string, createdAt: r['created_at'] as number, fs: JSON.parse(r['first_steps'] as string) }));
+  }
+
   setOwner(id: string, owner: string | null): void {
     this.db.prepare('UPDATE characters SET owner = ? WHERE id = ?').run(owner, id);
   }
@@ -195,6 +206,7 @@ export class Repository {
       banishCastAt:           (row['banish_cast_at'] as number | null) ?? undefined,
       stilledHourAt:          (row['stilled_hour_at'] as number | null) ?? undefined,
       viewMode:               (row['view_mode'] as Character['viewMode'] | null) ?? undefined,
+      firstSteps:             row['first_steps'] ? JSON.parse(row['first_steps'] as string) : undefined,
       charClass:              (row['char_class'] as Character['charClass']) || 'wizard',
       createdAt:              row['created_at'] as number,
       playTime:               row['play_time'] as number,

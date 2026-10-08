@@ -1436,6 +1436,39 @@ async function showAdmin() {
     table.appendChild(tr);
   }
   body.append(h, table);
+  showFirstSteps(body);
+}
+
+/** The admin's summary of how new characters' first stretch is going. */
+async function showFirstSteps(body) {
+  const r = await (await fetch('/api/admin/first-steps')).json().catch(() => ({}));
+  const s = r.summary;
+  if (!s) return;
+  const pct = x => `${Math.round(x * 100)}%`;
+  const num = x => (Math.round(x * 10) / 10).toString();
+  const mins = x => (x === null ? '—' : `${x} min`);
+  const h = document.createElement('h3');
+  h.textContent = `NEW CHARACTERS' FIRST STEPS (${s.characters})`;
+  const table = document.createElement('table');
+  const rows = s.characters ? [
+    ['Wizards / warriors', `${s.wizards} / ${s.warriors}`],
+    ['Won a fight', pct(s.wonAFight)],
+    ['Died before level 2', pct(s.diedBeforeLevel2)],
+    ['Reached level 2 / 3', `${pct(s.reachedLevel2)} / ${pct(s.reachedLevel3)}`],
+    ['Stopped early (idle a day, below level 3)', pct(s.stoppedEarly)],
+    ['Time to first win (median)', mins(s.medianMinutesToFirstWin)],
+    ['Time to level 2 (median)', mins(s.medianMinutesToLevel2)],
+    ['Heard Asmodeus', pct(s.heardAsmodeus)],
+    ['Per character: fights / deaths', `${num(s.perCharacter.fights)} / ${num(s.perCharacter.deaths)}`],
+    ['Per character: potions / runs (escaped)', `${num(s.perCharacter.potions)} / ${num(s.perCharacter.runs)} (${num(s.perCharacter.escapes)})`],
+    ['Per character: saved by the safety net', num(s.perCharacter.spared)],
+  ] : [['No new characters yet', '']];
+  for (const [k, v] of rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(k)}</td><td>${esc(v)}</td>`;
+    table.appendChild(tr);
+  }
+  body.append(h, table);
 }
 
 function renderMainMenuChoices(area, state) {

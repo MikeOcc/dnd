@@ -60,6 +60,11 @@ export function initDb(db?: DatabaseSync): void {
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN view_mode TEXT`);
   } catch { /* column already exists */ }
+  // A new character's early-game record (JSON, see FirstSteps), written as it
+  // happens rather than on save. NULL for characters made before it began.
+  try {
+    target.exec(`ALTER TABLE characters ADD COLUMN first_steps TEXT`);
+  } catch { /* column already exists */ }
   try {
     target.exec(`ALTER TABLE characters ADD COLUMN char_class TEXT NOT NULL DEFAULT 'wizard'`);
   } catch { /* column already exists */ }
