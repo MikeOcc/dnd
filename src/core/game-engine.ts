@@ -18,7 +18,7 @@ import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, cur
 import { calculateScore, formatScore } from './scoring.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE, ABOLETH, BORAK } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
-import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm } from './lairs.js';
+import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm, placeRakshasa } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
 import { buildStock, cannotBuy, buy, sellables, outpostHours } from './shop.js';
 import { treasureById } from '../content/treasures.js';
@@ -50,11 +50,11 @@ const ABOLETH_SENSE_LINES = [
   'The air turns thick and wet. You taste salt, and rot, and something older than both.',
   'Something huge and patient is watching you through the stone.',
   'Slime drips from the ceiling onto your neck, warm as breath.',
-  'Far off in the dark, something heavy beats its wings once, and is still.',
+  'Far off in the dark, something vast turns over in black water, and is still.',
 ];
 const ABOLETH_NEAR_LINES = [
   'The stink of evil is overpowering. It is very close now.',
-  'Wet wings rustle in the dark just ahead. Three green eyes open, one above another.',
+  'Water stirs in the dark just ahead. Three green eyes open, one above another.',
   '"I see you," says a voice inside your skull, "and I remember you, though we have never met."',
   'The floor is slick with slime, and the slime is moving toward you.',
 ];
@@ -1135,8 +1135,8 @@ export class GameEngine {
       this.cue('aboleth');
       this.startFixedEncounter(lair.content, 'Aboleth');
       return this.lairFirstStrike([
-        'Wings like wet black sails crack open in the dark above you.',
-        'Before you can raise a hand, the Aboleth drops out of the air and is upon you!', '']);
+        'The black water heaves, and bursts apart in a wall of green-lit spray.',
+        'Before you can raise a hand, the Aboleth surges out of it and is upon you!', '']);
     }
     if (d <= ABOLETH.SOUND_RADIUS && this.rng.float() < ABOLETH.SOUND_CHANCE) this.cue('aboleth');
     if (this.rng.float() < ABOLETH.STINK_CHANCE) {
@@ -1507,7 +1507,7 @@ export class GameEngine {
       4: [['unique-orc-king', 'War drums. The Orc King holds a hall of shields somewhere on this level.']],
       5: [['unique-barrow-king', 'Somewhere on this level is a barrow. Something in it has been waiting a thousand years.']],
       6: [['unique-lambton-worm', 'A worm that cannot be cut lies coiled on its hoard down here.'], ['unique-dracolich', 'A dragon that died and did not stop.'], ['unique-aboleth', 'Something ancient in the black water.']],
-      7: [['unique-asmodeus', 'At the center of this level, on a throne of black iron, Asmodeus waits for you.']],
+      7: [['unique-rakshasa', 'A tiger in a scholar\u2019s silks holds court here. Spells slide off it; only the finest blades bite.'], ['unique-asmodeus', 'At the center of this level, on a throne of black iron, Asmodeus waits for you.']],
     };
     const rumours = (RUMOURS[levelNum] ?? []).filter(([id]) => !id || alive(id)).map(([, t]) => t);
     return [
@@ -3914,7 +3914,7 @@ export class GameEngine {
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
     if (levelNum === 6) placeLambtonWorm(grid, entrance, exit, contents);
-    if (levelNum === 7) centerAsmodeusLair(grid, contents);
+    if (levelNum === 7) { centerAsmodeusLair(grid, contents); placeRakshasa(grid, entrance, exit, contents); }
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });

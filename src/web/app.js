@@ -274,7 +274,9 @@ function applyState(state) {
     const art = typeof paintedArt === 'function' ? paintedArt(monster.type) : null;
     const st = art ? loadPaintedArt(monster.type, () => { if (currentState?.combat?.monster?.type === monster.type) applyState(currentState); }) : null;
     const painted = art && st?.status !== 'failed';
-    const html = painted ? `<div class="painted-portrait"><img alt="${esc(monster.type)}" src="${art.src}" style="object-position:${art.focus}"${st.status === 'ok' ? ' class="loaded"' : ''}></div>` : sprite;
+    const html = !painted ? sprite
+      : art.cutout ? `<div class="painted-cutout"><img alt="${esc(monster.type)}" src="${art.src}" style="height:min(96%, ${art.height}px)"${st.status === 'ok' ? ' class="loaded"' : ''}></div>`
+      : `<div class="painted-portrait"><img alt="${esc(monster.type)}" src="${art.src}" style="object-position:${art.focus}"${st.status === 'ok' ? ' class="loaded"' : ''}></div>`;
     if (portraitEl.dataset.monster !== monster.type || portraitEl._sprite !== html || !portraitEl.innerHTML) {
       portraitEl.innerHTML = html || '';
       portraitEl.dataset.monster = monster.type;

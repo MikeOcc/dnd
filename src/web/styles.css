@@ -161,7 +161,12 @@ html, body {
   opacity: 0; transition: opacity 450ms ease;
 }
 .painted-portrait img.loaded { opacity: 1; }
-#monster-portrait.vanished .painted-portrait img { opacity: 0.08; }
+/* A painted cutout: the creature alone over the view, like the drawings but larger. */
+.painted-cutout { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; }
+.painted-cutout img { width: auto; max-width: 96%; object-fit: contain; display: block; opacity: 0; transition: opacity 450ms ease; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.7)); }
+.painted-cutout img.loaded { opacity: 1; }
+#monster-portrait.vanished .painted-portrait img, #monster-portrait.vanished .painted-cutout img { opacity: 0.08; }
+#monster-portrait.time-stopped .painted-cutout img { filter: grayscale(0.85) sepia(0.2) hue-rotate(180deg) brightness(0.9) contrast(1.1); transition: filter 600ms ease; }
 #monster-portrait.time-stopped .painted-portrait img { filter: grayscale(0.85) sepia(0.2) hue-rotate(180deg) brightness(0.9) contrast(1.1); transition: filter 600ms ease; }
 
 /* A great lord seen from afar: Asmodeus on his throne, smaller the farther away */

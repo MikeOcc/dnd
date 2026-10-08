@@ -296,7 +296,7 @@
   // in the scene the body is drawn without them, and each wing is flapped about
   // its shoulder (in the portrait's 160-unit frame, per art style).
   const WINGS = {
-    Aboleth: { classic: { l: [84, 70], r: [116, 70] }, horror: { l: [66, 74], r: [110, 74] }, speed: 4.2, lift: 0.32 },
+    // (none at present; e.g. Name: { classic: { l: [x, y], r: [x, y] }, horror: {...}, speed: 4.2, lift: 0.32 })
   };
   const wingImages = {};
   /** One wing alone, as an image (the art's defs kept, everything else left out). */
@@ -336,7 +336,9 @@
         const v = sprite?.view8 || 'front';
         const back = v.startsWith('back');
         const turn = v === 'left' || v === 'right' ? 0.58 : v === 'front' || v === 'back' ? 1 : 0.82;
-        const hh = h * (1 + breathe), ww = w * turn * (1 - breathe * 0.5);
+        // (a painting keeps its own proportions: a tall one is narrower than its box)
+        const aspect = painting ? (painting.naturalWidth || painting.width) / (painting.naturalHeight || painting.height) : 1;
+        const hh = h * (1 + breathe), ww = w * Math.min(1, aspect) * turn * (1 - breathe * 0.5);
         const x0 = x + (w - ww) / 2, y0 = y + (h - hh);
         ctx.save();
         if (obj.alpha !== undefined) ctx.globalAlpha = obj.alpha;

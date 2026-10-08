@@ -493,11 +493,11 @@ export const NEWCOMER = {
 
 // The Aboleth (level 6): its lair is dangerous to walk near. Within
 // SENSE_RADIUS squares you smell it (a line now and then); any step that
-// close, it may come for you on its wings; within SOUND_RADIUS you hear it.
+// close, it may surge out of the water at you; within SOUND_RADIUS you hear it.
 export const ABOLETH = {
   SENSE_RADIUS: 6,
   STINK_CHANCE: 0.35,       // a line about it, per step that close
-  POUNCE_CHANCE: 0.02,      // per step that close: it swoops on you and strikes first
+  POUNCE_CHANCE: 0.02,      // per step that close: it surges out of the water at you and strikes first
   SOUND_RADIUS: 3,
   SOUND_CHANCE: 0.5,        // per step that close
 } as const;

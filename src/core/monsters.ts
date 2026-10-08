@@ -410,16 +410,18 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ["behir-lightning", "behir-bite", "behir-coils"],
   },
+  // A great foe of level 7, met once, in its own room (lairs.ts): too much to
+  // meet by chance. Magic slides off it; only a +3 blade truly wounds it.
   "Rakshasa": {
-    type: "Rakshasa", isUndead: false, isUnique: false,
-    minLevel: 45, maxLevel: 60, naturalTier: 8, minDungeonLevel: 6, speed: 1.1,
+    type: "Rakshasa", isUndead: false, isUnique: true,
+    minLevel: 60, maxLevel: 70, naturalTier: 8, minDungeonLevel: 7, speed: 1.1,
     baseHpPerLevel: 13, baseAttackPerLevel: 4.2, baseDefensePerLevel: 3.5,
     fireballResistance: 1.0,
     encounterIntro: [
       "A gentleman in fine silks bows to you. His hands are on backward.",
       "When he raises his head it is a tiger's, and it is smiling. Magic slides off him like rain.",
       '',
-      'You have encountered a Level {LVL} Rakshasa!',
+      'THE RAKSHASA, Level {LVL}, AND IT HAS BEEN EXPECTING YOU.',
     ],
     specialAbilities: ["rakshasa-claws", "rakshasa-curse", "rakshasa-illusion"],
   },

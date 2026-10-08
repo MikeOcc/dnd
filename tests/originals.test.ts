@@ -211,7 +211,7 @@ describe('near the Aboleth', () => {
     return e;
   }
 
-  it('you smell it, hear it close by, and now and then it swoops on you and strikes first', () => {
+  it('you smell it, hear it close by, and now and then it surges out of the water and strikes first', () => {
     let smelt = false, heard = false, swooped = false;
     const e = nearIt(2);
     const spot = { x: e.char.x, y: e.char.y };
@@ -219,9 +219,9 @@ describe('near the Aboleth', () => {
       e.combat = null; e.phase = 'playing'; e.char.x = spot.x; e.char.y = spot.y;
       e.messages = []; e.fx = {};
       const s = e.nearTheAboleth() ?? e.getState();
-      if (s.messages.join(' ').match(/stink of evil|Three red eyes|I see you|slime is moving|wet wings/i)) smelt = true;
+      if (s.messages.join(' ').match(/stink of evil|Three green eyes|I see you|slime is moving|turns over in black water/i)) smelt = true;
       if ((s.fx?.cues || []).includes('aboleth')) heard = true;
-      if (s.phase === 'combat') { swooped = true; expect(e.combat.monster.type).toBe('Aboleth'); expect(s.messages.join(' ')).toContain('drops out of the air'); }
+      if (s.phase === 'combat') { swooped = true; expect(e.combat.monster.type).toBe('Aboleth'); expect(s.messages.join(' ')).toContain('surges out of it'); }
     }
     expect(smelt && heard && swooped).toBe(true);
   });
@@ -232,5 +232,23 @@ describe('near the Aboleth', () => {
     const done = nearIt(2);
     done.dungeonState.defeatedUniqueMonsters.add('unique-aboleth');
     for (let i = 0; i < 200; i++) { done.fx = {}; expect(done.nearTheAboleth()).toBeNull(); expect(done.getState().fx?.cues ?? []).not.toContain('aboleth'); }
+  });
+});
+
+describe('the Rakshasa', () => {
+  it('is a great foe of level 7, in a room of its own, and never met by chance', () => {
+    for (let d = 1; d <= 7; d++) expect(seenAt('Rakshasa', d)).toBe(false);
+    const e = engine();
+    e.char.dungeonLevel = 7;
+    e.loadLevelIntoCache(7);
+    const lvl = e.getLevel(7);
+    const uniques = [...lvl.contents].filter(([, v]: [string, { type: string }]) => v.type === 'unique-monster');
+    const raks = uniques.find(([, v]: [string, { monsterId?: string }]) => v.monsterId === 'Rakshasa');
+    expect(raks).toBeDefined();
+    const [rx, ry] = raks![0].split(',').map(Number);
+    const asm = uniques.find(([, v]: [string, { monsterId?: string }]) => v.monsterId === 'Asmodeus')!;
+    const [ax, ay] = asm[0].split(',').map(Number);
+    expect(Math.abs(rx - ax) + Math.abs(ry - ay)).toBeGreaterThan(8);
+    expect(e.levelIntroWithJourney(7).join(' ')).toContain('holds court here');
   });
 });

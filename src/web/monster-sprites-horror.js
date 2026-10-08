@@ -2238,14 +2238,12 @@ const HORROR_SPRITES = {
   `,
 
   // ─── Aboleth ─────────────────────────────────────────────────────────────
-  // An ancient thing of the drowned dark, and it flies: a vast swollen
-  // eel-fish body crusted with barnacles and old scars, great tattered wings
-  // of wet black membrane, three red slit-pupilled eyes stacked down its brow,
-  // a maw of needle teeth strung with mucus, tentacles reaching for you.
-  // (The wings are their own groups, m-wing-l / m-wing-r: they beat here, and
-  // the 3D view flaps them itself.)
+  // An ancient thing of the drowned dark: a vast swollen eel-fish body crusted
+  // with barnacles and old scars, three slit-pupilled eyes stacked down its
+  // brow, a maw of needle teeth strung with mucus, tentacles reaching for you.
+  // (The game shows its painting, monster-art.js; this is the stand-in.)
   'Aboleth': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth: a vast slimy winged horror, a swollen eel-fish body crusted with barnacles, great tattered black wings, three red slit eyes stacked down its brow, a maw of needle teeth strung with mucus, tentacles reaching for you">
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aboleth: a vast slimy horror, a swollen eel-fish body crusted with barnacles, three slit eyes stacked down its brow, a maw of needle teeth strung with mucus, tentacles reaching for you">
     <defs>
       ${wetSkinFilter('hab-skin', { freq: '0.12 0.18', seed: 133, shine: 0.35 })}
       ${horrorSkinFilter('hab-mem', { freq: '0.05 0.22', scale: 1.6, seed: 134, k: 1.15 })}
@@ -2258,22 +2256,6 @@ const HORROR_SPRITES = {
       <filter id="hab-gl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
     <ellipse cx="80" cy="100" rx="80" ry="60" fill="url(#hab-mucus)"/>
-
-    <!-- the wings: wet black membrane on long finger-bones, torn, dripping -->
-    <g class="m-wing-l"><g>
-      <animateTransform attributeName="transform" type="rotate" values="-6 66 74; 16 66 74; -6 66 74" dur="1.5s" repeatCount="indefinite"/>
-      <path d="M 66 74 C 50 44, 26 18, 2 10 C 8 22, 4 32, 12 40 C 4 46, 6 56, 16 60 C 10 68, 16 78, 28 78 C 26 86, 36 92, 46 88 C 52 92, 60 90, 64 84 Z" fill="url(#hab-wing)" filter="url(#hab-mem)"/>
-      <path d="M 66 74 L 2 10 M 66 74 L 12 40 M 66 74 L 16 60 M 66 74 L 28 78 M 66 74 L 46 88" stroke="#4a3a40" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M 30 30 c 4 2 6 6 4 10 c -4 -1 -6 -5 -4 -10 Z M 20 52 c 3 1 4 4 2 6 c -3 -1 -4 -3 -2 -6 Z" fill="#000" opacity="0.85"/>
-      <path d="M 12 40 c 0 5 1 8 0 12 M 28 78 c 0 4 1 7 0 10 M 46 88 c 1 4 0 7 1 10" stroke="#8aa098" stroke-width="1" fill="none" opacity="0.5"/>
-    </g></g>
-    <g class="m-wing-r"><g transform="translate(176 0) scale(-1 1)"><g>
-      <animateTransform attributeName="transform" type="rotate" values="-6 66 74; 16 66 74; -6 66 74" dur="1.5s" repeatCount="indefinite"/>
-      <path d="M 66 74 C 50 44, 26 18, 2 10 C 8 22, 4 32, 12 40 C 4 46, 6 56, 16 60 C 10 68, 16 78, 28 78 C 26 86, 36 92, 46 88 C 52 92, 60 90, 64 84 Z" fill="url(#hab-wing)" filter="url(#hab-mem)"/>
-      <path d="M 66 74 L 2 10 M 66 74 L 12 40 M 66 74 L 16 60 M 66 74 L 28 78 M 66 74 L 46 88" stroke="#4a3a40" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M 24 24 c 4 2 6 6 4 10 c -4 -1 -6 -5 -4 -10 Z M 34 66 c 3 1 4 4 2 6 c -3 -1 -4 -3 -2 -6 Z" fill="#000" opacity="0.85"/>
-      <path d="M 16 60 c 0 5 1 8 0 12 M 46 88 c 1 4 0 7 1 10" stroke="#8aa098" stroke-width="1" fill="none" opacity="0.5"/>
-    </g></g></g>
 
     <!-- the tail, curling away behind -->
     <path d="M 116 116 C 142 112, 158 132, 150 154 C 144 140, 132 132, 116 134 Z" fill="url(#hab-body)" filter="url(#hab-skin)"/>

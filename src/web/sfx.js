@@ -207,8 +207,8 @@ const SFX = (() => {
       noise(t + 0.2, { dur: 0.6, freq: 7000, q: 0.5, type: 'highpass', gain: 0.04, attack: 0.2 });
     },
 
-    /** The Aboleth, close by: a deep wet drone, bubbles rising, two slow beats of
-     * great wet wings, and a whisper just under hearing. */
+    /** The Aboleth, close by: a deep wet drone, bubbles rising, two slow heavy
+     * stirrings of water, and a whisper just under hearing. */
     aboleth() {
       if (!audio()) return;
       const t = ctx.currentTime + 0.01;
@@ -219,7 +219,8 @@ const SFX = (() => {
         tone(at, { freq: f, freqTo: f * 1.9, dur: 0.07, gain: 0.07, attack: 0.01 });
       }
       for (const at of [t + 0.7, t + 1.35]) {
-        noise(at, { dur: 0.45, freq: 260, q: 0.7, type: 'lowpass', gain: 0.4, attack: 0.08, sweepTo: 120 });
+        noise(at, { dur: 0.6, freq: 900, q: 0.6, type: 'lowpass', gain: 0.3, attack: 0.12, sweepTo: 250 });   // water sloshing
+        noise(at + 0.05, { dur: 0.3, freq: 2400, q: 0.8, gain: 0.06, attack: 0.03, sweepTo: 1200 });
       }
       noise(t + 0.3, { dur: 1.6, freq: 3200, q: 0.8, gain: 0.025, attack: 0.5, sweepTo: 1800 });
     },

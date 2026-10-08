@@ -217,6 +217,14 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
            'Your torch sputters and nearly dies. Something tall blots out the corridor ahead.',
            'Cold fingers of dark brush the back of your neck, then withdraw.'],
   },
+  Rakshasa: {
+    far:  ['Somewhere, faintly, someone is burning incense. Sandalwood, and something under it like old blood.',
+           'A soft chuckle, very far off, as if at a joke only it understands.'],
+    mid:  ['Silk whispers along the stone ahead, and a heavy tail drags after it.',
+           'A voice, cultured and amused, says your name from just around the corner. There is no one there.'],
+    near: ['The smell of tiger is thick in the air, and of incense, and of the dead.',
+           'In the dark ahead, two amber eyes, and a hand held out in welcome. The hand is on backward.'],
+  },
   'Bone Sovereign': {
     far:  ['A grave-cold wind moves through the corridor, carrying a fine grey dust. Bone dust.',
            'Somewhere far off, a great rattling, like a cartload of bones overturned.',

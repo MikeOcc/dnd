@@ -225,6 +225,32 @@ export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: P
   if (bier) contents.set(key(bier), { type: 'unique-monster', id: BARROW_LAIR.KING_ID, monsterId: 'Barrow-King' });
 }
 
+// ─── The Rakshasa (level 7) ──────────────────────────────────────────────────
+// Holding court in a room of its own, well along the way but far from the
+// other great foes (and from Asmodeus).
+
+export const RAKSHASA_ID = 'unique-rakshasa';
+
+export function placeRakshasa(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>): void {
+  if ([...contents.values()].some(c => c.id === RAKSHASA_ID)) return;
+  const map = mapAreas(grid);
+  const fromEntrance = distances(grid, entrance);
+  const others: Pt[] = [];
+  for (const [k, c] of contents) if (c.type === 'unique-monster') { const [x, y] = k.split(',').map(Number); others.push({ x, y }); }
+  const maxD = Math.max(...[...fromEntrance.values()].map(v => v.d));
+  const free = (p: Pt) => !contents.has(key(p)) && !(p.x === entrance.x && p.y === entrance.y) && !(exit && p.x === exit.x && p.y === exit.y);
+  let best: Pt | null = null, bestScore = -1;
+  for (const [k, { d }] of fromEntrance) {
+    if (d < maxD * 0.3 || d > maxD * 0.85) continue;            // well along the way, not at the very end
+    const [x, y] = k.split(',').map(Number);
+    const area = areaAtCell(map, x, y);
+    if (!area || area.kind !== 'room' || area.cells < 9 || !free({ x, y })) continue;
+    const apart = others.length ? Math.min(...others.map(o => Math.abs(o.x - x) + Math.abs(o.y - y))) : 99;
+    if (apart > bestScore) { best = { x, y }; bestScore = apart; }
+  }
+  if (best) contents.set(key(best), { type: 'unique-monster', id: RAKSHASA_ID, monsterId: 'Rakshasa' });
+}
+
 // ─── The Lambton Worm (level 6) ──────────────────────────────────────────────
 // Coiled on its hoard in a room far from the entrance. Nothing is walled up.
 
