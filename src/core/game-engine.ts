@@ -2197,12 +2197,12 @@ export class GameEngine {
       const items = shop.stock;
       this.messages = [...head, '', 'FOR SALE:', ...items.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold${it.qty > 1 ? ` (${it.qty} left)` : it.qty === 0 ? ' (sold out)' : ''}`)];
       this.interaction!.choices = [...items.map((it, i) => ({ key: letter(i), text: `${it.label} (${it.price}g)` })),
-        { key: letter(items.length), text: 'Sell instead' }, { key: letter(items.length + 1), text: 'Done trading (Esc)' }];
+        { key: letter(items.length), text: 'Sell instead' }, { key: letter(items.length + 1), text: 'Done trading' }];
     } else if (shop.mode === 'sell') {
       const list = sellables(this.char).slice(0, 20);
       this.messages = [...head, '', list.length ? 'WILL BUY:' : 'You have nothing they want.', ...list.map((it, i) => `  ${letter(i)}) ${it.label}: ${it.price} gold`)];
       this.interaction!.choices = [...list.map((it, i) => ({ key: letter(i), text: `Sell ${it.label} (${it.price}g)` })),
-        { key: letter(list.length), text: 'Buy instead' }, { key: letter(list.length + 1), text: 'Done trading (Esc)' }];
+        { key: letter(list.length), text: 'Buy instead' }, { key: letter(list.length + 1), text: 'Done trading' }];
     } else {
       this.messages = head;
       this.interaction!.choices = [{ key: 'a', text: 'Buy' }, { key: 'b', text: 'Sell' }, { key: 'c', text: 'Done trading (Esc)' }];
@@ -2217,6 +2217,12 @@ export class GameEngine {
     const done = () => this.closeInteraction(shop.kind === 'peddler'
       ? 'You turn to go. When you glance back, the peddler is gone.'
       : 'You leave the stall behind.');
+    // Esc: up one level (a list back to the counter; the counter, out of the shop).
+    if (key === 'esc') {
+      if (shop.mode === 'main') return done();
+      shop.mode = 'main';
+      return this.showShop();
+    }
     if (shop.mode === 'main') {
       if (key === 'a') { shop.mode = 'buy'; return this.showShop(); }
       if (key === 'b') { shop.mode = 'sell'; return this.showShop(); }

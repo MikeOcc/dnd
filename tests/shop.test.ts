@@ -125,8 +125,12 @@ describe('Shops in the game', () => {
     s = engine.interactionChoice(s.choices!.find((c: { text: string }) => c.text.includes('Ruby'))!.key);
     expect(e.char.inventory.gems.ruby).toBe(0);
     expect(e.char.gold).toBe(500 - SHOP.POTION_PRICE + GEMS.VALUES.ruby);
+    expect(s.choices!.at(-1)!.text).toBe('Done trading');
+    s = engine.interactionChoice('esc');                     // Esc: back to the counter
+    expect(s.phase).toBe('interaction');
+    expect(e.interaction.shop.mode).toBe('main');
     expect(s.choices!.at(-1)!.text).toBe('Done trading (Esc)');
-    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Done trading
+    s = engine.interactionChoice('esc');                     // Esc again: out of the shop
     expect(s.phase).toBe('playing');
   });
 
@@ -135,10 +139,10 @@ describe('Shops in the game', () => {
     let s = e.openShop('peddler');
     expect(s.choices!.at(-1)!.text).toBe('Done trading (Esc)');
     s = engine.interactionChoice('a');                       // Buy
-    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Sell instead', 'Done trading (Esc)']);
+    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Sell instead', 'Done trading']);
     s = engine.interactionChoice(s.choices!.at(-2)!.key);    // Sell instead
-    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Buy instead', 'Done trading (Esc)']);
-    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Done trading
+    expect(s.choices!.map((c: { text: string }) => c.text).slice(-2)).toEqual(['Buy instead', 'Done trading']);
+    s = engine.interactionChoice(s.choices!.at(-1)!.key);    // Done trading: straight out
     expect(s.phase).toBe('playing');
     expect(s.messages.join(' ')).toContain('the peddler is gone');
   });

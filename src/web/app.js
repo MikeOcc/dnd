@@ -2061,10 +2061,9 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'interaction') {
-    // Esc at a shop: done trading (its last choice).
+    // Esc at a shop: up one level (a list back to the counter; the counter, out).
     if (e.key === 'Escape' && currentState.interaction?.type === 'shop') {
-      const last = (currentState.choices || []).at(-1);
-      if (last) apiAction('interact', { choice: last.key });
+      apiAction('interact', { choice: 'esc' });
       return;
     }
     // Any letter on offer (a shop's lists can run long).
