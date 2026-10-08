@@ -443,14 +443,14 @@ export const SPELLS = {
   BANISH_HIGH_LEVEL_FRACTION: 0.7,   // monster.level >= its maxLevel × this...
   BANISH_HIGH_LEVEL_MAX: 60,          // ...or this, whichever is lower (so deep dragons count)
   BANISH_COOLDOWN_SECONDS: 3600,
-  // The Stilled Hour (wizards from level 80): time stops for the monster for
-  // d5+3 turns. It can't act and every blow lands. From the 4th still turn
+  // Timelock (wizards from level 80; once called The Stilled Hour): time stops
+  // for the monster for 3-6 turns. It can't act and every blow lands. From the 4th still turn
   // it can't breathe, and suffocates, harder each turn (a share of its full
   // health). Things that don't breathe don't suffocate; Asmodeus is held
   // half as long and never does. The price: you age (Strength and Dexterity
   // down for a long while), and it's once per hour of play.
   STILLED_HOUR: {
-    TURNS_MIN: 4, TURNS_MAX: 8,
+    TURNS_MIN: 3, TURNS_MAX: 6,
     BREATH_TURNS: 3,
     SUFFOCATE_STEP: 0.06,          // 6%, 12%, 18%... of full health
     COOLDOWN_SECONDS: 3600,

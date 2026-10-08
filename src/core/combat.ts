@@ -2394,7 +2394,7 @@ export function calculateXPReward(
   return Math.max(1, Math.round(base * mult));
 }
 
-// ─── The Stilled Hour ────────────────────────────────────────────────────────
+// ─── Timelock (once The Stilled Hour) ────────────────────────────────────────────────────────
 
 /** Things with no breath to lose: they don't suffocate in stopped time. */
 const NO_BREATH = ['Mold', 'Slime Mold', 'Gelatinous Cube', 'Elder Oblex', 'Iron Golem', 'Gargoyle', 'Banshee', 'Spectre',
@@ -2403,11 +2403,11 @@ export function breathes(monster: Monster): boolean {
   return !monster.definition.isUndead && !NO_BREATH.includes(monster.type);
 }
 
-/** Cast: time stops for the monster, d5+3 turns (Asmodeus, half). It doesn't answer this turn. */
+/** Cast: time stops for the monster, TURNS_MIN-TURNS_MAX turns (Asmodeus, half). It doesn't answer this turn. */
 export function playerStilledHour(char: Character, monster: Monster, rng: RNG): CombatRoundResult {
   const S = SPELLS.STILLED_HOUR;
   const rolled = rng.int(S.TURNS_MIN, S.TURNS_MAX);
-  const messages = ['You speak the words of The Stilled Hour, and the world\u2019s clock stops for everything but you.'];
+  const messages = ['You speak the words of the Timelock, and the world\u2019s clock stops for everything but you.'];
   // Asmodeus is older than the clocks: he may throw it off, and holds still half as long if not.
   if (monster.type === 'Asmodeus' && rng.float() < S.ASMODEUS_RESIST_CHANCE) {
     messages.push('Everything stops but him. Asmodeus smiles, and with one slow word starts the clock again. "Time? In MY Hells?"');
@@ -2420,7 +2420,7 @@ export function playerStilledHour(char: Character, monster: Monster, rng: RNG): 
   const turns = monster.type === 'Asmodeus' ? Math.max(2, Math.floor(rolled / 2)) : rolled;
   monster.frozenTurns = turns;
   monster.frozenElapsed = 0;
-  messages.push(`The ${monster.type} hangs motionless, caught between one heartbeat and the next. (d5+3: ${rolled} turns${turns !== rolled ? `; he fights it, and is held only ${turns}` : ''})`);
+  messages.push(`The ${monster.type} hangs motionless, caught between one heartbeat and the next. (${rolled} turns${turns !== rolled ? `; he fights it, and is held only ${turns}` : ''})`);
   if (!breathes(monster)) messages.push(`(It has no breath to lose: the stillness will not choke it.)`);
   // The price: time takes it out of you.
   addStatusEffect(char, { type: 'strength-reduced', value: S.AGE_STATS, turns: S.AGE_STEPS });

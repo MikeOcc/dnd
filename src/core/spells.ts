@@ -25,7 +25,7 @@ const NAMES: Record<SpellId, string> = {
   frost: 'Frost Bolt',
   lightning: 'Lightning',
   banish: 'Banish',
-  'stilled-hour': 'The Stilled Hour',
+  'stilled-hour': 'Timelock',
   'power-attack': 'Power Attack',
   'shield-bash': 'Shield Bash',
   cleave: 'Cleave',

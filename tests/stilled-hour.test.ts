@@ -1,4 +1,4 @@
-// The Stilled Hour: wizards of level 80+ stop time for a monster, d5+3
+// Timelock (once The Stilled Hour): wizards of level 80+ stop time for a monster, 3-6
 // turns. It can't act, every blow lands, and from the 4th still turn it
 // suffocates (unless it doesn't breathe). The caster ages; once an hour.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -17,14 +17,14 @@ function wizard(level = 85) {
   return c;
 }
 
-describe('The Stilled Hour', () => {
+describe('Timelock', () => {
   it('only wizards of level 80 and above know it', () => {
     expect(knownSpells(79, 'wizard').some(s => s.id === 'stilled-hour')).toBe(false);
     expect(knownSpells(80, 'wizard').some(s => s.id === 'stilled-hour')).toBe(true);
     expect(knownSpells(100, 'warrior').some(s => s.id === 'stilled-hour')).toBe(false);
   });
 
-  it('freezes the monster 4 to 8 turns, and it does not answer the casting', () => {
+  it('freezes the monster 3 to 6 turns, and it does not answer the casting', () => {
     const seen = new Set<number>();
     for (let i = 0; i < 200; i++) {
       const m = createMonster('Troll', 30, 't' + i);
@@ -32,7 +32,7 @@ describe('The Stilled Hour', () => {
       expect(r.playerDamage).toBe(0);
       seen.add(m.frozenTurns!);
     }
-    expect([...seen].sort()).toEqual([4, 5, 6, 7, 8]);
+    expect([...seen].sort()).toEqual([3, 4, 5, 6]);
   });
 
   it('while frozen it cannot act, every blow lands, and from the 4th turn it suffocates, worse each turn', () => {
@@ -81,7 +81,7 @@ describe('The Stilled Hour', () => {
   });
 });
 
-describe('The Stilled Hour in a fight', () => {
+describe('Timelock in a fight', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let db: any;
   beforeEach(() => { db = createMemoryDb(); });
@@ -94,12 +94,12 @@ describe('The Stilled Hour in a fight', () => {
     const e = engine as any;
     e.dismissLevelIntro();
     e.char.level = 90; e.char.hp = e.char.maxHp = 1e6; e.char.intelligence = 22;
-    const m = createMonster('Troll', 20, 'troll'); m.hp = 30; m.maxHp = 100;
+    const m = createMonster('Owlbear', 15, 'owlbear'); m.hp = 30; m.maxHp = 100;   // (a Troll would get back up)
     e.combat = { monster: m, round: 1 }; e.phase = 'combat';
-    const key = engine.getState().spellChoices!.find((c: { text: string }) => c.text.includes('Stilled'))!.key;
+    const key = engine.getState().spellChoices!.find((c: { text: string }) => c.text.includes('Timelock'))!.key;
     engine.spellAction(key);
     expect(m.frozenTurns).toBeGreaterThan(0);
-    m.frozenTurns = 8; m.hp = 15;   // the longest hold, against a weakened foe
+    m.frozenTurns = 6; m.hp = 15;   // the longest hold, against a weakened foe
     // Wait it out drinking potions (no blows): from the 4th still turn it suffocates, 6 then 12...
     e.char.inventory.potions = 20;
     for (let i = 0; i < 8 && e.phase === 'combat'; i++) { e.char.hp = 10; engine.combatAction('p'); }
@@ -107,7 +107,7 @@ describe('The Stilled Hour in a fight', () => {
     expect(e.char.monstersDefeated).toBe(1);
     // A second casting so soon is refused.
     e.combat = { monster: createMonster('Troll', 20, 't2'), round: 1 }; e.phase = 'combat';
-    expect(engine.spellAction(key).messages.join(' ')).toContain('will not be stilled again so soon');
+    expect(engine.spellAction(key).messages.join(' ')).toContain('will not be locked again so soon');
   });
 });
 

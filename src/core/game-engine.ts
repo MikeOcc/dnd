@@ -2470,7 +2470,7 @@ export class GameEngine {
     }
     if (spell === 'stilled-hour' && this.stilledReadyIn() > 0) {
       const m = Math.ceil(this.stilledReadyIn() / 60);
-      this.messages = [`The hours will not be stilled again so soon. (Ready in ${m} minute${m === 1 ? '' : 's'} of play.)`];
+      this.messages = [`Time will not be locked again so soon. (Timelock is ready in ${m} minute${m === 1 ? '' : 's'} of play.)`];
       return this.getState();
     }
     if (this.isHeld()) return this.combatHeld();
@@ -2751,7 +2751,7 @@ export class GameEngine {
     return Math.max(0, this.char.banishCastAt + SPELLS.BANISH_COOLDOWN_SECONDS - this.char.playTime);
   }
 
-  /** Seconds of play until The Stilled Hour can be cast again. */
+  /** Seconds of play until Timelock can be cast again. */
   private stilledReadyIn(): number {
     if (!this.char || this.char.stilledHourAt === undefined) return 0;
     return Math.max(0, this.char.stilledHourAt + SPELLS.STILLED_HOUR.COOLDOWN_SECONDS - this.char.playTime);
