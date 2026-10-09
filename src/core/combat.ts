@@ -1545,6 +1545,7 @@ export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRo
     - (monster.definition.speed - 1.0) * COMBAT.SPEED_RUN_MODIFIER;
   if (mummified) chance -= 0.2;
   if (monster.type === 'Tarrasque') chance -= 0.3;
+  if (monster.type === 'Black Annis') chance -= 0.25;   // her arms stretch after you
   if (monster.type === 'Nuckelavee') chance += 0.3;   // it will not cross running water
   chance = Math.max(0.05, Math.min(0.90, chance));
 
@@ -1561,7 +1562,7 @@ export function playerRun(char: Character, monster: Monster, rng: RNG): CombatRo
       ran: true,
     };
   } else {
-    messages.push('The monster blocks your escape!');
+    messages.push(monster.type === 'Black Annis' ? 'You run, but her arm stretches after you, longer and longer, and the iron fingers drag you back!' : 'The monster blocks your escape!');
     const res = monsterAction(char, monster, rng, messages);
     return { ...res, playerDamage: 0, monsterDied: false, runFailed: true };
   }
@@ -1772,7 +1773,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'grindy-drag': 'drowning grip',
   'grindy-drown': 'drowning grip',
   'grindy-bite': 'needle teeth',
-  'annis-claws': 'iron claws',
+  'annis-claws': 'iron claws', 'annis-reach': 'long iron reach', 'annis-shriek': 'shriek',
   'annis-flay': 'flaying claws',
   'annis-vanish': 'ambush',
   'annis-bite': 'iron tooth',

@@ -442,20 +442,42 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     { id: 'grindy-bite', weight: 65, run: k => { k.strike(1.0, d => `The Grindylow bites with its needle teeth. (${d} damage)`); } },
   ] },
 
+  // Black Annis (Leicestershire): iron claws that dug her cave out of the rock,
+  // arms that stretch to reach in at a window, a shriek heard for miles, one
+  // eye that freezes you where you stand. (Her long arms drag back a runner and
+  // she drops from above: combat.ts and game-engine.ts.)
   'Black Annis': { moves: [
-    { id: 'annis-claws', weight: 50, run: k => {
+    { id: 'annis-claws', weight: 40, run: k => {
       k.strikes(2, 0.7, (d, i) => `Her iron claws ${i === 0 ? 'rake' : 'rake again'}! (${d} damage)`);
       if (k.alive() && k.rng.float() < 0.4) { k.status({ type: 'bleeding', value: 3, turns: 6 }); k.say('The iron has cut deep. You are bleeding!'); }
     } },
-    { id: 'annis-flay', weight: 20, run: k => {
+    { id: 'annis-flay', weight: 15, run: k => {
       k.strike(1.4, d => `She catches you and tries to peel your skin like a fruit! You suffer ${d} damage.`);
     } },
-    { id: 'annis-vanish', weight: 15, run: k => {
+    { id: 'annis-vanish', weight: 10, run: k => {
       k.monster.caughtOffGuard = false;
       k.say('She steps back into the dark and is gone. Then a claw comes out of nowhere:');
       k.strike(1.2, d => `She strikes from the shadows! (${d} damage)`);
     } },
-    { id: 'annis-bite', weight: 15, run: k => { k.strike(1.0, d => `Black Annis bites with teeth like a horse's. (${d} damage)`); } },
+    { id: 'annis-bite', weight: 8, run: k => { k.strike(1.0, d => `Black Annis bites with teeth like a horse's. (${d} damage)`); } },
+    { id: 'annis-reach', weight: 10, run: k => {
+      k.strike(1.0, d => `Her arm STRETCHES, impossibly long, across the room, and the iron fingers find you. (${d} damage)`);
+    } },
+    { id: 'annis-shriek', weight: 12, when: k => !k.held(), run: k => {
+      k.strike(0.4, d => `She throws back her head and SHRIEKS, a sound they hear for miles. Your ears bleed. (${d} damage)`);
+      if (!k.alive()) return;
+      const s = k.save(14, ['wisdom', 'charisma']);
+      if (s.ok) { k.say(`You hold your ground against it. ${s.text}`); return; }
+      k.hold(1, 'feared');
+      k.say(`Terror roots you to the spot. ${s.text}`);
+    } },
+    { id: 'annis-eye', weight: 15, when: k => !k.held(), run: k => {
+      k.say('Her one yellow eye finds yours, and will not let go.');
+      const s = k.save(15, ['wisdom']);
+      if (s.ok) { k.say(`You tear your gaze away. ${s.text}`); return; }
+      k.hold(1, 'paralyzed');
+      k.say(`You cannot move, cannot look away, cannot run. ${s.text}`);
+    } },
   ] },
 
   'Barghest': { moves: [

@@ -1839,6 +1839,10 @@ export class GameEngine {
       this.char.statusEffects = this.char.statusEffects.filter(e => e.type !== 'deafened');
       addStatusEffect(this.char, { type: 'deafened', value: 0, turns: HUSH.DEAF_STEPS });
     }
+    // Black Annis may drop on you from the dark above (not on a character on their first level).
+    if (monster.type === 'Black Annis' && this.char.level > 1 && this.rng.float() < 0.35) {
+      return this.lairFirstStrike(['Something drops from the dark above you, claws first: she was waiting overhead!', '']);
+    }
     // A Bugbear may have been waiting in ambush (not for a character on their first level).
     if (monster.type === 'Bugbear' && this.char.level > 1 && this.rng.float() < 0.4) {
       return this.lairFirstStrike(['The Bugbear springs out of the shadows before you can react!', '']);

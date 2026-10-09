@@ -126,3 +126,35 @@ describe('The Fetch and the Bone Vortex', () => {
     expect(seenAt('Bone Vortex', 6)).toBe(false); expect(seenAt('Bone Vortex', 7)).toBe(true);
   });
 });
+
+describe('Black Annis, as the stories tell it', () => {
+  it('shrieks, fixes you with her one eye, and reaches across the room with her long arms', () => {
+    const seen = new Set<string>();
+    const rng = new RNG(4);
+    for (let i = 0; i < 400; i++) {
+      const c = hero(); c.heldRounds = 0;
+      const m = createMonster('Black Annis', 25, 'ba' + i);
+      const text = monsterFirstStrike(c, m, rng).messages.join(' ');
+      if (text.includes('SHRIEKS')) seen.add('shriek');
+      if (text.includes('one yellow eye')) seen.add('eye');
+      if (text.includes('STRETCHES')) seen.add('reach');
+      if (text.includes('iron claws')) seen.add('claws');
+    }
+    expect([...seen].sort()).toEqual(['claws', 'eye', 'reach', 'shriek']);
+  });
+
+  it('is hard to run from: her arm drags you back', () => {
+    let got = 0, dragged = false;
+    const rng = new RNG(9);
+    for (let i = 0; i < 400; i++) {
+      const c = hero(); c.level = 20; c.dexterity = 10;
+      const annis = createMonster('Black Annis', 20, 'a' + i), goblin = createMonster('Orc', 20, 'o' + i);
+      const r = playerRun(c, annis, rng);
+      if (r.ran) got++;
+      if (r.messages.join(' ').includes('drag you back')) dragged = true;
+      void goblin;
+    }
+    expect(dragged).toBe(true);
+    expect(got).toBeLessThan(400 * 0.6);
+  });
+});
