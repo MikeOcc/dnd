@@ -2458,7 +2458,14 @@ export function calculateXPReward(
     mult += diff * LEVELING.XP_LEVEL_DIFF_BONUS_LINEAR
       + diff * diff * LEVELING.XP_LEVEL_DIFF_BONUS_QUADRATIC;
   }
-  if (diff < 0) mult = Math.max(LEVELING.XP_MIN_FRACTION, mult + diff * LEVELING.XP_LEVEL_DIFF_PENALTY);
+  if (diff < 0) {
+    // A monster below you is worth less, by how far below as a share of your
+    // level (ten levels down is a lot at 15, little at 90), and never less
+    // than the old flat rule of -10% a level would give.
+    const flat = mult + diff * LEVELING.XP_LEVEL_DIFF_PENALTY;
+    const share = 1 + (diff / Math.max(1, charLevel)) * LEVELING.XP_BELOW_SHARE_PENALTY;
+    mult = Math.max(LEVELING.XP_MIN_FRACTION, flat, share);
+  }
 
   // Inherent danger of the monster's kind, independent of the level it rolled.
   mult *= 1 + (naturalTier - 1) * LEVELING.XP_TIER_BONUS_PER_TIER;

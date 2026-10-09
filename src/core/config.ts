@@ -270,7 +270,8 @@ export const LEVELING = {
   // doubling payout for a 30+ level gap.
   XP_LEVEL_DIFF_BONUS_LINEAR: 0.2,
   XP_LEVEL_DIFF_BONUS_QUADRATIC: 0.02,
-  XP_LEVEL_DIFF_PENALTY: 0.1, // -10% per level monster is below player
+  XP_LEVEL_DIFF_PENALTY: 0.1, // -10% per level monster is below player (the floor of the two rules)...
+  XP_BELOW_SHARE_PENALTY: 1.5, // ...or less by how far below as a share of your level: 10% of your level below = -15%
   XP_MIN_FRACTION: 0.05,      // always at least 5% of base XP
 
   // A monster's naturalTier (1-10) reflects its inherent danger independent

@@ -1879,3 +1879,18 @@ describe('Backfires', () => {
     expect(r.deathCause).toContain('your own magic');
   });
 });
+
+describe('experience from a monster below you', () => {
+  it('is cut by how far below as a share of your level, so high-level foes still pay', async () => {
+    const { calculateXPReward } = await import('../src/core/combat.js');
+    // Level 90 against a level-80 Troll: most of its worth, not 5%.
+    expect(calculateXPReward(90, 80, false, 4)).toBeGreaterThan(1000);
+    // Never less than the old flat rule gave, at any level.
+    for (const [c, m] of [[5, 3], [10, 5], [20, 12], [30, 20], [60, 40], [90, 80]]) {
+      const flat = Math.max(1, Math.round(m * 12 * Math.max(0.05, 1 - (c - m) * 0.1)));
+      expect(calculateXPReward(c, m, false, 1)).toBeGreaterThanOrEqual(flat);
+    }
+    // Far below you is still worth little.
+    expect(calculateXPReward(90, 10, false, 1)).toBeLessThan(calculateXPReward(90, 80, false, 1) / 10);
+  });
+});
