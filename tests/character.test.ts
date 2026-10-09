@@ -1,3 +1,4 @@
+import { calculateXPReward } from '../src/core/combat.js';
 import { describe, it, expect } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import {
@@ -102,6 +103,12 @@ describe('Character leveling', () => {
     expect(calculateLevel(xpForLevel(60))).toBe(60);
     expect(calculateLevel(xpForLevel(100))).toBe(100);
     expect(calculateLevel(xpForLevel(100) + 10_000_000_000)).toBe(100);
+  });
+
+  it('from 41 to 60 each level costs about as many fights as level 40 did, and from 60 the same XP each time', () => {
+    const fights = (L: number) => (xpForLevel(L + 1) - xpForLevel(L)) / calculateXPReward(L, L, false, 4);
+    for (let L = 41; L < 60; L++) expect(fights(L)).toBeGreaterThan(1000), expect(fights(L)).toBeLessThan(2000);
+    for (let L = 61; L < 100; L++) expect(xpForLevel(L + 1) - xpForLevel(L)).toBe(xpForLevel(61) - xpForLevel(60));
   });
 
   it('xpForLevel keeps increasing all the way to the level-100 cap', () => {
