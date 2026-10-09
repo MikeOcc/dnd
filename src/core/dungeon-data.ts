@@ -52,7 +52,7 @@ export const LEVEL_UNIQUE_MONSTERS: Record<number, UniqueMonsterDef[]> = {
     { id: 'unique-dracolich',  type: 'Bone Sovereign'  },
   ],
   7: [
-    { id: 'unique-nightwalker', type: 'Dusk Nightmare' },
+    { id: 'unique-nightwalker', type: 'Gloommaw' },
     { id: 'unique-tarrasque',   type: 'Tarrasque'   },
     { id: 'unique-tiamat',      type: 'Big Fat Dragon'      },
     { id: 'unique-asmodeus',    type: 'Asmodeus'    },

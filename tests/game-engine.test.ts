@@ -199,7 +199,7 @@ describe('GameEngine — unique boss level rolls', () => {
     for (const [monsterId, min, max] of [
       ['Aboleth', 60, 75],
       ['Bone Sovereign', 60, 75],
-      ['Dusk Nightmare', 60, 75],
+      ['Gloommaw', 60, 75],
       ['Tarrasque', 72, 90],
       ['Big Fat Dragon', 72, 90],
     ] as const) {

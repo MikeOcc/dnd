@@ -1083,8 +1083,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['dragon-breath', 'necromantic-magic', 'life-drain', 'strong-defense'],
   },
-  'Dusk Nightmare': {
-    type: 'Dusk Nightmare', isUndead: true, isUnique: true,
+  'Gloommaw': {
+    type: 'Gloommaw', isUndead: true, isUnique: true,
     minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 7, speed: 1.1,
     baseHpPerLevel: 16, baseAttackPerLevel: 10.0, baseDefensePerLevel: 5.0,
     fireballResistance: 1.0,
@@ -1092,8 +1092,9 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       'The torches gutter and die.',
       '',
       'Something tall and absolute walks out of the darkness.',
+      'Where its face should be there is only a mouth, and the dark pours into it.',
       '',
-      'THE NIGHTWALKER DOES NOT SLOW.',
+      'THE GLOOMMAW DOES NOT SLOW.',
     ],
     specialAbilities: ['darkness', 'terror', 'life-drain', 'heavy-blow'],
   },
@@ -1122,7 +1123,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
       '',
       'Five pairs of eyes open in the darkness.',
       '',
-      'TIAMAT, QUEEN OF EVIL DRAGONS, RISES.',
+      'THE BIG FAT DRAGON RISES.',
     ],
     specialAbilities: ['acid-breath', 'poison-breath', 'lightning-breath', 'frost-breath', 'fire-breath'],
   },
@@ -1148,7 +1149,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight', 'Dracolich': 'Bone Sovereign', 'Tiamat': 'Big Fat Dragon', 'Nightwalker': 'Dusk Nightmare' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight', 'Dracolich': 'Bone Sovereign', 'Tiamat': 'Big Fat Dragon', 'Nightwalker': 'Gloommaw', 'Dusk Nightmare': 'Gloommaw' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1284,7 +1285,7 @@ export const ANCIENT_GHOUL_INTRO = [
 ];
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Bone Sovereign', 'Dusk Nightmare',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Bone Sovereign', 'Gloommaw',
   'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan', 'Bone Vortex',
 ];
 

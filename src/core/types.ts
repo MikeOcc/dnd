@@ -300,7 +300,7 @@ export type MonsterType =
   | 'Gold Dragon'
   | 'Aboleth'
   | 'Bone Sovereign'
-  | 'Dusk Nightmare'
+  | 'Gloommaw'
   | 'Tarrasque'
   | 'Big Fat Dragon'
   | 'Asmodeus';

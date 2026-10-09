@@ -4912,8 +4912,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Dusk Nightmare': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dusk Nightmare">
+  'Gloommaw': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gloommaw">
     <defs>
     <radialGradient id="nw-void" cx="50%" cy="50%" r="50%">
     <stop offset="0" stop-color="#1a1224"/>

@@ -203,7 +203,7 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
     near: ['The ceiling cracks under a titanic footstep!',
            'The whole corridor bucks like a ship in a storm!'],
   },
-  'Dusk Nightmare': {
+  'Gloommaw': {
     far:  ['The air grows suddenly cold. Your breath mists.',
            'Your torchlight shrinks, as though something is drinking it.',
            'For a moment you cannot remember what warmth felt like.',

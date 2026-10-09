@@ -16,7 +16,7 @@ export const MENU_LORE: string[][] = [
   ['A Cerebrovore has already heard you thinking about coming down.', 'It thought you sounded delicious.'],
   ['The Gelatinous Cube leaves the corridors spotless.', 'It keeps the bones as souvenirs.'],
   ['Five heads. Five colours. Five ways to die.', 'The Big Fat Dragon waits where the seventh level ends.'],
-  ['The Dusk Nightmare does not hurry.', 'It has never needed to.'],
+  ['The Gloommaw does not hurry.', 'It has never needed to.'],
   ['Magic tomes whisper in the dark to anyone who will listen.', 'Read one, and it may whisper back something useful.'],
   ['No adventurer has ever returned from the seventh level.', 'Perhaps you will be the first. Perhaps you will be the next.'],
   ['The Lich keeps its heart in a jar of green fire.', 'Find the jar, and even death can die.'],
