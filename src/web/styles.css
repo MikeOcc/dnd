@@ -1038,3 +1038,29 @@ button, .ctrl-btn, .choice-btn { touch-action: manipulation; }
 @media (max-width: 700px) and (prefers-reduced-motion: reduce) {
   #action-sheet, #action-sheet.open { transition: none; }
 }
+
+
+/* Long menus (rings, amulets, gems, spells, shops, gear): a window of their
+   own, with a title, one choice a row, and a scroll bar when needed. */
+#choices-area.list-menu {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 55;
+  width: min(560px, 94vw); max-height: 70vh; overflow-y: auto;
+  flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px;
+  background: var(--panel); border: 1px solid var(--terminal-green);
+  box-shadow: 0 0 24px rgba(0, 255, 0, 0.15), 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  padding: 10px 12px;
+  scrollbar-color: var(--terminal-green-dim) transparent; scrollbar-width: thin;
+}
+#choices-area.list-menu::before { content: attr(data-title); color: var(--terminal-green-bright); letter-spacing: 0.1em; margin-bottom: 4px; }
+#choices-area.list-menu .choice-btn { width: 100%; text-align: left; white-space: normal; flex-shrink: 0; padding: 8px 12px; }
+#choices-area.list-menu::-webkit-scrollbar { width: 8px; }
+#choices-area.list-menu::-webkit-scrollbar-thumb { background: var(--terminal-green-dim); }
+@media (max-width: 700px) {
+  /* On a phone: a sheet from the bottom, like Actions. */
+  #choices-area.list-menu {
+    left: 0; right: 0; top: auto; bottom: 0; transform: none; width: auto;
+    max-height: 72dvh; padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    border-width: 1px 0 0 0;
+  }
+  #choices-area.list-menu .choice-btn { padding: 10px 12px; font-size: 13px; }
+}

@@ -1176,6 +1176,15 @@ const PLANAR_STEP_SECONDS = 20;
 
 function renderChoices(choices, phase, state) {
   const area = document.getElementById('choices-area');
+  // A long list of things to pick from opens as a window (not the fight's own buttons).
+  const lead = state?.messages?.find(l => l && l.trim()) || '';
+  const menuTitle = phase === 'interaction' && state?.interaction?.type === 'shop' && state.interaction.shop?.mode !== 'main' ? (state.interaction.shop.mode === 'buy' ? 'BUY' : 'SELL')
+    : phase === 'interaction' && state?.interaction?.type === 'gear' ? 'GEAR'
+    : phase === 'combat' && /^Choose a spell/.test(lead) ? 'SPELLS'
+    : phase === 'combat' && /^Choose a skill/.test(lead) ? 'SKILLS'
+    : phase === 'combat' && /gem/i.test(lead) && (choices || []).length > 3 ? 'GEMS'
+    : (phase === 'interaction' && (choices || []).length > 6) ? 'CHOOSE' : null;
+  setListMenu(area, menuTitle);
   area.innerHTML = '';
 
   if (phase === 'main-menu') {
@@ -1562,6 +1571,14 @@ function renderMainMenuChoices(area, state) {
   area.appendChild(credits);
 }
 
+/** Long menus (rings, amulets, gems, spells, a shop's or the gear list) open
+ * as a window of their own: a title, one choice a row, a scroll bar when
+ * needed; on a phone, a sheet from the bottom. The fight's own buttons stay put. */
+function setListMenu(area, title) {
+  if (title) { area.dataset.list = '1'; area.dataset.title = title; } else { delete area.dataset.list; delete area.dataset.title; }
+  area.classList.toggle('list-menu', !!title);
+}
+
 /** The ring menu (R in a fight, J while exploring), from the engine's ringChoices. */
 function openRingMenu() {
   const rings = currentState.ringChoices || [];
@@ -1571,6 +1588,7 @@ function openRingMenu() {
   }
   ringMenuOpen = true;
   const area = document.getElementById('choices-area');
+  setListMenu(area, 'RINGS');
   area.innerHTML = '';
   for (const ring of rings) {
     const btn = makeChoiceBtn(ring.key.toUpperCase(), ring.text);
@@ -1592,6 +1610,7 @@ function openAmuletMenu() {
   }
   amuletMenuOpen = true;
   const area = document.getElementById('choices-area');
+  setListMenu(area, 'AMULETS');
   area.innerHTML = '';
   for (const a of amulets) {
     const btn = makeChoiceBtn(a.key.toUpperCase(), a.text);
