@@ -34,10 +34,10 @@ const MONSTER_ART = {
   Rakshasa: { src: 'art/rakshasa.webp?v=1', cutout: true, height: 320 },
   'Barrow-King': { src: 'art/barrow-king.webp?v=1', cutout: true, height: 340 },
   'Lambton Worm': { src: 'art/lambton-worm.webp?v=1', cutout: true, height: 270 },
-  Nightwalker: { src: 'art/nightwalker.webp?v=1', cutout: true, height: 350 },
+  'Dusk Nightmare': { src: 'art/nightwalker.webp?v=1', cutout: true, height: 350 },
   'Orc King': { src: 'art/orc-king.webp?v=1', cutout: true, height: 330 },
   Tarrasque: { src: 'art/tarrasque.webp?v=1', cutout: true, height: 280 },
-  Tiamat: { src: 'art/tiamat.webp?v=1', cutout: true, height: 320 },
+  'Big Fat Dragon': { src: 'art/tiamat.webp?v=1', cutout: true, height: 320 },
   // Asmodeus, the reptilian lord, on the red smoke of his own background.
   Asmodeus: { src: 'art/asmodeus.jpg?v=1', soft: true, height: 380, scene: { cx: 0.5, cy: 0.5, r: 0.5 } },
 };

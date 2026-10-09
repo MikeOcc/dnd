@@ -1371,7 +1371,7 @@ describe('Scare', () => {
   it('never works on the mindless or on unique lords', () => {
     expect(scareChance(hero(90), createMonster('Zombie', 5, 'z'))).toBe(0);
     expect(scareChance(hero(90), createMonster('Gelatinous Cube', 5, 'g'))).toBe(0);
-    expect(scareChance(hero(90), createMonster('Tiamat', 60, 't'))).toBe(0);
+    expect(scareChance(hero(90), createMonster('Big Fat Dragon', 60, 't'))).toBe(0);
   });
 
   it('is easy against a far weaker foe, hard against a fearsome one, and helped by Charisma', () => {

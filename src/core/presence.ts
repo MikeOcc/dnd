@@ -1,7 +1,7 @@
 // The unique monsters make themselves felt before they're met. Asmodeus's
 // voice reaches every level, and from level 4 down he lashes out from afar,
 // harder the deeper you are and the nearer his lair. The others are felt on
-// their own level (Tiamat faintly on the level above), more strongly the
+// their own level (Big Fat Dragon faintly on the level above), more strongly the
 // closer you are. The Bone Sovereign sends remote fear. Everything stops once
 // that monster is defeated. Nothing here can kill.
 
@@ -15,7 +15,7 @@ export interface Lair { type: MonsterType; x: number; y: number }
 export interface PresenceContext {
   char: Character;
   level: number;                  // current dungeon level
-  lairs: Lair[];                  // living uniques on this level (and Tiamat from level 7 when on 6)
+  lairs: Lair[];                  // living uniques on this level (and Big Fat Dragon from level 7 when on 6)
   asmodeusAlive: boolean;
   asmodeusLair: { x: number; y: number } | null;   // on level 7, if known
   voiceDue?: boolean;             // a new character's first word from Asmodeus is due now
@@ -175,7 +175,7 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
            'Torchlight flickers ahead, and the shadows of armored shapes move across the walls.',
            'Heads on spikes line the passage here, some of them wearing crowns.'],
   },
-  Tiamat: {
+  'Big Fat Dragon': {
     far:  ['A roar rolls through the rock from somewhere far off, shaking dust from the ceiling.',
            'Far away, something vast bellows, and the echo takes a long time to die.',
            'A distant thunder that is not thunder grumbles through the walls.',
@@ -203,7 +203,7 @@ export const FLAVOR: Partial<Record<MonsterType, Record<Range, string[]>>> = {
     near: ['The ceiling cracks under a titanic footstep!',
            'The whole corridor bucks like a ship in a storm!'],
   },
-  Nightwalker: {
+  'Dusk Nightmare': {
     far:  ['The air grows suddenly cold. Your breath mists.',
            'Your torchlight shrinks, as though something is drinking it.',
            'For a moment you cannot remember what warmth felt like.',
@@ -259,8 +259,8 @@ function lairFlavor(ctx: PresenceContext, rng: RNG): PresenceEvent | null {
   const lair = [...ctx.lairs].sort((a, b) => dist(ctx.char, a) - dist(ctx.char, b))[0];
   const pool = FLAVOR[lair.type];
   if (!pool) return null;
-  // Tiamat heard through the floor from the level above is always faint.
-  const range = lair.type === 'Tiamat' && ctx.level !== 7 ? 'far' : rangeOf(dist(ctx.char, lair));
+  // Big Fat Dragon heard through the floor from the level above is always faint.
+  const range = lair.type === 'Big Fat Dragon' && ctx.level !== 7 ? 'far' : rangeOf(dist(ctx.char, lair));
   const messages = [rng.pick(pool[range])];
 
   if (lair.type === 'Tarrasque' && range === 'near') {

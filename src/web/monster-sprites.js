@@ -4912,8 +4912,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Nightwalker': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nightwalker">
+  'Dusk Nightmare': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dusk Nightmare">
     <defs>
     <radialGradient id="nw-void" cx="50%" cy="50%" r="50%">
     <stop offset="0" stop-color="#1a1224"/>
@@ -5091,8 +5091,8 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
-  'Tiamat': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tiamat">
+  'Big Fat Dragon': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Big Fat Dragon">
     <defs>
     <radialGradient id="tm-body" cx="45%" cy="30%" r="80%">
     <stop offset="0" stop-color="#6a4a7a"/>

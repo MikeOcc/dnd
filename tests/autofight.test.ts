@@ -14,7 +14,7 @@ const ctx = { held: false, powerReady: true };
 
 describe('choosing', () => {
   it('hands a great foe back to the player', () => {
-    const r = chooseAuto(wizard(), createMonster('Tiamat', 90, 't'), {}, new RNG(1), ctx);
+    const r = chooseAuto(wizard(), createMonster('Big Fat Dragon', 90, 't'), {}, new RNG(1), ctx);
     expect(r.kind).toBe('stop');
   });
 
@@ -79,7 +79,7 @@ describe('in the game', () => {
     const s = e.beginCombat(createMonster('Kobold', 1, 'k'));
     expect(s.choices.some((c: { key: string; text: string }) => c.key === 'g' && c.text === 'Auto-fight')).toBe(true);
     e.phase = 'playing'; e.combat = null;
-    const u = e.beginCombat(createMonster('Tiamat', 90, 't'));
+    const u = e.beginCombat(createMonster('Big Fat Dragon', 90, 't'));
     expect(u.choices.some((c: { key: string }) => c.key === 'g')).toBe(false);
     expect(e.autoFight().autoFight.stopped).toMatch(/great foe/);
   });

@@ -1083,8 +1083,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['dragon-breath', 'necromantic-magic', 'life-drain', 'strong-defense'],
   },
-  'Nightwalker': {
-    type: 'Nightwalker', isUndead: true, isUnique: true,
+  'Dusk Nightmare': {
+    type: 'Dusk Nightmare', isUndead: true, isUnique: true,
     minLevel: 60, maxLevel: 75, naturalTier: 9, minDungeonLevel: 7, speed: 1.1,
     baseHpPerLevel: 16, baseAttackPerLevel: 10.0, baseDefensePerLevel: 5.0,
     fireballResistance: 1.0,
@@ -1112,8 +1112,8 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: ['enormous-hp', 'massive-attack', 'spell-resistance', 'hard-to-run'],
   },
-  'Tiamat': {
-    type: 'Tiamat', isUndead: false, isUnique: true,
+  'Big Fat Dragon': {
+    type: 'Big Fat Dragon', isUndead: false, isUnique: true,
     minLevel: 72, maxLevel: 90, naturalTier: 10, minDungeonLevel: 7, speed: 1.0,
     baseHpPerLevel: 22, baseAttackPerLevel: 11.0, baseDefensePerLevel: 6.5,
     fireballResistance: 0.5,  // has white dragon head so vulnerable in one sense, but multi-headed
@@ -1148,7 +1148,7 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
 };
 
 /** Monsters that were renamed: saved levels may still name them the old way. */
-const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight', 'Dracolich': 'Bone Sovereign' };
+const RENAMED: Record<string, MonsterType> = { 'Mind Flayer': 'Cerebrovore', 'Beholder': 'Hollow Choir', 'Demilich': 'Caput Mortuum', 'Behir': 'Beithir', 'Death Knight': 'Undead Knight', 'Dracolich': 'Bone Sovereign', 'Tiamat': 'Big Fat Dragon', 'Nightwalker': 'Dusk Nightmare' };
 
 /** A monster type as the game knows it now (an old saved name maps to its new one). */
 export function currentMonsterType(type: string): MonsterType {
@@ -1284,7 +1284,7 @@ export const ANCIENT_GHOUL_INTRO = [
 ];
 
 export const UNDEAD_TYPES: MonsterType[] = [
-  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Bone Sovereign', 'Nightwalker',
+  'Skeleton', 'Zombie', 'Ghoul', 'Wight', 'Spectre', 'Banshee', 'Vampire', 'Undead Knight', 'Lich', 'Bone Sovereign', 'Dusk Nightmare',
   'Death Tyrant', 'Caput Mortuum', 'Barrow-King', 'Draugr', 'Penanggalan', 'Bone Vortex',
 ];
 

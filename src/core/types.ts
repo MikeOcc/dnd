@@ -300,9 +300,9 @@ export type MonsterType =
   | 'Gold Dragon'
   | 'Aboleth'
   | 'Bone Sovereign'
-  | 'Nightwalker'
+  | 'Dusk Nightmare'
   | 'Tarrasque'
-  | 'Tiamat'
+  | 'Big Fat Dragon'
   | 'Asmodeus';
 
 export interface MonsterDefinition {

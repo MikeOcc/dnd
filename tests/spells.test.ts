@@ -55,7 +55,7 @@ describe('Banish', () => {
   it('very powerful monsters resist on a d12, more so by tier', () => {
     expect(banishFailFaces(createMonster('Lich', 20, 'l'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[8]);
     expect(banishFailFaces(createMonster('Bone Sovereign', 65, 'd'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[9]);
-    expect(banishFailFaces(createMonster('Tiamat', 85, 't'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
+    expect(banishFailFaces(createMonster('Big Fat Dragon', 85, 't'))).toBe(SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
   });
 
   it('high-level dragons and undead resist too, low-level ones do not', () => {
@@ -71,12 +71,12 @@ describe('Banish', () => {
     const rng = new RNG(11);
     let banished = 0, failed = 0;
     for (let i = 0; i < 600; i++) {
-      const res = playerBanish(makeChar(80), createMonster('Tiamat', 85, 't'), rng);
+      const res = playerBanish(makeChar(80), createMonster('Big Fat Dragon', 85, 't'), rng);
       const roll = Number(res.messages.join(' ').match(/d12: (\d+)/)![1]);
       expect(res.banished ?? false).toBe(roll > SPELLS.BANISH_FAIL_FACES_BY_TIER[10]);
       if (res.banished) banished++; else failed++;
     }
-    // 5 of 12 faces succeed against Tiamat
+    // 5 of 12 faces succeed against Big Fat Dragon
     expect(banished / 600).toBeGreaterThan(0.33);
     expect(banished / 600).toBeLessThan(0.5);
     expect(failed).toBeGreaterThan(0);

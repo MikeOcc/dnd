@@ -95,9 +95,9 @@ describe('The Bone Sovereign’s fear', () => {
 });
 
 describe('Lair presences', () => {
-  it('Tiamat is heard faintly from the level above, and the Tarrasque drops stones up close', () => {
-    const faint = rollPresence(base({ level: 6, asmodeusAlive: false, lairs: [{ type: 'Tiamat', x: 11, y: 10 }] }), scripted([0]))!;
-    expect(FLAVOR.Tiamat!.far).toContain(faint.messages[0]);
+  it('Big Fat Dragon is heard faintly from the level above, and the Tarrasque drops stones up close', () => {
+    const faint = rollPresence(base({ level: 6, asmodeusAlive: false, lairs: [{ type: 'Big Fat Dragon', x: 11, y: 10 }] }), scripted([0]))!;
+    expect(FLAVOR['Big Fat Dragon']!.far).toContain(faint.messages[0]);
 
     const ctx = base({ level: 7, asmodeusAlive: false, lairs: [{ type: 'Tarrasque', x: 11, y: 10 }] });
     const ev = rollPresence(ctx, scripted([0, 0.5]))!;

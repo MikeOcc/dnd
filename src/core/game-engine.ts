@@ -1263,8 +1263,8 @@ export class GameEngine {
 
     const level = this.char.dungeonLevel;
     const here = lairsOn(level).filter(l => l.type !== 'Asmodeus');
-    // Tiamat is heard through the floor from the level above.
-    const tiamatBelow = level === 6 ? lairsOn(7).filter(l => l.type === 'Tiamat') : [];
+    // Big Fat Dragon is heard through the floor from the level above.
+    const tiamatBelow = level === 6 ? lairsOn(7).filter(l => l.type === 'Big Fat Dragon') : [];
     const deepest = lairsOn(7);
     const asmodeus = deepest.find(l => l.type === 'Asmodeus');
     const asmodeusAlive = !!asmodeus;   // banished or not, he always comes back
@@ -3295,7 +3295,7 @@ export class GameEngine {
     }
 
     // A dragon sometimes leaves its hoard (the great ones always do).
-    if ((monster.type.includes('Dragon') || ['Tiamat', 'Bone Sovereign', 'Lambton Worm'].includes(monster.type))
+    if ((monster.type.includes('Dragon') || ['Big Fat Dragon', 'Bone Sovereign', 'Lambton Worm'].includes(monster.type))
         && (def.isUnique || this.rng.float() < HOARD.CHANCE)) {
       this.messages.push(...this.leaveHoard(monster));
     }
@@ -3760,7 +3760,7 @@ export class GameEngine {
     if (hoard) {
       const loot = dragonHoardLoot(this.char, currentMonsterType(hoard.monster), hoard.monsterLevel, this.rng);
       messages.push(...loot.messages);
-      const unique = ['Tiamat', 'Bone Sovereign'].includes(currentMonsterType(hoard.monster));   // (an old hoard may say Dracolich)
+      const unique = ['Big Fat Dragon', 'Bone Sovereign'].includes(currentMonsterType(hoard.monster));   // (an old hoard may say Dracolich)
       if (unique || (hoard.monsterLevel >= HOARD.ITEM_FROM_LEVEL && this.rng.float() < HOARD.ITEM_CHANCE)) messages.push(...this.hoardItem());
       this.dungeonState.hoards = this.dungeonState.hoards!.filter(h => h.id !== id);
       this.cue('victory-4');

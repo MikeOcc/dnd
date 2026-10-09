@@ -2111,11 +2111,11 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
-  // ─── Tiamat ──────────────────────────────────────────────────────────────
+  // ─── Big Fat Dragon ──────────────────────────────────────────────────────────────
   // The Queen of Dragons: five heads on five long necks, one of each
   // chromatic colour, rising from one vast scaled body, every maw open.
-  'Tiamat': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tiamat: five dragon heads, red, blue, green, white and black, on long scaled necks rising from one vast body, every maw open">
+  'Big Fat Dragon': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Big Fat Dragon: five dragon heads, red, blue, green, white and black, on long scaled necks rising from one vast body, every maw open">
     <defs>
       ${wetSkinFilter('hti-hide', { freq: '0.14 0.18', seed: 130, shine: 0.5 })}
       ${scalePattern('hti-sc', 3, '#08060a', '#d8c8e0')}
