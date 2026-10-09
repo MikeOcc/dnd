@@ -98,13 +98,14 @@ describe('Character leveling', () => {
     expect(char.level).toBe(1);
   });
 
-  it('the character level cap is 60, reachable through normal XP progression', () => {
+  it('the character level cap is 100, reachable through normal XP progression', () => {
     expect(calculateLevel(xpForLevel(60))).toBe(60);
-    expect(calculateLevel(xpForLevel(60) + 1_000_000_000)).toBe(60);
+    expect(calculateLevel(xpForLevel(100))).toBe(100);
+    expect(calculateLevel(xpForLevel(100) + 10_000_000_000)).toBe(100);
   });
 
-  it('xpForLevel keeps increasing all the way to the level-60 cap', () => {
-    for (let i = 21; i <= 60; i++) {
+  it('xpForLevel keeps increasing all the way to the level-100 cap', () => {
+    for (let i = 21; i <= 100; i++) {
       expect(xpForLevel(i)).toBeGreaterThan(xpForLevel(i - 1));
     }
   });

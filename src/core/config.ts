@@ -237,9 +237,9 @@ export const COMBAT = {
 
 export const LEVELING = {
   // XP thresholds for each character level (index = level). Levels 1-20
-  // follow the original curve; 21-60 continue it with a decaying growth
-  // ratio (approaching ~1.10x per level) so the climb keeps steepening
-  // without exploding into absurd numbers by the level-60 cap.
+  // follow the original curve; 21-100 continue it with a decaying growth
+  // ratio (about 1.12x a level at 60, easing to 1.08x by 100) so the climb
+  // keeps steepening without exploding into absurd numbers by the level-100 cap.
   XP_TABLE: [
     0, 0, 100, 300, 700, 1500, 3000, 5500, 9000, 14000, 21000,
     30000, 42000, 57000, 75000, 97000, 125000, 159000, 200000, 249000, 307000,
@@ -247,8 +247,13 @@ export const LEVELING = {
     2105300, 2452400, 2849100, 3301700, 3817100, 4403000, 5068000, 5821600, 6674400, 7638100,
     8725600, 9951300, 11331100, 12882600, 14625300, 16580700, 18772600, 21227300, 23973900, 27044500,
     30474500, 34303100, 38573500, 43333400, 48635400, 54537600, 61104000, 68405300, 76519400, 85532200,
+    // 61-100: the same climb, easing from about +12% a level toward +8%.
+    95539500, 106622100, 118883600, 132436300, 147401600, 163910600, 182104700, 202136200, 224169000, 248379300,
+    274955900, 304101200, 336031800, 370979100, 409189900, 450927300, 496471000, 546118100, 600183800, 659001800,
+    722925000, 792325800, 867596800, 949150900, 1037421900, 1132864700, 1235955400, 1347191400, 1467091400, 1596195400,
+    1735064400, 1884279900, 2044443700, 2216177000, 2400119700, 2596929500, 2807280800, 3031863300, 3271380500, 3526548200,
   ],
-  MAX_LEVEL: 60,
+  MAX_LEVEL: 100,
 
   // HP gain per level: const + CON_DIVISOR roll
   HP_PER_LEVEL_BASE: 4,
