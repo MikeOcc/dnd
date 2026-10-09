@@ -191,6 +191,7 @@ function applyState(state) {
   viewContainer.classList.toggle('hidden', !isPlaying || !state.view || ['map', 'inventory', 'status'].includes(phase));
   movementControls.classList.toggle('hidden', !['playing', 'status', 'inventory'].includes(phase) && !(phase === 'map' && arrowsShown));
   movementControls.classList.toggle('map-walk', phase === 'map');
+  nextAutoRound(state);
   if (sheetOpen && !['playing', 'status', 'inventory'].includes(phase)) setSheet(false);
   nameInputArea.classList.toggle('hidden', phase !== 'name-entry');
 
@@ -528,6 +529,35 @@ function updateViewButton() {
 // ─── More, Help, the strip under the view ────────────────────────────────────
 
 let moreOpen = false;
+// ─── Auto-fight: the game picks each round's action (the server decides and
+// learns; see core/autofight.ts). One request a round, about a second apart,
+// so you can watch; any key or tap takes over. It hands the fight back on its
+// own against a great foe, or badly hurt with nothing left to heal.
+const AUTO_ROUND_MS = 900;
+let autoFighting = false, autoTimer = null;
+function startAutoFight() {
+  if (currentState?.phase !== 'combat') return;
+  autoFighting = true;
+  apiAction('combat', { choice: 'auto' });
+}
+function stopAutoFight() {
+  autoFighting = false;
+  clearTimeout(autoTimer); autoTimer = null;
+  const area = document.getElementById('messages');
+  if (area && currentState?.phase === 'combat') area.insertAdjacentText('afterbegin', 'You take over the fight.\n');
+}
+/** After each round: go on, or stop (the fight is over, or it handed it back). */
+function nextAutoRound(state) {
+  clearTimeout(autoTimer); autoTimer = null;
+  if (!autoFighting) return;
+  if (state.phase !== 'combat' || state.autoFight?.stopped) { autoFighting = false; return; }
+  autoTimer = setTimeout(() => { if (autoFighting && currentState?.phase === 'combat') apiAction('combat', { choice: 'auto' }); }, AUTO_ROUND_MS);
+}
+// A tap anywhere takes over too (but not the tap that started it).
+document.addEventListener('pointerdown', (e) => {
+  if (autoFighting && !e.target.closest?.('[data-auto]')) stopAutoFight();
+}, true);
+
 // ─── Phones: the action sheet (see styles.css). Map, Potion and Actions sit in a
 // small bar; Actions slides up a sheet with every other command. Picking one,
 // tapping outside, ✕ or Esc closes it.
@@ -1272,6 +1302,12 @@ function renderChoices(choices, phase, state) {
   for (const choice of choices) {
     const btn = makeChoiceBtn(choice.key.toUpperCase(), choice.text);
     btn.onclick = () => handleChoiceKey(choice.key, phase);
+    if (phase === 'combat' && choice.key === 'g') {
+      // Auto-fight: the same button starts it and stops it.
+      btn.dataset.auto = '1';
+      if (autoFighting) btn.lastChild.textContent = ' Stop auto-fight';
+      btn.onclick = () => (autoFighting ? stopAutoFight() : startAutoFight());
+    }
     area.appendChild(btn);
   }
 }
@@ -1841,6 +1877,7 @@ function handleChoiceKey(key, phase) {
   }
 
   if (phase === 'combat') {
+    if (key === 'g' && !spellMenuOpen && !gemMenuOpen && !ringMenuOpen && !amuletMenuOpen) { startAutoFight(); return; }
     if (spellMenuOpen) {
       spellMenuOpen = false;
       apiAction('spell', { choice: key });
@@ -1920,6 +1957,8 @@ function submitName() {
 // ─── Keyboard events ──────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
+  // Auto-fight: any key takes the fight back.
+  if (autoFighting) { e.preventDefault(); stopAutoFight(); return; }
   if (sheetOpen && e.key === 'Escape') { e.preventDefault(); setSheet(false); return; }
   const phase = currentState.phase;
 
@@ -2093,6 +2132,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (phase === 'combat') {
+    if (key === 'g' && !spellMenuOpen && !gemMenuOpen && !ringMenuOpen && !amuletMenuOpen) { startAutoFight(); return; }
     if (spellMenuOpen) {
       if ((currentState.spellChoices || []).some(c => c.key === key)) {
         spellMenuOpen = false;

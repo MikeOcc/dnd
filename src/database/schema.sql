@@ -97,3 +97,15 @@ CREATE TABLE IF NOT EXISTS deaths (
   died_at       INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_deaths_level ON deaths(dungeon_level, died_at);
+
+-- What the game has learned about fighting each kind of monster, shared by
+-- every player: for each class and monster, how much harm each action did.
+-- Auto-fight picks by it (core/autofight.ts).
+CREATE TABLE IF NOT EXISTS fight_lore (
+  char_class    TEXT NOT NULL,
+  monster_type  TEXT NOT NULL,
+  action        TEXT NOT NULL,
+  uses          INTEGER NOT NULL DEFAULT 0,
+  damage        INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (char_class, monster_type, action)
+);

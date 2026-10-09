@@ -104,6 +104,18 @@ export class Repository {
     return row ? row.owner : undefined;
   }
 
+  /** What's been learned about fighting a kind of monster, for a class (auto-fight). */
+  fightLore(charClass: string, monsterType: string): Record<string, { uses: number; damage: number }> {
+    const rows = this.db.prepare('SELECT action, uses, damage FROM fight_lore WHERE char_class = ? AND monster_type = ?').all(charClass, monsterType) as { action: string; uses: number; damage: number }[];
+    return Object.fromEntries(rows.map(r => [r.action, { uses: r.uses, damage: r.damage }]));
+  }
+
+  /** One more use of an action against a kind of monster, and the harm it did. */
+  learnFight(charClass: string, monsterType: string, action: string, damage: number): void {
+    this.db.prepare(`INSERT INTO fight_lore (char_class, monster_type, action, uses, damage) VALUES (?, ?, ?, 1, ?)
+      ON CONFLICT(char_class, monster_type, action) DO UPDATE SET uses = uses + 1, damage = damage + excluded.damage`).run(charClass, monsterType, action, Math.max(0, Math.round(damage)));
+  }
+
   /** A death, kept for the echoes other players meet. */
   recordDeath(d: Omit<Death, 'id'>): void {
     this.db.prepare('INSERT INTO deaths (character_id, name, char_class, char_level, dungeon_level, cause, died_at) VALUES (?, ?, ?, ?, ?, ?, ?)')

@@ -502,6 +502,14 @@ export const ABOLETH = {
   SOUND_CHANCE: 0.5,        // per step that close
 } as const;
 
+// Auto-fight (core/autofight.ts).
+export const AUTO = {
+  HEAL_AT: 0.4,      // heal (a wizard's spell) or drink a potion at this share of health...
+  STOP_AT: 0.3,      // ...and with nothing to heal, hand the fight back below this
+  EXPLORE: 0.1,      // how often it tries something other than its best, to keep learning
+  MIN_TRIES: 2,      // each action is tried this many times against a kind of monster before trusting the record
+} as const;
+
 // Echoes of other players: where their characters fell (bloodstains) and
 // what is left of them (shades). Only names that pass core/names.ts are shown.
 export const ECHOES = {

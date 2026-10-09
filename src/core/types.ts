@@ -492,6 +492,7 @@ export interface SceneObject {
 }
 
 export interface GameState {
+  autoFight?: { action?: string; stopped?: string };   // auto-fight: what it just did, or why it handed the fight back
   phase: GamePhase;
   character?: Character;
   currentRoll?: CharacterRoll;

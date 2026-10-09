@@ -27,6 +27,7 @@ import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
 import { nameIsDecent } from './names.js';
+import { chooseAuto, loreAction, type Lore } from './autofight.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import { describeArea, ceilingHeight } from '../content/area-text.js';
 import { mapAreas, areaAtCell, type AreaMap, waysOut, bearingsPhrase } from './regions.js';
@@ -415,6 +416,7 @@ export class GameEngine {
         ...(this.ringsOwned().some(r => POWER_RINGS.includes(r)) ? [{ key: 'r', text: 'Use Ring' }] : []),
         ...(this.combat.monster.type === 'Unicorn' ? [{ key: 'h', text: 'Offer Your Hand' }] : []),
         ...(this.repeatSpellKey() ? [{ key: 'z', text: `${knownSpells(this.char!.level, 'wizard').find(s => s.id === this.lastSpell)?.name} again` }] : []),
+        ...(!this.combat.monster.definition.isUnique ? [{ key: 'g', text: 'Auto-fight' }] : []),
       ];
     }
     if (this.interaction) {
@@ -1158,6 +1160,45 @@ export class GameEngine {
     return this.beginCombat(monster);
   }
 
+  // ─── Auto-fight ──────────────────────────────────────────────────────────
+  // The game picks this round's action (core/autofight.ts) and learns from
+  // what it did. One round per call: the browser calls again while the player
+  // lets it run, so it is no more traffic than clicking.
+
+  autoFight(): GameState {
+    const c = this.char, cb = this.combat;
+    if (!c || !cb || this.phase !== 'combat') return this.getState();
+    const m = cb.monster;
+    let lore: Lore = {};
+    try { lore = this.repo.fightLore(c.charClass, m.type); } catch { /* learning is a nicety */ }
+    const choice = chooseAuto(c, m, lore, this.rng, { held: this.isHeld(), powerReady: this.powerAttackWait() === 0 });
+    if (choice.kind === 'stop') {
+      this.messages = [`AUTO-FIGHT STOPS. ${choice.why}`];
+      const s = this.getState();
+      s.autoFight = { stopped: choice.why };
+      return s;
+    }
+    const before = m.hp;
+    let label: string, s: GameState;
+    if (choice.kind === 'potion') { label = 'Potion'; s = this.combatAction('p'); }
+    else if (choice.kind === 'struggle' || choice.kind === 'attack') { label = choice.kind === 'struggle' ? 'Struggle' : 'Attack'; s = this.combatAction('a'); }
+    else {
+      const i = knownSpells(c.level, c.charClass).findIndex(sp => sp.id === choice.spell);
+      label = choice.name;
+      s = this.spellAction(String.fromCharCode(97 + i));
+    }
+    // What it did: the monster's health before, against after (all of it, if it fell).
+    const action = loreAction(choice);
+    if (action) {
+      const after = this.combat?.monster === m ? Math.max(0, m.hp) : 0;
+      try { this.repo.learnFight(c.charClass, m.type, action, before - after); } catch { /* learning is a nicety */ }
+    }
+    s.messages = [`[AUTO] ${label}  (any key or tap to take over)`, ...s.messages];
+    this.messages = s.messages;
+    s.autoFight = { action: label };
+    return s;
+  }
+
   /** Walking near the Aboleth's lair: you smell it, you hear it, and now and
    * then it comes for you on its wings and strikes before you can act. */
   private nearTheAboleth(): GameState | null {
@@ -1866,6 +1907,7 @@ export class GameEngine {
       case 'f': return this.combatScare();
       case 'e': return this.showGemMenu();
       case 'p': return this.combatPotion();
+      case 'auto': return this.autoFight();
       case 'z': {
         // A wizard's last spell, cast again.
         const k = this.repeatSpellKey();
