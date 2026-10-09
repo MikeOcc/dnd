@@ -1243,11 +1243,11 @@ function renderChoices(choices, phase, state) {
     const toggle = makeChoiceBtn('F', state.mapFull ? 'Centered View' : 'Full Floor');
     toggle.onclick = () => apiAction('toggle-map-view');
     area.appendChild(toggle);
-    if (state.mapRevealed) {
-      const reveal = makeChoiceBtn('X', state.mapShowWhole ? 'Explored Only' : 'Whole Level');
-      reveal.onclick = () => apiAction('toggle-map-reveal');
-      area.appendChild(reveal);
-    }
+    // Whole level / explored only: on a level a Diamond has revealed; elsewhere, greyed, saying how.
+    const reveal = makeChoiceBtn('X', !state.mapRevealed ? 'Whole Level (use a Diamond here first)' : state.mapShowWhole ? 'Explored Only' : 'Whole Level');
+    if (state.mapRevealed) reveal.onclick = () => apiAction('toggle-map-reveal');
+    else { reveal.disabled = true; reveal.title = 'A Diamond reveals the whole of this level; then X switches between the whole level and what you have explored.'; }
+    area.appendChild(reveal);
     const zin = makeChoiceBtn('+', `Zoom In (${mapZoom + 1}/${MAP_ZOOM_STEPS.length})`);
     zin.onclick = () => zoomMap(1);
     zin.disabled = mapZoom === MAP_ZOOM_STEPS.length - 1;
