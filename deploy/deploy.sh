@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 npm run typecheck
 rsync -az --delete \
   --exclude node_modules --exclude '*.db' --exclude '*.db-*' --exclude scratch --exclude mikefiles \
-  --exclude .git --exclude .DS_Store --exclude dist \
+  --exclude .git --exclude .DS_Store --exclude dist --exclude monster-sprites-local.js \
   ./ "$SERVER:/srv/seven-levels/app/"
 if $WEB_ONLY; then
   ssh "$SERVER" 'chown -R seven:seven /srv/seven-levels/app && echo "web files updated (no restart)"'

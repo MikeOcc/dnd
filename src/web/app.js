@@ -284,6 +284,10 @@ function applyState(state) {
       portraitEl._sprite = html;
     }
     portraitEl.classList.toggle('painted', !!painted);
+    // A painted foe shows its wounds: a red glow below two-thirds, pulsing embers below a third.
+    const hpLeft = monster.maxHp ? monster.hp / monster.maxHp : 1;
+    portraitEl.classList.toggle('wound-1', !!painted && hpLeft <= 0.66 && hpLeft > 0.33);
+    portraitEl.classList.toggle('wound-2', !!painted && hpLeft <= 0.33);
     portraitEl.style.setProperty('--sprite-scale', getMonsterSpriteScale(monster.type));
     portraitEl.classList.toggle('hidden', !sprite);
     // The Hollow Choir: shattered masks are gone; a mask gathering a power brightens as the masks align.
