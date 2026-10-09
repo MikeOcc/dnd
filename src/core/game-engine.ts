@@ -3,7 +3,7 @@ import type {
   Character, Monster, GameState, GamePhase, CombatState, InteractionState,
   Direction, SerializedDungeon, DungeonCell, CellContent, DungeonState,
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
-  Fx, FxElement, ChestTrapType, CharacterClass, MonsterType, FirstSteps,
+  Fx, FxElement, ChestTrapType, CharacterClass, MonsterType, FirstSteps, Death,
 } from './types.js';
 import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear, weaponPower, armorShare } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
@@ -16,7 +16,7 @@ import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } fr
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
-import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE, ABOLETH, BORAK } from './config.js';
+import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE, ABOLETH, BORAK, ECHOES, MONSTER_SCALING } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm, placeRakshasa } from './lairs.js';
 import { placeTreasures, placeShop, TREASURE_CHEST_PREFIX, RING_CHEST_PREFIX } from './treasures.js';
@@ -26,6 +26,7 @@ import { RINGS_INFO, RING_ORDER, ringChestById, POWER_RINGS, isProtectionRing } 
 import { getLevelIntro } from '../content/level-text.js';
 import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
+import { nameIsDecent } from './names.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import { describeArea, ceilingHeight } from '../content/area-text.js';
 import { mapAreas, areaAtCell, type AreaMap, waysOut, bearingsPhrase } from './regions.js';
@@ -44,6 +45,12 @@ function isSolidRock(cell: DungeonCell): boolean {
  * square on every level. */
 /** What you deal with from the square in front of it, rather than by stepping on it. */
 const APPROACHABLE = new Set<string>(['chest', 'altar', 'fountain', 'book', 'shop']);
+/** How long ago, in plain words: "earlier today", "yesterday", "3 days ago". */
+function agoText(at: number): string {
+  const days = Math.floor((Date.now() - at) / 86400000);
+  return days <= 0 ? 'earlier today' : days === 1 ? 'yesterday' : `${days} days ago`;
+}
+
 /** What you notice near the Aboleth's lair, close and very close. */
 const ABOLETH_SENSE_LINES = [
   'The stink of evil is here.',
@@ -292,6 +299,7 @@ export class GameEngine {
           objects.push({ x, y, kind: 'monster', type: isHiddenMonster(t) ? hiddenStandIn(t) : t, facing });
         }
         else if (c.type === 'shop') objects.push({ x, y, kind: 'shop' });
+        else if (c.type === 'bloodstain') objects.push({ x, y, kind: 'bloodstain' });
       }
     }
     return { x: px, y: py, facing: this.char.facing, level, radius: R, cells, objects };
@@ -1115,6 +1123,41 @@ export class GameEngine {
     return this.getState();
   }
 
+  /** Echoes of other players: up to a few bloodstains on this level where
+   * their characters fell lately (decent names only), each on a quiet square
+   * of a room, the same squares every time this level is loaded. */
+  private placeBloodstains(levelNum: number, grid: DungeonCell[][], entrance: { x: number; y: number }, contents: Map<string, CellContent>): void {
+    if (!this.char) return;
+    let deaths: Death[] = [];
+    try { deaths = this.repo.recentDeaths(levelNum, this.char.id, Date.now() - ECHOES.RECENT_DAYS * 86400000, ECHOES.STAINS_PER_LEVEL * 3); } catch { return; }
+    deaths = deaths.filter(d => nameIsDecent(d.name)).slice(0, ECHOES.STAINS_PER_LEVEL);
+    if (!deaths.length) return;
+    const reach = floodFill(grid, entrance.x, entrance.y);
+    const quiet = [...reach].filter(k => !contents.has(k)).sort();
+    for (const d of deaths) {
+      if (!quiet.length) break;
+      const i = (d.id * 2654435761 + this.char.id.length * 97) % quiet.length;
+      const k = quiet.splice(Math.abs(i), 1)[0];
+      contents.set(k, { type: 'bloodstain', id: `blood-${d.id}`, echo: d });
+    }
+  }
+
+  /** The shade of a character who fell on this level lately, if there is one. */
+  private shadeEncounter(): GameState | null {
+    const c = this.char;
+    if (!c) return null;
+    let deaths: Death[] = [];
+    try { deaths = this.repo.recentDeaths(c.dungeonLevel, c.id, Date.now() - ECHOES.RECENT_DAYS * 86400000, 10).filter(d => nameIsDecent(d.name)); } catch { return null; }
+    if (!deaths.length) return null;
+    const d = deaths[this.rng.int(0, deaths.length - 1)];
+    // About their level, but no stranger to this depth.
+    const range = MONSTER_SCALING.LEVEL_RANGE_BY_DUNGEON_LEVEL[Math.min(6, c.dungeonLevel - 1)];
+    const lvl = Math.max(range.min, Math.min(d.charLevel, range.max + Math.floor(c.level / MONSTER_SCALING.CHAR_LEVEL_CAP_DIVISOR))) + this.worldBoost();
+    const monster = createMonster('Shade', lvl, `shade-${d.id}-${Date.now()}`, true);
+    monster.echoOf = d;
+    return this.beginCombat(monster);
+  }
+
   /** Walking near the Aboleth's lair: you smell it, you hear it, and now and
    * then it comes for you on its wings and strikes before you can act. */
   private nearTheAboleth(): GameState | null {
@@ -1254,6 +1297,19 @@ export class GameEngine {
              'A sign hangs from the latch: CLOSED BETWEEN SHIFTS. RING TWICE AND RUN.', when];
         return this.getState();
       }
+      case 'bloodstain': {
+        const d = content.echo;
+        if (!d) return null;
+        const first = !ds.visitedDescriptions.has(content.id);
+        ds.visitedDescriptions.add(content.id);
+        this.messages = [...this.messages, '', ...(first
+          ? ['A dark stain on the stones, old blood ground into the cracks.',
+             `Here fell ${d.name}, a level ${d.charLevel} ${d.charClass}, ${agoText(d.diedAt)}.`,
+             `(${d.cause})`]
+          : [`The stain where ${d.name} fell.`])];
+        return null;   // walk on
+      }
+
       case 'description': {
         const descId = content.descriptionId ?? content.id;
         const isFirst = !ds.visitedDescriptions.has(content.id);
@@ -1721,6 +1777,11 @@ export class GameEngine {
     // A newcomer's first fights on level 1 come from the gentler kinds.
     const won = this.char.monstersDefeated;
     const maxTier = this.char.dungeonLevel === 1 && won < NEWCOMER.FIRST_FIGHT_TIERS.length ? NEWCOMER.FIRST_FIGHT_TIERS[won] : Infinity;
+    // Now and then, where another player's character fell, their shade instead.
+    if (maxTier === Infinity && this.rng.float() < ECHOES.SHADE_CHANCE) {
+      const shade = this.shadeEncounter();
+      if (shade) return shade;
+    }
     const type = pickRandomMonsterType(this.char.dungeonLevel, this.rng, maxTier);
     const def = getDefinition(type);
     const lvl = randomMonsterLevel(this.char.level, this.char.dungeonLevel, this.rng, type);
@@ -1760,7 +1821,7 @@ export class GameEngine {
     // Intro text (an ancient ghoul has its own)
     const introLines = monster.type === 'Ghoul' && monster.level >= GHOUL.ANCIENT_LEVEL ? ANCIENT_GHOUL_INTRO : monster.definition.encounterIntro;
     const intro = introLines.map(line =>
-      line.replace('{LVL}', String(monster.level))
+      line.replace('{LVL}', String(monster.level)).replace('{NAME}', monster.echoOf ? `${monster.echoOf.name}, a level ${monster.echoOf.charLevel} ${monster.echoOf.charClass} who died here ${agoText(monster.echoOf.diedAt)}` : 'someone')
     );
     this.messages = intro;
     // A warrior's first fight: point them at the blow that matters.
@@ -3142,6 +3203,11 @@ export class GameEngine {
     this.char.xp += xpGained;
     this.char.monstersDefeated++;
     this.noteFirstSteps(fs => { fs.wins++; fs.firstWinAt ??= this.char!.playTime; });
+    if (monster.echoOf) {
+      const gold = this.rng.int(ECHOES.SHADE_GOLD_MIN, ECHOES.SHADE_GOLD_MAX) * monster.level;
+      this.char.gold += gold;
+      this.messages.push('', `The shade of ${monster.echoOf.name} sighs, and thins, and is gone. Where it stood lies what it was carrying: ${gold} gold.`);
+    }
 
     // Track fixed/unique defeats
     if (def.isUnique) {
@@ -3241,6 +3307,11 @@ export class GameEngine {
 
     this.endCombat(false);
     this.noteFirstSteps(fs => { fs.deaths++; if (this.char!.level < 2) fs.deathsBeforeLevel2++; });
+    // Remembered, for the echoes other players meet (a bloodstain, a shade).
+    try {
+      const c = this.char;
+      this.repo.recordDeath({ characterId: c.id, name: c.name, charClass: c.charClass, charLevel: c.level, dungeonLevel: c.dungeonLevel, cause, diedAt: Date.now() });
+    } catch { /* an echo is never worth failing a death over */ }
     const entrance = this.getLevel(this.char.dungeonLevel)?.entrance ?? { x: 0, y: 0 };
     // Asmodeus takes a level and a little gold, and leaves you at level 7's entrance.
     const toll = killer === 'Asmodeus'
@@ -3917,6 +3988,7 @@ export class GameEngine {
     if (levelNum === 7) { centerAsmodeusLair(grid, contents); placeRakshasa(grid, entrance, exit, contents); }
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
+    this.placeBloodstains(levelNum, grid, entrance, contents);
     this.levelCache.set(levelNum, { grid, entrance, exit, contents });
     this.placeHoards(levelNum);
   }

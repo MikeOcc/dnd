@@ -5556,10 +5556,31 @@ const MONSTER_SPRITES = {
     </svg>
   `,
 
+  // The Shade: what is left of a fallen adventurer, grey and see-through,
+  // still wearing the wounds that killed it.
+  'Shade': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shade">
+    <defs>
+    <linearGradient id="shd-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8d4e0" stop-opacity="0.85"/><stop offset="0.7" stop-color="#7a8a9a" stop-opacity="0.5"/><stop offset="1" stop-color="#3a4a5a" stop-opacity="0"/></linearGradient>
+    <radialGradient id="shd-glow" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#b8d0e8" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    </defs>
+    <circle cx="80" cy="76" r="70" fill="url(#shd-glow)"/>
+    <path d="M 56 56 C 48 88, 46 120, 44 156 L 116 156 C 114 120, 112 88, 104 56 C 94 48, 66 48, 56 56 Z" fill="url(#shd-body)"/>
+    <path d="M 102 64 C 114 74, 120 88, 122 100" stroke="#b8c8d8" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 120 100 L 140 46" stroke="#d8e4f0" stroke-width="2.6" opacity="0.7"/>
+    <path d="M 58 64 C 46 74, 40 88, 38 100" stroke="#b8c8d8" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 64 34 C 62 18, 70 10, 80 10 C 90 10, 98 18, 96 34 C 96 46, 90 56, 80 58 C 70 56, 64 46, 64 34 Z" fill="#d0dce8" opacity="0.8"/>
+    <ellipse cx="72" cy="32" rx="4" ry="3" fill="#1a2430"/><ellipse cx="88" cy="32" rx="4" ry="3" fill="#1a2430"/>
+    <path d="M 72 46 Q 80 50 88 46" stroke="#3a4a5a" stroke-width="1.6" fill="none"/>
+    <path d="M 70 80 L 92 100 M 74 78 L 96 98" stroke="#5a1418" stroke-width="2.4" opacity="0.8"/>
+    </svg>
+  `,
+
 };
 
 // Monsters drawn larger than the standard portrait, as a multiple of it.
 const MONSTER_SPRITE_SCALE = {
+  'Shade': 1.1,
   'Lantern Moths': 1.1, 'Toll-Keeper': 1.2, 'Hush': 1.2, "Cartographer's Bane": 1.3,
   'Fetch': 1.05, 'Bone Vortex': 1.4, 'Grindylow': 0.95, 'Black Annis': 1.15, 'Barghest': 1.15, 'Nuckelavee': 1.3, 'Draugr': 1.25, 'Penanggalan': 1.0, 'Lambton Worm': 1.5,
   'Barrow-King': 1.3,

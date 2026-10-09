@@ -595,6 +595,24 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     ],
   },
 
+  // A Shade: the grave's cold, a wail, and the blow that killed it, again.
+  'Shade': { moves: [
+    { id: 'shade-touch', weight: 45, run: k => {
+      k.strike(1.0, d => `Its hand passes into your chest, cold as the grave. (${d} damage)`);
+      if (k.alive() && k.rng.float() < 0.3) { k.status({ type: 'strength-reduced', value: 2, turns: 20 }); k.say('Your strength drains into it. (-2 Strength for a while)'); }
+    } },
+    { id: 'shade-wail', weight: 20, when: k => !k.held(), run: k => {
+      const s = k.save(14, ['wisdom', 'charisma']);
+      if (s.ok) { k.say(`It wails, and you shut your ears to it. ${s.text}`); return; }
+      k.hold(1, 'feared');
+      k.say(`It wails the way it must have when it died. You cannot move for horror. ${s.text}`);
+    } },
+    { id: 'shade-death', weight: 35, run: k => {
+      const how = k.monster.echoOf?.cause.replace(/^Killed by /, '').replace(/\.$/, '');
+      k.strike(1.3, d => how ? `It lives its death again, and you with it: ${how}. (${d} damage)` : `It strikes with the last of its rage. (${d} damage)`);
+    } },
+  ] },
+
   // Lantern Moths: they put out your torch, then batter at you in the dark.
   'Lantern Moths': { moves: [
     { id: 'moth-snuff', weight: 45, when: k => !has(k.char, 'snuffed'), run: k => {

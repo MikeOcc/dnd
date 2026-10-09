@@ -1,7 +1,7 @@
 import type { RingId } from '../core/types.js';
 import { PROTECTION_RINGS, POWER_RINGS } from '../content/rings.js';
 import { DatabaseSync } from 'node:sqlite';
-import type { Character, SerializedDungeon, DungeonState, CharacterSummary, FirstSteps } from '../core/types.js';
+import type { Character, SerializedDungeon, DungeonState, CharacterSummary, FirstSteps, Death } from '../core/types.js';
 import { CHARACTER, GEMS, RINGS } from '../core/config.js';
 
 // ─── Repository class ────────────────────────────────────────────────────────
@@ -102,6 +102,25 @@ export class Repository {
   getOwner(id: string): string | null | undefined {
     const row = this.db.prepare('SELECT owner FROM characters WHERE id = ?').get(id) as { owner: string | null } | undefined;
     return row ? row.owner : undefined;
+  }
+
+  /** A death, kept for the echoes other players meet. */
+  recordDeath(d: Omit<Death, 'id'>): void {
+    this.db.prepare('INSERT INTO deaths (character_id, name, char_class, char_level, dungeon_level, cause, died_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(d.characterId, d.name, d.charClass, d.charLevel, d.dungeonLevel, d.cause, d.diedAt);
+  }
+
+  /** Other characters' deaths on a level since a time, newest first (one per character). */
+  recentDeaths(dungeonLevel: number, excludeCharacterId: string, since: number, limit: number): Death[] {
+    const rows = this.db.prepare(
+      `SELECT * FROM deaths WHERE dungeon_level = ? AND character_id != ? AND died_at >= ?
+       AND id IN (SELECT MAX(id) FROM deaths WHERE dungeon_level = ? GROUP BY character_id)
+       ORDER BY died_at DESC LIMIT ?`,
+    ).all(dungeonLevel, excludeCharacterId, since, dungeonLevel, limit) as Record<string, unknown>[];
+    return rows.map(r => ({
+      id: r['id'] as number, characterId: r['character_id'] as string, name: r['name'] as string, charClass: r['char_class'] as string,
+      charLevel: r['char_level'] as number, dungeonLevel: r['dungeon_level'] as number, cause: r['cause'] as string, diedAt: r['died_at'] as number,
+    }));
   }
 
   /** A character's early-game record, written on its own (saves never touch it). */

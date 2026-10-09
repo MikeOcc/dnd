@@ -34,11 +34,20 @@
     'throne-orc': { w: 1.15, h: 1.35 },
     pillar: { w: 0.42, h: 1.0 },
     shop: { w: 1.0, h: 1.0 },
+    bloodstain: { w: 0.8, h: 0.16 },   // flat on the floor: where another player's character fell
   };
 
   // ─── Built-in artwork (viewBox matches each landmark's proportions) ─────
 
   const SVG = {
+    bloodstain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40">
+      <ellipse cx="100" cy="24" rx="92" ry="13" fill="#2a0204" opacity="0.85"/>
+      <ellipse cx="94" cy="23" rx="62" ry="9" fill="#4a0608" opacity="0.9"/>
+      <ellipse cx="150" cy="28" rx="16" ry="5" fill="#3a0406" opacity="0.8"/>
+      <ellipse cx="38" cy="20" rx="12" ry="4" fill="#3a0406" opacity="0.8"/>
+      <circle cx="170" cy="14" r="3" fill="#4a0608"/><circle cx="24" cy="30" r="2.4" fill="#4a0608"/><circle cx="120" cy="10" r="2" fill="#4a0608"/>
+      <path d="M 70 22 Q 95 18 120 24" stroke="#6a1014" stroke-width="2" fill="none" opacity="0.6"/>
+    </svg>`,
     fountain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 180">
       <defs>
         <linearGradient id="st" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9a958a"/><stop offset="1" stop-color="#5a564e"/></linearGradient>

@@ -3635,4 +3635,39 @@ const HORROR_SPRITES = {
     </svg>
   `,
 
+  // ─── Shade ───────────────────────────────────────────────────────────────
+  // The ghost of another adventurer who died on this level: torn, grey and
+  // half-transparent, its mouth open on its last scream, its death-wound
+  // still bleeding light, its sword trailing mist.
+  'Shade': `
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shade: the half-transparent ghost of a fallen adventurer, torn and grey, its mouth open on its last scream, its death-wound still bleeding light, a misty sword in its hand">
+    <defs>
+      ${horrorSkinFilter('hsh-cloth', { freq: '0.05 0.3', scale: 1.6, seed: 190, k: 1.1 })}
+      <linearGradient id="hsh-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8e0ec" stop-opacity="0.85"/><stop offset="0.6" stop-color="#6a7a8c" stop-opacity="0.55"/><stop offset="1" stop-color="#1a2430" stop-opacity="0"/></linearGradient>
+      <radialGradient id="hsh-glow" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="#a8c8f0" stop-opacity="0.3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hsh-face" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#eef2f8" stop-opacity="0.9"/><stop offset="1" stop-color="#6a7a8c" stop-opacity="0.6"/></radialGradient>
+      <filter id="hsh-gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <circle cx="80" cy="70" r="76" fill="url(#hsh-glow)"/>
+    <!-- the torn body, fading away below -->
+    <path d="M 54 56 C 46 90, 44 120, 40 160 L 56 150 L 64 160 L 74 150 L 84 160 L 94 150 L 104 160 L 112 150 L 120 160 C 116 120, 114 90, 106 56 C 96 48, 64 48, 54 56 Z" fill="url(#hsh-body)" filter="url(#hsh-cloth)"/>
+    <path d="M 62 70 C 66 100, 64 130, 58 150 M 98 70 C 94 100, 96 130, 102 150" stroke="#2a3644" stroke-width="1" fill="none" opacity="0.5"/>
+    <!-- the death wound, still bleeding light -->
+    <path d="M 66 78 L 94 104 M 70 76 L 98 102" stroke="#e0f0ff" stroke-width="2.4" filter="url(#hsh-gl)" opacity="0.9"/>
+    <path d="M 66 78 L 94 104" stroke="#8a1018" stroke-width="1" opacity="0.7"/>
+    <!-- arms; a misty sword -->
+    <path d="M 104 62 C 118 72, 124 86, 126 100" stroke="url(#hsh-body)" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 124 102 L 148 40" stroke="#e8f0f8" stroke-width="3" opacity="0.8" filter="url(#hsh-gl)"/>
+    <path d="M 56 62 C 42 72, 36 88, 32 104" stroke="url(#hsh-body)" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 32 104 l -4 8 M 32 104 l 0 10 M 32 104 l 4 8" stroke="#c8d4e0" stroke-width="1.6" opacity="0.7"/>
+    <!-- the face: eyes black pits, the mouth open on its last scream -->
+    <path d="M 62 34 C 60 16, 70 8, 80 8 C 90 8, 100 16, 98 34 C 98 48, 90 58, 80 60 C 70 58, 62 48, 62 34 Z" fill="url(#hsh-face)" filter="url(#hsh-cloth)"/>
+    <path d="M 62 26 C 58 14, 66 4, 80 4 C 94 4, 102 14, 98 26 C 94 16, 66 16, 62 26 Z" fill="#8a96a4" opacity="0.7"/>
+    <ellipse cx="71" cy="32" rx="5" ry="6" fill="#0a0e14"/><ellipse cx="89" cy="32" rx="5" ry="6" fill="#0a0e14"/>
+    <circle cx="71" cy="33" r="1.2" fill="#c8e0ff" filter="url(#hsh-gl)"/><circle cx="89" cy="33" r="1.2" fill="#c8e0ff" filter="url(#hsh-gl)"/>
+    <ellipse cx="80" cy="49" rx="6" ry="8" fill="#0a0e14"/>
+    <path d="M 66 44 c -2 6 -1 12 -3 18 M 94 44 c 2 6 1 12 3 18" stroke="#c8d4e0" stroke-width="1" fill="none" opacity="0.5"/>
+    </svg>
+  `,
+
 };

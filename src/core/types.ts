@@ -25,6 +25,7 @@ export type CellContentType =
   | 'unique-monster'
   | 'description'
   | 'shop'           // the Trading Post on level 1
+  | 'bloodstain'     // an echo: where another player's character fell on this level
   | 'entrance';
 
 export interface CellContent {
@@ -34,6 +35,19 @@ export interface CellContent {
   descriptionId?: string;
   trapVariant?: string;
   treasure?: string;    // a Zork treasure chest: which treasure (content/treasures.ts), or a ring chest: which ring (content/rings.ts)
+  echo?: Death;         // a bloodstain: whose
+}
+
+/** A character's death, as other players' echoes remember it. */
+export interface Death {
+  id: number;
+  characterId: string;
+  name: string;
+  charClass: string;
+  charLevel: number;
+  dungeonLevel: number;
+  cause: string;
+  diedAt: number;
 }
 
 export interface SerializedDungeon {
@@ -240,6 +254,7 @@ export type MonsterType =
   | 'Fetch'
   | 'Bone Vortex'
   | 'Lantern Moths'
+  | 'Shade'
   | 'Toll-Keeper'
   | 'Hush'
   | "Cartographer's Bane"
@@ -341,6 +356,7 @@ export interface Monster {
   invisCooldown?: number;   // Banshee: turns until it can vanish again
   reborn?: boolean;         // Phoenix, Troll: has risen again this fight
   heads?: number;           // Hydra: heads left (or grown)
+  echoOf?: Death;           // a Shade: the fallen character it is the shade of
   mapBites?: number;        // Cartographer's Bane: touches this turn that tear away part of your map (the engine does the tearing)
   lastHp?: number;          // Hydra: HP at its last turn, to spot a severed head
   swallowHp?: number;       // Purple Worm: HP when it swallowed the character (cut out by wounding it from inside)     // Wendigo: turns its regeneration stays stopped after fire
@@ -469,7 +485,7 @@ export interface SceneData {
 export interface SceneObject {
   x: number;
   y: number;
-  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop' | 'monster';
+  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop' | 'monster' | 'bloodstain';
   variant?: string;   // throne: whose ('Asmodeus', 'Orc King')
   type?: string;      // monster: a great foe waiting in its room
   facing?: Direction; // monster: the way it faces (toward the way into the level)

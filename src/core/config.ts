@@ -502,6 +502,15 @@ export const ABOLETH = {
   SOUND_CHANCE: 0.5,        // per step that close
 } as const;
 
+// Echoes of other players: where their characters fell (bloodstains) and
+// what is left of them (shades). Only names that pass core/names.ts are shown.
+export const ECHOES = {
+  RECENT_DAYS: 30,          // deaths this recent leave echoes
+  STAINS_PER_LEVEL: 3,      // at most this many bloodstains on a level
+  SHADE_CHANCE: 0.04,       // a random fight on a level where someone fell may be their shade instead
+  SHADE_GOLD_MIN: 20, SHADE_GOLD_MAX: 60,   // × the shade's level: what it was carrying
+} as const;
+
 // The Toll-Keeper on the stairs down from level 2.
 export const TOLL = {
   SHARE: 0.25,      // of the gold you carry...

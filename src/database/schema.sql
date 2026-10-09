@@ -82,3 +82,18 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
   expires_at  INTEGER NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Every death, kept for the echoes other players meet: a bloodstain where
+-- someone fell, a shade of them on the same level. (Only the name, class,
+-- level, depth and cause; nothing else about the player.)
+CREATE TABLE IF NOT EXISTS deaths (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  character_id  TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  char_class    TEXT NOT NULL,
+  char_level    INTEGER NOT NULL,
+  dungeon_level INTEGER NOT NULL,
+  cause         TEXT NOT NULL,
+  died_at       INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_deaths_level ON deaths(dungeon_level, died_at);

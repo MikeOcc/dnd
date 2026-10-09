@@ -724,6 +724,23 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     ],
     specialAbilities: [],
   },
+  // A Shade: what is left of another player's character, on the level where
+  // they fell (an echo: never met at random, see game-engine.ts). It wears
+  // their name, about their level, and the memory of what killed them.
+  'Shade': {
+    type: 'Shade', isUndead: true, isUnique: false,
+    minLevel: 1, maxLevel: 120, naturalTier: 5, minDungeonLevel: 1, speed: 1.0,
+    baseHpPerLevel: 8, baseAttackPerLevel: 3.2, baseDefensePerLevel: 2.5,
+    fireballResistance: 0.8, coldResistance: 0.4,
+    encounterIntro: [
+      'The air goes cold, and grey light gathers into a figure in the passage ahead.',
+      'It is an adventurer, or was. You can see the wall through it.',
+      'It still wears the wounds that killed it.',
+      '',
+      'You have met the shade of {NAME}! (Level {LVL})',
+    ],
+    specialAbilities: [],
+  },
   // The Toll-Keeper: a hooded figure on the stairway down from level 2. Pay in
   // gold or in a finger, or fight it; paying is often smarter. (Met at the
   // ladder, never at random: see the engine's toll.)
@@ -1196,9 +1213,11 @@ export function hiddenStandIn(type: MonsterType): MonsterType {
 // Built but not in play yet (the owner's call): they never turn up at random.
 // Take one off this list to bring it into the dungeon.
 export const BENCHED: MonsterType[] = ['Hush', "Cartographer's Bane"];
+/** Met only as echoes of other players, never at random. */
+export const ECHO_ONLY: MonsterType[] = ['Shade'];
 
 export function isHiddenMonster(type: MonsterType): boolean {
-  return BENCHED.includes(type) || (process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type));
+  return BENCHED.includes(type) || ECHO_ONLY.includes(type) || (process.env.NODE_ENV === 'production' && HIDDEN_WHEN_HOSTED.includes(type));
 }
 
 /** maxTier: a newcomer's first fights draw only from the gentler kinds (see NEWCOMER). */

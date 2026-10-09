@@ -1795,6 +1795,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'fetch-spell': 'stolen spell',
   'fetch-omen': 'omen',
   'moth-swarm': 'swarming wings',
+  'shade-touch': 'grave-cold touch', 'shade-death': 'remembered death',
   'moth-snuff': 'smothering swarm',
   'toll-staff': 'iron-shod staff',
   'toll-collect': 'grasping hand',
