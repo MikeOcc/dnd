@@ -2399,11 +2399,12 @@ describe('GameEngine — seeing Asmodeus on his throne', () => {
     const seen = new Set<string>();
     for (const [dir, ox, oy] of [['N', 0, 1], ['S', 0, -1], ['E', -1, 0], ['W', 1, 0]] as const) {
       if (!canMove(lvl.grid, lx + ox, ly + oy, dir)) continue;
-      e.char.x = lx + ox * 2; e.char.y = ly + oy * 2; e.char.facing = dir;
-      if (!canMove(lvl.grid, e.char.x, e.char.y, dir)) continue;
+      // Two squares off, or one where the round throne room has no room for two.
+      const d = canMove(lvl.grid, lx + ox * 2, ly + oy * 2, dir) ? 2 : 1;
+      e.char.x = lx + ox * d; e.char.y = ly + oy * d; e.char.facing = dir;
       const s = engine.getState().sighting;
       expect(s?.monster).toBe('Asmodeus');
-      expect(s?.distance).toBe(2);
+      expect(s?.distance).toBe(d);
       seen.add(s!.view);
       // Turned away, or too far, and he's not in view.
       e.char.facing = ({ N: 'S', S: 'N', E: 'W', W: 'E' } as const)[dir];
@@ -2539,8 +2540,9 @@ describe('GameEngine — the throne faces its door', () => {
     expect(look(lx + 2 * fx, ly + 2 * fy, back[f])).toBe('front');
     // Beside it, looking at it: one side or the other.
     const [rx, ry] = fwd[rightOf[f]];
-    expect(look(lx + 2 * rx, ly + 2 * ry, back[rightOf[f]])).toBe('faces-right');
-    expect(look(lx - 2 * rx, ly - 2 * ry, rightOf[f])).toBe('faces-left');
+    // (One square to the side: the throne room is round, and its far corners are rock.)
+    expect(look(lx + rx, ly + ry, back[rightOf[f]])).toBe('faces-right');
+    expect(look(lx - rx, ly - ry, rightOf[f])).toBe('faces-left');
   });
 });
 

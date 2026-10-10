@@ -40,8 +40,8 @@
   /** Indexes a scene for lookups. */
   function buildWorld(scene) {
     const cells = new Map();
-    for (const [x, y, walls, ceiling, mats, torches, carvings] of scene.cells) {
-      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings });
+    for (const [x, y, walls, ceiling, mats, torches, carvings, curve] of scene.cells) {
+      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings, curve: curve || 0 });
     }
     return { scene, cells, objects: scene.objects || [] };
   }
@@ -126,6 +126,19 @@
       let dir, dist;
       if (sideX < sideY) { dir = stepX > 0 ? 'E' : 'W'; dist = sideX; }
       else { dir = stepY > 0 ? 'S' : 'N'; dist = sideY; }
+      // A curved square: its two walls are one quarter-circle, which the ray
+      // meets before it could leave the square through either of them.
+      const curved = cellAt(world, mapX, mapY)?.curve;
+      if (curved) {
+        const arc = curveHit(cam, rdx, rdy, mapX, mapY, curved);
+        if (arc && arc.t <= dist + 1e-9 && arc.t <= MAX_DIST) {
+          const side = CURVE_SIDES[curved];
+          return {
+            hit: { dist: arc.t, dir: side[0], cellX: mapX, cellY: mapY, u: arc.u, height: ceilingOf(world, mapX, mapY), ...wallInfo(world, mapX, mapY, side[0]), torch: false, carved: false, curve: true, shade: arc.shade },
+            crossings, rdx, rdy,
+          };
+        }
+      }
       if (dist > MAX_DIST) return { hit: null, crossings, rdx, rdy };
       if (wallBetween(world, mapX, mapY, dir)) {
         const along = dir === 'E' || dir === 'W' ? cam.y + dist * rdy : cam.x + dist * rdx;
@@ -142,6 +155,29 @@
       if (from !== to) crossings.push({ dist, from, to });
     }
     return { hit: null, crossings, rdx, rdy };
+  }
+
+  // Curved squares (core/curves.ts): 1 NE, 2 SE, 3 SW, 4 NW is the rounded
+  // corner; the circle (radius one square) is centred on the opposite corner.
+  const CURVE_SIDES = { 1: 'NE', 2: 'SE', 3: 'SW', 4: 'NW' };
+  const CURVE_CENTRE = { 1: [0, 1], 2: [0, 0], 3: [1, 0], 4: [1, 1] };
+
+  /** Where a ray leaves the circle of a curved square: its distance along
+   * the ray, where along the curve (for the texture), and how much to shade
+   * it (as much as an east or west wall, as the curve turns that way). */
+  function curveHit(cam, rdx, rdy, x, y, code) {
+    const [ox, oy] = CURVE_CENTRE[code];
+    const cx = x + ox, cy = y + oy;
+    const fx = cam.x - cx, fy = cam.y - cy;
+    const a = rdx * rdx + rdy * rdy, b = 2 * (fx * rdx + fy * rdy), c = fx * fx + fy * fy - 1;
+    const disc = b * b - 4 * a * c;
+    if (disc < 0) return null;
+    const t = (-b + Math.sqrt(disc)) / (2 * a);       // the far crossing: from inside, out
+    if (t <= 0) return null;
+    const hx = cam.x + t * rdx - cx, hy = cam.y + t * rdy - cy;
+    const ang = Math.atan2(hy, hx);
+    const u = ((ang / (Math.PI / 2)) * 1.5708 % 1 + 1) % 1;
+    return { t, u, shade: 0.18 * hx * hx };
   }
 
   /** Screen y of a point `h` high at distance `d`. */
@@ -336,7 +372,7 @@
   const GREEN_NEAR = 'eeeeee', GREEN_FAR = '1a1a1a';
 
   /** Which flat wall surface a hit lies on (a line of the grid, one side of it). */
-  const planeOf = (w) => (w.dir === 'N' || w.dir === 'S' ? `y${w.cellY + (w.dir === 'S' ? 1 : 0)}` : `x${w.cellX + (w.dir === 'E' ? 1 : 0)}`) + w.dir;
+  const planeOf = (w) => w.curve ? `c${w.cellX},${w.cellY}` : (w.dir === 'N' || w.dir === 'S' ? `y${w.cellY + (w.dir === 'S' ? 1 : 0)}` : `x${w.cellX + (w.dir === 'E' ? 1 : 0)}`) + w.dir;
 
   /** Masonry layout per material, in world units: course height, block
    * width, and whether joints run the full height (planks). */
@@ -966,7 +1002,7 @@
           ctx.drawImage(footTex, tx, s0, 1, Math.max(1, TEX - s0), x, ya, colW + 0.5, w.bottom - ya);
         }
       }
-      const side = w.dir === 'N' || w.dir === 'S' ? 0 : 0.18;
+      const side = w.curve ? w.shade : w.dir === 'N' || w.dir === 'S' ? 0 : 0.18;
       const l = lit(w.dist);
       ctx.fillStyle = `rgba(${fogRGB},${Math.min(0.97, 1 - l).toFixed(3)})`;
       ctx.fillRect(x, w.top, colW + 0.5, w.bottom - w.top);
