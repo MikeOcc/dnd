@@ -8,7 +8,7 @@ older than the kingdoms of men.
 
 Seven levels descend into darkness.
 
-At the center of the lowest level waits
+At the end of the lowest level waits
 Asmodeus.
 
 No adventurer has ever returned.

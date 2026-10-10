@@ -97,7 +97,7 @@ function renderTitle(): string[] {
     '',
     g('Seven levels descend into darkness.'),
     '',
-    g('At the center of the lowest level waits'),
+    g('At the end of the lowest level waits'),
     g('Asmodeus.'),
     '',
     g('No adventurer has ever returned.'),

@@ -336,7 +336,11 @@ function applyState(state) {
   const logging = LOG_PHASES.includes(phase) && LOG_PHASES.includes(prev?.phase) && sameChar;
   updateMessageLog(bodyLines, logging);
   renderMessageLog(msgEl);
-  if (isMap && state.mapData) drawMap(msgEl, state.mapData, !!state.mapFull);
+  // The map in the look of the view: drawn for the Painted view, text (with its walls) for Classic and ASCII.
+  if (isMap && state.mapData) {
+    if (viewMode === 'painted') drawMap(msgEl, state.mapData, !!state.mapFull);
+    else asciiMap(msgEl, state.mapData);
+  }
   msgEl.classList.toggle('map-view', phase === 'map');
   msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
   msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
@@ -1190,6 +1194,45 @@ function drawMap(el, data, full) {
     g.fillText(ch, cx, cy + 1);
   }
   el.replaceChildren(canvas);
+}
+
+/** The map as text, walls and all, like an old maze printout: each square is
+ * two characters, itself and the wall on its right; a wall along a square's
+ * bottom is _ (= where barred), a wall at its side | (: where barred).
+ * Curved corners are / and \. Symbols as ever; @ is you. */
+const ASCII_CURVES = { '╭': '/', '╮': '\\', '╰': '\\', '╯': '/' };
+function asciiMap(el, data) {
+  const h = data.rows.length, w = data.rows[0]?.length ?? 0;
+  const shown = (x, y) => (data.walls[y]?.[x] ?? ' ') !== ' ';
+  const wallsOf = (x, y) => (shown(x, y) ? parseInt(data.walls[y][x], 16) : 0);
+  const barsOf = (x, y) => (shown(x, y) ? parseInt(data.bars[y]?.[x] || '0', 16) || 0 : 0);
+  // A wall along the bottom of (x,y): its own south wall, or the north wall of the square below.
+  const bottom = (x, y) => (wallsOf(x, y) & 4 ? (barsOf(x, y) & 4 ? '=' : '_') : wallsOf(x, y + 1) & 1 ? (barsOf(x, y + 1) & 1 ? '=' : '_') : '');
+  const side = (x, y) => {   // between (x,y) and (x+1,y)
+    if (wallsOf(x, y) & 2) return barsOf(x, y) & 2 ? ':' : '|';
+    if (wallsOf(x + 1, y) & 8) return barsOf(x + 1, y) & 8 ? ':' : '|';
+    const a = bottom(x, y), b = bottom(x + 1, y);
+    if (a && b) return a === '=' && b === '=' ? '=' : '_';
+    return shown(x, y) && shown(x + 1, y) ? '.' : ' ';
+  };
+  const lines = [];
+  // The top edge: the north walls of the first row.
+  let top = ' ';
+  for (let x = 0; x < w; x++) top += (wallsOf(x, 0) & 1 ? '_' : ' ') + (wallsOf(x, 0) & 1 && wallsOf(x + 1, 0) & 1 ? '_' : ' ');
+  lines.push(top);
+  for (let y = 0; y < h; y++) {
+    let line = wallsOf(0, y) & 8 ? '|' : ' ';
+    for (let x = 0; x < w; x++) {
+      const ch = data.rows[y][x];
+      let c;
+      if (ch !== ' ' && !MAP_FLOOR.has(ch)) c = ch;                 // a symbol
+      else if (ASCII_CURVES[ch]) c = ASCII_CURVES[ch];
+      else c = bottom(x, y) || (shown(x, y) ? '.' : ' ');
+      line += c + side(x, y);
+    }
+    lines.push(line.replace(/\s+$/, ''));
+  }
+  el.replaceChildren(document.createTextNode(lines.join('\n')));
 }
 
 function centerMapOnPlayer() {
@@ -2447,7 +2490,7 @@ updateSoundButton();
       '',
       'Seven levels descend into darkness.',
       '',
-      'At the center of the lowest level waits',
+      'At the end of the lowest level waits',
       'Asmodeus.',
       '',
       'No adventurer has ever returned.',
