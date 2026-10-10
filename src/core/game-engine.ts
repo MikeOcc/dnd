@@ -307,7 +307,9 @@ export class GameEngine {
         });
         const area = areaAtCell(areas, x, y);
         const corner = lvl.straight?.has(`${x},${y}`) ? null : curvedCorner(level, cell, area);
-        cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings, corner ? CORNER_CODE[corner] : 0, bars]);
+        // Level 7: the square's own district, so a lava room ahead looks like one from the corridor.
+        const look = level === 7 ? (this.districtsOf(lvl)[areas.areaAt[y * lvl.grid[0].length + x]] ?? '') : '';
+        cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings, corner ? CORNER_CODE[corner] : 0, bars, look]);
         if (lvl.gaol?.bones.some(b => b.x === x && b.y === y)) objects.push({ x, y, kind: 'bones' });
 
         const c = lvl.contents.get(`${x},${y}`);
@@ -1719,10 +1721,15 @@ export class GameEngine {
     if (!this.char || this.char.dungeonLevel !== 7) return null;
     const lvl = this.getLevel(7);
     if (!lvl) return null;
+    const districts = this.districtsOf(lvl);
+    const i = lvl.areas!.areaAt[this.char.y * (lvl.grid[0]?.length ?? 0) + this.char.x];
+    return i >= 0 ? districts[i] ?? null : null;
+  }
+
+  /** Level 7's district for each area (by its index in the area map). */
+  private districtsOf(lvl: LevelCache): DistrictId[] {
     lvl.areas ??= mapAreas(lvl.grid);
-    lvl.districts ??= assignDistricts(lvl.grid, lvl.areas, lvl.entrance, lvl.sanctum ?? null, lvl.seed ?? 0);
-    const i = lvl.areas.areaAt[this.char.y * (lvl.grid[0]?.length ?? 0) + this.char.x];
-    return i >= 0 ? lvl.districts[i] ?? null : null;
+    return (lvl.districts ??= assignDistricts(lvl.grid, lvl.areas, lvl.entrance, lvl.sanctum ?? null, lvl.seed ?? 0));
   }
 
   /** What happens along the Long Way to the throne, each thing once, as you

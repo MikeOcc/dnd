@@ -479,7 +479,7 @@ export interface SceneData {
   facing: Direction;
   level: number;
   radius: number;
-  cells: [number, number, number, number, string, number, number, number, number][];   // ..., curved corner (curves.ts CORNER_CODE, 0 none), barred sides (bits like walls)
+  cells: [number, number, number, number, string, number, number, number, number, string][];   // ..., curved corner (curves.ts CORNER_CODE, 0 none), barred sides (bits like walls), level 7's district ('' elsewhere)
   objects: SceneObject[];
 }
 

@@ -40,8 +40,8 @@
   /** Indexes a scene for lookups. */
   function buildWorld(scene) {
     const cells = new Map();
-    for (const [x, y, walls, ceiling, mats, torches, carvings, curve, bars] of scene.cells) {
-      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings, curve: curve || 0, bars: bars || 0 });
+    for (const [x, y, walls, ceiling, mats, torches, carvings, curve, bars, look] of scene.cells) {
+      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings, curve: curve || 0, bars: bars || 0, look: look || '' });
     }
     return { scene, cells, objects: scene.objects || [] };
   }
@@ -820,6 +820,13 @@
     '7:throne':   { tint: '#6a3436', fog: [30, 2, 0], reach: 7, glow: [255, 70, 20], flame: [255, 150, 60], floor: 'obsidian', ceil: [1, 0.42, 0.32], overlay: 'hell', motes: 'embers' },
   };
   const themeFor = (level) => THEMES[level] || THEMES[1];
+  /** The look a square is drawn in: on the seventh level, its own district's
+   * (so a lava room ahead looks like one from the corridor); elsewhere the level's. */
+  const lookAt = (world, x, y, level) => {
+    if (level !== 7 && !String(level).startsWith('7:')) return level;
+    const c = cellAt(world, x, y);
+    return c && c.look ? `7:${c.look}` : level;
+  };
 
   /** A material's texture as it looks on a level: tinted, with that level's
    * overlay painted on (and, for the Hells, a second texture of glowing cracks). */
@@ -1112,7 +1119,7 @@
           if (d < col.depth && d < MAX_DIST) {
             const fx = cam.x + col.rdx * d, fy = cam.y + col.rdy * d;
             const l = lit(d);
-            const fc = floorColor(th.floor, fx, fy, d, t);
+            const fc = floorColor(themeFor(lookAt(world, Math.floor(fx), Math.floor(fy), level)).floor, fx, fy, d, t);
             rgb = [fc.rgb[0] * l + fog[0] * (1 - l), fc.rgb[1] * l + fog[1] * (1 - l), fc.rgb[2] * l + fog[2] * (1 - l)];
             if (fc.glow) { const k = 0.45 + 0.55 * l; rgb = [rgb[0] + fc.glow[0] * k, rgb[1] + fc.glow[1] * k, rgb[2] + fc.glow[2] * k]; }
           }
@@ -1123,9 +1130,10 @@
             const cell = cellAt(world, Math.floor(fx), Math.floor(fy));
             if (cell && cell.ceiling === 0) {
               const l = lit(d) * 0.7;
-              const beam = th.rough ? false : Math.abs(fx - Math.round(fx)) < 0.04 || Math.abs(fy - Math.round(fy)) < 0.04;
-              const base = th.rough ? 26 + noise(fx * 3, fy * 3) * 22 : beam ? 22 : 40;
-              rgb = [base * l * th.ceil[0] + fog[0] * (1 - l), base * l * th.ceil[1] + fog[1] * (1 - l), base * l * th.ceil[2] + fog[2] * (1 - l)];
+              const ct = cell.look ? themeFor(lookAt(world, cell.x, cell.y, level)) : th;
+              const beam = ct.rough ? false : Math.abs(fx - Math.round(fx)) < 0.04 || Math.abs(fy - Math.round(fy)) < 0.04;
+              const base = ct.rough ? 26 + noise(fx * 3, fy * 3) * 22 : beam ? 22 : 40;
+              rgb = [base * l * ct.ceil[0] + fog[0] * (1 - l), base * l * ct.ceil[1] + fog[1] * (1 - l), base * l * ct.ceil[2] + fog[2] * (1 - l)];
             }
           }
         }
@@ -1156,7 +1164,8 @@
       const srcTop = TEX * reps * ((w.top - fullTop) / (w.bottom - fullTop));
       // Draw the visible part, tiling the texture vertically.
       const pxPerTex = (w.bottom - fullTop) / reps / TEX;
-      const tex = themedTexture(w.material, level);
+      const wallLook = lookAt(world, w.cellX, w.cellY, level), wt = themeFor(wallLook);
+      const tex = themedTexture(w.material, wallLook);
       const tile = (img) => {
         let y = w.top, sy = srcTop;
         while (y < w.bottom - 0.01) {
@@ -1168,7 +1177,7 @@
       };
       tile(tex);
       // The foot of the wall: drawn once, over its lowest unit of height.
-      const footTex = TEXTURES[`${th.rough && w.material !== 'wood' ? 'rough' : w.material}:${level}:foot`];
+      const footTex = TEXTURES[`${wt.rough && w.material !== 'wood' ? 'rough' : w.material}:${wallLook}:foot`];
       if (footTex) {
         const unitTop = screenY(horizon, f, 1, w.dist);
         const ya = Math.max(unitTop, w.top);
@@ -1183,7 +1192,7 @@
       ctx.fillRect(x, w.top, colW + 0.5, w.bottom - w.top);
       if (side) { ctx.fillStyle = `rgba(0,0,0,${side})`; ctx.fillRect(x, w.top, colW + 0.5, w.bottom - w.top); }
       // The Hells: cracks that glow whatever the light.
-      const glow = TEXTURES[`${th.rough && w.material !== 'wood' ? 'rough' : w.material}:${level}:glow`];
+      const glow = TEXTURES[`${wt.rough && w.material !== 'wood' ? 'rough' : w.material}:${wallLook}:glow`];
       if (glow) {
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
