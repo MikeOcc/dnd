@@ -1206,14 +1206,14 @@ export function randomMonsterLevel(
 // (not NODE_ENV=production) they still do.
 export const HIDDEN_WHEN_HOSTED: MonsterType[] = ['Death Tyrant', 'Displacer Beast', 'Elder Oblex'];
 /** What stands in for a hidden monster placed on the map as a guard. */
-const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire' };   // the closest in strength (others: a Undead Knight)
+const STAND_INS: Partial<Record<MonsterType, MonsterType>> = { 'Elder Oblex': 'Vampire', 'Rust Monster': 'Bugbear' };   // the closest in strength (others: a Undead Knight)
 export function hiddenStandIn(type: MonsterType): MonsterType {
   return STAND_INS[type] ?? 'Undead Knight';
 }
 
 // Built but not in play yet (the owner's call): they never turn up at random.
 // Take one off this list to bring it into the dungeon.
-export const BENCHED: MonsterType[] = ['Hush', "Cartographer's Bane"];
+export const BENCHED: MonsterType[] = ['Hush', "Cartographer's Bane", 'Rust Monster'];
 /** Met only as echoes of other players, never at random. */
 export const ECHO_ONLY: MonsterType[] = ['Shade'];
 

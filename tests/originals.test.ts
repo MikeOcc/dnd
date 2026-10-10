@@ -252,3 +252,13 @@ describe('the Rakshasa', () => {
     expect(e.levelIntroWithJourney(7).join(' ')).toContain('holds court here');
   });
 });
+
+describe('the Rust Monster', () => {
+  it('is out of the dungeon: never met at random, at any depth', async () => {
+    const { pickRandomMonsterType, isHiddenMonster } = await import('../src/core/monsters.js');
+    const { RNG } = await import('../src/core/random.js');
+    expect(isHiddenMonster('Rust Monster')).toBe(true);
+    const rng = new RNG(5);
+    for (let depth = 1; depth <= 7; depth++) for (let i = 0; i < 400; i++) expect(pickRandomMonsterType(depth, rng)).not.toBe('Rust Monster');
+  });
+});
