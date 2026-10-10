@@ -1,0 +1,123 @@
+// The seventh level: Asmodeus's throne room at the end of the Long Way, and
+// the districts of Hell.
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { generateLevel, deserializeLevel, floodFill } from '../src/core/dungeon.js';
+import { distances } from '../src/core/lairs.js';
+import { buildSanctum, SANCTUM } from '../src/core/sanctum.js';
+import { mapAreas, areaAtCell } from '../src/core/regions.js';
+import { assignDistricts } from '../src/core/hell-districts.js';
+import { APPROACH_EVENTS } from '../src/content/district-text.js';
+import { createMemoryDb } from '../src/database/database.js';
+import { Repository } from '../src/database/repositories.js';
+import { GameEngine } from '../src/core/game-engine.js';
+
+describe('the Long Way and the throne room', () => {
+  it('a throne room with one door, at the end of a long passage, cutting nothing else off', () => {
+    for (let s = 1; s <= 15; s++) {
+      const seed = s * 7919;
+      const { grid, entrance, contents } = deserializeLevel(generateLevel(7, seed));
+      const was = distances(grid, entrance).get([...contents.entries()].find(([, c]) => c.monsterId === 'Asmodeus')![0])!.d;
+      const before = floodFill(grid, entrance.x, entrance.y);
+      const sc = buildSanctum(grid, entrance, contents, seed)!;
+      expect(sc).not.toBeNull();
+      const after = floodFill(grid, entrance.x, entrance.y);
+      expect([...before].every(c => after.has(c))).toBe(true);
+      // Asmodeus is on the throne, inside a room with exactly one way in.
+      expect(contents.get(`${sc.throne.x},${sc.throne.y}`)?.monsterId).toBe('Asmodeus');
+      const room = areaAtCell(mapAreas(grid), sc.throne.x, sc.throne.y)!;
+      expect(room.kind).toBe('room');
+      expect(room.exits).toBe(1);
+      // A long way, and a much longer walk than before.
+      expect(sc.path.length).toBeGreaterThanOrEqual(SANCTUM.MIN_PASSAGE_FALLBACK);
+      const walk = distances(grid, entrance).get(`${sc.throne.x},${sc.throne.y}`)!.d;
+      expect(walk).toBeGreaterThan(Math.max(150, was * 2));
+    }
+  });
+
+  it('is the same every time the level loads', () => {
+    const a = deserializeLevel(generateLevel(7, 4242)), b = deserializeLevel(generateLevel(7, 4242));
+    const sa = buildSanctum(a.grid, a.entrance, a.contents, 4242)!, sb = buildSanctum(b.grid, b.entrance, b.contents, 4242)!;
+    expect(sb.throne).toEqual(sa.throne);
+    expect(sb.path).toEqual(sa.path);
+  });
+
+  it('every room and corridor has a district: the Ash Plain at the ladder, the Long Way, the throne room', () => {
+    const seed = 99991;
+    const { grid, entrance, contents } = deserializeLevel(generateLevel(7, seed));
+    const sc = buildSanctum(grid, entrance, contents, seed)!;
+    const areas = mapAreas(grid);
+    const d = assignDistricts(grid, areas, entrance, sc, seed);
+    expect(d.length).toBe(areas.areas.length);
+    const at = (p: { x: number; y: number }) => d[areas.areaAt[p.y * grid[0].length + p.x]];
+    expect(at(entrance)).toBe('ash');
+    expect(at(sc.path[Math.floor(sc.path.length / 2)])).toBe('approach');
+    expect(at(sc.throne)).toBe('throne');
+    expect(at(sc.mouth)).toBe('court');
+    for (const id of ['forges', 'frozen', 'pacts', 'cages']) expect(d).toContain(id);
+  });
+});
+
+describe('the seventh level in the game', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  function onLevel7() {
+    const e = new GameEngine(new Repository(db)) as any;
+    e.startNameEntry(); e.submitName('Walker'); e.acceptCharacter(); e.dismissLevelIntro();
+    e.char.hp = e.char.maxHp = 1000;
+    e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
+    const lvl = e.getLevel(7);
+    return { e, lvl, sc: lvl.sanctum };
+  }
+
+  it('the things along the Long Way happen once each, as you come to them', () => {
+    const { e, sc } = onLevel7();
+    const potions = e.char.inventory.potions;
+    const seen: string[] = [];
+    for (const p of sc.path) { e.char.x = p.x; e.char.y = p.y; seen.push(...e.alongTheLongWay()); }
+    for (const ev of APPROACH_EVENTS) expect(seen).toContain(ev.lines[0]);
+    expect(e.char.inventory.potions).toBe(potions + 1);
+    expect(e.char.hp).toBeGreaterThan(0);
+    // Walking it again: nothing.
+    for (const p of sc.path) { e.char.x = p.x; e.char.y = p.y; expect(e.alongTheLongWay()).toEqual([]); }
+  });
+
+  it('the fire along it never kills', () => {
+    const { e, sc } = onLevel7();
+    e.char.hp = 1; e.char.dexterity = 3;
+    const fire = APPROACH_EVENTS.find(x => x.id === 'fire')!;
+    const p = sc.path[Math.floor(fire.at * sc.path.length)];
+    e.char.x = p.x; e.char.y = p.y;
+    e.alongTheLongWay();
+    expect(e.char.hp).toBe(1);
+  });
+
+  it('no teleport lands on the Long Way or in the throne room', () => {
+    const { e, lvl, sc } = onLevel7();
+    for (let i = 0; i < 300; i++) {
+      e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y;
+      e.teleportPlayer();
+      expect(e.onTheLongWay(lvl, { x: e.char.x, y: e.char.y })).toBe(false);
+    }
+    void sc;
+  });
+
+  it('says where you have come, the first time into each district', () => {
+    const { e, lvl } = onLevel7();
+    e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y; e.lastArea = null;
+    const first = e.enterArea().join(' ');
+    expect(first).toContain('the Ash Plain');
+    expect(first).toMatch(/You are in an? (ash|grey|wide|long)/);
+    e.lastArea = null;
+    expect(e.enterArea().join(' ')).not.toContain('This is the Ash Plain');
+    expect(e.getState().district).toBe('ash');
+  });
+
+  it('"NOT. NOW." sends you back to the start of the Long Way', () => {
+    const { e, sc } = onLevel7();
+    e.dismissedByAsmodeus();
+    expect({ x: e.char.x, y: e.char.y }).toEqual(sc.mouth);
+  });
+});

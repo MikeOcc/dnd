@@ -7,7 +7,7 @@ import type { Area } from '../core/regions.js';
 
 type Size = 'small' | 'medium' | 'large' | 'vast';
 
-interface LevelWords {
+export interface LevelWords {
   rooms: Record<Size | 'long', string>;
   passage: string;
   flavor: string[];  // one line, picked per room
@@ -144,19 +144,19 @@ export function ceilingHeight(level: number, area: Area): number {
   return rank >= 3 ? 2 : rank === 2 ? 1 : 0;
 }
 
-/** The room's name, e.g. "a great ossuary". */
-export function roomName(level: number, area: Area): string {
-  const w = words(level);
+/** The room's name, e.g. "a great ossuary". `own`: a part of the level with its own words (a district of the seventh). */
+export function roomName(level: number, area: Area, own?: LevelWords): string {
+  const w = own ?? words(level);
   return isLong(area) && area.cells >= 20 ? w.rooms.long : w.rooms[sizeOf(area)];
 }
 
 /** Lines shown on stepping into an area. First visits get the full picture;
  * returning to a room gets a short reminder; corridors are only described
  * the first time, and only if they're long enough to be worth a word. */
-export function describeArea(level: number, area: Area, firstVisit: boolean): string[] {
-  const w = words(level);
+export function describeArea(level: number, area: Area, firstVisit: boolean, own?: LevelWords): string[] {
+  const w = own ?? words(level);
   if (area.kind === 'room') {
-    const name = roomName(level, area);
+    const name = roomName(level, area, own);
     if (!firstVisit) return [`You are back in ${name.replace(/^an? /, 'the ')}.`];
     const size = sizeOf(area);
     const reach =
@@ -165,11 +165,11 @@ export function describeArea(level: number, area: Area, firstVisit: boolean): st
       : size === 'large' ? 'Your torchlight barely reaches the far wall.'
       : 'Your torchlight is swallowed by the dark long before it finds a far wall.';
     const shape = isLong(area) && area.cells >= 20 ? `It runs a long way, ${axis(area)}.` : reach;
-    const flavor = w.flavor[hash(`${level}:${area.id}`) % w.flavor.length];
+    const flavor = w.flavor.length ? w.flavor[hash(`${level}:${area.id}`) % w.flavor.length] : '';
     const ceiling = ceilingHeight(level, area);
     const overhead = ceiling === 2 ? ['Far overhead, the ceiling is lost in darkness.']
       : ceiling === 1 ? ['The ceiling rises high above you.'] : [];
-    return [`You are in ${name}.`, shape, ...overhead, flavor, exitsLine(area.exits)];
+    return [`You are in ${name}.`, shape, ...overhead, ...(flavor ? [flavor] : []), exitsLine(area.exits)];
   }
 
   if (!firstVisit || area.cells < 6) return [];

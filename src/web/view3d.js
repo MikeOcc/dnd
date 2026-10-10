@@ -598,6 +598,15 @@
     5: { tint: '#aa8474', fog: [16, 6, 2], reach: 6.4, glow: [255, 125, 35], flame: [255, 190, 90], floor: 'ash', ceil: [0.9, 0.68, 0.58], overlay: 'scorch', motes: 'ash' },
     6: { tint: '#7c98a8', fog: [0, 9, 14], reach: 6, glow: [120, 200, 210], flame: [195, 245, 245], floor: 'water', ceil: [0.68, 0.84, 0.95], overlay: 'wet', motes: 'drips' },
     7: { tint: '#7e4440', fog: [26, 3, 0], reach: 6, glow: [255, 90, 30], flame: [255, 170, 70], floor: 'obsidian', ceil: [1, 0.48, 0.38], overlay: 'hell', motes: 'embers' },
+    // The districts of the seventh level (content/district-text.ts): one Hell, each part its own.
+    '7:ash':      { tint: '#8c7c74', fog: [18, 10, 6], reach: 6.4, glow: [255, 120, 50], flame: [255, 185, 90], floor: 'ash', ceil: [0.9, 0.72, 0.62], overlay: 'scorch', motes: 'ash' },
+    '7:forges':   { tint: '#9a5a36', fog: [30, 10, 0], reach: 6.2, glow: [255, 130, 30], flame: [255, 200, 90], floor: 'obsidian', ceil: [1, 0.62, 0.4], overlay: 'scorch', motes: 'embers' },
+    '7:frozen':   { tint: '#7c96b4', fog: [2, 8, 18], reach: 5.6, glow: [140, 190, 255], flame: [190, 225, 255], floor: 'water', ceil: [0.7, 0.82, 1], overlay: 'wet', motes: 'dust' },
+    '7:pacts':    { tint: '#6e5258', fog: [10, 3, 6], reach: 5.8, glow: [230, 140, 70], flame: [255, 205, 130], floor: 'flags', ceil: [0.86, 0.64, 0.62], overlay: 'hell', motes: 'dust' },
+    '7:cages':    { tint: '#7e4440', fog: [26, 3, 0], reach: 6, glow: [255, 90, 30], flame: [255, 170, 70], floor: 'obsidian', ceil: [1, 0.48, 0.38], overlay: 'hell', motes: 'embers' },
+    '7:court':    { tint: '#a08050', fog: [16, 8, 0], reach: 6.6, glow: [255, 180, 80], flame: [255, 220, 130], floor: 'flags', ceil: [1, 0.82, 0.55], overlay: 'hell', motes: 'embers' },
+    '7:approach': { tint: '#5a2c2c', fog: [22, 0, 0], reach: 4.6, glow: [255, 60, 20], flame: [255, 140, 60], floor: 'obsidian', ceil: [1, 0.4, 0.3], overlay: 'hell', motes: 'embers' },
+    '7:throne':   { tint: '#6a3436', fog: [30, 2, 0], reach: 7, glow: [255, 70, 20], flame: [255, 150, 60], floor: 'obsidian', ceil: [1, 0.42, 0.32], overlay: 'hell', motes: 'embers' },
   };
   const themeFor = (level) => THEMES[level] || THEMES[1];
 
@@ -617,7 +626,9 @@
     g.globalCompositeOperation = 'multiply';
     g.fillStyle = th.tint; g.fillRect(0, 0, TEX, TEX);
     g.globalCompositeOperation = 'source-over';
-    const r = rand(level * 7919 + base.length * 31);
+    // (A district of the seventh level, '7:forges', seeds by its name.)
+    const n = typeof level === 'number' ? level : [...String(level)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+    const r = rand(n * 7919 + base.length * 31);
     const blot = (x, y, rad, color) => {
       const gr = g.createRadialGradient(x, y, 0, x, y, rad);
       gr.addColorStop(0, color); gr.addColorStop(1, 'rgba(0,0,0,0)');

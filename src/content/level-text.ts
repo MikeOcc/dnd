@@ -82,7 +82,7 @@ const LEVEL_INTROS: Record<number, string[]> = {
     'The darkness is broken by rivers of fire.',
     'Monstrous shapes move beyond the flames.',
     '',
-    'At the center of this level waits Asmodeus.',
+    'Somewhere beyond it all, at the end of a long and narrow way, waits Asmodeus.',
     '',
     'PRESS ANY KEY',
   ],

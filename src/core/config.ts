@@ -508,6 +508,12 @@ export const ABOLETH = {
   SOUND_CHANCE: 0.5,        // per step that close
 } as const;
 
+// The Long Way to Asmodeus's throne (core/sanctum.ts): the fire along it.
+export const LONG_WAY = {
+  FIRE_DC: 13,        // Dexterity roll (d20 + bonus) to dodge it
+  FIRE_SHARE: 0.08,   // of maximum HP, if it catches you (never fatal)
+} as const;
+
 // Auto-fight (core/autofight.ts).
 export const AUTO = {
   HEAL_AT: 0.4,      // heal (a wizard's spell) or drink a potion at this share of health...

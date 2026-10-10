@@ -24,7 +24,7 @@ type Pt = { x: number; y: number };
 const key = (p: Pt) => `${p.x},${p.y}`;
 
 /** Walking distance from `from` to every square reachable from it. */
-function distances(grid: DungeonCell[][], from: Pt): Map<string, { d: number; prev: string | null }> {
+export function distances(grid: DungeonCell[][], from: Pt): Map<string, { d: number; prev: string | null }> {
   const out = new Map<string, { d: number; prev: string | null }>([[key(from), { d: 0, prev: null }]]);
   const queue = [from];
   while (queue.length) {

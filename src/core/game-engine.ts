@@ -16,6 +16,7 @@ import { spellMenu, spellForKey, spellsLearnedBetween, isMagic, knownSpells } fr
 import { initialPace, incrementPace, shouldTriggerRandomEncounter, resetPaceAfterCombat, EncounterPace, applyDeath, applyAsmodeusDeath, resolveChest, readBook, resolveAltar, resolveFountain, chestTrapFor, chestTrapName, chestTrapDetectChance, chestTrapDisarmChance, springChestTrap, resolveTrapTriggered, resolveTrapAvoid, resolveTrapDisarm, rollGear, HOARD_PREFIX, dragonHoardLoot, carriedTreasure } from './encounters.js';
 import { createMonster, asmodeusReturnBonus, isHiddenMonster, hiddenStandIn, currentMonsterType, pickRandomMonsterType, randomMonsterLevel, getDefinition, ANCIENT_GHOUL_INTRO } from './monsters.js';
 import { calculateScore, formatScore } from './scoring.js';
+import { LONG_WAY } from './config.js';
 import { DEBUG, CHARACTER, GAMEPLAY, DUNGEON, TREASURE, GEMS, CHEST_TRAPS, SPELLS, WARRIOR, TRAPS, LAIR, FLEE, GHOUL, PHOENIX, UNICORN, PRESENCE, RINGS, DEATH, GEAR, SHOP, HOARD, AMULETS, NEWCOMER, TOLL, HUSH, BANE, ABOLETH, BORAK, ECHOES, MONSTER_SCALING } from './config.js';
 import { LAIRS } from '../content/lair-text.js';
 import { buildOrcKingLair, centerAsmodeusLair, buildBarrowKingLair, placeLambtonWorm, placeRakshasa } from './lairs.js';
@@ -28,6 +29,9 @@ import { MENU_LORE } from '../content/menu-lore.js';
 import { rollPresence, type Lair } from './presence.js';
 import { nameIsDecent } from './names.js';
 import { chooseAuto, loreAction, type Lore } from './autofight.js';
+import { buildSanctum, type Sanctum } from './sanctum.js';
+import { assignDistricts } from './hell-districts.js';
+import { DISTRICTS, APPROACH_EVENTS, type DistrictId } from '../content/district-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
 import { describeArea, ceilingHeight } from '../content/area-text.js';
 import { mapAreas, areaAtCell, type AreaMap, waysOut, bearingsPhrase } from './regions.js';
@@ -109,6 +113,9 @@ interface LevelCache {
   exit: { x: number; y: number } | null;
   contents: Map<string, CellContent>;
   areas?: AreaMap;   // rooms and corridors, worked out on first use
+  seed?: number;                 // the level's own seed
+  sanctum?: Sanctum | null;      // level 7: Asmodeus's throne room and the Long Way to it
+  districts?: DistrictId[];      // level 7: each area's district, worked out on first use
 }
 
 export class GameEngine {
@@ -183,6 +190,8 @@ export class GameEngine {
       if (lvl) {
         state.view = this.renderView();
         state.scene = this.buildScene(lvl);
+        const district = this.districtHere();
+        if (district) state.district = district;
       }
     }
 
@@ -1093,6 +1102,11 @@ export class GameEngine {
     }
     const areaLines = this.enterArea();
     if (areaLines.length) this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...areaLines];
+    const longWay = this.alongTheLongWay();
+    if (longWay.length) {
+      this.messages = [...this.messages, ...(this.messages.length ? [''] : []), ...longWay];
+      return this.getState();   // nothing else happens on the same step
+    }
 
     // Check cell content. Something you already dealt with from the next
     // square (a chest you left shut, say) lets you walk over it.
@@ -1604,7 +1618,7 @@ export class GameEngine {
       4: [['unique-orc-king', 'War drums. The Orc King holds a hall of shields somewhere on this level.']],
       5: [['unique-barrow-king', 'Somewhere on this level is a barrow. Something in it has been waiting a thousand years.']],
       6: [['unique-lambton-worm', 'A worm that cannot be cut lies coiled on its hoard down here.'], ['unique-dracolich', 'A dragon that died and did not stop.'], ['unique-aboleth', 'Something ancient in the black water.']],
-      7: [['unique-rakshasa', 'A tiger in a scholar\u2019s silks holds court here. Spells slide off it; only the finest blades bite.'], ['unique-asmodeus', 'At the center of this level, on a throne of black iron, Asmodeus waits for you.']],
+      7: [['unique-rakshasa', 'A tiger in a scholar\u2019s silks holds court here. Spells slide off it; only the finest blades bite.'], ['unique-asmodeus', 'At the end of a long and narrow way, on a throne of black iron, Asmodeus waits for you.']],
     };
     const rumours = (RUMOURS[levelNum] ?? []).filter(([id]) => !id || alive(id)).map(([, t]) => t);
     return [
@@ -1643,7 +1657,19 @@ export class GameEngine {
     const seenKey = `area:${key}`;
     const first = !this.dungeonState.visitedDescriptions.has(seenKey);
     this.dungeonState.visitedDescriptions.add(seenKey);
-    const lines = describeArea(this.char.dungeonLevel, area, first);
+    const district = this.districtHere();
+    const lines = describeArea(this.char.dungeonLevel, area, first, district ? DISTRICTS[district] : undefined);
+    if (district) {
+      // The first time into each district of the seventh level, say where you've come.
+      const dk = `district:${district}`;
+      if (!this.dungeonState.visitedDescriptions.has(dk)) {
+        this.dungeonState.visitedDescriptions.add(dk);
+        lines.unshift(...DISTRICTS[district].arrival, '');
+      }
+      // The room the crack opens from.
+      const m = lvl.sanctum?.mouth;
+      if (first && m && areaAtCell(lvl.areas, m.x, m.y) === area) lines.splice(lines.length - 1, 0, 'In one wall, a narrow crack opens on a passage of black glass, leading down into the dark.');
+    }
     // Say which way the ways out lie: "There are three ways out: two ahead and one behind you."
     const last = lines.length - 1;
     if (area.kind === 'room' && last >= 0 && /way(s)? out\.$/.test(lines[last]) && area.exits > 0) {
@@ -1651,6 +1677,48 @@ export class GameEngine {
       if (ways.length) lines[last] = lines[last].replace(/\.$/, `: ${bearingsPhrase(ways)}.`);
     }
     this.mapAreaLines = lines;
+    return lines;
+  }
+
+  /** The district of the seventh level the character is in, or null elsewhere. */
+  private districtHere(): DistrictId | null {
+    if (!this.char || this.char.dungeonLevel !== 7) return null;
+    const lvl = this.getLevel(7);
+    if (!lvl) return null;
+    lvl.areas ??= mapAreas(lvl.grid);
+    lvl.districts ??= assignDistricts(lvl.grid, lvl.areas, lvl.entrance, lvl.sanctum ?? null, lvl.seed ?? 0);
+    const i = lvl.areas.areaAt[this.char.y * (lvl.grid[0]?.length ?? 0) + this.char.x];
+    return i >= 0 ? lvl.districts[i] ?? null : null;
+  }
+
+  /** What happens along the Long Way to the throne, each thing once, as you
+   * reach its place in the passage (content/district-text.ts). */
+  private alongTheLongWay(): string[] {
+    if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return [];
+    const sc = this.getLevel(7)?.sanctum;
+    if (!sc) return [];
+    const i = sc.path.findIndex(p => p.x === this.char!.x && p.y === this.char!.y);
+    if (i < 0) return [];
+    const ev = APPROACH_EVENTS.find(e => Math.floor(e.at * sc.path.length) === i);
+    if (!ev) return [];
+    const seenKey = `longway:${ev.id}`;
+    if (this.dungeonState.visitedDescriptions.has(seenKey)) return [];
+    this.dungeonState.visitedDescriptions.add(seenKey);
+    const lines = [...ev.lines];
+    if (ev.id === 'fire') {
+      const roll = this.rng.int(1, 20) + this.lairDexBonus();
+      if (roll >= LONG_WAY.FIRE_DC) lines.push(`You throw yourself flat, and the fire roars over you. (Dexterity: rolled ${roll}, needed ${LONG_WAY.FIRE_DC})`);
+      else {
+        const dmg = Math.min(this.char.hp - 1, Math.max(1, Math.round(this.char.maxHp * LONG_WAY.FIRE_SHARE)));
+        this.char.hp -= dmg;
+        this.fx.player = 'fire';
+        lines.push(`It catches you! You burn for ${dmg} damage. (Dexterity: rolled ${roll}, needed ${LONG_WAY.FIRE_DC})`);
+      }
+    }
+    if (ev.id === 'mercy') {
+      this.char.inventory.potions++;
+      lines.push('You take the vial. It is a healing potion. (+1 potion)');
+    }
     return lines;
   }
 
@@ -1679,6 +1747,22 @@ export class GameEngine {
 
   /** Asmodeus can't be bothered: he flings the intruder elsewhere on the level. */
   private dismissedByAsmodeus(): GameState {
+    const crack = this.getLevel(7)?.sanctum?.mouth;
+    if (crack && this.char) {
+      this.char.x = crack.x; this.char.y = crack.y;
+      this.lightAround();
+      this.lastArea = null;
+      this.presenceFelt = true;
+      this.fx.player = 'arcane';
+      this.messages = [
+        'The smoke parts. On the throne, something vast stirs, and sighs.',
+        'A bored voice like grinding stone: "NOT. NOW."',
+        '',
+        'The world folds around you, and you are standing at the crack where the Long Way begins.',
+        'You will have to walk it again.',
+      ];
+      return this.getState();
+    }
     this.teleportPlayer();
     this.presenceFelt = true;  // in map mode, show this rather than redrawing the map
     this.fx.player = 'arcane';
@@ -2777,7 +2861,7 @@ export class GameEngine {
    * clear line of sight (no wall crossed) to it, not behind them, faint at
    * the edge if it's only in the corner of their eye. It always looks empty;
    * he is met only by stepping onto it. Which side of it they see depends on
-   * where they stand; it always faces south. */
+   * where they stand; it faces its room's door (south, if it has no throne room). */
   private sightAsmodeus(): GameState['sighting'] | null {
     if (!this.char || !this.dungeonState || this.char.dungeonLevel !== 7) return null;
     const lvl = this.getLevel(7);
@@ -2804,8 +2888,8 @@ export class GameEngine {
     if (Math.abs(ratio) > 6) return null;     // too far round to see at all
     const offset = Math.max(-1, Math.min(1, ratio / 1.2));
 
-    // Which side of the throne faces the character. It always faces south.
-    const throne: Direction = 'S';
+    // Which side of the throne faces the character.
+    const throne: Direction = lvl.sanctum?.facing ?? 'S';
     const [tx, ty] = fwd[throne];
     const along = -dx * tx + -dy * ty;        // the character's position, in front of (+) or behind (-) the throne
     const side = -dx * -ty + -dy * tx;
@@ -3996,6 +4080,7 @@ export class GameEngine {
       .map(k => { const [x, y] = k.split(',').map(Number); return { x, y }; })
       .filter(p => !(p.x === here.x && p.y === here.y))
       .filter(p => !isSolidRock(lvl.grid[p.y][p.x]))
+      .filter(p => !this.onTheLongWay(lvl, p))
       .filter(p => {
         const content = lvl.contents.get(`${p.x},${p.y}`);
         return !content || content.type === 'description';
@@ -4009,6 +4094,14 @@ export class GameEngine {
     this.char.facing = this.rng.pick(['N', 'E', 'S', 'W'] as Direction[]);
     this.lightAround();
     this.lastArea = null;  // the next step describes wherever this is
+  }
+
+  /** On the Long Way to the throne, or in the throne room: no shortcut lands you there. */
+  private onTheLongWay(lvl: LevelCache, p: { x: number; y: number }): boolean {
+    const sc = lvl.sanctum;
+    if (!sc) return false;
+    if (p.x >= sc.room.x0 && p.x <= sc.room.x1 && p.y >= sc.room.y0 && p.y <= sc.room.y1) return true;
+    return sc.path.some(q => q.x === p.x && q.y === p.y) || sc.branches.some(q => q.x === p.x && q.y === p.y);
   }
 
   // ─── Level cache ─────────────────────────────────────────────────────────
@@ -4028,14 +4121,17 @@ export class GameEngine {
     if (!serialized) return;
 
     const { grid, entrance, exit, contents } = deserializeLevel(serialized);
+    // Level 7: Asmodeus on his throne at the end of the Long Way (or, where there's no room for it, in the middle).
+    const seed = serialized.seed ?? (entrance.x * 7919 + entrance.y * 104729);
+    const sanctum = levelNum === 7 ? buildSanctum(grid, entrance, contents, seed) : null;
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
     if (levelNum === 6) placeLambtonWorm(grid, entrance, exit, contents);
-    if (levelNum === 7) { centerAsmodeusLair(grid, contents); placeRakshasa(grid, entrance, exit, contents); }
+    if (levelNum === 7) { if (!sanctum) centerAsmodeusLair(grid, contents); placeRakshasa(grid, entrance, exit, contents); }
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
     this.placeBloodstains(levelNum, grid, entrance, contents);
-    this.levelCache.set(levelNum, { grid, entrance, exit, contents });
+    this.levelCache.set(levelNum, { grid, entrance, exit, contents, seed, sanctum });
     this.placeHoards(levelNum);
   }
 

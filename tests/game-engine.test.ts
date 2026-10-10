@@ -2514,13 +2514,13 @@ describe('GameEngine — the throne in the field of view', () => {
   });
 });
 
-describe('GameEngine — the throne faces south', () => {
+describe('GameEngine — the throne faces its door', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let db: any;
   beforeEach(() => { db = createMemoryDb(); });
   afterEach(() => { db.close(); });
 
-  it('shows its front from the south, its back from the north, and its sides from east and west', () => {
+  it('shows its front from the door side and its sides from either hand', () => {
     const engine = makeReadyEngine(db);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
@@ -2530,10 +2530,17 @@ describe('GameEngine — the throne faces south', () => {
     const [k] = [...lvl.contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
     const [lx, ly] = k.split(',').map(Number);
     const look = (x: number, y: number, facing: string) => { e.char.x = x; e.char.y = y; e.char.facing = facing; return engine.getState().sighting?.view; };
-    expect(look(lx, ly + 1, 'N')).toBe('front');
-    expect(look(lx, ly - 1, 'S')).toBe('back');
-    expect(look(lx + 1, ly, 'W')).toBe('faces-left');    // looking west, south is on your left
-    expect(look(lx - 1, ly, 'E')).toBe('faces-right');
+    const f: string = lvl.sanctum.facing;
+    const fwd: Record<string, [number, number]> = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+    const back: Record<string, string> = { N: 'S', S: 'N', E: 'W', W: 'E' };
+    const rightOf: Record<string, string> = { N: 'E', E: 'S', S: 'W', W: 'N' };
+    const [fx, fy] = fwd[f];
+    // Two squares in front of it, looking at it: its front.
+    expect(look(lx + 2 * fx, ly + 2 * fy, back[f])).toBe('front');
+    // Beside it, looking at it: one side or the other.
+    const [rx, ry] = fwd[rightOf[f]];
+    expect(look(lx + 2 * rx, ly + 2 * ry, back[rightOf[f]])).toBe('faces-right');
+    expect(look(lx - 2 * rx, ly - 2 * ry, rightOf[f])).toBe('faces-left');
   });
 });
 

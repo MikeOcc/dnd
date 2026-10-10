@@ -785,7 +785,9 @@ function draw3D(state) {
   const camera = cameraFor3D(state, now);
   const extraObjects = monsterShownInScene(state) ? [monsterObject(state, camera, now)] : [];
   const snuffed = (state.character?.statusEffects || []).some(e => e.type === 'snuffed');
-  const opts = { sprites: SceneSprites, t, camera, extraObjects, level: state.character?.dungeonLevel || 1, dark: snuffed };
+  // On the seventh level, each district of Hell has its own look.
+  const lvlNum = state.character?.dungeonLevel || 1;
+  const opts = { sprites: SceneSprites, t, camera, extraObjects, level: lvlNum === 7 && state.district ? `7:${state.district}` : lvlNum, dark: snuffed };
   if (viewMode === 'painted') {
     View3D.renderPainted(canvas, state.scene, opts);
   } else {

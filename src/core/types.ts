@@ -492,6 +492,7 @@ export interface SceneObject {
 }
 
 export interface GameState {
+  district?: string;   // level 7: the district of Hell the character is in (the painted view dresses it)
   autoFight?: { action?: string; stopped?: string };   // auto-fight: what it just did, or why it handed the fight back
   phase: GamePhase;
   character?: Character;
