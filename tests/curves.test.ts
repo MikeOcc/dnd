@@ -104,7 +104,7 @@ describe('the drawn map', () => {
         checked++;
       }));
       expect(checked).toBeGreaterThan(300);
-      if (level === 5) expect(d.bars.join('').replace(/[ 0]/g, '').length).toBeGreaterThan(0);
+      if (level === 5 && lvl.gaol) expect(d.bars.join('').replace(/[ 0]/g, '').length).toBeGreaterThan(0);   // (a rare level has no room for the gaol)
     }
   });
 });

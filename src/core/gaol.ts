@@ -48,10 +48,19 @@ function open(grid: DungeonCell[][], a: Pt, b: Pt): void {
   else if (dy === -1) { A.N = false; B.S = false; }
 }
 
-/** Builds the gaol, if there's room for it; returns null (and changes nothing) if not. */
+/** Builds the gaol, if there's room for it (a crowded level gets a smaller
+ * one); returns null (and changes nothing) if there's no room at all. */
 export function buildGaol(grid: DungeonCell[][], entrance: Pt, contents: Map<string, CellContent>, seed: number): Gaol | null {
+  for (let n = GAOL.CELLS_A_SIDE; n >= 3; n--) {
+    const g = buildGaolOf(n, grid, entrance, contents, seed);
+    if (g) return g;
+  }
+  return null;
+}
+
+function buildGaolOf(cellsASide: number, grid: DungeonCell[][], entrance: Pt, contents: Map<string, CellContent>, seed: number): Gaol | null {
   const H = grid.length, W = grid[0]?.length ?? 0;
-  const L = GAOL.CELLS_A_SIDE * 2;   // the aisle's length
+  const L = cellsASide * 2;   // the aisle's length
   const fromEntrance = distances(grid, entrance);
   const rng = new RNG((seed ^ 0x6a01) >>> 0 || 1);
 
@@ -105,7 +114,7 @@ export function buildGaol(grid: DungeonCell[][], entrance: Pt, contents: Map<str
   // The cells, and their barred doors (still walls: you can't walk through bars).
   const bars = new Set<string>();
   const cells: Pt[][] = [];
-  for (let c = 0; c < GAOL.CELLS_A_SIDE; c++) for (const side of [-1, 1]) {
+  for (let c = 0; c < cellsASide; c++) for (const side of [-1, 1]) {
     const sq = [toXY(c * 2, side), toXY(c * 2 + 1, side), toXY(c * 2, side * 2), toXY(c * 2 + 1, side * 2)];
     open(grid, sq[0], sq[1]); open(grid, sq[2], sq[3]); open(grid, sq[0], sq[2]); open(grid, sq[1], sq[3]);
     cells.push(sq);

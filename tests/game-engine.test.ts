@@ -1,3 +1,4 @@
+import { generateLevel } from '../src/core/dungeon.js';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { RNG } from '../src/core/random.js';
 import { createMemoryDb } from '../src/database/database.js';
@@ -2526,6 +2527,7 @@ describe('GameEngine — the throne faces its door', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = engine as any;
     e.dismissLevelIntro();
+    e.repo.saveLevel(e.char.id, 7, generateLevel(7, 5 * 7919));   // a level with the Long Way and its round throne room
     e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
     const lvl = e.getLevel(7);
     const [k] = [...lvl.contents.entries()].find(([, x]: [string, { monsterId?: string }]) => x.monsterId === 'Asmodeus')!;
