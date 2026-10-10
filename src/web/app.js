@@ -756,6 +756,9 @@ function flashSaved() {
 // How monsters appear in the 3D views: the portrait overlay, or standing in the scene.
 const MONSTER_KEY = 'sevenLevels.monsterDisplay';
 let monsterInScene = (() => { try { return localStorage.getItem(MONSTER_KEY) === 'scene'; } catch { return false; } })();
+// The ASCII 3D view's objects (chests, ladders, figures): drawn in characters (the default: pure text) or as pictures.
+const TEXT_OBJECTS_KEY = 'sevenLevels.asciiTextObjects';
+let textObjects = (() => { try { return localStorage.getItem(TEXT_OBJECTS_KEY) !== '0'; } catch { return true; } })();
 // Smooth movement in the 3D views: steps glide and turns swivel.
 const SMOOTH_KEY = 'sevenLevels.smoothMove';
 let smoothMove = (() => { try { return localStorage.getItem(SMOOTH_KEY) !== '0'; } catch { return true; } })();
@@ -855,7 +858,7 @@ function draw3D(state) {
     const px = Math.round(13 * crisp);
     const font = `${px}px ${getComputedStyle(pre).fontFamily}`;
     ctx.font = font;
-    View3D.renderAscii(canvas, state.scene, { ...opts, font, cellW: ctx.measureText('M').width, cellH: Math.round(px * 1.15) });
+    View3D.renderAscii(canvas, state.scene, { ...opts, font, cellW: ctx.measureText('M').width, cellH: Math.round(px * 1.15), textObjects });
   }
 
   // Keep going: every frame while gliding or a blow lands, gently otherwise
@@ -874,6 +877,11 @@ const SETTINGS = [
   { key: 'e', label: 'Monsters (3D views)', get: () => monsterInScene, value: () => (monsterInScene ? 'IN SCENE' : 'PORTRAIT'), toggle: () => {
       monsterInScene = !monsterInScene;
       try { localStorage.setItem(MONSTER_KEY, monsterInScene ? 'scene' : 'portrait'); } catch { /* per-viewer nicety only */ }
+      applyState(currentState);
+    } },
+  { key: 'h', label: 'Objects (ASCII 3D)', get: () => textObjects, value: () => (textObjects ? 'CHARACTERS' : 'PICTURES'), toggle: () => {
+      textObjects = !textObjects;
+      try { localStorage.setItem(TEXT_OBJECTS_KEY, textObjects ? '1' : '0'); } catch { /* per-viewer nicety only */ }
       applyState(currentState);
     } },
   { key: 'f', label: 'Smooth movement (3D views)', get: () => smoothMove, toggle: () => {

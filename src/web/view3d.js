@@ -402,6 +402,150 @@
     rough: { course: 0.5, block: 0.7, rough: true },
   };
 
+
+  // ─── Text-only objects (the ASCII 3D view's "Objects: characters" setting) ──
+  // Each thing in the scene drawn in characters, scaled to where it stands:
+  // the art is sampled into the glyph cells its picture would cover, hidden
+  // behind nearer walls like the pictures are. Too small for the art, it's a
+  // single symbol. [art lines, colour, symbol]
+  const TEXT_ART = {
+    chest: [[' ________ ', '/________\\', '|  [==]  |', '|________|'], 'd8a040', '$'],
+    'ladder-up': [['|-|', '|-|', '|-|', '|-|', '|-|', '|-|'], 'c8b090', '>'],
+    'ladder-down': [[' _______ ', '/  |-|  \\', '\\__|-|__/'], 'c8b090', '<'],
+    fountain: [['   .|.   ', '  \' | \'  ', ' ___|___ ', '(~~~~~~~)', ' \\_____/ '], '70c8e0', '~'],
+    well: [[' _/^^^\\_ ', '  |   |  ', ' _|___|_ ', '|~~~~~~~|', '|_______|'], '70c8e0', '~'],
+    altar: [['   +   ', ' __|__ ', '|=====|', '|  +  |', '|_____|'], 'e8e8e8', '+'],
+    book: [[' _____ ', '/__|__\\', '   |   ', '  _|_  '], 'b0d0ff', '?'],
+    throne: [[' /\\   /\\ ', '|  \\_/  |', '|  ___  |', '| |   | |', '|_|___|_|'], 'c070c0', 'A'],
+    'throne-back': [[' /\\___/\\ ', '|       |', '|       |', '|       |', '|_______|'], 'c070c0', 'A'],
+    'throne-side': [['  /| ', ' / | ', '|  |_', '|  | |', '|__|_|'], 'c070c0', 'A'],
+    'throne-orc': [[' ^ ^ ^ ', '|  _  |', '| | | |', '|_|_|_|'], 'c09060', 'K'],
+    shop: [['/\\/\\/\\/\\/\\', '|  $  $  |', '|________|'], 'e0c060', '$'],
+    pillar: [['_|_', '| |', '| |', '| |', '| |', '_|_'], 'a0a0a0', '|'],
+    bones: [['  .-.      ', ' (o.o)=-=<>'], 'd8d0b8', '%'],
+    bloodstain: [['~~~~~~~~'], 'a01818', '~'],
+    monster: [['  ,_,  ', ' (O O) ', '/|===|\\', ' |   | ', ' /   \\ '], 'ff5040', 'M'],
+  };
+
+
+  // Larger art for the bigger things, used when there's room for it.
+  const TEXT_ART_BIG = {
+    throne: [
+      '  /\\             /\\  ',
+      ' /  \\    /\\     /  \\ ',
+      '|    \\__/  \\__/    |',
+      '|                   |',
+      '|    ___________    |',
+      '|   |           |   |',
+      '|   |           |   |',
+      '|===|___________|===|',
+      '|   |           |   |',
+      '|___|___________|___|',
+    ],
+    'throne-back': [
+      '  /\\             /\\  ',
+      ' /  \\___________/  \\ ',
+      '|                   |',
+      '|                   |',
+      '|                   |',
+      '|                   |',
+      '|                   |',
+      '|                   |',
+      '|___________________|',
+    ],
+    shop: [
+      '/\\/\\/\\/\\/\\/\\/\\/\\/\\',
+      '|  #  ##   o   #   |',
+      '|==================|',
+      '|      TRADE       |',
+      '|__________________|',
+    ],
+    chest: [
+      '  ______________  ',
+      ' /______________\\ ',
+      '|=======[]=======|',
+      '|       ||       |',
+      '|________________|',
+    ],
+    altar: [
+      '       +       ',
+      '      _|_      ',
+      ' ____|___|____ ',
+      '|=============|',
+      '|      +      |',
+      '|             |',
+      '|_____________|',
+    ],
+    fountain: [
+      '      .  |  .      ',
+      '    \'  . | .  \'    ',
+      '       _|_|_       ',
+      '  ____|_____|____  ',
+      ' (~~~~~~~~~~~~~~~) ',
+      '  \\_____________/  ',
+    ],
+    well: [
+      '   ____/^^^^^\\____   ',
+      '       |     |       ',
+      '       |  o  |       ',
+      '  _____|_____|_____  ',
+      ' |~~~~~~~~~~~~~~~~~| ',
+      ' |_________________| ',
+    ],
+    monster: [
+      '    ,___,    ',
+      '   ( O O )   ',
+      '    \\ ^ /    ',
+      '  __/|=|\\__  ',
+      ' /  |===|  \\ ',
+      '/   |   |   \\',
+      '    |   |    ',
+      '   /     \\   ',
+      '  /       \\  ',
+    ],
+  };
+
+  /** Draws each object of the scene in characters into the glyph grid. */
+  function textSprites(placed, cast, cellW, cellH, cols, rows, put) {
+    for (const s of placed) {
+      const kind = s.obj.kind === 'throne' ? (s.view === 'front' ? 'throne' : s.view === 'back' ? 'throne-back' : 'throne-side') : s.obj.kind;
+      const def = TEXT_ART[kind] || TEXT_ART[s.obj.kind] || TEXT_ART.monster;
+      const [small, hex, symbol] = def;
+      // The larger art where there's room for all of it.
+      const big = TEXT_ART_BIG[kind] || (TEXT_ART[kind] ? null : TEXT_ART_BIG.monster);
+      const boxW = (s.width / cellW), boxH = (s.height / cellH);
+      const art = big && boxW >= Math.max(...big.map(l => l.length)) && boxH >= big.length ? big : small;
+      const color = lerpColor('000000', hex, Math.max(0.25, light(s.depth)));
+      const c0 = Math.floor(s.left / cellW), c1 = Math.floor((s.left + s.width) / cellW);
+      const r0 = Math.floor(s.top / cellH), r1 = Math.floor((s.top + s.height) / cellH);
+      const visible = (c) => c >= 0 && c < cols && cast.columns[c] && cast.columns[c].depth > s.depth;
+      const W = Math.max(...art.map(l => l.length)), H = art.length;
+      if (c1 - c0 + 1 < Math.ceil(W / 2) || r1 - r0 + 1 < Math.ceil(H / 2)) {
+        // Too small to draw: its symbol, where its foot stands.
+        const c = Math.floor(s.screenX / cellW), r = Math.min(rows - 1, Math.floor((s.baseY - 1) / cellH));
+        if (visible(c)) put(r, c, symbol, color, 12);
+        continue;
+      }
+      if (c1 - c0 + 1 >= W && r1 - r0 + 1 >= H) {
+        // Room for it: the art as drawn (enlarged, characters would only repeat), standing where the thing stands.
+        const left = Math.round(s.screenX / cellW - W / 2), bottom = Math.min(rows - 1, Math.floor((s.baseY - 1) / cellH));
+        art.forEach((line, i) => {
+          const r = bottom - (H - 1) + i;
+          for (let j = 0; j < line.length; j++) if (line[j] !== ' ' && visible(left + j)) put(r, left + j, line[j], color, 12);
+        });
+        continue;
+      }
+      // Smaller: the art squeezed into the space it has.
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        if (!visible(c)) continue;
+        const ay = Math.min(H - 1, Math.floor(((r - r0) / (r1 - r0 + 1)) * H));
+        const ax = Math.min(W - 1, Math.floor(((c - c0) / (c1 - c0 + 1)) * W));
+        const g = art[ay][ax];
+        if (g && g !== ' ') put(r, c, g, color, 12);
+      }
+    }
+  }
+
   /** Renders the ASCII 3D look onto a canvas: architecture drawn as glyph
    * lines (wall edges, mortar courses and joints that follow the
    * perspective, chosen by slope as \ / _ - |), floor seams, and sprites
@@ -543,6 +687,10 @@
       }
     }
 
+    // Objects in characters, if chosen (they join the glyphs); otherwise pictures, after.
+    const placed = placeObjects(world, cam, width, height, sprites.sizeOf);
+    if (opts.textObjects) textSprites(placed, cast, cellW, cellH, cols, rows, put);
+
     // Paint the glyphs, then the sprites among them.
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
@@ -553,9 +701,7 @@
       ctx.fillStyle = col_[r][c];
       ctx.fillText(ch[r][c], c * cellW, r * cellH);
     }
-    for (const s of placeObjects(world, cam, width, height, sprites.sizeOf)) {
-      drawSprite(ctx, cast, s, width, t, sprites.art(s.obj));
-    }
+    if (!opts.textObjects) for (const s of placed) drawSprite(ctx, cast, s, width, t, sprites.art(s.obj));
     // Iron bars, over whatever lies beyond them: uprights, and two crossbars.
     for (let c = 0; c < cols; c++) {
       for (const b of [...cast.columns[c].bars].reverse()) {
