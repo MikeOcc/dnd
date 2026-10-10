@@ -35,11 +35,30 @@
     pillar: { w: 0.42, h: 1.0 },
     shop: { w: 1.0, h: 1.0 },
     bloodstain: { w: 0.8, h: 0.16 },   // flat on the floor: where another player's character fell
+    bones: { w: 0.62, h: 0.3 },        // a prisoner's, left in a cell of the old gaol
   };
 
   // ─── Built-in artwork (viewBox matches each landmark's proportions) ─────
 
   const SVG = {
+    bones: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 96">
+      <ellipse cx="100" cy="86" rx="92" ry="9" fill="#000" opacity="0.35"/>
+      <g stroke="#6a6250" stroke-width="2" fill="#cfc6ae">
+        <path d="M 24 78 L 142 62 L 146 70 L 28 86 Z"/>
+        <circle cx="22" cy="80" r="7"/><circle cx="24" cy="88" r="6"/><circle cx="144" cy="62" r="6"/><circle cx="148" cy="71" r="6"/>
+        <path d="M 60 88 L 176 84 L 176 91 L 60 94 Z"/>
+        <circle cx="178" cy="85" r="5"/><circle cx="178" cy="92" r="5"/>
+        <path d="M 96 70 q 10 -14 22 0 q -11 8 -22 0 Z" opacity="0.9"/>
+        <path d="M 104 58 q 4 -10 14 -4 M 100 62 q 6 -12 22 -6" fill="none"/>
+      </g>
+      <g stroke="#5a5240" stroke-width="2.4" fill="#d8cfb6">
+        <path d="M 40 66 C 40 40, 86 38, 88 62 C 89 70, 84 74, 80 76 L 80 84 L 50 84 L 50 76 C 44 74, 40 72, 40 66 Z"/>
+      </g>
+      <g fill="#1a1612"><ellipse cx="54" cy="62" rx="7" ry="8"/><ellipse cx="74" cy="62" rx="7" ry="8"/><path d="M 62 70 l 3 6 l -6 0 Z"/></g>
+      <path d="M 54 84 l 0 -6 M 60 84 l 0 -6 M 66 84 l 0 -6 M 72 84 l 0 -6" stroke="#5a5240" stroke-width="2"/>
+      <path d="M 120 40 q 6 20 -2 30 M 128 36 q 10 24 0 36" stroke="#4a4038" stroke-width="3" fill="none" opacity="0.8"/>
+      <circle cx="120" cy="38" r="4" fill="none" stroke="#4a4038" stroke-width="3"/>
+    </svg>`,
     bloodstain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40">
       <ellipse cx="100" cy="24" rx="92" ry="13" fill="#2a0204" opacity="0.85"/>
       <ellipse cx="94" cy="23" rx="62" ry="9" fill="#4a0608" opacity="0.9"/>

@@ -478,14 +478,14 @@ export interface SceneData {
   facing: Direction;
   level: number;
   radius: number;
-  cells: [number, number, number, number, string, number, number, number][];   // ..., curved corner (curves.ts CORNER_CODE, 0 none)
+  cells: [number, number, number, number, string, number, number, number, number][];   // ..., curved corner (curves.ts CORNER_CODE, 0 none), barred sides (bits like walls)
   objects: SceneObject[];
 }
 
 export interface SceneObject {
   x: number;
   y: number;
-  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop' | 'monster' | 'bloodstain';
+  kind: 'fountain' | 'well' | 'altar' | 'chest' | 'book' | 'ladder-up' | 'ladder-down' | 'throne' | 'shop' | 'monster' | 'bloodstain' | 'bones';
   variant?: string;   // throne: whose ('Asmodeus', 'Orc King')
   type?: string;      // monster: a great foe waiting in its room
   facing?: Direction; // monster: the way it faces (toward the way into the level)

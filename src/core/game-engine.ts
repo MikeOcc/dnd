@@ -31,6 +31,7 @@ import { nameIsDecent } from './names.js';
 import { chooseAuto, loreAction, type Lore } from './autofight.js';
 import { buildSanctum, type Sanctum } from './sanctum.js';
 import { roundRooms, curvedCorner, CORNER_CODE, CORNER_GLYPH } from './curves.js';
+import { buildGaol, GAOL, type Gaol } from './gaol.js';
 import { assignDistricts } from './hell-districts.js';
 import { DISTRICTS, APPROACH_EVENTS, type DistrictId } from '../content/district-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
@@ -108,6 +109,14 @@ const GEM_PLURAL: Record<GemType, string> = {
   ruby: 'rubies', sapphire: 'sapphires', diamond: 'diamonds', opal: 'opals', emerald: 'emeralds', moonstone: 'moonstones', pearl: 'pearls',
 };
 
+/** Stepping into the old gaol's aisle (gaol.ts) for the first time. */
+const GAOL_LINES = [
+  'You are in a narrow aisle between two rows of cells: an old gaol, cut into the rock.',
+  'Each cell is shut behind a door of iron bars, red with rust and locked fast.',
+  'Through the bars your light finds old bones, chains still fixed to the walls, and here and there a chest no one has reached in a very long time.',
+  'If only you could pick a lock.',
+];
+
 interface LevelCache {
   grid: DungeonCell[][];
   entrance: { x: number; y: number };
@@ -116,6 +125,8 @@ interface LevelCache {
   areas?: AreaMap;   // rooms and corridors, worked out on first use
   seed?: number;                 // the level's own seed
   sanctum?: Sanctum | null;      // level 7: Asmodeus's throne room and the Long Way to it
+  gaol?: Gaol | null;            // level 5: the old gaol, its cells behind iron bars
+  straight?: Set<string>;        // squares never drawn curved (the gaol's)
   districts?: DistrictId[];      // level 7: each area's district, worked out on first use
 }
 
@@ -282,8 +293,9 @@ export class GameEngine {
       for (let x = px - R; x <= px + R; x++) {
         const cell = row[x];
         if (!cell || isSolidRock(cell)) continue;
-        let walls = 0, torches = 0, carvings = 0, mats = '';
+        let walls = 0, torches = 0, carvings = 0, mats = '', bars = 0;
         dirs.forEach((d, i) => {
+          if (lvl.gaol?.bars.has(`${x},${y},${d}`)) bars |= 1 << i;
           if (cell.walls[d]) {
             walls |= 1 << i;
             mats += mat[edgeMaterial(level, x, y, d)] ?? 's';
@@ -292,8 +304,9 @@ export class GameEngine {
           } else mats += '-';
         });
         const area = areaAtCell(areas, x, y);
-        const corner = curvedCorner(level, cell, area);
-        cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings, corner ? CORNER_CODE[corner] : 0]);
+        const corner = lvl.straight?.has(`${x},${y}`) ? null : curvedCorner(level, cell, area);
+        cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings, corner ? CORNER_CODE[corner] : 0, bars]);
+        if (lvl.gaol?.bones.some(b => b.x === x && b.y === y)) objects.push({ x, y, kind: 'bones' });
 
         const c = lvl.contents.get(`${x},${y}`);
         if (!c) continue;
@@ -668,8 +681,9 @@ export class GameEngine {
         if (!cell) { row += '.'; continue; }
         const { N, S, E, W } = cell.walls;
         const openCount = [!N, !S, !E, !W].filter(Boolean).length;
-        const curve = curvedCorner(level, cell, areaAtCell(lvl.areas ??= mapAreas(lvl.grid), cx, cy));
-        if (curve)               row += CORNER_GLYPH[curve];   // a curved bend or corner
+        const curve = lvl.straight?.has(k) ? null : curvedCorner(level, cell, areaAtCell(lvl.areas ??= mapAreas(lvl.grid), cx, cy));
+        if (lvl.gaol?.aisle.some(p => p.x === cx && p.y === cy)) row += '=';   // the gaol's aisle, between barred cells
+        else if (curve)          row += CORNER_GLYPH[curve];   // a curved bend or corner
         else if (openCount >= 3) row += '.';   // room interior / junction
         else if (!N && !S)       row += '|';   // N-S corridor
         else if (!E && !W)       row += '-';   // E-W corridor
@@ -686,7 +700,7 @@ export class GameEngine {
       ...rows.map(r => `  ${r}`),
       `  ${'─'.repeat(w)}`,
       '',
-      `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar${asmodeusAt ? '  A Asmodeus' : ''}`,
+      `  @ You  . Room  |- Corridor  < Down  > Up  $ Chest  + Altar${lvl.gaol ? '  = Barred cells' : ''}${asmodeusAt ? '  A Asmodeus' : ''}`,
       ...(this.mapAreaLines.length ? ['', ...this.mapAreaLines] : []),
     ];
     return this.getState();
@@ -1037,7 +1051,7 @@ export class GameEngine {
       const next: { x: number; y: number }[] = [];
       for (const p of frontier) {
         for (const [dir, dx, dy] of steps) {
-          if (!canMove(lvl.grid, p.x, p.y, dir)) continue;
+          if (!canMove(lvl.grid, p.x, p.y, dir) && !lvl.gaol?.bars.has(`${p.x},${p.y},${dir}`)) continue;   // light passes bars
           const q = { x: p.x + dx, y: p.y + dy };
           const k = `${q.x},${q.y}`;
           if (seen.has(k)) continue;
@@ -1057,7 +1071,9 @@ export class GameEngine {
     if (!lvl) return this.getState();
 
     if (!canMove(lvl.grid, this.char.x, this.char.y, dir)) {
-      this.messages = ['A stone wall blocks your path.'];
+      this.messages = [lvl.gaol?.bars.has(`${this.char.x},${this.char.y},${dir}`)
+        ? 'Iron bars block the way. The cell door is locked fast, and the lock is old and heavy.'
+        : 'A stone wall blocks your path.'];
       return this.getState();
     }
 
@@ -1662,6 +1678,10 @@ export class GameEngine {
     const seenKey = `area:${key}`;
     const first = !this.dungeonState.visitedDescriptions.has(seenKey);
     this.dungeonState.visitedDescriptions.add(seenKey);
+    if (lvl.gaol && lvl.gaol.aisle.some(p => p.x === this.char!.x && p.y === this.char!.y)) {
+      this.mapAreaLines = first ? GAOL_LINES : ['You are back in the old gaol.'];
+      return this.mapAreaLines;
+    }
     const district = this.districtHere();
     const lines = describeArea(this.char.dungeonLevel, area, first, district ? DISTRICTS[district] : undefined);
     if (district) {
@@ -4156,12 +4176,15 @@ export class GameEngine {
     roundRooms(grid, contents, [entrance, exit, sanctum?.mouth ?? null, sanctum?.door ?? null], levelNum);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
+    // Level 5: the old gaol, cut into the rock (gaol.ts).
+    const gaol = levelNum === GAOL.LEVEL ? buildGaol(grid, entrance, contents, seed) : null;
+    const straight = gaol ? new Set([...gaol.aisle, ...gaol.link, ...gaol.cells.flat()].map(p => `${p.x},${p.y}`)) : undefined;
     if (levelNum === 6) placeLambtonWorm(grid, entrance, exit, contents);
     if (levelNum === 7) { if (!sanctum) centerAsmodeusLair(grid, contents); placeRakshasa(grid, entrance, exit, contents); }
     placeTreasures(levelNum, grid, entrance, exit, contents);
     placeShop(levelNum, grid, entrance, exit, contents);
     this.placeBloodstains(levelNum, grid, entrance, contents);
-    this.levelCache.set(levelNum, { grid, entrance, exit, contents, seed, sanctum });
+    this.levelCache.set(levelNum, { grid, entrance, exit, contents, seed, sanctum, gaol, straight });
     this.placeHoards(levelNum);
   }
 

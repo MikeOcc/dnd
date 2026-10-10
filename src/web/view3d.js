@@ -40,8 +40,8 @@
   /** Indexes a scene for lookups. */
   function buildWorld(scene) {
     const cells = new Map();
-    for (const [x, y, walls, ceiling, mats, torches, carvings, curve] of scene.cells) {
-      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings, curve: curve || 0 });
+    for (const [x, y, walls, ceiling, mats, torches, carvings, curve, bars] of scene.cells) {
+      cells.set(`${x},${y}`, { x, y, walls, ceiling, mats, torches, carvings, curve: curve || 0, bars: bars || 0 });
     }
     return { scene, cells, objects: scene.objects || [] };
   }
@@ -57,6 +57,16 @@
     const [dx, dy] = FORWARD[dir];
     const n = cellAt(world, x + dx, y + dy);
     return !n || !!(n.walls & BIT[OPPOSITE[dir]]);
+  }
+
+  /** Iron bars on side `dir` of square (x,y) (the gaol's cell doors): they stop
+   * your feet but not your eyes, so a ray passes them and they're drawn over
+   * whatever lies beyond. Only where there's a square beyond to see. */
+  function barsBetween(world, x, y, dir) {
+    const c = cellAt(world, x, y);
+    if (!c || !(c.bars & BIT[dir])) return false;
+    const [dx, dy] = FORWARD[dir];
+    return !!cellAt(world, x + dx, y + dy);
   }
 
   function ceilingOf(world, x, y) {
@@ -122,6 +132,7 @@
     let sideX = rdx < 0 ? (cam.x - mapX) * deltaX : (mapX + 1 - cam.x) * deltaX;
     let sideY = rdy < 0 ? (cam.y - mapY) * deltaY : (mapY + 1 - cam.y) * deltaY;
     const crossings = [];
+    const bars = [];   // barred doors the ray passed through, nearest first
     for (let guard = 0; guard < 64; guard++) {
       let dir, dist;
       if (sideX < sideY) { dir = stepX > 0 ? 'E' : 'W'; dist = sideX; }
@@ -135,18 +146,21 @@
           const side = CURVE_SIDES[curved];
           return {
             hit: { dist: arc.t, dir: side[0], cellX: mapX, cellY: mapY, u: arc.u, height: ceilingOf(world, mapX, mapY), ...wallInfo(world, mapX, mapY, side[0]), torch: false, carved: false, curve: true, shade: arc.shade },
-            crossings, rdx, rdy,
+            crossings, bars, rdx, rdy,
           };
         }
       }
-      if (dist > MAX_DIST) return { hit: null, crossings, rdx, rdy };
-      if (wallBetween(world, mapX, mapY, dir)) {
+      if (dist > MAX_DIST) return { hit: null, crossings, bars, rdx, rdy };
+      if (barsBetween(world, mapX, mapY, dir)) {
+        const along = dir === 'E' || dir === 'W' ? cam.y + dist * rdy : cam.x + dist * rdx;
+        bars.push({ dist, u: along - Math.floor(along), height: ceilingOf(world, mapX, mapY) });
+      } else if (wallBetween(world, mapX, mapY, dir)) {
         const along = dir === 'E' || dir === 'W' ? cam.y + dist * rdy : cam.x + dist * rdx;
         let u = along - Math.floor(along);
         if (dir === 'W' || dir === 'S') u = 1 - u;   // read every wall left to right
         return {
           hit: { dist, dir, cellX: mapX, cellY: mapY, u, height: ceilingOf(world, mapX, mapY), ...wallInfo(world, mapX, mapY, dir) },
-          crossings, rdx, rdy,
+          crossings, bars, rdx, rdy,
         };
       }
       const from = ceilingOf(world, mapX, mapY);
@@ -154,7 +168,7 @@
       const to = ceilingOf(world, mapX, mapY);
       if (from !== to) crossings.push({ dist, from, to });
     }
-    return { hit: null, crossings, rdx, rdy };
+    return { hit: null, crossings, bars, rdx, rdy };
   }
 
   // Curved squares (core/curves.ts): 1 NE, 2 SE, 3 SW, 4 NW is the rounded
@@ -179,6 +193,10 @@
     const u = ((ang / (Math.PI / 2)) * 1.5708 % 1 + 1) % 1;
     return { t, u, shade: 0.18 * hx * hx };
   }
+
+  // The bars of a gaol cell's door: five uprights a square, two rails across.
+  const BAR_RAILS = [0.12, 0.86];
+  const barStripe = (u) => { const fr = (u * 5) % 1; return fr > 0.38 && fr < 0.62; };
 
   /** Screen y of a point `h` high at distance `d`. */
   const screenY = (horizon, f, h, d) => horizon - (f * (h - EYE)) / d;
@@ -214,7 +232,8 @@
         const h = ray.hit;
         wall = { ...h, top: Math.max(clipY, screenY(horizon, f, h.height, h.dist)), bottom: screenY(horizon, f, 0, h.dist) };
       }
-      out.push({ camX, rdx: ray.rdx, rdy: ray.rdy, wall, lintels, clips, depth: ray.hit ? ray.hit.dist : Infinity, ceilingNow });
+      const bars = ray.bars.map(b => ({ ...b, top: screenY(horizon, f, b.height, b.dist), bottom: screenY(horizon, f, 0, b.dist) }));
+      out.push({ camX, rdx: ray.rdx, rdy: ray.rdy, wall, lintels, clips, bars, depth: ray.hit ? ray.hit.dist : Infinity, ceilingNow });
     }
     return { columns: out, f, horizon };
   }
@@ -536,6 +555,16 @@
     }
     for (const s of placeObjects(world, cam, width, height, sprites.sizeOf)) {
       drawSprite(ctx, cast, s, width, t, sprites.art(s.obj));
+    }
+    // Iron bars, over whatever lies beyond them: uprights, and two crossbars.
+    for (let c = 0; c < cols; c++) {
+      for (const b of [...cast.columns[c].bars].reverse()) {
+        const color = lerpColor('120f0c', 'b8a890', light(b.dist));
+        const r0 = Math.floor(b.top / cellH), r1 = Math.floor((b.bottom - 1) / cellH);
+        const glyphAt = (r, g) => { if (r < 0 || r >= rows) return; ctx.fillStyle = '#000'; ctx.fillRect(c * cellW, r * cellH, cellW, cellH); ctx.fillStyle = color; ctx.fillText(g, c * cellW, r * cellH); };
+        if (barStripe(b.u)) for (let r = r0; r <= r1; r++) glyphAt(r, '|');
+        for (const h of BAR_RAILS) glyphAt(Math.floor(screenY(horizon, f, h, b.dist) / cellH), '=');
+      }
     }
     return { cast, cam, world };
   }
@@ -1065,6 +1094,25 @@
     ctx.restore();
     for (const s of placeObjects(world, cam, width, height, sprites.sizeOf)) {
       drawSprite(ctx, cast, s, width, t, sprites.art(s.obj), lit);
+    }
+    // Iron bars, over whatever lies beyond them: rusted uprights, lit from the
+    // front at their middle, and two rails across.
+    for (let c = 0; c < cols; c++) {
+      const x = c * colW;
+      for (const b of [...cast.columns[c].bars].reverse()) {
+        const l = lit(b.dist);
+        const iron = (k) => `rgb(${Math.round((34 + 70 * k) * l + 4)},${Math.round((28 + 52 * k) * l + 3)},${Math.round((22 + 40 * k) * l + 2)})`;
+        const fr = (b.u * 5) % 1;
+        if (fr > 0.38 && fr < 0.62) {
+          ctx.fillStyle = iron(1 - Math.abs(fr - 0.5) / 0.12);
+          ctx.fillRect(x, b.top, colW + 0.5, b.bottom - b.top);
+        }
+        ctx.fillStyle = iron(0.55);
+        for (const h of BAR_RAILS) {
+          const y0 = screenY(horizon, f, h + 0.025, b.dist), y1 = screenY(horizon, f, h - 0.025, b.dist);
+          ctx.fillRect(x, y0, colW + 0.5, Math.max(1, y1 - y0));
+        }
+      }
     }
     drawMotes(ctx, th.motes, width, height, t, prefersReducedMotion());
     return { cast, cam, world };
