@@ -2036,38 +2036,123 @@ const HORROR_SPRITES = {
   `,
 
   // ─── Nuckelavee ──────────────────────────────────────────────────────────
-  // Orkney's horror: a horse and rider grown into one, with no skin at all:
-  // raw red muscle, yellow veins of black blood, the rider's arms trailing
-  // to the ground, the horse's single burning eye and gaping mouth.
+  // Orkney's sea-devil, seen three-quarter on: one creature, a gaunt skinless
+  // horse of dark wine-red muscle, ribs and tendons showing, on cracked black
+  // hooves, its long head gaping, one eye burning; and out of its back, with no
+  // saddle and no legs of its own, a man's torso, the bald head too big,
+  // tilted to study you, the jaw hanging long. The man's arms reach almost to
+  // the ground either side, clawed. Seaweed clings to it; cold sea-light rims
+  // it; a sick haze hangs at its mouth and hooves. It breathes, its arms sway
+  // and its eye pulses (styles.css: .hnk-breathe, .hnk-arm-l/-r, .hnk-eye).
   'Nuckelavee': `
-    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nuckelavee: a skinless horse and rider grown into one, raw red muscle threaded with yellow veins, long arms trailing to the ground, a single burning eye">
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nuckelavee: a gaunt skinless sea-horse demon of dark red muscle with one burning eye, a man's bald, long-jawed torso grown from its back, arms so long the clawed hands nearly touch the ground">
     <defs>
-      ${wetSkinFilter('hnk-meat', { freq: '0.08 0.3', seed: 121, shine: 0.7 })}
-      <linearGradient id="hnk-muscle" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#d0504a"/><stop offset="0.5" stop-color="#7a1418"/><stop offset="1" stop-color="#2a0406"/></linearGradient>
-      <filter id="hnk-g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      ${wetSkinFilter('hnk-meat', { freq: '0.16 0.2', seed: 121, shine: 0.3 })}
+      <linearGradient id="hnk-flesh" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#8a2430"/><stop offset="0.45" stop-color="#4e0a14"/><stop offset="1" stop-color="#160206"/></linearGradient>
+      <linearGradient id="hnk-far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a0a12"/><stop offset="1" stop-color="#0c0103"/></linearGradient>
+      <radialGradient id="hnk-eye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.3" stop-color="#ff5010"/><stop offset="1" stop-color="#600000" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hnk-haze" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#a8c8a0" stop-opacity="0.32"/><stop offset="1" stop-color="#a8c8a0" stop-opacity="0"/></radialGradient>
+      <filter id="hnk-rim" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.7"/></filter>
+      <filter id="hnk-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
-    <ellipse cx="80" cy="152" rx="66" ry="5" fill="#000" opacity="0.6"/>
-    <g fill="#6a8a30" opacity="0.25"><circle cx="14" cy="60" r="10"/><circle cx="8" cy="72" r="8"/></g>
-    <path d="M 36 100 L 30 150 L 42 150 L 46 104 Z M 52 104 L 50 150 L 62 150 L 62 104 Z M 104 104 L 106 150 L 118 150 L 114 104 Z M 120 100 L 126 150 L 138 150 L 130 98 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <path d="M 26 80 C 24 98, 40 112, 60 112 L 118 112 C 136 110, 142 96, 136 80 C 120 64, 42 64, 26 80 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <!-- muscle bands and yellow veins of black blood -->
-    <g stroke="#3a0406" stroke-width="1.4" fill="none" opacity="0.8"><path d="M 36 82 C 50 76, 64 80, 80 76 M 34 92 C 52 86, 72 92, 100 86 M 44 102 C 64 96, 92 104, 128 96"/></g>
-    <g stroke="#e8c840" stroke-width="1" fill="none" filter="url(#hnk-g)" opacity="0.85"><path d="M 40 86 C 60 82, 80 92, 112 86 M 50 98 C 70 94, 96 102, 126 94 M 30 120 L 34 146 M 116 120 L 120 146"/></g>
-    <g stroke="#000" stroke-width="0.6" fill="none"><path d="M 40 86 C 60 82, 80 92, 112 86"/></g>
-    <!-- the horse's head, one burning eye, a great mouth -->
-    <path d="M 28 82 C 16 68, 10 52, 16 38 C 26 34, 34 46, 40 60 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <circle cx="20" cy="48" r="4" fill="#ff4010" filter="url(#hnk-g)"/>
-    <path d="M 12 42 C 6 50, 8 60, 14 62 L 20 56 Z" fill="#100204"/>
-    <path d="M 10 46 l 3 2 M 9 52 l 3 1 M 10 58 l 3 0" stroke="#e8dcb8" stroke-width="1"/>
-    <!-- the rider grown from its back, arms trailing to the ground -->
-    <path d="M 84 74 C 80 56, 82 40, 90 30 C 98 40, 100 56, 96 74 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <path d="M 86 44 C 72 66, 64 100, 58 146 L 64 146 C 70 104, 78 72, 90 52 Z M 94 44 C 108 66, 116 100, 122 146 L 116 146 C 110 104, 102 72, 90 52 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <path d="M 58 146 l -4 4 M 62 146 l -1 5 M 118 146 l 2 5 M 122 146 l 4 4" stroke="#2a0406" stroke-width="1.6" stroke-linecap="round"/>
-    <!-- the rider's head, huge, lolling, mouth wide -->
-    <path d="M 78 30 C 72 14, 80 4, 92 4 C 104 4, 110 16, 104 30 C 100 38, 94 42, 90 42 C 86 42, 80 38, 78 30 Z" fill="url(#hnk-muscle)" filter="url(#hnk-meat)"/>
-    <ellipse cx="86" cy="18" rx="3" ry="2.2" fill="#f0e8c0"/><ellipse cx="98" cy="18" rx="3" ry="2.2" fill="#f0e8c0"/>
-    <circle cx="86" cy="18" r="1" fill="#000"/><circle cx="98" cy="18" r="1" fill="#000"/>
-    <path d="M 84 28 Q 92 38 100 28 Q 92 32 84 28 Z" fill="#100204"/>
+    <!-- shadow and the sick haze at its hooves -->
+    <ellipse cx="80" cy="149" rx="68" ry="6" fill="#000" opacity="0.7"/>
+    <ellipse cx="88" cy="144" rx="70" ry="10" fill="url(#hnk-haze)"/>
+
+    <!-- the far legs, in shadow -->
+    <path d="M 64 98 C 67 112, 62 120, 65 128 L 64 145 L 71 145 L 72 128 C 70 118, 74 110, 72 98 Z" fill="url(#hnk-far)"/>
+    <path d="M 104 98 C 109 112, 104 120, 106 128 L 106 145 L 113 145 L 114 128 C 112 118, 116 110, 113 98 Z" fill="url(#hnk-far)"/>
+    <circle cx="68" cy="120" r="3" fill="#2a0408"/><circle cx="109" cy="120" r="3" fill="#2a0408"/>
+    <path d="M 62 144 L 72 144 L 73 149 L 61 149 Z M 105 144 L 115 144 L 116 149 L 104 149 Z" fill="#050404"/>
+
+    <!-- the gaunt body: ribs, hip, wet muscle -->
+    <path d="M 46 78 C 58 68, 104 66, 126 71 C 139 75, 141 89, 134 99 C 125 107, 100 106, 80 104 C 62 104, 47 100, 44 93 C 42 86, 42 82, 46 78 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+    <g stroke="#1a0206" stroke-width="1.5" fill="none" opacity="0.9" stroke-linecap="round">
+      <path d="M 60 76 Q 56 88 61 101 M 67 74 Q 63 88 68 102 M 74 73 Q 70 88 75 103 M 81 72 Q 78 88 82 103 M 88 72 Q 86 87 89 102"/>
+    </g>
+    <g stroke="#d08880" stroke-width="0.6" fill="none" opacity="0.5"><path d="M 62 77 Q 58 88 63 100 M 69 75 Q 65 88 70 101 M 76 74 Q 72 88 77 102 M 83 73 Q 80 88 84 102"/></g>
+    <path d="M 110 73 C 124 72, 136 80, 134 94 C 129 86, 120 80, 110 80 Z" fill="#2a0408" opacity="0.6"/>
+    <path d="M 52 74 C 64 67, 104 65, 126 70 C 136 73, 141 82, 139 91" stroke="#7ff0e0" stroke-width="1.1" fill="none" opacity="0.4" filter="url(#hnk-rim)"/>
+    <!-- black veins branching -->
+    <g stroke="#060001" stroke-width="0.8" fill="none" opacity="0.85">
+      <path d="M 100 80 C 108 86, 112 92, 122 96 M 110 88 l 4 7 M 116 93 l 6 -2 M 48 86 C 52 92, 50 98, 55 102 M 52 95 l -4 3"/>
+    </g>
+
+    <!-- the near legs: sinew and tendon, cracked black hooves -->
+    <path d="M 50 96 C 47 110, 53 116, 51 126 L 49 144 L 57 144 L 59 126 C 61 116, 58 108, 61 98 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+    <path d="M 120 94 C 128 106, 121 118, 125 128 L 125 144 L 133 144 L 133 127 C 132 116, 136 106, 130 92 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+    <circle cx="55" cy="118" r="3.6" fill="#5a0e18" filter="url(#hnk-meat)"/><circle cx="128" cy="116" r="3.6" fill="#5a0e18" filter="url(#hnk-meat)"/>
+    <path d="M 54 100 C 52 112, 56 118, 54 140 M 126 98 C 131 110, 127 120, 129 140" stroke="#e8c8b8" stroke-width="0.8" fill="none" opacity="0.55"/>
+    <path d="M 47 143 L 58 143 L 60 149 L 45 149 Z M 123 143 L 134 143 L 136 149 L 121 149 Z" fill="#060404"/>
+    <path d="M 52 144 l -1 5 M 128 144 l 1 5" stroke="#3a3430" stroke-width="0.6"/>
+
+    <!-- seaweed clinging -->
+    <g stroke="#2e4a1c" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.9">
+      <path d="M 70 66 C 75 78, 66 90, 72 104"/><path d="M 106 63 C 101 76, 110 86, 103 98"/><path d="M 125 106 C 130 118, 123 126, 128 138"/>
+    </g>
+    <g fill="#3a5a22" opacity="0.85"><path d="M 72 80 l 4 -2 l -1 4 Z M 68 94 l -4 -1 l 3 3 Z M 104 80 l 4 1 l -3 2 Z M 127 120 l 4 0 l -3 3 Z"/></g>
+
+    <!-- the long neck and the horse's head, gaping, one burning eye -->
+    <path d="M 46 92 C 34 78, 30 60, 36 40 L 52 34 C 52 50, 57 66, 66 76 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+    <g stroke="#1a0206" stroke-width="1.2" fill="none" opacity="0.8"><path d="M 38 72 C 44 74, 50 78, 56 80 M 36 58 C 42 62, 46 66, 52 70 M 38 46 C 42 50, 46 54, 50 58"/></g>
+    <path d="M 34 40 C 28 27, 35 14, 47 14 C 55 15, 59 22, 57 32 C 53 45, 41 60, 31 70 C 25 76, 15 77, 10 71 C 6 65, 9 57, 16 53 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+    <path d="M 46 15 l 2 -8 l 4 9 Z M 53 18 l 5 -7 l 1 9 Z" fill="#3a0610"/>
+    <path d="M 40 22 C 36 34, 28 48, 18 58" stroke="#1a0206" stroke-width="1" fill="none" opacity="0.7"/>
+    <!-- the mouth: wide and ragged, uneven teeth, a haze breathing out -->
+    <circle cx="16" cy="72" r="17" fill="url(#hnk-haze)"/>
+    <path d="M 9 64 C 12 73, 24 77, 38 65 C 30 72, 18 72, 12 66 Z" fill="#0a0002"/>
+    <path d="M 12 66 l 1 3 l 1 -3 M 16 69 l 1 4 l 1 -3 M 21 71 l 1 3 l 2 -4 M 27 70 l 1 4 l 1 -4 M 32 68 l 1 3 l 1 -4" stroke="#d8ccb0" stroke-width="0.9" fill="#d8ccb0"/>
+    <path d="M 15 74 l 1 -3 l 1 3 M 22 75 l 1 -4 l 2 4 M 29 72 l 1 -3 l 1 3" stroke="#c8bca0" stroke-width="0.8" fill="#c8bca0"/>
+    <ellipse cx="11" cy="60" rx="2.6" ry="1.8" fill="#000" transform="rotate(-35 11 60)"/>
+    <ellipse cx="16" cy="58" rx="2" ry="1.4" fill="#000" transform="rotate(-35 16 58)"/>
+    <g class="hnk-eye" filter="url(#hnk-glow)"><circle cx="44" cy="27" r="7" fill="url(#hnk-eye)" opacity="0.8"/><circle cx="44" cy="27" r="2.6" fill="#ffd040"/><circle cx="44" cy="27" r="1" fill="#300"/></g>
+
+    <!-- the man, grown from its back -->
+    <g class="hnk-breathe">
+      <path d="M 79 78 C 77 66, 70 55, 65 45 C 74 36, 104 36, 113 45 C 108 55, 101 66, 99 78 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+      <g stroke="#1a0206" stroke-width="1.2" fill="none" opacity="0.85">
+        <path d="M 89 46 L 89 70 M 76 52 C 82 56, 86 56, 89 52 M 102 52 C 96 56, 92 56, 89 52 M 80 62 C 84 64, 86 64, 89 62 M 98 62 C 94 64, 92 64, 89 62"/>
+      </g>
+      <path d="M 80 74 C 84 80, 94 80, 98 74" stroke="#2a0408" stroke-width="2" fill="none"/>
+      <!-- the head: too big, bald, tilted, the jaw hanging long -->
+      <g transform="rotate(-13 90 26)">
+        <path d="M 75 22 C 75 9, 83 4, 91 4 C 100 4, 106 10, 106 21 C 106 29, 103 33, 101 37 L 99 48 C 95 53, 87 53, 83 48 L 80 37 C 77 33, 75 28, 75 22 Z" fill="url(#hnk-flesh)" filter="url(#hnk-meat)"/>
+        <path d="M 79 14 C 84 11, 96 11, 102 14 M 80 17 C 86 15, 94 15, 101 17" stroke="#2a0408" stroke-width="0.8" fill="none" opacity="0.8"/>
+        <ellipse cx="84" cy="22" rx="4.2" ry="3.4" fill="#0a0002"/><ellipse cx="97" cy="22" rx="4.2" ry="3.4" fill="#0a0002"/>
+        <circle cx="84.5" cy="22.5" r="0.9" fill="#d8e8d0"/><circle cx="96.5" cy="22.5" r="0.9" fill="#d8e8d0"/>
+        <path d="M 89 26 L 88 31 L 91 31" stroke="#2a0408" stroke-width="0.8" fill="none"/>
+        <ellipse cx="90.5" cy="41" rx="4.2" ry="7.5" fill="#060001"/>
+        <path d="M 87.5 35 l 0.8 3 l 0.8 -3 M 91 34.5 l 0.8 3 l 0.8 -3 M 88 47 l 0.8 -3 l 0.8 3 M 91.5 47.5 l 0.8 -3 l 0.8 3" stroke="#c8bca0" stroke-width="0.7" fill="#c8bca0"/>
+        <path d="M 76 20 C 77 10, 84 5, 91 5 C 99 5, 104 10, 105 18" stroke="#7ff0e0" stroke-width="1.1" fill="none" opacity="0.55" filter="url(#hnk-rim)"/>
+      </g>
+    </g>
+
+    <!-- the arms, reaching almost to the ground either side, clawed -->
+    <g class="hnk-arm-l">
+      <path d="M 68 47 C 60 60, 50 72, 42 84" stroke="#4e0a14" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+      <path d="M 42 84 C 38 100, 33 116, 29 132" stroke="#4a0812" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+      <circle cx="42" cy="84" r="3.6" fill="#5a0e18"/>
+      <path d="M 66 49 C 58 60, 48 72, 40 84 M 40 86 C 36 100, 31 116, 27 131" stroke="#e8c8b8" stroke-width="0.6" fill="none" opacity="0.5"/>
+      <path d="M 64 47 C 56 59, 46 71, 38 83 C 34 98, 29 114, 25 130" stroke="#7ff0e0" stroke-width="0.9" fill="none" opacity="0.5" filter="url(#hnk-rim)"/>
+      <ellipse cx="29" cy="136" rx="5.5" ry="4.5" fill="#3a0610"/>
+      <path d="M 24 138 C 21 143, 19 147, 16 150 M 27 140 C 26 145, 25 149, 23 152 M 31 140 C 32 145, 32 149, 31 153 M 34 138 C 36 142, 38 146, 39 149" stroke="#e0d8c0" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="hnk-arm-r">
+      <path d="M 110 47 C 120 60, 130 72, 138 84" stroke="#4e0a14" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+      <path d="M 138 84 C 142 100, 145 116, 147 132" stroke="#4a0812" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+      <circle cx="138" cy="84" r="3.6" fill="#5a0e18"/>
+      <path d="M 112 49 C 122 60, 132 72, 140 84 M 140 86 C 144 100, 147 116, 149 131" stroke="#e8c8b8" stroke-width="0.6" fill="none" opacity="0.5"/>
+      <path d="M 114 47 C 124 59, 134 71, 142 83 C 146 98, 149 114, 151 130" stroke="#7ff0e0" stroke-width="0.9" fill="none" opacity="0.6" filter="url(#hnk-rim)"/>
+      <ellipse cx="147" cy="136" rx="5.5" ry="4.5" fill="#3a0610"/>
+      <path d="M 142 138 C 140 142, 138 146, 137 149 M 145 140 C 145 145, 145 149, 144 153 M 149 140 C 150 145, 151 149, 153 152 M 152 138 C 154 142, 156 146, 158 149" stroke="#e0d8c0" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- cold sea-light along its back, the horse's head and the man's shoulders -->
+    <g stroke="#7ff0e0" stroke-width="1.1" fill="none" opacity="0.55" filter="url(#hnk-rim)" stroke-linecap="round">
+      <path d="M 33 39 C 28 27, 35 15, 47 15 C 54 16, 58 22, 56 31"/>
+      <path d="M 66 45 C 75 37, 103 37, 112 45"/>
+      <path d="M 132 100 C 134 110, 132 124, 134 140"/>
+    </g>
     </svg>
   `,
 

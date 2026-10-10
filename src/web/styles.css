@@ -643,6 +643,18 @@ html, body {
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
 
+/* The Nuckelavee (monster-sprites-horror.js): it breathes, its long arms sway, its eye pulses. */
+#monster-portrait .hnk-breathe { transform-box: view-box; transform-origin: 89px 78px; animation: hnk-breathe 4.6s ease-in-out infinite; }
+#monster-portrait .hnk-arm-l { transform-box: view-box; transform-origin: 68px 47px; animation: hnk-sway 7s ease-in-out infinite; }
+#monster-portrait .hnk-arm-r { transform-box: view-box; transform-origin: 110px 47px; animation: hnk-sway 7s ease-in-out infinite reverse; animation-delay: -2.3s; }
+#monster-portrait .hnk-eye { animation: hnk-eye 2.6s ease-in-out infinite; }
+@keyframes hnk-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.015, 1.03); } }
+@keyframes hnk-sway { 0%, 100% { transform: rotate(-1.8deg); } 50% { transform: rotate(1.8deg); } }
+@keyframes hnk-eye { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  #monster-portrait .hnk-breathe, #monster-portrait .hnk-arm-l, #monster-portrait .hnk-arm-r, #monster-portrait .hnk-eye { animation: none; }
+}
+
 /* A monster in characters (Monster pictures: off) */
 #monster-portrait pre.monster-text {
   margin: 0; height: 100%; display: flex; align-items: center; justify-content: center;

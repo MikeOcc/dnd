@@ -495,19 +495,33 @@ export const BESTIARY: Partial<Record<MonsterType, Script>> = {
     } },
   ] },
 
+  // Orkney's Nuckelavee: its breath is pestilence and blight. It withers
+  // what grows (here, what you carry: a healing potion turns black), and it
+  // brings mortasheen, the wasting sickness that killed the islands' horses.
   'Nuckelavee': { moves: [
-    { id: 'nuck-breath', weight: 30, run: k => {
+    { id: 'nuck-breath', weight: 25, run: k => {
       k.strike(0.8, d => `It breathes on you. Every sickness there is. (${d} damage)`);
       if (k.alive()) {
         const s = k.save(15, ['constitution']);
-        if (!s.ok) { k.status({ type: 'poison', value: 3, turns: 10 }); k.status({ type: 'fiend-venom', value: 1, turns: 40 }); k.say(`The plague takes hold: you are poisoned, and healing works at half strength. ${s.text}`); }
-        else k.say(`You retch, but the sickness doesn't take. ${s.text}`);
+        if (!s.ok) {
+          k.status({ type: 'poison', value: 3, turns: 10 });
+          k.status({ type: 'mortasheen', value: 2, turns: 150 });
+          k.say(`It is mortasheen, the wasting sickness. You are poisoned, and weak (-2 Strength, -2 Constitution); your body will not mend itself, and healing works at half strength, until it passes. ${s.text}`);
+        } else k.say(`You retch, but the sickness doesn't take. ${s.text}`);
       }
     } },
-    { id: 'nuck-arms', weight: 45, run: k => {
+    { id: 'nuck-blight', weight: 12, run: k => {
+      k.say('Its breath rolls over you like a sea-fog, and everything it touches withers.');
+      if (k.char.inventory.potions <= 0) { k.say('Your pack has nothing left in it to spoil.'); return; }
+      const s = k.save(14, ['dexterity']);
+      if (s.ok) { k.say(`You turn and shield your pack in time. ${s.text}`); return; }
+      k.char.inventory.potions--;
+      k.say(`Blight! One of your healing potions turns black and foul. (-1 potion, ${k.char.inventory.potions} left) ${s.text}`);
+    } },
+    { id: 'nuck-arms', weight: 40, run: k => {
       k.strikes(2, 0.75, (d, i) => i === 0 ? `The rider's long skinless arms lash you! (${d} damage)` : `And again! (${d} damage)`);
     } },
-    { id: 'nuck-trample', weight: 25, run: k => { k.strike(1.4, d => `The horse rears and comes down on you! (${d} damage)`); } },
+    { id: 'nuck-trample', weight: 23, run: k => { k.strike(1.4, d => `The horse rears and comes down on you! (${d} damage)`); } },
   ] },
 
   // The longer it fights, the bigger it gets: +12% to its blows each turn.

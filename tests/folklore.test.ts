@@ -158,3 +158,33 @@ describe('Black Annis, as the stories tell it', () => {
     expect(got).toBeLessThan(400 * 0.6);
   });
 });
+
+describe('the Nuckelavee: pestilence and blight', () => {
+  it('its breath can bring mortasheen: weaker, no mending, healing at half strength', async () => {
+    const { getEffectiveStats, healingFactor } = await import('../src/core/character.js');
+    let caught = false;
+    const rng = new RNG(11);
+    for (let i = 0; i < 400 && !caught; i++) {
+      const c = hero(); c.constitution = 3;
+      monsterFirstStrike(c, createMonster('Nuckelavee', 30, 'n' + i), rng);
+      const m = c.statusEffects.find(e => e.type === 'mortasheen');
+      if (m) {
+        caught = true;
+        expect(getEffectiveStats(c).strength).toBe(Math.max(1, c.strength - m.value));
+        expect(healingFactor(c)).toBeLessThan(1);
+      }
+    }
+    expect(caught).toBe(true);
+  });
+
+  it('its blight withers a healing potion', () => {
+    let lost = false;
+    const rng = new RNG(12);
+    for (let i = 0; i < 400 && !lost; i++) {
+      const c = hero(); c.dexterity = 3; c.inventory.potions = 5;
+      const r = monsterFirstStrike(c, createMonster('Nuckelavee', 30, 'b' + i), rng);
+      if (c.inventory.potions === 4) { lost = true; expect(r.messages.join(' ')).toMatch(/Blight!/); }
+    }
+    expect(lost).toBe(true);
+  });
+});

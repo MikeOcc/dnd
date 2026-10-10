@@ -5,7 +5,7 @@ import type {
   CharacterRoll, CharacterSummary, ScoreResult, Choice, StatusEffect, GemType,
   Fx, FxElement, ChestTrapType, CharacterClass, MonsterType, FirstSteps, Death,
 } from './types.js';
-import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear, weaponPower, armorShare } from './character.js';
+import { rollCharacter, createCharacter, checkLevelUp, tickStatusEffects, formatRoll, addStatusEffect, xpForLevel, potionHealAmount, wardFights, wearDownWard, getEffectiveStats, advanceFleshRot, slowFleshRot, wornAmulet, amuletName, amuletDelta, breakAmuletCurse, wearCursedAmulet, bestWeapon, wornArmor, armorProtection, gearName, canUseGear, weaponPower, armorShare, healingFactor } from './character.js';
 import { generateLevel, deserializeLevel, canMove, floodFill } from './dungeon.js';
 import { renderCorridorView, scanCorridor, CORRIDOR_VIEW_DEFAULTS, CONTENT_PATTERNS, spatialHash, edgeMaterial, edgeCarved, edgeTorch } from './corridor-view.js';
 import type { EntityMarker } from './corridor-view.js';
@@ -844,7 +844,7 @@ export class GameEngine {
     if (fatal) return this.handleDeath(fatal);
     const heal = Math.min(
       this.char.maxHp - this.char.hp,
-      Math.max(1, Math.round(this.char.maxHp * GAMEPLAY.REST_HEAL_PCT_PER_TICK)),
+      Math.max(1, Math.round(this.char.maxHp * GAMEPLAY.REST_HEAL_PCT_PER_TICK * healingFactor(this.char))),
     );
     this.char.hp += heal;
 
@@ -1102,7 +1102,8 @@ export class GameEngine {
     if (damageTaken > 0) this.fx.player = dot?.type === 'poison' ? 'poison' : dot?.type === 'mummified' || dot?.type === 'flesh-rot' ? 'drain' : 'physical';
 
     // Passive HP regeneration
-    if (this.char.stepsTaken % GAMEPLAY.REGEN_HP_EVERY_N_STEPS === 0 && this.char.hp < this.char.maxHp) {
+    // (Not while the mortasheen wastes you: the body won't mend itself.)
+    if (this.char.stepsTaken % GAMEPLAY.REGEN_HP_EVERY_N_STEPS === 0 && this.char.hp < this.char.maxHp && !this.char.statusEffects.some(e => e.type === 'mortasheen')) {
       this.char.hp++;
       this.messages = [...this.messages, 'Your wounds slowly knit. (+1 HP)'];
     }

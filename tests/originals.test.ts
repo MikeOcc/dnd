@@ -149,7 +149,9 @@ describe("Cartographer's Bane", () => {
     const e = engine();
     e.char.dungeonLevel = 5;
     e.loadLevelIntoCache(5);
-    e.char.x = 40; e.char.y = 30;
+    // Standing on floor (a fixed square might be rock on a random level).
+    const at = e.getLevel(5).entrance;
+    e.char.x = at.x; e.char.y = at.y;
     for (let x = 0; x < 80; x++) for (let y = 0; y < 60; y++) e.dungeonState.visitedCells.add(`5:${x},${y}`);
     e.dungeonState.visitedCells.add('4:1,1');
     e.dungeonState.revealedLevels.add(5);
@@ -160,7 +162,7 @@ describe("Cartographer's Bane", () => {
     e.noteMonsterTurn(result);
     const left = [...e.dungeonState.visitedCells].filter((k: string) => k.startsWith('5:')).length;
     expect(left).toBe(80 * 60 - Math.round(80 * 60 * 0.25));
-    expect(e.dungeonState.visitedCells.has('5:40,30')).toBe(true);
+    expect(e.dungeonState.visitedCells.has(`5:${at.x},${at.y}`)).toBe(true);
     expect(e.dungeonState.visitedCells.has('4:1,1')).toBe(true);
     expect(e.dungeonState.revealedLevels.has(5)).toBe(false);
     expect(result.messages.join(' ')).toContain('Part of your map of Level 5 is gone');

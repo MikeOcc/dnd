@@ -1780,7 +1780,7 @@ const ATTACK_NAMES: Record<string, string> = {
   'barghest-howl': 'howl',
   'barghest-bite': 'bite',
   'barghest-shadow': 'shadow',
-  'nuck-breath': 'plague breath',
+  'nuck-breath': 'plague breath', 'nuck-blight': 'blight',
   'nuck-arms': 'grasping arms',
   'nuck-trample': 'trampling hooves',
   'draugr-blow': 'crushing blow',

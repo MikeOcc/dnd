@@ -124,9 +124,9 @@ export function potionHealAmount(char: Character, rng: RNG): number {
   return Math.max(1, Math.round(amount * healingFactor(char)));
 }
 
-/** How well healing takes: halved while a ghoul's flesh rot lasts. */
+/** How well healing takes: halved while a ghoul's flesh rot, a fiend's venom or mortasheen lasts. */
 export function healingFactor(char: Character): number {
-  return char.statusEffects.some(e => e.type === 'flesh-rot' || e.type === 'fiend-venom') ? GHOUL.ROT_HEAL_FACTOR : 1;
+  return char.statusEffects.some(e => e.type === 'flesh-rot' || e.type === 'fiend-venom' || e.type === 'mortasheen') ? GHOUL.ROT_HEAL_FACTOR : 1;
 }
 
 /** Drains one character level (minimum level 1). Returns the HP lost, or 0 if already at level 1. */
@@ -162,6 +162,7 @@ export function getEffectiveStats(char: Character): Character {
     if (eff.type === 'intelligence-reduced') c.intelligence = Math.max(1, c.intelligence - eff.value);
     if (eff.type === 'dexterity-reduced')    c.dexterity    = Math.max(1, c.dexterity    - eff.value);
     if (eff.type === 'strength-reduced')     c.strength     = Math.max(1, c.strength     - eff.value);
+    if (eff.type === 'mortasheen') { c.strength = Math.max(1, c.strength - eff.value); c.constitution = Math.max(1, c.constitution - eff.value); }
     if (eff.type === 'resistance-improved')  c.resistance   = c.resistance + eff.value;
   }
   const amulet = wornAmulet(char);
@@ -301,6 +302,7 @@ export function tickStatusEffects(char: Character): { messages: string[]; damage
       if (eff.type === 'flesh-rot') messages.push('The rot burns itself out at last. Your flesh begins to heal.');
       if (eff.type === 'corroded')  messages.push('You have finally scoured the rust from your weapon.');
       if (eff.type === 'fiend-venom') messages.push('The infernal venom has worked its way out of you.');
+      if (eff.type === 'mortasheen') messages.push('The mortasheen leaves you at last. Your strength comes back, and your body begins to mend.');
       if (eff.type === 'intelligence-reduced') messages.push('Your mind clears.');
       if (eff.type === 'dexterity-reduced')    messages.push('Your coordination returns.');
       if (eff.type === 'strength-reduced')     messages.push('Your strength returns.');

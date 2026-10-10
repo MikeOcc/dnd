@@ -96,6 +96,7 @@ export type StatusEffectType =
   | 'corroded'     // a Rust Monster's touch: value = % less weapon damage, until it wears off
   | 'lycanthropy'  // a Werewolf's bite: now and then the beast takes over (doesn't tick with steps)
   | 'fiend-venom'  // a Pit Fiend's bite: healing works at half strength while it lasts
+  | 'mortasheen'   // the Nuckelavee's wasting sickness: value = Strength and Constitution lost; no natural mending, healing at half strength
   | 'death-mark'   // a Barghest's howl: a blow that leaves you near death kills you instead, until an altar lifts it
   | 'snuffed'      // Lantern Moths put your torch out: value = to-hit lost; whatever you meet in the dark strikes first
   | 'deafened';    // the Hush: you can't hear what's coming, and whatever you meet strikes first

@@ -612,9 +612,10 @@ const DEFINITIONS: Record<MonsterType, MonsterDefinition> = {
     baseHpPerLevel: 13, baseAttackPerLevel: 4.6, baseDefensePerLevel: 3.0,
     fireballResistance: 1.0,
     encounterIntro: [
-      'The air turns foul. Into the torchlight comes a horse with no skin, and growing',
-      'out of its back, a rider with no skin either, arms trailing to the ground.',
-      'Black blood runs in the yellow veins you can see through the meat of it.',
+      'The air turns foul, and the fungus on the walls goes grey and dies as you watch.',
+      'Into the torchlight comes a horse with no skin, and growing out of its back,',
+      'a man with no skin either, his head too big, his arms trailing to the ground.',
+      'Black blood runs in the veins you can see through the meat of it.',
       'It breathes, and the breath stinks of every sickness there is.',
       '',
       'You have encountered a Level {LVL} Nuckelavee!',
