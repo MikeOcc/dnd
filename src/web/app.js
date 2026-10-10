@@ -266,6 +266,13 @@ function applyState(state) {
     // The monster stands in the 3D scene itself (draw3D), not over it.
     portraitEl.classList.add('hidden');
     portraitEl.innerHTML = '';
+  } else if (monster && !monsterPictures && viewMode !== 'painted') {
+    // Pictures off (Classic and ASCII 3D): the monster in characters, with its name and health.
+    const text = textPortrait(monster);
+    if (portraitEl._sprite !== text) { portraitEl.innerHTML = `<pre class="monster-text">${esc(text)}</pre>`; portraitEl._sprite = text; }
+    portraitEl.dataset.monster = monster.type;
+    portraitEl.classList.remove('painted', 'wound-1', 'wound-2', 'choir', 'choir-prep', 'hidden');
+    portraitEl.style.removeProperty('--sprite-scale');
   } else if (monster) {
     // (If its art is somehow missing, a dark silhouette with its name rather than nothing.)
     const sprite = (typeof getMonsterPortrait === 'function' ? getMonsterPortrait(monster) : getMonsterSprite(monster.type)) || `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${monster.type}"><ellipse cx="80" cy="96" rx="44" ry="52" fill="#120c0c" stroke="#3a1a1a" stroke-width="3"/><circle cx="66" cy="84" r="4" fill="#c33"/><circle cx="94" cy="84" r="4" fill="#c33"/><text x="80" y="156" text-anchor="middle" font-family="monospace" font-size="11" fill="#a99">${monster.type}</text></svg>`;
@@ -427,6 +434,74 @@ function fxNumber(text, kind, where, element, big) {
   num.style.setProperty('--fx', FX_COLOR[element] || '#000');
   num.addEventListener('animationend', () => num.remove());
   layer.appendChild(num);
+}
+
+// ─── Monsters in characters (Monster pictures: off, in Classic and ASCII 3D) ──
+// A figure for the kind of thing it is, its name, level and health.
+const TEXT_FIGURES = {
+  dragon: [
+    '         __/\\__         ',
+    '   /\\   /  ..  \\   /\\   ',
+    '  /  \\_/  \\__/  \\_/  \\  ',
+    ' /     \\  /||\\  /     \\ ',
+    '/_______\\/ || \\/_______\\',
+    '         /    \\         ',
+    '        /_/  \\_\\        ',
+  ],
+  undead: [
+    '      .-----.      ',
+    '     /       \\     ',
+    '    |  () ()  |    ',
+    '     \\   ^   /     ',
+    '      |||||||      ',
+    '   ___|||||||___   ',
+    '  /  /  | |  \\  \\  ',
+    ' /  /   | |   \\  \\ ',
+    '    |   | |   |    ',
+  ],
+  ooze: [
+    '        .--.        ',
+    '     .-(    )-.     ',
+    '   .(  o    o  ).   ',
+    '  (      __      )  ',
+    ' (    .-\'  \'-.    ) ',
+    '(____/________\\____)',
+  ],
+  flier: [
+    '   __         __   ',
+    '  /  \\_.---._/  \\  ',
+    ' /    ( o o )    \\ ',
+    '/  /\\  \\ v /  /\\  \\',
+    '\\_/  \\__\\_/__/  \\_/',
+    '        / \\        ',
+  ],
+  creature: [
+    '      ,_____,      ',
+    '     ( O   O )     ',
+    '      \\  ^  /      ',
+    '   ___/|===|\\___   ',
+    '  /   |=====|   \\  ',
+    ' /    |     |    \\ ',
+    '      |     |      ',
+    '     /       \\     ',
+    '    /         \\    ',
+  ],
+};
+function textFigureKind(m) {
+  const t = m.type;
+  if (/Dragon|Wyvern|Worm|Beithir|Tarrasque|Bone Sovereign|Drake|Hydra/.test(t)) return 'dragon';
+  if (m.definition?.isUndead) return 'undead';
+  if (/Mold|Slime|Cube|Ooze|Oblex|Jelly|Pudding/.test(t)) return 'ooze';
+  if (/Harpy|Stirge|Moth|Phoenix|Bat|Gargoyle|Vortex|Banshee/.test(t)) return 'flier';
+  return 'creature';
+}
+function textPortrait(m) {
+  const fig = TEXT_FIGURES[textFigureKind(m)];
+  const width = Math.max(...fig.map(l => l.length));
+  const pct = m.maxHp ? Math.max(0, m.hp / m.maxHp) : 1;
+  const bar = '[' + '#'.repeat(Math.round(pct * 20)).padEnd(20, '.') + ']';
+  const center = (s) => ' '.repeat(Math.max(0, Math.floor((width - s.length) / 2))) + s;
+  return [...fig, '', center(m.type.toUpperCase()), center(`Level ${m.level}`), center(bar)].join('\n');
 }
 
 function fxMonster(cls, element) {
@@ -758,6 +833,9 @@ const MONSTER_KEY = 'sevenLevels.monsterDisplay';
 let monsterInScene = (() => { try { return localStorage.getItem(MONSTER_KEY) === 'scene'; } catch { return false; } })();
 // The ASCII 3D view's objects (chests, ladders, figures): drawn in characters (the default: pure text) or as pictures.
 const TEXT_OBJECTS_KEY = 'sevenLevels.asciiTextObjects';
+// Monster pictures in the Classic and ASCII 3D views (off: in characters). The Painted view always has them.
+const MONSTER_PICTURES_KEY = 'sevenLevels.monsterPictures';
+let monsterPictures = (() => { try { return localStorage.getItem(MONSTER_PICTURES_KEY) !== '0'; } catch { return true; } })();
 let textObjects = (() => { try { return localStorage.getItem(TEXT_OBJECTS_KEY) !== '0'; } catch { return true; } })();
 // Smooth movement in the 3D views: steps glide and turns swivel.
 const SMOOTH_KEY = 'sevenLevels.smoothMove';
@@ -877,6 +955,13 @@ const SETTINGS = [
   { key: 'e', label: 'Monsters (3D views)', get: () => monsterInScene, value: () => (monsterInScene ? 'IN SCENE' : 'PORTRAIT'), toggle: () => {
       monsterInScene = !monsterInScene;
       try { localStorage.setItem(MONSTER_KEY, monsterInScene ? 'scene' : 'portrait'); } catch { /* per-viewer nicety only */ }
+      applyState(currentState);
+    } },
+  { key: 'i', label: 'Monster pictures (Classic, ASCII 3D)', get: () => monsterPictures, toggle: () => {
+      monsterPictures = !monsterPictures;
+      try { localStorage.setItem(MONSTER_PICTURES_KEY, monsterPictures ? '1' : '0'); } catch { /* per-viewer nicety only */ }
+      const portrait = document.getElementById('monster-portrait');
+      delete portrait.dataset.monster; portrait._sprite = null;
       applyState(currentState);
     } },
   { key: 'h', label: 'Objects (ASCII 3D)', get: () => textObjects, value: () => (textObjects ? 'CHARACTERS' : 'PICTURES'), toggle: () => {

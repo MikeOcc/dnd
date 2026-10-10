@@ -643,6 +643,13 @@ html, body {
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
 
+/* A monster in characters (Monster pictures: off) */
+#monster-portrait pre.monster-text {
+  margin: 0; height: 100%; display: flex; align-items: center; justify-content: center;
+  color: #ff6a50; font-size: clamp(7px, 1.6vw, 13px); line-height: 1.15; white-space: pre;
+  text-shadow: 0 0 6px rgba(255, 60, 40, 0.35);
+}
+
 /* The drawn map (app.js drawMap): a canvas in place of the text */
 #messages.map-view canvas.drawn-map { display: block; }
 
