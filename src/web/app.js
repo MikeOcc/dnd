@@ -671,28 +671,45 @@ let lastSavedAt = Date.now();
 const SAVE_NUDGE_SHOW_MS = 10000;
 let nudgeShowing = false, nudgeFrom = Date.now(), nudgeShownAt = 0;
 const NOT_PROGRESS = new Set(['save', 'restore', 'load', 'main-menu', 'show-map', 'show-status', 'show-inventory', 'dismiss-status', 'dismiss-inventory', 'dismiss-intro', 'open-gear']);
-// Quitting always asks first, in a small window: save and quit (when there's
-// anything unsaved), quit, or keep playing. Keys: S, Q, Esc.
-let quitOpen = false;
-function quitToMenu() {
+// Asking first, in a small window: quitting (save and quit when there's
+// anything unsaved, quit, or keep playing: S, Q, Esc) and going back to the
+// last save (R, Esc). Each choice has its key; Esc always keeps playing.
+let quitOpen = false, confirmKeys = {};
+function openConfirm(title, note, warn, choices) {
   if (quitOpen) return;
   quitOpen = true;
-  const note = document.getElementById('quit-note');
+  document.getElementById('quit-title').textContent = `══ ${title} ══`;
+  const noteEl = document.getElementById('quit-note');
+  noteEl.replaceChildren();
+  const n = document.createElement('div');
+  if (warn) n.className = 'warn';
+  n.textContent = note;
+  noteEl.appendChild(n);
   const rows = document.getElementById('quit-rows');
-  const mins = Math.round((Date.now() - lastSavedAt) / 60000);
-  note.replaceChildren();
-  if (unsaved) {
-    const w = document.createElement('div');
-    w.className = 'warn';
-    w.textContent = `You have progress that isn\u2019t saved${mins >= 1 ? ` (last saved ${mins} minute${mins === 1 ? '' : 's'} ago)` : ''}. Quit without saving and it\u2019s lost.`;
-    note.appendChild(w);
-  } else note.textContent = 'Your game is saved.';
   rows.replaceChildren();
-  const add = (key, text, fn) => { const b = makeChoiceBtn(key, text); b.onclick = fn; rows.appendChild(b); };
-  if (unsaved) add('S', 'Save, then quit', saveAndQuit);
-  add('Q', unsaved ? 'Quit without saving' : 'Quit', leaveToMenu);
-  add('Esc', 'Keep playing', closeQuit);
+  confirmKeys = {};
+  for (const [key, text, fn] of [...choices, ['Esc', 'Keep playing', closeQuit]]) {
+    const b = makeChoiceBtn(key, text); b.onclick = fn; rows.appendChild(b);
+    confirmKeys[key.toLowerCase() === 'esc' ? 'escape' : key.toLowerCase()] = fn;
+  }
   document.getElementById('quit-panel').classList.remove('hidden');
+}
+const minsSinceSave = () => Math.round((Date.now() - lastSavedAt) / 60000);
+const sinceText = () => { const m = minsSinceSave(); return m >= 1 ? ` (last saved ${m} minute${m === 1 ? '' : 's'} ago)` : ''; };
+function quitToMenu() {
+  openConfirm('QUIT TO THE MAIN MENU?',
+    unsaved ? `You have progress that isn\u2019t saved${sinceText()}. Quit without saving and it\u2019s lost.` : 'Your game is saved.',
+    unsaved,
+    [...(unsaved ? [['S', 'Save, then quit', saveAndQuit]] : []), ['Q', unsaved ? 'Quit without saving' : 'Quit', leaveToMenu]]);
+}
+/** Going back to the last save. While the character lives it asks first (on the death screen it doesn't). */
+function restoreLastSave() {
+  const alive = currentState?.phase !== 'death' && (currentState?.character?.hp ?? 1) > 0;
+  if (!alive) { apiAction('restore'); return; }
+  openConfirm('GO BACK TO YOUR LAST SAVE?',
+    unsaved ? `Everything since your last save${sinceText()} will be undone: where you are, what you found, what you fought.` : 'Nothing has changed since your last save.',
+    unsaved,
+    [['R', 'Go back to my last save', () => { closeQuit(); apiAction('restore'); }]]);
 }
 function closeQuit() {
   quitOpen = false;
@@ -1997,13 +2014,12 @@ function submitName() {
 // ─── Keyboard events ──────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
-  // The quit window: S saves and quits, Q quits, Esc (or N) keeps playing; nothing else gets through.
+  // The asking window (quit, restore): its keys, Esc (or N) keeps playing; nothing else gets through.
   if (quitOpen) {
     e.preventDefault();
     const k = e.key.toLowerCase();
-    if (k === 's' && unsaved) saveAndQuit();
-    else if (k === 'q' || k === 'y') leaveToMenu();
-    else if (k === 'escape' || k === 'n') closeQuit();
+    const fn = confirmKeys[k] ?? (k === 'n' ? closeQuit : null);
+    if (fn) fn();
     return;
   }
   // Auto-fight: any key takes the fight back.
@@ -2133,7 +2149,7 @@ document.addEventListener('keydown', (e) => {
     if (key === 'm') apiAction('show-map');
     if (key === 't') apiAction('show-status');
     if (key === 'i') apiAction('show-inventory');
-    if (key === 'r') apiAction('restore');
+    if (key === 'r') restoreLastSave();
     if (key === 's') apiAction('save');
     if (key === 'n') toggleSound();
     if (key === 'v') toggleArrows();
@@ -2302,7 +2318,7 @@ document.getElementById('btn-amulets')   ?.addEventListener('click', () => { if 
 document.getElementById('btn-gear')      ?.addEventListener('click', () => { if (currentState.phase === 'playing') apiAction('open-gear'); });
 document.getElementById('btn-status')    ?.addEventListener('click', () => apiAction('show-status'));
 document.getElementById('btn-inventory') ?.addEventListener('click', () => apiAction('show-inventory'));
-document.getElementById('btn-restore')   ?.addEventListener('click', () => apiAction('restore'));
+document.getElementById('btn-restore')   ?.addEventListener('click', () => restoreLastSave());
 document.getElementById('btn-save')      ?.addEventListener('click', () => apiAction('save'));
 document.getElementById('btn-sound')     ?.addEventListener('click', toggleSound);
 updateSoundButton();
