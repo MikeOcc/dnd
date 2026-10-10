@@ -65,7 +65,7 @@ describe('curved spaces in the game', () => {
     const e = new GameEngine(new Repository(db)) as any;
     e.startNameEntry(); e.submitName('Stuck'); e.acceptCharacter(); e.dismissLevelIntro();
     const grid = e.getLevel(1).grid;
-    const r = grid.flat().find((c: { walls: { N: boolean; E: boolean; S: boolean; W: boolean } }) => rock(c) && c.x > 2 && c.y > 2 && c.x < 77 && c.y < 57);
+    const r = grid.flat().find((c: { x: number; y: number; walls: { N: boolean; E: boolean; S: boolean; W: boolean } }) => rock(c) && c.x > 2 && c.y > 2 && c.x < 77 && c.y < 57);
     e.char.x = r.x; e.char.y = r.y;
     e.getState();
     expect(rock(grid[e.char.y][e.char.x])).toBe(false);
