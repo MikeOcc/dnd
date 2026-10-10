@@ -508,6 +508,11 @@ export interface GameState {
   finalScore?: ScoreResult;
   saveSlots?: CharacterSummary[];
   mapFull?: boolean;           // map phase only: showing the whole floor rather than the centered window
+  // map phase only: what the drawn map needs. `rows` is the text map (one
+  // character a square: symbols, floor, ╭╮╰╯ curves, = the gaol's aisle,
+  // space unseen); `walls` and `bars` give each shown square's walled and
+  // barred sides as a hex digit (N 1, E 2, S 4, W 8), space where unseen.
+  mapData?: { x0: number; y0: number; rows: string[]; walls: string[]; bars: string[]; you: { x: number; y: number; facing: string } };
   mapRevealed?: boolean;       // map phase only: this level has been revealed, so the whole-level/explored toggle applies
   mapShowWhole?: boolean;      // map phase only: showing the whole revealed level, not just the explored squares
   spellChoices?: Choice[];     // combat only: the spell menu (known spells, lettered in unlock order, then Cancel)

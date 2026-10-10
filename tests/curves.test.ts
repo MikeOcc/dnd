@@ -81,3 +81,30 @@ describe('curved spaces in the game', () => {
     expect(rock(grid[e.char.y][e.char.x])).toBe(false);
   });
 });
+
+describe('the drawn map', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let db: any;
+  beforeEach(() => { db = createMemoryDb(); });
+  afterEach(() => { db.close(); });
+
+  it('is sent each shown square\'s walls exactly as the level has them, so it always matches', () => {
+    const e = new GameEngine(new Repository(db)) as any;
+    e.startNameEntry(); e.submitName('Mapper'); e.acceptCharacter(); e.dismissLevelIntro();
+    for (const level of [1, 4, 5, 7]) {
+      e.char.dungeonLevel = level; e.loadLevelIntoCache(level); e.phase = 'playing';
+      e.dungeonState.revealedLevels.add(level); e.mapShowWhole = true; e.mapFull = true;
+      const lvl = e.getLevel(level);
+      const d = e.renderMap().mapData;
+      let checked = 0;
+      d.walls.forEach((row: string, y: number) => [...row].forEach((h: string, x: number) => {
+        if (h === ' ') return;
+        const c = lvl.grid[d.y0 + y][d.x0 + x];
+        expect(parseInt(h, 16)).toBe((c.walls.N ? 1 : 0) | (c.walls.E ? 2 : 0) | (c.walls.S ? 4 : 0) | (c.walls.W ? 8 : 0));
+        checked++;
+      }));
+      expect(checked).toBeGreaterThan(300);
+      if (level === 5) expect(d.bars.join('').replace(/[ 0]/g, '').length).toBeGreaterThan(0);
+    }
+  });
+});

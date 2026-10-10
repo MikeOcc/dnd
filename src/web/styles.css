@@ -643,6 +643,9 @@ html, body {
 
 .choice-btn:disabled { opacity: 0.35; cursor: default; }
 
+/* The drawn map (app.js drawMap): a canvas in place of the text */
+#messages.map-view canvas.drawn-map { display: block; }
+
 /* Whole-floor map: up to 80×60 cells, so shrink to fit the panel. */
 #messages.map-view.map-full {
   font-size: calc(7px * var(--map-zoom, 1));

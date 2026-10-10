@@ -336,6 +336,7 @@ function applyState(state) {
   const logging = LOG_PHASES.includes(phase) && LOG_PHASES.includes(prev?.phase) && sameChar;
   updateMessageLog(bodyLines, logging);
   renderMessageLog(msgEl);
+  if (isMap && state.mapData) drawMap(msgEl, state.mapData, !!state.mapFull);
   msgEl.classList.toggle('map-view', phase === 'map');
   msgEl.classList.toggle('map-full', phase === 'map' && !!state.mapFull);
   msgEl.style.setProperty('--map-zoom', phase === 'map' ? MAP_ZOOM_STEPS[mapZoom] : 1);
@@ -1101,9 +1102,106 @@ function zoomMap(step) {
   applyState(currentState);
 }
 
+// ─── The drawn map ───────────────────────────────────────────────────────────
+// The server sends each shown square's symbol, walls and bars (mapData); the
+// map is drawn from them, so it always matches the level: walls as lines,
+// curved corners as arcs, the gaol's bars as bars. (The text map stays as
+// the fallback, and is what the server's tests read.)
+
+const MAP_CURVES = { '╮': [0, 1, -Math.PI / 2, 0], '╯': [0, 0, 0, Math.PI / 2], '╰': [1, 0, Math.PI / 2, Math.PI], '╭': [1, 1, Math.PI, Math.PI * 1.5] };
+const MAP_FLOOR = new Set(['.', '|', '-', '=', '╮', '╯', '╰', '╭']);
+const MAP_SYMBOL_COLORS = { '@': '#b6ffb6', '<': '#ffb347', '>': '#ffb347', '$': '#ffd700', '+': '#f0f0f0', '?': '#7fdcff', '~': '#5fa8ff', A: '#ff5040' };
+let mapCell = 0;   // pixels a square on the drawn map, for centring it
+
+function drawMap(el, data, full) {
+  const cell = Math.round((full ? 9 : 18) * MAP_ZOOM_STEPS[mapZoom]);
+  mapCell = cell;
+  const h = data.rows.length, w = data.rows[0]?.length ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil((w * cell + 2) * dpr); canvas.height = Math.ceil((h * cell + 2) * dpr);
+  canvas.style.width = `${w * cell + 2}px`; canvas.style.height = `${h * cell + 2}px`;
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', 'Map of the explored level');
+  canvas.className = 'drawn-map';
+  const g = canvas.getContext('2d');
+  g.scale(dpr, dpr);
+  g.translate(1, 1);
+  const lineW = Math.max(1.5, cell / 7);
+  const shown = (x, y) => (data.walls[y]?.[x] ?? ' ') !== ' ';
+  // Floors first.
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!shown(x, y)) continue;
+    const ch = data.rows[y][x], curve = MAP_CURVES[ch];
+    g.fillStyle = ch === '=' ? '#1d2618' : '#123312';
+    if (curve) {
+      const [ox, oy, a0, a1] = curve, cx = (x + ox) * cell, cy = (y + oy) * cell;
+      g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, cell, a0, a1); g.closePath(); g.fill();
+    } else g.fillRect(x * cell, y * cell, cell, cell);
+  }
+  // Then walls, curves and bars.
+  g.lineCap = 'square';
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!shown(x, y)) continue;
+    const walls = parseInt(data.walls[y][x], 16), bars = parseInt(data.bars[y]?.[x] || '0', 16) || 0;
+    const ch = data.rows[y][x], curve = MAP_CURVES[ch];
+    const X = x * cell, Y = y * cell;
+    const edges = [[1, X, Y, X + cell, Y], [2, X + cell, Y, X + cell, Y + cell], [4, X, Y + cell, X + cell, Y + cell], [8, X, Y, X, Y + cell]];
+    for (const [bit, x0, y0, x1, y1] of edges) {
+      if (!(walls & bit)) continue;
+      if (curve && !(bars & bit)) {
+        // The curve stands in for its square's two walls; any third is drawn straight.
+        const [ox, oy] = curve;
+        const onCorner = (bit === 1 && oy === 1) || (bit === 4 && oy === 0) || (bit === 8 && ox === 1) || (bit === 2 && ox === 0);
+        if (onCorner) continue;
+      }
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1);
+      if (bars & bit) { g.strokeStyle = '#c8a060'; g.lineWidth = Math.max(1, lineW * 0.8); g.setLineDash([Math.max(1, cell / 8), Math.max(1, cell / 8)]); }
+      else { g.strokeStyle = '#5fd35f'; g.lineWidth = lineW; g.setLineDash([]); }
+      g.stroke();
+    }
+    g.setLineDash([]);
+    if (curve) {
+      const [ox, oy, a0, a1] = curve;
+      g.beginPath(); g.arc((x + ox) * cell, (y + oy) * cell, cell, a0, a1);
+      g.strokeStyle = '#5fd35f'; g.lineWidth = lineW; g.stroke();
+    }
+  }
+  // Symbols: you, ladders, chests and the rest.
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = `bold ${Math.max(7, Math.round(cell * 0.82))}px monospace`;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ch = data.rows[y][x];
+    if (ch === ' ' || MAP_FLOOR.has(ch)) continue;
+    const cx = x * cell + cell / 2, cy = y * cell + cell / 2;
+    if (ch === '@') {
+      // You, and which way you face.
+      g.fillStyle = MAP_SYMBOL_COLORS['@'];
+      g.beginPath(); g.arc(cx, cy, cell * 0.3, 0, Math.PI * 2); g.fill();
+      const a = { N: -Math.PI / 2, E: 0, S: Math.PI / 2, W: Math.PI }[data.you.facing] ?? 0;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(a) * cell * 0.5, cy + Math.sin(a) * cell * 0.5);
+      g.lineTo(cx + Math.cos(a + 2.4) * cell * 0.3, cy + Math.sin(a + 2.4) * cell * 0.3);
+      g.lineTo(cx + Math.cos(a - 2.4) * cell * 0.3, cy + Math.sin(a - 2.4) * cell * 0.3);
+      g.closePath(); g.fill();
+      continue;
+    }
+    g.fillStyle = MAP_SYMBOL_COLORS[ch] || '#9fe79f';
+    g.fillText(ch, cx, cy + 1);
+  }
+  el.replaceChildren(canvas);
+}
+
 function centerMapOnPlayer() {
   const area = document.getElementById('message-area');
   const msgEl = document.getElementById('messages');
+  const data = currentState?.mapData;
+  if (data && msgEl.querySelector('canvas.drawn-map')) {
+    const col = data.you.x - data.x0, row = data.you.y - data.y0;
+    area.scrollLeft = Math.max(0, col * mapCell - area.clientWidth / 2);
+    area.scrollTop = Math.max(0, row * mapCell - area.clientHeight / 2);
+    return;
+  }
   const lines = msgEl.textContent.split('\n');
   const row = lines.findIndex(l => l.includes('@'));
   if (row < 0) return;

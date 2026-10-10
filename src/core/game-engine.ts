@@ -143,6 +143,7 @@ export class GameEngine {
   private mapShowWhole = true;   // on a revealed level: the whole level, or only what's been explored
   private fx: Fx = {};   // hit-effect hints gathered during the current action
   private lastArea: string | null = null;
+  private mapData: GameState['mapData'] | null = null;   // the drawn map's squares, walls and bars (renderMap)
   private dyingOfShock = false;
   private shockWarnedAt = -Infinity;  // play time of the last anaphylaxis warning while walking  // guards checkAnaphylaxis against re-entry through handleDeath's getState
   private stepFrom: { x: number; y: number } | null = null;  // where the last step started
@@ -213,6 +214,7 @@ export class GameEngine {
     if (this.pendingRoll) state.currentRoll = this.pendingRoll;
     if (this.phase === 'map') {
       state.mapFull = this.mapFull;
+      if (this.mapData) state.mapData = this.mapData;
       state.mapRevealed = this.levelRevealed();
       state.mapShowWhole = state.mapRevealed && this.mapShowWhole;
     }
@@ -651,11 +653,16 @@ export class GameEngine {
     const minY = this.mapFull ? exMinY : Math.max(0, this.char.y - radius);
     const maxY = this.mapFull ? exMaxY : Math.min(DUNGEON.HEIGHT - 1, this.char.y + radius);
 
-    const rows: string[] = [];
+    const rows: string[] = [], wallRows: string[] = [], barRows: string[] = [];
     for (let cy = minY; cy <= maxY; cy++) {
-      let row = '';
+      let row = '', wallRow = '', barRow = '';
       for (let cx = minX; cx <= maxX; cx++) {
         const k = `${cx},${cy}`;
+        // The drawn map: this square's walls and bars, if it's shown at all.
+        const sq = grid[cy]?.[cx];
+        const shown = !!sq && !isSolidRock(sq) && (isVisited(cx, cy) || (cx === this.char!.x && cy === this.char!.y));
+        wallRow += shown ? ((sq.walls.N ? 1 : 0) | (sq.walls.E ? 2 : 0) | (sq.walls.S ? 4 : 0) | (sq.walls.W ? 8 : 0)).toString(16) : ' ';
+        barRow += shown && lvl.gaol ? ((['N', 'E', 'S', 'W'] as const).reduce((m, d, i) => m | (lvl.gaol!.bars.has(`${cx},${cy},${d}`) ? 1 << i : 0), 0)).toString(16) : (shown ? '0' : ' ');
 
         if (cx === this.char!.x && cy === this.char!.y) { row += '@'; continue; }
         if (asmodeusAt && cx === asmodeusAt.x && cy === asmodeusAt.y) { row += 'A'; continue; }
@@ -689,8 +696,9 @@ export class GameEngine {
         else if (!E && !W)       row += '-';   // E-W corridor
         else                     row += '.';   // corner
       }
-      rows.push(row);
+      rows.push(row); wallRows.push(wallRow); barRows.push(barRow);
     }
+    this.mapData = { x0: minX, y0: minY, rows, walls: wallRows, bars: barRows, you: { x: this.char.x, y: this.char.y, facing: this.char.facing } };
 
     const w = maxX - minX + 1;
     this.phase = 'map';
