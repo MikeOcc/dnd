@@ -1,7 +1,7 @@
 // Curved spaces: rounded bends and corners, and round rooms, on levels 4 and 7.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateLevel, deserializeLevel, floodFill } from '../src/core/dungeon.js';
-import { roundRooms, curvedCorner, CURVED_LEVELS } from '../src/core/curves.js';
+import { roundRooms, curvedCorner, curvedArea, CURVED_LEVELS } from '../src/core/curves.js';
 import { mapAreas } from '../src/core/regions.js';
 import { createMemoryDb } from '../src/database/database.js';
 import { Repository } from '../src/database/repositories.js';
@@ -19,12 +19,22 @@ describe('curved spaces', () => {
     expect(CURVED_LEVELS).toEqual([4, 7]);
   });
 
+  it('elsewhere, some rooms and passages curve, but not most', () => {
+    let curved = 0, all = 0;
+    for (const level of [1, 2, 3, 5, 6]) for (let s = 1; s <= 6; s++) {
+      const { grid } = deserializeLevel(generateLevel(level, s * 7919));
+      for (const a of mapAreas(grid).areas) { all++; if (curvedArea(level, a)) curved++; }
+    }
+    expect(curved / all).toBeGreaterThan(0.12);
+    expect(curved / all).toBeLessThan(0.4);
+  });
+
   it('rounds rooms without losing anything: every square still reachable, nothing lying anywhere filled in', () => {
     for (const level of [4, 7]) for (let s = 1; s <= 10; s++) {
       const { grid, entrance, exit, contents } = deserializeLevel(generateLevel(level, s * 104729));
       const before = floodFill(grid, entrance.x, entrance.y);
       const rooms = mapAreas(grid).areas.filter(a => a.kind === 'room').length;
-      roundRooms(grid, contents, [entrance, exit]);
+      roundRooms(grid, contents, [entrance, exit], level);
       const after = floodFill(grid, entrance.x, entrance.y);
       // Squares only ever become rock; whatever is still open is still reachable.
       let open = 0;

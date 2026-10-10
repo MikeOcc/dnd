@@ -30,7 +30,7 @@ import { rollPresence, type Lair } from './presence.js';
 import { nameIsDecent } from './names.js';
 import { chooseAuto, loreAction, type Lore } from './autofight.js';
 import { buildSanctum, type Sanctum } from './sanctum.js';
-import { CURVED_LEVELS, roundRooms, curvedCorner, CORNER_CODE, CORNER_GLYPH } from './curves.js';
+import { roundRooms, curvedCorner, CORNER_CODE, CORNER_GLYPH } from './curves.js';
 import { assignDistricts } from './hell-districts.js';
 import { DISTRICTS, APPROACH_EVENTS, type DistrictId } from '../content/district-text.js';
 import { getDescription, getDescriptionShort } from '../content/descriptions.js';
@@ -292,7 +292,7 @@ export class GameEngine {
           } else mats += '-';
         });
         const area = areaAtCell(areas, x, y);
-        const corner = curvedCorner(level, cell);
+        const corner = curvedCorner(level, cell, area);
         cells.push([x, y, walls, area ? ceilingHeight(level, area) : 0, mats, torches, carvings, corner ? CORNER_CODE[corner] : 0]);
 
         const c = lvl.contents.get(`${x},${y}`);
@@ -668,7 +668,7 @@ export class GameEngine {
         if (!cell) { row += '.'; continue; }
         const { N, S, E, W } = cell.walls;
         const openCount = [!N, !S, !E, !W].filter(Boolean).length;
-        const curve = curvedCorner(level, cell);
+        const curve = curvedCorner(level, cell, areaAtCell(lvl.areas ??= mapAreas(lvl.grid), cx, cy));
         if (curve)               row += CORNER_GLYPH[curve];   // a curved bend or corner
         else if (openCount >= 3) row += '.';   // room interior / junction
         else if (!N && !S)       row += '|';   // N-S corridor
@@ -4152,8 +4152,8 @@ export class GameEngine {
     // Level 7: Asmodeus on his throne at the end of the Long Way (or, where there's no room for it, in the middle).
     const seed = serialized.seed ?? (entrance.x * 7919 + entrance.y * 104729);
     const sanctum = levelNum === 7 ? buildSanctum(grid, entrance, contents, seed) : null;
-    // The Caverns of Teeth and the Hells: round rooms (curves.ts).
-    if (CURVED_LEVELS.includes(levelNum)) roundRooms(grid, contents, [entrance, exit, sanctum?.mouth ?? null, sanctum?.door ?? null]);
+    // Round rooms: all of them on the Caverns of Teeth and the Hells, some elsewhere (curves.ts).
+    roundRooms(grid, contents, [entrance, exit, sanctum?.mouth ?? null, sanctum?.door ?? null], levelNum);
     if (levelNum === 4) buildOrcKingLair(grid, entrance, exit, contents);
     if (levelNum === 5) buildBarrowKingLair(grid, entrance, exit, contents);
     if (levelNum === 6) placeLambtonWorm(grid, entrance, exit, contents);
