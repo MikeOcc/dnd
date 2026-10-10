@@ -663,7 +663,7 @@ function updateViewStrip(state) {
 }
 
 // Unsaved progress: warn before quitting to the menu without saving.
-let unsaved = false, quitArmedUntil = 0;
+let unsaved = false;
 // A gentle reminder under the view after a long while without saving (no autosave).
 const SAVE_NUDGE_MINUTES = 10;
 let lastSavedAt = Date.now();
@@ -671,17 +671,55 @@ let lastSavedAt = Date.now();
 const SAVE_NUDGE_SHOW_MS = 10000;
 let nudgeShowing = false, nudgeFrom = Date.now(), nudgeShownAt = 0;
 const NOT_PROGRESS = new Set(['save', 'restore', 'load', 'main-menu', 'show-map', 'show-status', 'show-inventory', 'dismiss-status', 'dismiss-inventory', 'dismiss-intro', 'open-gear']);
+// Quitting always asks first, in a small window: save and quit (when there's
+// anything unsaved), quit, or keep playing. Keys: S, Q, Esc.
+let quitOpen = false;
 function quitToMenu() {
-  if (unsaved && Date.now() > quitArmedUntil) {
-    quitArmedUntil = Date.now() + 6000;
-    updateMessageLog(['You have unsaved progress.', 'Press S to save first, or Q again to leave without saving.'], true);
-    renderMessageLog(document.getElementById('messages'));
-    return;
-  }
-  quitArmedUntil = 0;
+  if (quitOpen) return;
+  quitOpen = true;
+  const note = document.getElementById('quit-note');
+  const rows = document.getElementById('quit-rows');
+  const mins = Math.round((Date.now() - lastSavedAt) / 60000);
+  note.replaceChildren();
+  if (unsaved) {
+    const w = document.createElement('div');
+    w.className = 'warn';
+    w.textContent = `You have progress that isn\u2019t saved${mins >= 1 ? ` (last saved ${mins} minute${mins === 1 ? '' : 's'} ago)` : ''}. Quit without saving and it\u2019s lost.`;
+    note.appendChild(w);
+  } else note.textContent = 'Your game is saved.';
+  rows.replaceChildren();
+  const add = (key, text, fn) => { const b = makeChoiceBtn(key, text); b.onclick = fn; rows.appendChild(b); };
+  if (unsaved) add('S', 'Save, then quit', saveAndQuit);
+  add('Q', unsaved ? 'Quit without saving' : 'Quit', leaveToMenu);
+  add('Esc', 'Keep playing', closeQuit);
+  document.getElementById('quit-panel').classList.remove('hidden');
+}
+function closeQuit() {
+  quitOpen = false;
+  document.getElementById('quit-panel').classList.add('hidden');
+}
+function leaveToMenu() {
+  closeQuit();
   characterId = null;
   apiAction('main-menu');
 }
+async function saveAndQuit() {
+  await apiAction('save');
+  if (unsaved) {   // the save didn't take (in the middle of something): say why, and stay
+    const w = document.createElement('div');
+    w.className = 'warn';
+    w.textContent = (currentState?.messages || []).join(' ') || 'The game could not be saved just now.';
+    document.getElementById('quit-note').replaceChildren(w);
+    return;
+  }
+  leaveToMenu();
+}
+// Clicking off the window keeps playing.
+document.addEventListener('click', (e) => {
+  if (!quitOpen || document.getElementById('quit-panel').contains(e.target)) return;
+  e.preventDefault(); e.stopPropagation();
+  closeQuit();
+}, true);
 
 /** A moment's "Saved" by the Save button and under the view. */
 function flashSaved() {
@@ -1959,6 +1997,15 @@ function submitName() {
 // ─── Keyboard events ──────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
+  // The quit window: S saves and quits, Q quits, Esc (or N) keeps playing; nothing else gets through.
+  if (quitOpen) {
+    e.preventDefault();
+    const k = e.key.toLowerCase();
+    if (k === 's' && unsaved) saveAndQuit();
+    else if (k === 'q' || k === 'y') leaveToMenu();
+    else if (k === 'escape' || k === 'n') closeQuit();
+    return;
+  }
   // Auto-fight: any key takes the fight back.
   if (autoFighting) { e.preventDefault(); stopAutoFight(); return; }
   if (sheetOpen && e.key === 'Escape') { e.preventDefault(); setSheet(false); return; }

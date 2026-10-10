@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Seven Levels — Play My D&amp;D Adventure">
   <meta name="twitter:image" content="https://playsevenlevels.com/og-image.jpg">
-  <link rel="stylesheet" href="styles.css?v=75">
+  <link rel="stylesheet" href="styles.css?v=76">
 </head>
 <body>
   <div id="terminal">
@@ -165,6 +165,13 @@
       <div class="settings-hint">Press a letter to toggle. X, O or Esc to close.</div>
     </div>
 
+    <!-- Quit: always asks first (app.js quitToMenu) -->
+    <div id="quit-panel" class="hidden" role="dialog" aria-modal="true" aria-labelledby="quit-title">
+      <div id="quit-title">══ QUIT TO THE MAIN MENU? ══</div>
+      <div id="quit-note"></div>
+      <div id="quit-rows"></div>
+    </div>
+
     <div id="account-panel" class="hidden" role="dialog" aria-labelledby="account-title">
       <div id="account-title">══ ACCOUNT ══</div>
       <div id="account-msg" role="status"></div>
@@ -189,6 +196,6 @@
   <script src="view3d.js?v=10"></script>
   <script src="view-sprites.js?v=12"></script>
   <script src="sfx.js?v=8"></script>
-  <script src="app.js?v=112"></script>
+  <script src="app.js?v=113"></script>
 </body>
 </html>

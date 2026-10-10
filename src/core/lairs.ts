@@ -41,7 +41,7 @@ export function distances(grid: DungeonCell[][], from: Pt): Map<string, { d: num
   return out;
 }
 
-interface Opening { inside: Pt; outside: Pt; dir: Direction }
+export interface Opening { inside: Pt; outside: Pt; dir: Direction }
 
 function openingsOf(grid: DungeonCell[][], areaIndex: Int32Array, width: number, idx: number): Opening[] {
   const out: Opening[] = [];
@@ -55,7 +55,7 @@ function openingsOf(grid: DungeonCell[][], areaIndex: Int32Array, width: number,
   return out;
 }
 
-function setWall(grid: DungeonCell[][], o: Opening, closed: boolean): void {
+export function setWall(grid: DungeonCell[][], o: Opening, closed: boolean): void {
   grid[o.inside.y][o.inside.x].walls[o.dir] = closed;
   grid[o.outside.y][o.outside.x].walls[OPPOSITE[o.dir]] = closed;
 }
@@ -178,8 +178,11 @@ export const BARROW_LAIR = {
   MIN_ROOM_CELLS: 12,
 } as const;
 
-export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>): void {
-  if ([...contents.values()].some(c => c.id === BARROW_LAIR.KING_ID)) return;
+/** The room farthest from the entrance that can be walled up to one doorway
+ * without cutting off anything else, and the square in it farthest from that
+ * doorway. Nothing is changed: `seal` is what to wall up. */
+export function farthestSealableRoom(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>, minCells: number):
+    { area: Area; keep: Opening; seal: Opening[]; seat: Pt; walk: number } | null {
   const map = mapAreas(grid);
   const width = grid[0].length;
   const reachableBefore = floodFill(grid, entrance.x, entrance.y).size;
@@ -191,10 +194,9 @@ export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: P
     return map.areaAt[y * width + x] === idx;
   });
 
-  // The farthest room that can be walled up to one doorway without cutting off anything else.
   let best: { area: Area; keep: Opening; seal: Opening[]; score: number } | null = null;
   map.areas.forEach((area, idx) => {
-    if (area.kind !== 'room' || area.cells < BARROW_LAIR.MIN_ROOM_CELLS) return;
+    if (area.kind !== 'room' || area.cells < minCells) return;
     if (touches(area, entrance) || touches(area, exit) || hasLadder(idx)) return;
     const openings = openingsOf(grid, map.areaAt, width, idx);
     if (openings.length === 0) return;
@@ -209,20 +211,31 @@ export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: P
       if (ok) { best = { area, keep, seal, score: near }; break; }
     }
   });
-  if (!best) return;
-  const { area, keep, seal } = best as { area: Area; keep: Opening; seal: Opening[] };
-  seal.forEach(o => setWall(grid, o, true));
+  if (!best) return null;
+  const { area, keep, seal } = best as { area: Area; keep: Opening; seal: Opening[]; score: number };
 
   const free = (p: Pt) => !contents.has(key(p)) && !(p.x === entrance.x && p.y === entrance.y) && !(exit && p.x === exit.x && p.y === exit.y);
-  // The bier: the room square farthest from the doorway.
+  // The square farthest from the doorway (walking inside the room).
+  seal.forEach(o => setWall(grid, o, true));
   const fromDoor = distances(grid, keep.inside);
-  let bier: Pt | null = null, far = -1;
+  seal.forEach(o => setWall(grid, o, false));
+  let seat: Pt | null = null, far = -1;
   for (const [k, { d }] of fromDoor) {
     const [x, y] = k.split(',').map(Number);
     if (areaAtCell(map, x, y) !== area || d <= far || !free({ x, y })) continue;
-    bier = { x, y }; far = d;
+    seat = { x, y }; far = d;
   }
-  if (bier) contents.set(key(bier), { type: 'unique-monster', id: BARROW_LAIR.KING_ID, monsterId: 'Barrow-King' });
+  if (!seat) return null;
+  return { area, keep, seal, seat, walk: (best as { score: number }).score + 1 + far };
+}
+
+export function buildBarrowKingLair(grid: DungeonCell[][], entrance: Pt, exit: Pt | null, contents: Map<string, CellContent>): void {
+  if ([...contents.values()].some(c => c.id === BARROW_LAIR.KING_ID)) return;
+  const found = farthestSealableRoom(grid, entrance, exit, contents, BARROW_LAIR.MIN_ROOM_CELLS);
+  if (!found) return;
+  found.seal.forEach(o => setWall(grid, o, true));
+  // The bier: the room square farthest from the doorway.
+  contents.set(key(found.seat), { type: 'unique-monster', id: BARROW_LAIR.KING_ID, monsterId: 'Barrow-King' });
 }
 
 // ─── The Rakshasa (level 7) ──────────────────────────────────────────────────

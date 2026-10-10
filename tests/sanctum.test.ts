@@ -27,10 +27,31 @@ describe('the Long Way and the throne room', () => {
       const room = areaAtCell(mapAreas(grid), sc.throne.x, sc.throne.y)!;
       expect(room.kind).toBe('room');
       expect(room.exits).toBe(1);
-      // A long way, and a much longer walk than before.
-      expect(sc.path.length).toBeGreaterThanOrEqual(SANCTUM.MIN_PASSAGE_FALLBACK);
+      // A longer walk than before, and a long one: by the Long Way, or (where the rooms are packed too close) to a walled-up far room.
       const walk = distances(grid, entrance).get(`${sc.throne.x},${sc.throne.y}`)!.d;
-      expect(walk).toBeGreaterThan(Math.max(150, was * 2));
+      expect(walk).toBeGreaterThan(was);
+      expect(walk).toBeGreaterThanOrEqual(SANCTUM.GOOD_WALK);
+    }
+  });
+
+  it('nothing runs alongside the passage: it touches the rest of the level only at the crack and the door', () => {
+    // (The map draws no walls, so anything beside it would look joined to it.)
+    for (let s = 1; s <= 15; s++) {
+      const seed = s * 7919;
+      const { grid, entrance, contents } = deserializeLevel(generateLevel(7, seed));
+      const sc = buildSanctum(grid, entrance, contents, seed)!;
+      if (!sc.path.length) continue;   // a walled-up room: no passage
+      const way = new Set([...sc.path, ...sc.branches].map(p => `${p.x},${p.y}`));
+      const rock = (x: number, y: number) => { const w = grid[y]?.[x]?.walls; return !w || (w.N && w.E && w.S && w.W); };
+      const inThrone = (x: number, y: number) => x >= sc.room.x0 && x <= sc.room.x1 && y >= sc.room.y0 && y <= sc.room.y1;
+      for (const p of [...sc.path, ...sc.branches]) {
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const x = p.x + dx, y = p.y + dy;
+          if (rock(x, y) || way.has(`${x},${y}`)) continue;
+          const ok = (x === sc.mouth.x && y === sc.mouth.y && p === sc.path[0]) || (p === sc.door && inThrone(x, y));
+          expect(ok, `passage square ${p.x},${p.y} beside ${x},${y}`).toBe(true);
+        }
+      }
     }
   });
 
@@ -50,7 +71,7 @@ describe('the Long Way and the throne room', () => {
     expect(d.length).toBe(areas.areas.length);
     const at = (p: { x: number; y: number }) => d[areas.areaAt[p.y * grid[0].length + p.x]];
     expect(at(entrance)).toBe('ash');
-    expect(at(sc.path[Math.floor(sc.path.length / 2)])).toBe('approach');
+    if (sc.path.length) expect(at(sc.path[Math.floor(sc.path.length / 2)])).toBe('approach');
     expect(at(sc.throne)).toBe('throne');
     expect(at(sc.mouth)).toBe('court');
     for (const id of ['forges', 'frozen', 'pacts', 'cages']) expect(d).toContain(id);
@@ -67,6 +88,8 @@ describe('the seventh level in the game', () => {
     const e = new GameEngine(new Repository(db)) as any;
     e.startNameEntry(); e.submitName('Walker'); e.acceptCharacter(); e.dismissLevelIntro();
     e.char.hp = e.char.maxHp = 1000;
+    // A level with a Long Way (some packed levels wall up a far room instead).
+    e.repo.saveLevel(e.char.id, 7, generateLevel(7, 5 * 7919));
     e.char.dungeonLevel = 7; e.loadLevelIntoCache(7); e.phase = 'playing';
     const lvl = e.getLevel(7);
     return { e, lvl, sc: lvl.sanctum };
@@ -109,7 +132,7 @@ describe('the seventh level in the game', () => {
     e.char.x = lvl.entrance.x; e.char.y = lvl.entrance.y; e.lastArea = null;
     const first = e.enterArea().join(' ');
     expect(first).toContain('the Ash Plain');
-    expect(first).toMatch(/You are in an? (ash|grey|wide|long)/);
+    expect(first).toMatch(/You are in .*ash/);
     e.lastArea = null;
     expect(e.enterArea().join(' ')).not.toContain('This is the Ash Plain');
     expect(e.getState().district).toBe('ash');
